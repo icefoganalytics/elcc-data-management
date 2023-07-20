@@ -1,0 +1,13 @@
+@startuml notification_pipeline
+participant User
+participant API
+participant UI
+participant Toaster
+
+User --> UI: peform action
+UI -> API: request data
+API --> UI: data package
+UI <- UI: extract toast from data
+UI --> Toaster: display toast
+UI -> UI: display new data
+@enduml
