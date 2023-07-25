@@ -5,16 +5,16 @@
 
 1. Rename `db/sapassword.env.sample` to `db/sapassword.env` and set the `MSSQL_SA_PASSWORD` variable.
 
-2. Create a `src/api/.env.development` file with the following content:
+2. Create a `src/api/.env.development` file with the following content, filling in as needed:
 
     ```bash
     VUE_APP_FRONTEND_URL=http://localhost:8080
-    VUE_APP_AUTH_DOMAIN=https://dev-0tc6bn14.eu.auth0.com
-    VUE_APP_AUTH_CLIENTID=9LYlWVby1DLUu7SDUiCcvorVXqAlCMYs
+    VUE_APP_AUTH_DOMAIN=...................
+    VUE_APP_AUTH_CLIENTID=........................
     VUE_APP_AUTH_AUDIENCE=testing
 
     AUTH0_AUDIENCE=testing
-    AUTH0_DOMAIN=https://dev-0tc6bn14.eu.auth0.com/
+    AUTH0_DOMAIN=...................
 
     APPLICATION_NAME=ELCC Data Management
 
