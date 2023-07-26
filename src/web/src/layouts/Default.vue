@@ -15,6 +15,8 @@
           <v-chip v-else color="yg_twilight"> User </v-chip>
         </span>
 
+        <NotificationDrawerMenu />
+
         <v-menu offset-y>
           <template v-slot:activator="{ props }">
             <v-btn icon="mdi-dots-vertical" color="primary" v-bind="props"></v-btn>
@@ -73,10 +75,14 @@ import { useNotificationStore } from "@/store/NotificationStore";
 import { useCentreStore } from "@/modules/centre/store";
 import { useSubmissionLinesStore } from "@/modules/submission-lines/store";
 
+import NotificationDrawerMenu from "@/components/NotificationDrawerMenu.vue";
+
 import { mapState, mapActions, mapWritableState } from "pinia";
 export default {
   name: "Default",
-
+  components: {
+    NotificationDrawerMenu
+  },
   data() {
     return {
       isAuthenticated: this.$auth0.isAuthenticated,
