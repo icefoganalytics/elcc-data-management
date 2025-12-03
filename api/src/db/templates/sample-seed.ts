@@ -1,39 +1,44 @@
 import type { Knex } from "knex"
+import * as models from "@/models"
 
 export async function seed(knex: Knex): Promise<void> {
   throw new Error("Not implemented")
 
-  // Example: Insert seed data with upsert pattern
-  // This uses ON CONFLICT for idempotent seeding
-  await knex("table_name")
-    .insert([
-      {
-        id: 1,
-        name: "Example 1",
-        status: "active",
-        created_at: knex.fn.now(),
-        updated_at: knex.fn.now(),
-      },
-      {
-        id: 2,
-        name: "Example 2",
-        status: "active",
-        created_at: knex.fn.now(),
-        updated_at: knex.fn.now(),
-      },
-    ])
-    .onConflict("id")
-    .merge()
+  // Seeds use Sequelize Models for type safety and consistency with application code
+  // Example: Using Model.findOrCreate for idempotent seeding
+  await models.Centre.findOrCreate({
+    where: {
+      name: "Example Centre",
+    },
+    defaults: {
+      name: "Example Centre",
+      license: "123",
+      community: "Whitehorse",
+      region: "WHITEHORSE",
+      status: "Active",
+      hotMeal: true,
+      licensedFor: 20,
+    },
+  })
 
-  // Alternative: Check if data exists before inserting
-  const existingRecord = await knex("table_name").where({ id: 1 }).first()
-  if (!existingRecord) {
-    await knex("table_name").insert({
-      id: 1,
-      name: "Example",
-      status: "active",
-      created_at: knex.fn.now(),
-      updated_at: knex.fn.now(),
-    })
-  }
+  // Alternative: Bulk create with ignoreDuplicates
+  await models.Centre.bulkCreate(
+    [
+      {
+        name: "Example Centre 1",
+        license: "456",
+        community: "Whitehorse",
+        region: "WHITEHORSE",
+        status: "Active",
+      },
+      {
+        name: "Example Centre 2",
+        license: "789",
+        community: "Dawson",
+        region: "DAWSON",
+        status: "Active",
+      },
+    ],
+    { ignoreDuplicates: true }
+  )
 }
