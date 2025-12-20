@@ -68,7 +68,30 @@
           />
         </h3>
 
-        <EditWageEnhancementsWidget
+        <div class="d-flex justify-end mb-2">
+          <v-btn
+            v-if="!showWageEnhancementCreateForm"
+            color="yg-blue"
+            prepend-icon="mdi-plus"
+            @click="showWageEnhancementCreateForm = true"
+          >
+            Add Employee
+          </v-btn>
+        </div>
+
+        <WageEnhancementCreateFormCard
+          v-if="showWageEnhancementCreateForm"
+          id="wage-enhancement-create-form-card"
+          :centre-id="props.centreId"
+          :fiscal-period-id="fiscalPeriodId"
+          elevation="0"
+          class="mb-4"
+          @created="closeCreateFormAndRefresh"
+          @cancel="showWageEnhancementCreateForm = false"
+        />
+
+        <WageEnhancementsEditTable
+          ref="wageEnhancementsEditTable"
           :centre-id="props.centreId"
           :fiscal-period-id="fiscalPeriodId"
         />
@@ -78,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed, ref, useTemplateRef } from "vue"
 import { isEmpty, isNil } from "lodash"
 
 import DateTimeUtils from "@/utils/date-time-utils"
@@ -86,7 +109,8 @@ import useFiscalPeriods, { FiscalPeriodMonths } from "@/use/use-fiscal-periods"
 import useEmployeeBenefits from "@/use/use-employee-benefits"
 
 import EmployeeBenefitEditTable from "@/components/employee-benefits/EmployeeBenefitEditTable.vue"
-import EditWageEnhancementsWidget from "@/modules/centre/components/EditWageEnhancementsWidget.vue"
+import WageEnhancementCreateFormCard from "@/components/wage-enhancements/WageEnhancementCreateFormCard.vue"
+import WageEnhancementsEditTable from "@/components/wage-enhancements/WageEnhancementsEditTable.vue"
 import ReplicateEstimatesButton from "@/components/wage-enhancements/ReplicateEstimatesButton.vue"
 
 const props = defineProps<{
@@ -129,6 +153,14 @@ const employeeBenefitId = computed(() => employeeBenefits.value[0]?.id)
 const employeeBenefitNotFound = computed(
   () => !isLoadingEmployeeBenefits.value && isEmpty(employeeBenefits.value)
 )
+
+const showWageEnhancementCreateForm = ref(false)
+const wageEnhancementsEditTable = useTemplateRef("wageEnhancementsEditTable")
+
+async function closeCreateFormAndRefresh() {
+  showWageEnhancementCreateForm.value = false
+  await wageEnhancementsEditTable.value?.refresh()
+}
 </script>
 
 <style scoped></style>
