@@ -1,5 +1,49 @@
 # API service Tests
 
+## Testing Commands
+
+**IMPORTANT:** Use `./bin/dev` not just `dev` when running commands directly.
+
+- **Run all API tests**: `./bin/dev test api -- --run`
+- **Run specific test file**: `./bin/dev test api -- --run tests/services/example.test.ts`
+- **Run tests with watch mode**: `./bin/dev test api tests/services/example.test.ts` (no `--run` flag)
+- **Run tests with pattern**: `./bin/dev test api -- --grep "fiscal year"`
+- **Skip setup (faster)**: `./bin/dev test api --skip-setup -- --run tests/services/example.test.ts`
+- **Format files**: from the repo root run `npx prettier --write <paths>`
+
+**Why `./bin/dev` instead of `dev`:**
+
+- The `.envrc` file adds `bin` to PATH with `PATH_add bin`
+- This makes `dev` available when direnv is active in the shell
+- When running commands through tools or in different contexts, direnv may not be active
+- Using `./bin/dev` ensures the command is always found regardless of direnv state
+- **Best practice**: Always use `./bin/dev` in scripts and tool calls for reliability
+
+## Skipping Global Setup (Quick Mode)
+
+Global setup runs database health checks, migrations, and seeds on every test invocation. When these have already run in the current session (i.e., the database is initialized and migrations are current), you can skip them for faster iteration:
+
+```bash
+# ~5s instead of ~14s
+./bin/dev test api --skip-setup -- --run tests/services/example.test.ts
+```
+
+**When to use:** After you've already run tests at least once in the current session (so the database exists, migrations are applied, and seeds are loaded).
+
+**When NOT to use:** After pulling new code with migrations, after a database reset, or on the first test run of a session. If tests fail unexpectedly with quick mode, re-run without it to ensure the database is fully initialized.
+
+## Sharing the Test Container (AI Agents)
+
+**Only one test container can run at a time** — running two causes database deadlocks. When the user already has a test container running (e.g., in watch mode), AI agents must not start their own via `dev test`. Instead, watch the existing container's output:
+
+```bash
+# User runs this in one terminal
+./bin/dev test api tests/services/example.test.ts
+
+# AI agent watches the existing container output
+docker logs -f elcc-data-management-test-1
+```
+
 ## Implementation
 
 Tests are written in [vitest](https://vitest.dev/guide/)

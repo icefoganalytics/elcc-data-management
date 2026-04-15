@@ -1,5 +1,5 @@
 ---
-description: Create and edit well-structured pull requests following ELCC project patterns and conventions
+description: Create and edit well-structured pull requests following ELCC Data Management project patterns and conventions
 auto_execution_mode: 1
 ---
 
@@ -13,7 +13,7 @@ auto_execution_mode: 1
 - Clear title following naming conventions
 - Context explaining WHY the change is needed
 - Implementation summarizing WHAT was changed (purpose, not files)
-- A generated `# Testing Instructions` section
+- Testing instructions that verify correctness
 
 **Decision Rules:**
 - **Title format:** Use `Issue-<number>: Description` for GitHub issues, `TICKET-ID: Description` for Jira tickets, `Fix: Description` for bug fixes, or `Action Verb + Noun` for features. Always use AP style title case.
@@ -21,11 +21,10 @@ auto_execution_mode: 1
 - **Implementation section:** Focus on purpose and intent, not specific files. A reviewer can see file changes in the diff - the Implementation section explains the reasoning behind those changes.
 - **Screenshots:** Check the diff for `web/src/components/` or `web/src/pages/` changes. If present, write "TODO" and let user add screenshots. Only write "N/A - backend changes only" if there are truly no frontend changes.
 - **Draft mode:** Always create PRs as drafts first
-- **Testing instructions are delegated:** Do not author detailed QA steps in this workflow. Generate or refresh the entire `# Testing Instructions` section via `testing-instructions.md`.
-- **PR edits still need QA workflow:** When updating an existing PR body, if the change touches the `# Testing Instructions` section or could invalidate it, rerun the `testing-instructions` workflow before patching the PR.
+- **QA Testing:** Write testing instructions for someone with zero project knowledge, focusing on user interactions rather than technical implementation. Follow the `testing-instructions` workflow for comprehensive guidance on creating detailed, accurate testing instructions with exact UI element names and proper test case structure.
 - **Complete workflow sequence:** This is step 3 of 4 in the complete PR creation process. Always use after jira-issue-management and code-review workflows, then follow with testing-instructions workflow for comprehensive test coverage.
 
-This workflow covers the process of creating and editing well-structured pull requests that follow the established patterns in the ELCC project.
+This workflow covers the process of creating and editing well-structured pull requests that follow the established patterns in the ELCC Data Management project.
 
 ## Quick Reference
 
@@ -121,11 +120,14 @@ Relates to:
 
 # Screenshots
 
-<Screenshots or "N/A">
+TODO - check diff for web/src/components/ or web/src/pages/ changes
 
 # Testing Instructions
 
-<Paste the output from `testing-instructions.md`>
+1. Run the test suite via `dev test`.
+2. Boot the app via `dev up`.
+3. Log in to the app at http://localhost:3000.
+4. <specific step>
 ```
 
 **PR Template Usage:**

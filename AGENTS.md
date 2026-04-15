@@ -6,10 +6,36 @@ This file follows the format from https://agents.md/ for AI agent documentation.
 
 ## Documentation Philosophy
 
-Keep `AGENTS.md` focused on project-wide conventions and other high-level concepts. When guidance becomes specific to a broader architectural area, move it into a nearby `README.md` or `agents/` folder and link to it from here.
+**Documentation philosophy:** This file focuses on patterns, conventions, and architecture rather than documenting specific features or domain models. Examples illustrate patterns, not exhaustive feature documentation.
+Less is more: prefer the smallest guidance, implementation, or abstraction that fully solves the problem. A thing is complete not when there is nothing left to add, but when there is nothing left to take away.
+Do not remove durable reference material that is hard to rediscover later, such as known-good test inputs, sample payloads, or validated reference values.
+
+Keep `AGENTS.md` focused on project-wide conventions and high-level concepts. When guidance becomes specific to a subsystem or directory, move it into the nearest `README.md` or `agents/` workflow document and link to it from here.
+
+---
+
+## Design Philosophy
+
+**Perfection through removal, not addition:**
+
+Perfection is achieved not when there is nothing more to add, but when there is nothing left to take away. Focus on removing unnecessary complexity, verbosity, and redundancy rather than adding more features or content.
+
+**Application:** Question whether new features are actually needed before implementing. Simpler is better when the feature doesn't add clear value.
+
+---
+
+## Technology Stack
+
+- **Backend:** Node.js + Express + TypeScript, Sequelize 7 + Knex migrations → [`api/README.md`](api/README.md)
+- **Frontend:** Vue 3 + Vuetify 3, TypeScript, Vite, Pinia → [`web/README.md`](web/README.md)
+- **Database:** Microsoft SQL Server 2019
+- **Testing:** Vitest
+- **Infrastructure:** Docker Compose
 
 Useful local documentation:
 
+- [README.md](./README.md)
+- [COMMITTING.md](./COMMITTING.md)
 - [bin/README.md](./bin/README.md)
 - [api/src/controllers/README.md](./api/src/controllers/README.md)
 - [api/src/models/README.md](./api/src/models/README.md)
@@ -20,6 +46,7 @@ Useful local documentation:
 - [web/src/components/README.md](./web/src/components/README.md)
 - [web/src/pages/README.md](./web/src/pages/README.md)
 - [web/src/use/README.md](./web/src/use/README.md)
+- [agents/README.md](./agents/README.md)
 - [agents/workflows/README.md](./agents/workflows/README.md)
 
 ## Development Approach
@@ -37,13 +64,6 @@ git log --since="3 months ago" --diff-filter=A --name-only --pretty=format: | so
 
 For initial environment setup, see [README.md](./README.md).
 
-### Tech Stack
-
-- Frontend: Vue 3, Vuetify 3, TypeScript, Vite, Pinia
-- Backend: Express, Sequelize 7, TypeScript
-- Database: Microsoft SQL Server 2019
-- Infrastructure: Docker Compose
-- Testing: Vitest
 
 ### Common Commands
 
