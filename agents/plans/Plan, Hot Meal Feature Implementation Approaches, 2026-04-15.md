@@ -103,7 +103,7 @@ The hot meal increment logic needs to be applied in the following locations wher
 - **Current Behavior**: Only updates funding region record, does not trigger JSON regeneration
 - **Required**: Add logic to regenerate `funding_submission_line_jsons` for all centres in affected region for current and future periods
 - **Service Available**: `BulkApplyHotMealEnhancementForRegionService` - ready to use
-- **Status**: ❌ NOT INTEGRATED
+- **Status**: ❌ NOT IMPLEMENTED - Manual workaround available: users can update region, then toggle centre hotMeal off/on to trigger updates
 
 ### 5. Bulk Create Service (JSON Generation)
 - **File**: `api/src/services/centres/funding-periods/funding-submission-line-jsons/bulk-create-service.ts`
@@ -145,12 +145,14 @@ The hot meal increment logic needs to be applied in the following locations wher
 
 ### High Priority (Core Functionality)
 1. **Centre Update (Hot Meal Toggle)** - Users need immediate feedback when toggling hot meal
-2. **Funding Region Update (Hot Meal Increment Amount)** - Admins need to apply new rates to existing centres
-3. **Replicate Estimates Service** - Ensure future periods have correct hot meal increments
+2. **Replicate Estimates Service** - Ensure future periods have correct hot meal increments
 
 ### Medium Priority (Edge Cases)
-4. **Frontend Refresh Integration** - Improve UX by showing immediate feedback
-5. **Error Handling** - Proper error handling for bulk operations
+3. **Frontend Refresh Integration** - Improve UX by showing immediate feedback
+4. **Error Handling** - Proper error handling for bulk operations
+
+### Deferred (Manual Workaround Available)
+5. **Funding Region Update (Hot Meal Increment Amount)** - Manual workaround: update region, then toggle centre hotMeal off/on to trigger updates
 
 ## Implementation Steps
 
@@ -158,25 +160,19 @@ The hot meal increment logic needs to be applied in the following locations wher
 - Modify `api/src/services/centres/update-service.ts`
 - Detect when `hotMeal` attribute is being changed
 - If hotMeal changed, trigger JSON regeneration for current and future periods
-- Use existing `BulkApplyHotMealEnhancementForRegionService` pattern
+- Use existing `ApplyHotMealEnhancementService` and `RemoveHotMealEnhancementService` pattern
 
-### Step 2: Update Funding Region Update Service
-- Modify `api/src/services/funding-regions/update-service.ts`
-- Detect when `hotMealIncrementAmount` attribute is being changed
-- If changed, trigger bulk update for all centres in region
-- Call `BulkApplyHotMealEnhancementForRegionService`
-
-### Step 3: Update Replicate Estimates Service
+### Step 2: Update Replicate Estimates Service
 - Modify `api/src/services/funding-submission-line-jsons/replicate-estimates-service.ts`
 - Add hot meal logic to replicated estimates
 - Ensure future periods have correct hot meal increments based on centre settings
 
-### Step 4: Frontend Integration
+### Step 3: Frontend Integration
 - Add refresh logic when hot meal toggle changes
 - Show loading state during JSON regeneration
 - Display success/error notifications
 
-### Step 5: Testing
+### Step 4: Testing
 - Test centre creation with hot meal enabled/disabled
 - Test centre update when toggling hot meal
 - Test funding region update when changing increment amount
