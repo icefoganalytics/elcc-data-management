@@ -73,7 +73,9 @@ export class Centre extends BaseModel<InferAttributes<Centre>, InferCreationAttr
   declare license: string | null
 
   @Attribute(DataTypes.BOOLEAN)
-  declare hotMeal: boolean | null
+  @NotNull
+  @Default(false)
+  declare hotMeal: CreationOptional<boolean>
 
   @Attribute(DataTypes.INTEGER)
   declare licensedFor: number | null
