@@ -18,13 +18,16 @@ import {
 import { isValidFiscalYearLegacy } from "@/models/validators"
 
 import BaseModel from "@/models/base-model"
-import FUNDING_SUBMISSION_LINE_DEFAULTS from "@/models/funding-submission-line-defaults"
+import FUNDING_SUBMISSION_LINE_DEFAULTS, {
+  FundingSubmissionLineImmutableSectionNames,
+} from "@/models/funding-submission-line-defaults"
 
 export class FundingSubmissionLine extends BaseModel<
   InferAttributes<FundingSubmissionLine>,
   InferCreationAttributes<FundingSubmissionLine>
 > {
   static readonly DEFAULTS = FUNDING_SUBMISSION_LINE_DEFAULTS
+  static readonly ImmutableSectionNames = FundingSubmissionLineImmutableSectionNames
 
   @Attribute(DataTypes.INTEGER)
   @PrimaryKey

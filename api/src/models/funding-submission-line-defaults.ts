@@ -1,5 +1,9 @@
 import FundingSubmissionLine from "@/models/funding-submission-line"
 
+export enum FundingSubmissionLineImmutableSectionNames {
+  QUALITY_ENHANCEMENT_PROGRAM = "Quality Enhancement Program",
+}
+
 export type FundingSubmissionLineDefault = Pick<
   FundingSubmissionLine,
   "sectionName" | "lineName" | "fromAge" | "toAge" | "monthlyAmount"
@@ -105,49 +109,49 @@ export const FUNDING_SUBMISSION_LINE_DEFAULTS = Object.freeze<FundingSubmissionL
     monthlyAmount: "50.0",
   },
   {
-    sectionName: "Quality Program Enhancement",
+    sectionName: FundingSubmissionLineImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM,
     lineName: "Infants",
     fromAge: 0,
     toAge: 1,
     monthlyAmount: "206.1",
   },
   {
-    sectionName: "Quality Program Enhancement",
+    sectionName: FundingSubmissionLineImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM,
     lineName: "Toddlers",
     fromAge: 2,
     toAge: 3,
     monthlyAmount: "154.58",
   },
   {
-    sectionName: "Quality Program Enhancement",
+    sectionName: FundingSubmissionLineImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM,
     lineName: "Preschool",
     fromAge: 4,
     toAge: 5,
     monthlyAmount: "114.5",
   },
   {
-    sectionName: "Quality Program Enhancement",
+    sectionName: FundingSubmissionLineImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM,
     lineName: "Kindergarten (PT)",
     fromAge: 5,
     toAge: 6,
     monthlyAmount: "114.5",
   },
   {
-    sectionName: "Quality Program Enhancement",
+    sectionName: FundingSubmissionLineImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM,
     lineName: "Kindergarten (FT)",
     fromAge: 5,
     toAge: 6,
     monthlyAmount: "114.5",
   },
   {
-    sectionName: "Quality Program Enhancement",
+    sectionName: FundingSubmissionLineImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM,
     lineName: "School Age (PT)",
     fromAge: 5,
     toAge: 6,
     monthlyAmount: "97.33",
   },
   {
-    sectionName: "Quality Program Enhancement",
+    sectionName: FundingSubmissionLineImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM,
     lineName: "School Age (FT)",
     fromAge: 5,
     toAge: 6,
