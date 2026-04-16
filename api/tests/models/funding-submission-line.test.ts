@@ -207,5 +207,91 @@ describe("api/src/models/funding-submission-line.ts", () => {
         })
       })
     })
+
+    describe("Model Validators", () => {
+      describe("#ensureImmutableSectionNamesRemainUnchanged", () => {
+        test("when creating new record with immutable section name, validation succeeds", async () => {
+          // Arrange
+          const attributes = {
+            fiscalYear: "2023/24",
+            sectionName: FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM,
+            lineName: "Infants",
+            monthlyAmount: "206.1000",
+          }
+
+          const fundingSubmissionLine = FundingSubmissionLine.build(attributes)
+
+          // Act & Assert
+          await expect(fundingSubmissionLine.validate()).resolves.not.toThrow()
+        })
+
+        test("when updating mutable section name, validation succeeds", async () => {
+          // Arrange
+          const fundingSubmissionLine = await fundingSubmissionLineFactory.create({
+            fiscalYear: "2023/24",
+            sectionName: "Child Care Spaces",
+            lineName: "Infants",
+            monthlyAmount: "100.0000",
+          })
+
+          fundingSubmissionLine.set("sectionName", "Administration")
+
+          // Act & Assert
+          await expect(fundingSubmissionLine.validate()).resolves.not.toThrow()
+        })
+
+        test("when updating immutable section name to different value, validation fails", async () => {
+          // Arrange
+          const fundingSubmissionLine = await fundingSubmissionLineFactory.create({
+            fiscalYear: "2023/24",
+            sectionName: FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM,
+            lineName: "Infants",
+            monthlyAmount: "206.1000",
+          })
+
+          fundingSubmissionLine.set("sectionName", "Child Care Spaces")
+
+          // Act & Assert
+          await expect(fundingSubmissionLine.validate()).rejects.toThrow(
+            `Section name "Quality Enhancement Program" is immutable and cannot be changed.`
+          )
+        })
+
+        test("when updating immutable section name to same value, validation succeeds", async () => {
+          // Arrange
+          const fundingSubmissionLine = await fundingSubmissionLineFactory.create({
+            fiscalYear: "2023/24",
+            sectionName: FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM,
+            lineName: "Infants",
+            monthlyAmount: "206.1000",
+          })
+
+          fundingSubmissionLine.set(
+            "sectionName",
+            FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM
+          )
+          fundingSubmissionLine.set("lineName", "Updated Infants")
+
+          // Act & Assert
+          await expect(fundingSubmissionLine.validate()).resolves.not.toThrow()
+        })
+
+        test("when updating other fields on immutable section name record, validation succeeds", async () => {
+          // Arrange
+          const fundingSubmissionLine = await fundingSubmissionLineFactory.create({
+            fiscalYear: "2023/24",
+            sectionName: FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM,
+            lineName: "Infants",
+            monthlyAmount: "206.1000",
+          })
+
+          fundingSubmissionLine.set("lineName", "Updated Infants")
+          fundingSubmissionLine.set("monthlyAmount", "250.0000")
+
+          // Act & Assert
+          await expect(fundingSubmissionLine.validate()).resolves.not.toThrow()
+        })
+      })
+    })
   })
 })

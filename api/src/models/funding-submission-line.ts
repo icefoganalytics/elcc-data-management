@@ -10,10 +10,12 @@ import {
   Attribute,
   AutoIncrement,
   Default,
+  ModelValidator,
   NotNull,
   PrimaryKey,
   ValidateAttribute,
 } from "@sequelize/core/decorators-legacy"
+import { isNil } from "lodash"
 
 import { isValidFiscalYearLegacy } from "@/models/validators"
 
@@ -74,7 +76,6 @@ export class FundingSubmissionLine extends BaseModel<
   declare deletedAt: Date | null
 
   // Helpers
-
   /**
    * Converts fiscal year from FundingPeriod format (YYYY-YYYY) to FundingSubmissionLine format (YYYY/YY)
    *
@@ -91,6 +92,23 @@ export class FundingSubmissionLine extends BaseModel<
     return shortFormat.replace("-", "/")
   }
 
+  // Validators
+  @ModelValidator
+  ensureImmutableSectionNamesRemainUnchanged() {
+    if (this.isNewRecord) return
+    if (!this.changed("sectionName")) return
+
+    const previousSectionName = this.previous("sectionName")
+    if (isNil(previousSectionName)) return
+
+    const isImmutableSectionName = Object.values<string>(
+      FundingSubmissionLineImmutableSectionNames
+    ).includes(previousSectionName)
+    if (isImmutableSectionName) {
+      throw new Error(`Section name "${previousSectionName}" is immutable and cannot be changed.`)
+    }
+  }
+
   static establishScopes() {
     this.addSearchScope(["fiscalYear", "sectionName", "lineName"])
 
@@ -103,8 +121,7 @@ export class FundingSubmissionLine extends BaseModel<
             funding_submission_lines
           WHERE
             funding_submission_lines.deleted_at IS NULL
-            AND
-            EXISTS (
+            AND EXISTS (
               SELECT
                 1
               FROM
