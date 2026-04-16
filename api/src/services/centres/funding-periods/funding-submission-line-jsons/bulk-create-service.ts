@@ -1,9 +1,11 @@
 import { type CreationAttributes } from "@sequelize/core"
 import { isEmpty } from "lodash"
+import Big from "big.js"
 
 import {
   Centre,
   FiscalPeriod,
+  FundingRegion,
   FundingSubmissionLine,
   FundingSubmissionLineJson,
   type FundingPeriod,
@@ -40,17 +42,38 @@ export class BulkCreateService extends BaseService {
       throw new Error("No funding submission lines found for the funding period.")
     }
 
+    const { fundingRegionId, hotMeal } = this.centre
+    const fundingRegion = await FundingRegion.findByPk(fundingRegionId, {
+      rejectOnEmpty: true,
+    })
+
+    const { hotMealIncrementAmount } = fundingRegion
+
     const fundingSubmissionLineJsonsDefaults = fundingSubmissionLines.map(
-      (fundingSubmissionLine) => ({
-        submissionLineId: fundingSubmissionLine.id,
-        sectionName: fundingSubmissionLine.sectionName,
-        lineName: fundingSubmissionLine.lineName,
-        monthlyAmount: fundingSubmissionLine.monthlyAmount,
-        estimatedChildOccupancyRate: "0",
-        actualChildOccupancyRate: "0",
-        estimatedComputedTotal: "0",
-        actualComputedTotal: "0",
-      })
+      (fundingSubmissionLine) => {
+        const {
+          id: submissionLineId,
+          sectionName,
+          lineName,
+          monthlyAmount: originalMonthlyAmount,
+        } = fundingSubmissionLine
+        const monthlyAmount = this.calculateMonthlyAmountWithEnhancements(
+          sectionName,
+          originalMonthlyAmount,
+          hotMeal,
+          hotMealIncrementAmount
+        )
+        return {
+          submissionLineId,
+          sectionName,
+          lineName,
+          monthlyAmount,
+          estimatedChildOccupancyRate: "0",
+          actualChildOccupancyRate: "0",
+          estimatedComputedTotal: "0",
+          actualComputedTotal: "0",
+        }
+      }
     )
 
     const { id: centreId } = this.centre
@@ -69,6 +92,25 @@ export class BulkCreateService extends BaseService {
       })
 
     return FundingSubmissionLineJson.bulkCreate(fundingSubmissionLineJsonsAttributes)
+  }
+
+  private calculateMonthlyAmountWithEnhancements(
+    sectionName: string,
+    monthlyAmount: string,
+    hotMeal: boolean,
+    hotMealIncrementAmount: string
+  ): string {
+    let monthlyAmountAsBig = Big(monthlyAmount)
+
+    if (
+      hotMeal &&
+      sectionName === FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM
+    ) {
+      const hotMealIncrementAsBig = Big(hotMealIncrementAmount)
+      monthlyAmountAsBig = monthlyAmountAsBig.plus(hotMealIncrementAsBig)
+    }
+
+    return monthlyAmountAsBig.toFixed(4)
   }
 }
 
