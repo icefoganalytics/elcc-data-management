@@ -162,15 +162,23 @@ If multiple enhancement types are needed in the future:
 3. `api/src/models/funding-region.ts` - Add hotMealIncrementAmount field
 4. `web/src/components/funding-submission-line-jsons/FundingSubmissionLineJsonSectionTable.vue` - Frontend display logic
 
-## Implementation Files
+## Implementation Status
+
+### ✅ Completed
 
 | File                                                                                    | Change                                                    |
 | --------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| `api/src/models/funding-region.ts`                                                      | Add hotMealIncrementAmount field                          |
-| `api/src/db/migrations/YYYY.MM.DD.add-hot-meal-increment-to-funding-regions.ts`         | Add hot meal increment field                              |
-| `api/src/serializers/funding-submission-line-json-serializer.ts`                        | Update JSON serialization for hot meal logic              |
-| `api/src/services/funding-regions/update-hot-meal-for-region-service.ts`                | Service for funding region hot meal updates              |
-| `web/src/components/centres/CentreEditForm.vue`                                        | Add refresh logic when hot meal toggle changes            |
+| `api/src/models/funding-region.ts`                                                      | ✅ Added hotMealIncrementAmount field with defaults       |
+| `api/src/db/migrations/2026.04.15T16.00.00.add-hot-meal-increment-to-funding-regions.ts` | ✅ Schema migration for hot meal increment field          |
+| `api/src/db/migrations/2026.04.15T16.01.00.backfill-hot-meal-increment-for-funding-regions.ts` | ✅ Backfill existing regions with $32.06 default          |
+
+### 🔄 In Progress
+
+| File                                                                                    | Change                                                    |
+| --------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `api/src/serializers/funding-submission-line-json-serializer.ts`                        | 🔄 Update JSON serialization for hot meal logic              |
+| `api/src/services/funding-regions/update-hot-meal-for-region-service.ts`                | 🔄 Service for funding region hot meal updates              |
+| `web/src/components/centres/CentreEditForm.vue`                                        | 🔄 Add refresh logic when hot meal toggle changes            |
 
 ## Related Issues
 
