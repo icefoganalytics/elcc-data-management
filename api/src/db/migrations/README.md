@@ -48,11 +48,9 @@ export async function up({ context: { sequelize } }: Migration) {
   )
 }
 
-export async function down({ context: { sequelize } }: Migration) {
-  await sequelize.query(
-    sql`UPDATE table SET new_field = '0.0000' WHERE new_field = '32.0600'`,
-    { type: QueryTypes.UPDATE }
-  )
+export async function down({ context: _queryInterface }: Migration) {
+  // No down migration - we don't want to revert this backfill because we cannot
+  // reliably determine if the data had been edited after the fact
 }
 ```
 
@@ -134,21 +132,7 @@ export async function down({ context: queryInterface }: Migration) {
 ```
 
 **Backfill Migration** (`backfill-hot-meal-increment.ts`):
-```typescript
-import { QueryTypes, sql } from "@sequelize/core"
-import { type Migration } from "@/db/umzug"
-
-export async function up({ context: { sequelize } }: Migration) {
-  await sequelize.query(
-    sql`UPDATE funding_regions SET hotMealIncrementAmount = '32.0600' WHERE hotMealIncrementAmount = '0.0000'`,
-    { type: QueryTypes.UPDATE }
-  )
-}
-
-export async function down({ context: _queryInterface }: Migration) {
-  // No down migration - we don't want to remove the backfilled data
-}
-```
+See Data Backfills section above for complete backfill pattern and standards.
 
 ## Non-Null Foreign Key Pattern
 
@@ -233,6 +217,26 @@ const result = await sequelize.query<{ id: number }>(
   }
 )
 ```
+
+## Migration Organization
+
+### Split Data Operations by Table
+- Create separate migrations for each table being modified
+- Don't combine multiple table updates in a single migration
+- Use symmetric naming patterns for related migrations
+
+### Migration Ordering
+- Update base tables before JSON values that reference them
+- Use timestamps to ensure proper execution order
+- Example: `2026.04.16T08.30.59.table-name.ts` runs before `2026.04.16T08.31.00.other-table.ts`
+
+## Backfill Migration Standards
+
+All backfill migration standards are documented in the **Data Backfills** section above, including:
+- Proper context destructuring using `{ context: { sequelize } }`
+- Down migration comments explaining why reversions are not implemented
+- Formal grammar standards ("cannot" instead of "couldn't")
+- SQL template literal usage with QueryTypes
 
 ## Code Quality
 
