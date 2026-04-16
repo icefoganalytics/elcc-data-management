@@ -122,16 +122,6 @@ Parent discovers data -> Child displays or edits a specific record
 - Use one import per line except when importing multiple members from the same module.
 - Remove unused imports.
 
-### Commit Messages
-
-- Avoid emojis in source and configuration files.
-- Git commit messages use GitHub-style emoji prefixes:
-
-```text
-:emoji: concise description
-
-[optional] Why? Why I made the changes
-```
 
 ## Frontend Patterns
 
