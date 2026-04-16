@@ -41,6 +41,8 @@ Useful local documentation:
 - [api/src/models/README.md](./api/src/models/README.md)
 - [api/src/services/README.md](./api/src/services/README.md)
 - [api/src/serializers/README.md](./api/src/serializers/README.md)
+- [api/src/db/README.md](./api/src/db/README.md) - Database & migration rules
+- [api/src/db/migrations/README.md](./api/src/db/migrations/README.md) - Migration patterns & examples
 - [api/tests/README.md](./api/tests/README.md)
 - [web/src/api/README.md](./web/src/api/README.md)
 - [web/src/components/README.md](./web/src/components/README.md)
