@@ -1,4 +1,5 @@
 import { Log } from "@/models"
+import { FundingSubmissionLineJsons } from "@/services/centres/funding-periods"
 
 import { centreFactory, userFactory } from "@/factories"
 
@@ -57,6 +58,98 @@ describe("api/src/services/centres/update-service.ts", () => {
             data: JSON.stringify(centre),
           }),
         ])
+      })
+
+      test("when hotMeal changes from false to true, applies hot meal enhancement", async () => {
+        // Arrange
+        const currentUser = await userFactory.create()
+        const centre = await centreFactory.create({
+          hotMeal: false,
+        })
+
+        const attributes = {
+          hotMeal: true,
+        }
+
+        const applyHotMealEnhancementSpy = vi.spyOn(
+          FundingSubmissionLineJsons.ApplyHotMealEnhancementService,
+          "perform"
+        ).mockResolvedValue(undefined)
+
+        // Act
+        await UpdateService.perform(centre, attributes, currentUser)
+
+        // Assert
+        expect(applyHotMealEnhancementSpy).toHaveBeenCalledWith(centre)
+      })
+
+      test("when hotMeal changes from true to false, removes hot meal enhancement", async () => {
+        // Arrange
+        const currentUser = await userFactory.create()
+        const centre = await centreFactory.create({
+          hotMeal: true,
+        })
+
+        const attributes = {
+          hotMeal: false,
+        }
+
+        const removeHotMealEnhancementSpy = vi.spyOn(
+          FundingSubmissionLineJsons.RemoveHotMealEnhancementService,
+          "perform"
+        ).mockResolvedValue(undefined)
+
+        // Act
+        await UpdateService.perform(centre, attributes, currentUser)
+
+        // Assert
+        expect(removeHotMealEnhancementSpy).toHaveBeenCalledWith(centre)
+      })
+
+      test("when hot meal does not change, does not call apply enhancement service", async () => {
+        // Arrange
+        const currentUser = await userFactory.create()
+        const centre = await centreFactory.create({
+          hotMeal: false,
+        })
+
+        const attributes = {
+          hotMeal: false,
+        }
+
+        const applyHotMealEnhancementSpy = vi.spyOn(
+          FundingSubmissionLineJsons.ApplyHotMealEnhancementService,
+          "perform"
+        ).mockResolvedValue(undefined)
+
+        // Act
+        await UpdateService.perform(centre, attributes, currentUser)
+
+        // Assert
+        expect(applyHotMealEnhancementSpy).not.toHaveBeenCalled()
+      })
+
+      test("when hot meal does not change, does not call remove enhancement service", async () => {
+        // Arrange
+        const currentUser = await userFactory.create()
+        const centre = await centreFactory.create({
+          hotMeal: false,
+        })
+
+        const attributes = {
+          hotMeal: false,
+        }
+
+        const removeHotMealEnhancementSpy = vi.spyOn(
+          FundingSubmissionLineJsons.RemoveHotMealEnhancementService,
+          "perform"
+        ).mockResolvedValue(undefined)
+
+        // Act
+        await UpdateService.perform(centre, attributes, currentUser)
+
+        // Assert
+        expect(removeHotMealEnhancementSpy).not.toHaveBeenCalled()
       })
     })
   })
