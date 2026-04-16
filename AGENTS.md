@@ -35,7 +35,7 @@ Perfection is achieved not when there is nothing more to add, but when there is 
 Useful local documentation:
 
 - [README.md](./README.md)
-- [COMMITTING.md](./COMMITTING.md)
+- [COMMITTING.md](./COMMITTING.md) - Commit message guidelines, standards, and techniques
 - [bin/README.md](./bin/README.md)
 - [api/src/controllers/README.md](./api/src/controllers/README.md)
 - [api/src/models/README.md](./api/src/models/README.md)
@@ -65,7 +65,6 @@ git log --since="3 months ago" --diff-filter=A --name-only --pretty=format: | so
 ## Development Environment
 
 For initial environment setup, see [README.md](./README.md).
-
 
 ### Common Commands
 

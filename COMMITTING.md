@@ -107,6 +107,33 @@ Focus on:
 
 Avoid: in-progress reasoning, implementation mechanics, and code symbols in prose.
 
+## Business-Focused Commit Messages
+
+**CRITICAL: Always focus on what the commit ACHIEVES, never what you DID.**
+
+**Pattern:** [Business Value] + [Impact on Users]
+
+- Business value: The core benefit delivered
+- User impact: How it helps developers/users
+- Remove implementation details - they're obvious from `git diff`
+
+**Examples:**
+❌ "What I did": "Improve documentation organization and descriptions"
+✅ "What it achieves": "Enhance documentation discoverability for developers"
+
+❌ "What I did": "Add field to table"
+✅ "What it achieves": "Enables per-region hot meal funding"
+
+❌ "What I did": "Fix bug in calculation"
+✅ "What it achieves": "Ensures accurate funding amounts"
+
+**Key principles:**
+- Focus on business value, not implementation mechanics
+- Remove specific values that can become wrong over time
+- Single line when title is self-explanatory - no unnecessary explanation
+- "Less is more" - remove every word that doesn't add essential meaning
+- This pattern applies to ALL commits - no exceptions
+
 ## General rules
 
 - **One commit per logical change** — don't bundle multiple fixes or changes into a single commit
