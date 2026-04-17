@@ -4,6 +4,7 @@ require "shellwords"
 require "rdoc"
 
 require_relative "./jira_api"
+require_relative "./open-in-editor-bridge"
 require_relative "./pull_request_editor"
 
 class DevHelper
@@ -55,11 +56,25 @@ class DevHelper
   end
 
   def up(*args, **kwargs)
-    compose(*%w[up --remove-orphans --force-recreate], *args, **kwargs)
+    OpenInEditorBridge.with_running do
+      compose(
+        *%w[up --remove-orphans --force-recreate],
+        *args,
+        execution_mode: WAIT_FOR_PROCESS,
+        **kwargs
+      )
+    end
   end
 
   def down(*args, **kwargs)
-    compose(*%w[down --remove-orphans], *args, **kwargs)
+    OpenInEditorBridge.with_running(ensure_running: false) do
+      compose(
+        *%w[down --remove-orphans],
+        *args,
+        execution_mode: WAIT_FOR_PROCESS,
+        **kwargs
+      )
+    end
   end
 
   def logs(*args, **kwargs)
@@ -298,8 +313,18 @@ class DevHelper
     pipe_input = kwargs.delete(:pipe_input)
 
     go_to_project_root = "cd #{project_root}"
+    compose_file_args = ["-f docker-compose.#{environment}.yaml"]
+
+    if RUBY_PLATFORM =~ /linux/
+      linux_override = "docker-compose.#{environment}.linux.yml"
+      linux_override_path = File.join(project_root, linux_override)
+      if File.exist?(linux_override_path)
+        compose_file_args << "-f #{linux_override}"
+      end
+    end
+
     bootstrap_docker =
-      "docker compose -f docker-compose.#{environment}.yaml #{args.join(" ")}"
+      "docker compose #{compose_file_args.join(" ")} #{args.join(" ")}"
 
     if pipe_input
       shell_safe_pipe_input = Shellwords.escape(pipe_input)
