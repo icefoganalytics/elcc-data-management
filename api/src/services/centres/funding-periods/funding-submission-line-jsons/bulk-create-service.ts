@@ -3,20 +3,21 @@ import { DateTime } from "luxon"
 import { isEmpty } from "lodash"
 import Big from "big.js"
 
+import sumByDecimal from "@/utils/sum-by-decimal"
+
 import {
   Centre,
   FiscalPeriod,
+  FundingPeriod,
   FundingRegion,
   FundingSubmissionLine,
   FundingSubmissionLineJson,
-  type FundingPeriod,
 } from "@/models"
 import {
   type FundingLineValue,
   type FundingLineValueProgramQualityEnhancements,
 } from "@/models/funding-line-value"
 import BaseService from "@/services/base-service"
-import sumByDecimal from "@/utils/sum-by-decimal"
 
 export class BulkCreateService extends BaseService {
   constructor(
