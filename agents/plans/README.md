@@ -107,10 +107,8 @@ All plans follow this template:
 
 ## Current Plans
 
-- `Plan, Hot Meal Feature Implementation Approaches, 2026-04-15.md` - Comprehensive plan for implementing hot meal feature with Quality Program Enhancement model
-- `Plan, Rails-like Model Scopes, 2025-12-22.md` - Plan for adding Rails-like model scopes to improve query organization
-- `Plan, Refactor EmployeeWageTier to FundingPeriod, 2025-12-24.md` - Plan for refactoring wage tier structure to funding periods
+Search this directory for available plans. Plans follow the naming convention: `Type, Title, Date.md`.
 
 ---
 
-**Last Updated:** 2026-04-15
+**Last Updated:** 2026-04-17
