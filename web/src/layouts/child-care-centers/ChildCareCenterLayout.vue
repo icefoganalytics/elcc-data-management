@@ -107,7 +107,10 @@
 
             <v-divider></v-divider>
 
-            <router-view v-slot="{ Component }">
+            <router-view
+              :key="mainContentRefreshKey"
+              v-slot="{ Component }"
+            >
               <component
                 :is="Component"
                 @update:funding-submission-line-json="refreshFundingLineValuesEnrollmentChart"
@@ -123,7 +126,7 @@
 <script setup lang="ts">
 import { isEmpty, isNil } from "lodash"
 import { useRoute, useRouter } from "vue-router"
-import { computed, onMounted, useTemplateRef } from "vue"
+import { computed, onMounted, ref, useTemplateRef } from "vue"
 import { useDisplay } from "vuetify"
 
 import { getCurrentFiscalYearSlug, normalizeFiscalYearToLongForm } from "@/utils/fiscal-year"
@@ -148,7 +151,14 @@ const props = withDefaults(
 )
 
 const centreIdAsNumber = computed(() => parseInt(props.centreId))
-const { centre, refresh } = useCentre(centreIdAsNumber)
+const { centre, refresh: refreshCentre } = useCentre(centreIdAsNumber)
+
+const mainContentRefreshKey = ref(0)
+
+async function refresh() {
+  await refreshCentre()
+  mainContentRefreshKey.value++
+}
 
 const fiscalYearLegacy = computed<string | undefined>(() => props.fiscalYearSlug?.replace("-", "/"))
 const fiscalYearLong = computed<string | undefined>(() => {
