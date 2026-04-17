@@ -14,7 +14,7 @@ class DevHelper
     "description-from" => :description_from,
     "check-types" => :check_types,
     "edit-pr" => :edit_pr,
-    "sqlcmd-query" => :sqlcmd_query,
+    "sqlcmd-query" => :sqlcmd_query
   }
   METHOD_TO_COMMAND = COMMAND_TO_METHOD.invert
 
@@ -185,7 +185,9 @@ class DevHelper
 
   def ownit(*args, **kwargs)
     file_or_directory = args[0]
-    raise ScriptError, "Must provide a file or directory path." if file_or_directory.nil?
+    if file_or_directory.nil?
+      raise ScriptError, "Must provide a file or directory path."
+    end
 
     if RUBY_PLATFORM =~ /linux/
       puts "Take ownership of the file or directory? #{file_or_directory}"
@@ -224,7 +226,11 @@ class DevHelper
   # Example:
   #   dev edit-pr https://github.com/icefoganalytics/travel-authorization/pull/218
   def edit_pr(pull_request_url, *args, **kwargs)
-    PullRequestEditor.edit_pull_request_description(pull_request_url, *args, **kwargs)
+    PullRequestEditor.edit_pull_request_description(
+      pull_request_url,
+      *args,
+      **kwargs
+    )
     exit(0)
   end
 
@@ -290,7 +296,8 @@ class DevHelper
     pipe_input = kwargs.delete(:pipe_input)
 
     go_to_project_root = "cd #{project_root}"
-    bootstrap_docker = "docker compose -f docker-compose.#{environment}.yaml #{args.join(' ')}"
+    bootstrap_docker =
+      "docker compose -f docker-compose.#{environment}.yaml #{args.join(" ")}"
 
     if pipe_input
       shell_safe_pipe_input = Shellwords.escape(pipe_input)
@@ -343,7 +350,10 @@ class DevHelper
       src_path_regex = Regexp.escape(src_path_prefix)
 
       if args[0].start_with?(src_path_prefix)
-        args[0] = args[0].gsub(/^#{src_path_regex}/, "tests/").gsub(/\.ts$/, ".test.ts")
+        args[0] = args[0].gsub(/^#{src_path_regex}/, "tests/").gsub(
+          /\.ts$/,
+          ".test.ts"
+        )
         # TODO: handle other file types
       else
         args[0] = args[0].gsub(/^#{test_path_regex}/, "")
