@@ -1,7 +1,7 @@
 import { Op } from "@sequelize/core"
 import Big from "big.js"
 import { DateTime } from "luxon"
-import { isEmpty, isUndefined } from "lodash"
+import { has, isEmpty, isEqual, isUndefined } from "lodash"
 
 import sumByDecimal from "@/utils/sum-by-decimal"
 
@@ -68,17 +68,15 @@ export class RemoveHotMealEnhancementService extends BaseService {
           }
 
           const { programQualityEnhancements } = line
-          if (isUndefined(programQualityEnhancements) || isEmpty(programQualityEnhancements)) {
+          if (isUndefined(programQualityEnhancements)) {
             return line
           }
 
-          const hotMealEnhancement =
-            programQualityEnhancements[FundingSubmissionLine.EnhancementTypes.HOT_MEAL]
-          if (isUndefined(hotMealEnhancement)) {
+          if (!has(programQualityEnhancements, FundingSubmissionLine.EnhancementTypes.HOT_MEAL)) {
             return line
           }
 
-          const { preEnhancementAmount } = hotMealEnhancement
+          const { preEnhancementAmount } = programQualityEnhancements
           delete programQualityEnhancements[FundingSubmissionLine.EnhancementTypes.HOT_MEAL]
 
           const monthlyAmount = this.calculateMonthlyAmountFromEnhancements(
@@ -86,7 +84,7 @@ export class RemoveHotMealEnhancementService extends BaseService {
             programQualityEnhancements
           )
 
-          if (isEmpty(programQualityEnhancements)) {
+          if (isEqual(Object.keys(programQualityEnhancements), ["preEnhancementAmount"])) {
             delete line.programQualityEnhancements
             return {
               ...line,
@@ -108,7 +106,6 @@ export class RemoveHotMealEnhancementService extends BaseService {
     )
   }
 
-  // TODO: validate that this would handle a second enhancment type.
   private calculateMonthlyAmountFromEnhancements(
     preEnhancementAmount: string,
     programQualityEnhancements: FundingLineValueProgramQualityEnhancements

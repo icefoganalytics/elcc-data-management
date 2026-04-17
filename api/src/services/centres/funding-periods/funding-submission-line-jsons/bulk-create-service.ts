@@ -1,4 +1,5 @@
 import { type CreationAttributes } from "@sequelize/core"
+import { DateTime } from "luxon"
 import { isEmpty } from "lodash"
 import Big from "big.js"
 
@@ -10,7 +11,12 @@ import {
   FundingSubmissionLineJson,
   type FundingPeriod,
 } from "@/models"
+import {
+  type FundingLineValue,
+  type FundingLineValueProgramQualityEnhancements,
+} from "@/models/funding-line-value"
 import BaseService from "@/services/base-service"
+import sumByDecimal from "@/utils/sum-by-decimal"
 
 export class BulkCreateService extends BaseService {
   constructor(
@@ -57,22 +63,26 @@ export class BulkCreateService extends BaseService {
           lineName,
           monthlyAmount: originalMonthlyAmount,
         } = fundingSubmissionLine
-        const monthlyAmount = this.calculateMonthlyAmountWithEnhancements(
-          sectionName,
-          originalMonthlyAmount,
-          hotMeal,
-          hotMealIncrementAmount
-        )
-        return {
+
+        const line = {
           submissionLineId,
           sectionName,
           lineName,
-          monthlyAmount,
+          monthlyAmount: originalMonthlyAmount,
           estimatedChildOccupancyRate: "0",
           actualChildOccupancyRate: "0",
           estimatedComputedTotal: "0",
           actualComputedTotal: "0",
         }
+
+        if (
+          hotMeal &&
+          sectionName === FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM
+        ) {
+          return this.applyHotMealEnhancement(line, originalMonthlyAmount, hotMealIncrementAmount)
+        }
+
+        return line
       }
     )
 
@@ -94,23 +104,39 @@ export class BulkCreateService extends BaseService {
     return FundingSubmissionLineJson.bulkCreate(fundingSubmissionLineJsonsAttributes)
   }
 
-  private calculateMonthlyAmountWithEnhancements(
-    sectionName: string,
-    monthlyAmount: string,
-    hotMeal: boolean,
+  private applyHotMealEnhancement(
+    line: FundingLineValue,
+    originalMonthlyAmount: string,
     hotMealIncrementAmount: string
-  ): string {
-    let monthlyAmountAsBig = Big(monthlyAmount)
-
-    if (
-      hotMeal &&
-      sectionName === FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM
-    ) {
-      const hotMealIncrementAsBig = Big(hotMealIncrementAmount)
-      monthlyAmountAsBig = monthlyAmountAsBig.plus(hotMealIncrementAsBig)
+  ) {
+    const programQualityEnhancements = {
+      preEnhancementAmount: originalMonthlyAmount,
+      [FundingSubmissionLine.EnhancementTypes.HOT_MEAL]: {
+        amount: hotMealIncrementAmount,
+        appliedAt: DateTime.utc().toISO(),
+      },
     }
 
-    return monthlyAmountAsBig.toFixed(4)
+    const monthlyAmount = this.calculateMonthlyAmountFromEnhancements(
+      originalMonthlyAmount,
+      programQualityEnhancements
+    )
+
+    return {
+      ...line,
+      monthlyAmount,
+      programQualityEnhancements,
+    }
+  }
+
+  private calculateMonthlyAmountFromEnhancements(
+    preEnhancementAmount: string,
+    programQualityEnhancements: FundingLineValueProgramQualityEnhancements
+  ): string {
+    const preEnhancementAmountAsBig = Big(preEnhancementAmount)
+    const enhancementValues = Object.values(programQualityEnhancements)
+    const totalEnhancementAsBig = sumByDecimal(enhancementValues, "amount")
+    return preEnhancementAmountAsBig.plus(totalEnhancementAsBig).toFixed(4)
   }
 }
 

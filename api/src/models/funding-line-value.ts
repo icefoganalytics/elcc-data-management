@@ -4,12 +4,13 @@
 import { FundingSubmissionLineEnhancementTypes } from "@/models/funding-submission-line-defaults"
 
 export type FundingSubmissionLineEnhancement = {
-  preEnhancementAmount: string
   amount: string
   appliedAt: string
 }
 
 export type FundingLineValueProgramQualityEnhancements = {
+  preEnhancementAmount: string
+} & {
   [K in FundingSubmissionLineEnhancementTypes]?: FundingSubmissionLineEnhancement
 }
 

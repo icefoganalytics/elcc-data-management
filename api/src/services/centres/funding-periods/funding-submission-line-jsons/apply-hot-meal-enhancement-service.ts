@@ -11,7 +11,6 @@ import {
   FundingSubmissionLineJson,
 } from "@/models"
 import BaseService from "@/services/base-service"
-import type { FundingLineValueProgramQualityEnhancements } from "@/models/funding-line-value"
 
 export class ApplyHotMealEnhancementService extends BaseService {
   constructor(private centre: Centre) {
@@ -64,15 +63,15 @@ export class ApplyHotMealEnhancementService extends BaseService {
             return line
           }
 
-          const programQualityEnhancements: FundingLineValueProgramQualityEnhancements =
-            line.programQualityEnhancements ?? {}
+          const { monthlyAmount: preEnhancementAmount } = line
+          const programQualityEnhancements = line.programQualityEnhancements ?? {
+            preEnhancementAmount,
+          }
           if (has(programQualityEnhancements, FundingSubmissionLine.EnhancementTypes.HOT_MEAL)) {
             return line
           }
 
-          const preEnhancementAmount = line.monthlyAmount
           programQualityEnhancements[FundingSubmissionLine.EnhancementTypes.HOT_MEAL] = {
-            preEnhancementAmount,
             amount: hotMealIncrementAmount,
             appliedAt: DateTime.utc().toISO(),
           }

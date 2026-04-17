@@ -59,8 +59,8 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
               estimatedComputedTotal: "0",
               actualComputedTotal: "0",
               programQualityEnhancements: {
+                preEnhancementAmount: "100.00",
                 hot_meal: {
-                  preEnhancementAmount: "100.00",
                   amount: "32.06",
                   appliedAt: "2025-03-01T00:00:00.000Z",
                 },
@@ -301,8 +301,8 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
               estimatedComputedTotal: "0",
               actualComputedTotal: "0",
               programQualityEnhancements: {
+                preEnhancementAmount: "100.00",
                 hot_meal: {
-                  preEnhancementAmount: "100.00",
                   amount: "32.06",
                   appliedAt: "2025-03-01T00:00:00.000Z",
                 },
@@ -394,8 +394,8 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
               estimatedComputedTotal: "0",
               actualComputedTotal: "0",
               programQualityEnhancements: {
+                preEnhancementAmount: "100.00",
                 hot_meal: {
-                  preEnhancementAmount: "100.00",
                   amount: "32.06",
                   appliedAt: "2025-03-01T00:00:00.000Z",
                 },
@@ -418,8 +418,8 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
               estimatedComputedTotal: "0",
               actualComputedTotal: "0",
               programQualityEnhancements: {
+                preEnhancementAmount: "100.00",
                 hot_meal: {
-                  preEnhancementAmount: "100.00",
                   amount: "32.06",
                   appliedAt: "2025-03-01T00:00:00.000Z",
                 },
