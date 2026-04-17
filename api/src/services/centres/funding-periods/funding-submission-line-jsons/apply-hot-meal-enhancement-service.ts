@@ -22,7 +22,7 @@ export class ApplyHotMealEnhancementService extends BaseService {
 
     const fiscalPeriods = await FiscalPeriod.findAll({
       where: {
-        dateStart: {
+        dateEnd: {
           [Op.gte]: currentDate.toJSDate(),
         },
       },
