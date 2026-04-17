@@ -58,6 +58,13 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
               actualChildOccupancyRate: "0",
               estimatedComputedTotal: "0",
               actualComputedTotal: "0",
+              programQualityEnhancements: {
+                hot_meal: {
+                  preEnhancementAmount: "100.00",
+                  amount: "32.06",
+                  appliedAt: "2025-03-01T00:00:00.000Z",
+                },
+              },
             },
           ],
         })
@@ -69,9 +76,16 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
         await expect(fundingSubmissionLineJson.reload()).resolves.toEqual(
           expect.objectContaining({
             lines: [
-              expect.objectContaining({
-                monthlyAmount: "100.0000",
-              }),
+              {
+                submissionLineId: fundingSubmissionLine.id,
+                sectionName: "Quality Enhancement Program",
+                lineName: "Quality Enhancement",
+                monthlyAmount: "100.00",
+                estimatedChildOccupancyRate: "0",
+                actualChildOccupancyRate: "0",
+                estimatedComputedTotal: "0",
+                actualComputedTotal: "0",
+              },
             ],
           })
         )
@@ -108,7 +122,7 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
               submissionLineId: fundingSubmissionLine.id,
               sectionName: "Child Care Spaces",
               lineName: "Infants",
-              monthlyAmount: "132.0600",
+              monthlyAmount: "150.0000",
               estimatedChildOccupancyRate: "0",
               actualChildOccupancyRate: "0",
               estimatedComputedTotal: "0",
@@ -124,9 +138,16 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
         await expect(fundingSubmissionLineJson.reload()).resolves.toEqual(
           expect.objectContaining({
             lines: [
-              expect.objectContaining({
-                monthlyAmount: "132.0600",
-              }),
+              {
+                submissionLineId: fundingSubmissionLine.id,
+                sectionName: "Child Care Spaces",
+                lineName: "Infants",
+                monthlyAmount: "150.0000",
+                estimatedChildOccupancyRate: "0",
+                actualChildOccupancyRate: "0",
+                estimatedComputedTotal: "0",
+                actualComputedTotal: "0",
+              },
             ],
           })
         )
@@ -176,6 +197,68 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
         await expect(RemoveHotMealEnhancementService.perform(centre)).resolves.not.toThrow()
       })
 
+      test("when enhancement does not exist on a Quality Enhancement Program section, does not attempt to remove enhancement", async () => {
+        // Arrange
+        vi.setSystemTime(new Date("2025-04-01"))
+
+        const fundingRegion = await fundingRegionFactory.create({
+          hotMealIncrementAmount: "32.06",
+        })
+        const centre = await centreFactory.create({
+          fundingRegionId: fundingRegion.id,
+        })
+        const fundingPeriod = await fundingPeriodFactory.create({
+          fiscalYear: "2025-2026",
+        })
+        const futureFiscalPeriod = await fiscalPeriodFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          dateStart: new Date("2025-04-15"),
+        })
+        const fundingSubmissionLine = await fundingSubmissionLineFactory.create({
+          sectionName: "Quality Enhancement Program",
+          lineName: "Quality Enhancement",
+          monthlyAmount: "100.00",
+        })
+        const fundingSubmissionLineJson = await fundingSubmissionLineJsonFactory.create({
+          centreId: centre.id,
+          dateStart: futureFiscalPeriod.dateStart,
+          dateEnd: futureFiscalPeriod.dateEnd,
+          lines: [
+            {
+              submissionLineId: fundingSubmissionLine.id,
+              sectionName: "Quality Enhancement Program",
+              lineName: "Quality Enhancement",
+              monthlyAmount: "100.00",
+              estimatedChildOccupancyRate: "0",
+              actualChildOccupancyRate: "0",
+              estimatedComputedTotal: "0",
+              actualComputedTotal: "0",
+            },
+          ],
+        })
+
+        // Act
+        await RemoveHotMealEnhancementService.perform(centre)
+
+        // Assert
+        await expect(fundingSubmissionLineJson.reload()).resolves.toEqual(
+          expect.objectContaining({
+            lines: [
+              {
+                submissionLineId: fundingSubmissionLine.id,
+                sectionName: "Quality Enhancement Program",
+                lineName: "Quality Enhancement",
+                monthlyAmount: "100.00",
+                estimatedChildOccupancyRate: "0",
+                actualChildOccupancyRate: "0",
+                estimatedComputedTotal: "0",
+                actualComputedTotal: "0",
+              },
+            ],
+          })
+        )
+      })
+
       test("when multiple lines exist including Quality Enhancement Program sections and non-Quality Enhancement Program sections, only removes enhancement from Quality Enhancement Program sections", async () => {
         // Arrange
         vi.setSystemTime(new Date("2025-04-01"))
@@ -217,6 +300,13 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
               actualChildOccupancyRate: "0",
               estimatedComputedTotal: "0",
               actualComputedTotal: "0",
+              programQualityEnhancements: {
+                hot_meal: {
+                  preEnhancementAmount: "100.00",
+                  amount: "32.06",
+                  appliedAt: "2025-03-01T00:00:00.000Z",
+                },
+              },
             },
             {
               submissionLineId: otherLine.id,
@@ -238,12 +328,26 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
         await expect(fundingSubmissionLineJson.reload()).resolves.toEqual(
           expect.objectContaining({
             lines: [
-              expect.objectContaining({
-                monthlyAmount: "100.0000",
-              }),
-              expect.objectContaining({
+              {
+                submissionLineId: qualityLine.id,
+                sectionName: "Quality Enhancement Program",
+                lineName: "Quality Enhancement",
+                monthlyAmount: "100.00",
+                estimatedChildOccupancyRate: "0",
+                actualChildOccupancyRate: "0",
+                estimatedComputedTotal: "0",
+                actualComputedTotal: "0",
+              },
+              {
+                submissionLineId: otherLine.id,
+                sectionName: "Child Care Spaces",
+                lineName: "Infants",
                 monthlyAmount: "232.0600",
-              }),
+                estimatedChildOccupancyRate: "0",
+                actualChildOccupancyRate: "0",
+                estimatedComputedTotal: "0",
+                actualComputedTotal: "0",
+              },
             ],
           })
         )
@@ -289,6 +393,13 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
               actualChildOccupancyRate: "0",
               estimatedComputedTotal: "0",
               actualComputedTotal: "0",
+              programQualityEnhancements: {
+                hot_meal: {
+                  preEnhancementAmount: "100.00",
+                  amount: "32.06",
+                  appliedAt: "2025-03-01T00:00:00.000Z",
+                },
+              },
             },
           ],
         })
@@ -306,6 +417,13 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
               actualChildOccupancyRate: "0",
               estimatedComputedTotal: "0",
               actualComputedTotal: "0",
+              programQualityEnhancements: {
+                hot_meal: {
+                  preEnhancementAmount: "100.00",
+                  amount: "32.06",
+                  appliedAt: "2025-03-01T00:00:00.000Z",
+                },
+              },
             },
           ],
         })
@@ -319,17 +437,31 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
           expect.objectContaining({
             id: fundingSubmissionLineJson1.id,
             lines: [
-              expect.objectContaining({
-                monthlyAmount: "100.0000",
-              }),
+              {
+                submissionLineId: qualityLine.id,
+                sectionName: "Quality Enhancement Program",
+                lineName: "Quality Enhancement",
+                monthlyAmount: "100.00",
+                estimatedChildOccupancyRate: "0",
+                actualChildOccupancyRate: "0",
+                estimatedComputedTotal: "0",
+                actualComputedTotal: "0",
+              },
             ],
           }),
           expect.objectContaining({
             id: fundingSubmissionLineJson2.id,
             lines: [
-              expect.objectContaining({
-                monthlyAmount: "100.0000",
-              }),
+              {
+                submissionLineId: qualityLine.id,
+                sectionName: "Quality Enhancement Program",
+                lineName: "Quality Enhancement",
+                monthlyAmount: "100.00",
+                estimatedChildOccupancyRate: "0",
+                actualChildOccupancyRate: "0",
+                estimatedComputedTotal: "0",
+                actualComputedTotal: "0",
+              },
             ],
           }),
         ])

@@ -1,7 +1,6 @@
 import { Op } from "@sequelize/core"
-import Big from "big.js"
 import { DateTime } from "luxon"
-import { isEmpty } from "lodash"
+import { isEmpty, isUndefined } from "lodash"
 
 import {
   Centre,
@@ -43,7 +42,7 @@ export class RemoveHotMealEnhancementService extends BaseService {
 
   private async removeHotMealEnhancementForPeriod(
     fiscalPeriod: FiscalPeriod,
-    hotMealIncrementAmount: string
+    _hotMealIncrementAmount: string
   ): Promise<void> {
     await FundingSubmissionLineJson.findEach(
       {
@@ -56,7 +55,7 @@ export class RemoveHotMealEnhancementService extends BaseService {
       async (fundingSubmissionLineJson) => {
         const { lines } = fundingSubmissionLineJson
 
-        lines.map((line) => {
+        const newLines = lines.map((line) => {
           const { sectionName } = line
           if (
             sectionName !== FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM
@@ -64,31 +63,40 @@ export class RemoveHotMealEnhancementService extends BaseService {
             return line
           }
 
-          const { monthlyAmount: originalMonthlyAmount } = line
-          const monthlyAmount = this.calculateMonthlyAmountWithoutEnhancement(
-            originalMonthlyAmount,
-            hotMealIncrementAmount
-          )
-          line.monthlyAmount = monthlyAmount
-          return line
+          const { programQualityEnhancements } = line
+          if (isUndefined(programQualityEnhancements) || isEmpty(programQualityEnhancements)) {
+            return line
+          }
+
+          const hotMealEnhancement =
+            programQualityEnhancements[FundingSubmissionLine.EnhancementTypes.HOT_MEAL]
+          if (isUndefined(hotMealEnhancement)) {
+            return line
+          }
+
+          const { preEnhancementAmount } = hotMealEnhancement
+          delete programQualityEnhancements[FundingSubmissionLine.EnhancementTypes.HOT_MEAL]
+
+          if (isEmpty(programQualityEnhancements)) {
+            delete line.programQualityEnhancements
+            return {
+              ...line,
+              monthlyAmount: preEnhancementAmount,
+            }
+          }
+
+          return {
+            ...line,
+            monthlyAmount: preEnhancementAmount,
+            programQualityEnhancements,
+          }
         })
 
         await fundingSubmissionLineJson.update({
-          lines,
+          lines: newLines,
         })
       }
     )
-  }
-
-  private calculateMonthlyAmountWithoutEnhancement(
-    monthlyAmount: string,
-    hotMealIncrementAmount: string
-  ): string {
-    const monthlyAmountAsBig = Big(monthlyAmount)
-    const hotMealIncrementAsBig = Big(hotMealIncrementAmount)
-    const reducedAmountAsBig = monthlyAmountAsBig.minus(hotMealIncrementAsBig)
-
-    return reducedAmountAsBig.toFixed(4)
   }
 }
 
