@@ -11,6 +11,7 @@ import {
   FundingSubmissionLineJson,
 } from "@/models"
 import BaseService from "@/services/base-service"
+import type { FundingLineValueProgramQualityEnhancements } from "@/models/funding-line-value"
 
 export class ApplyHotMealEnhancementService extends BaseService {
   constructor(private centre: Centre) {
@@ -63,7 +64,8 @@ export class ApplyHotMealEnhancementService extends BaseService {
             return line
           }
 
-          const programQualityEnhancements = line.programQualityEnhancements ?? {}
+          const programQualityEnhancements: FundingLineValueProgramQualityEnhancements =
+            line.programQualityEnhancements ?? {}
           if (has(programQualityEnhancements, FundingSubmissionLine.EnhancementTypes.HOT_MEAL)) {
             return line
           }

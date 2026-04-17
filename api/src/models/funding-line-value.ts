@@ -9,6 +9,10 @@ export type FundingSubmissionLineEnhancement = {
   appliedAt: string
 }
 
+export type FundingLineValueProgramQualityEnhancements = {
+  [K in FundingSubmissionLineEnhancementTypes]?: FundingSubmissionLineEnhancement
+}
+
 export type FundingLineValue = {
   submissionLineId: number
   sectionName: string
@@ -18,9 +22,7 @@ export type FundingLineValue = {
   actualChildOccupancyRate: string
   estimatedComputedTotal: string
   actualComputedTotal: string
-  programQualityEnhancements?: Partial<
-    Record<FundingSubmissionLineEnhancementTypes, FundingSubmissionLineEnhancement>
-  >
+  programQualityEnhancements?: FundingLineValueProgramQualityEnhancements
 }
 
 export default FundingLineValue

@@ -1,6 +1,9 @@
 import { Op } from "@sequelize/core"
+import Big from "big.js"
 import { DateTime } from "luxon"
 import { isEmpty, isUndefined } from "lodash"
+
+import sumByDecimal from "@/utils/sum-by-decimal"
 
 import {
   Centre,
@@ -9,6 +12,7 @@ import {
   FundingSubmissionLine,
   FundingSubmissionLineJson,
 } from "@/models"
+import { type FundingLineValueProgramQualityEnhancements } from "@/models/funding-line-value"
 import BaseService from "@/services/base-service"
 
 export class RemoveHotMealEnhancementService extends BaseService {
@@ -77,17 +81,22 @@ export class RemoveHotMealEnhancementService extends BaseService {
           const { preEnhancementAmount } = hotMealEnhancement
           delete programQualityEnhancements[FundingSubmissionLine.EnhancementTypes.HOT_MEAL]
 
+          const monthlyAmount = this.calculateMonthlyAmountFromEnhancements(
+            preEnhancementAmount,
+            programQualityEnhancements
+          )
+
           if (isEmpty(programQualityEnhancements)) {
             delete line.programQualityEnhancements
             return {
               ...line,
-              monthlyAmount: preEnhancementAmount,
+              monthlyAmount,
             }
           }
 
           return {
             ...line,
-            monthlyAmount: preEnhancementAmount,
+            monthlyAmount,
             programQualityEnhancements,
           }
         })
@@ -97,6 +106,18 @@ export class RemoveHotMealEnhancementService extends BaseService {
         })
       }
     )
+  }
+
+  // TODO: validate that this would handle a second enhancment type.
+  private calculateMonthlyAmountFromEnhancements(
+    preEnhancementAmount: string,
+    programQualityEnhancements: FundingLineValueProgramQualityEnhancements
+  ): string {
+    const preEnhancementAmountAsBig = Big(preEnhancementAmount)
+    const enhancementValues = Object.values(programQualityEnhancements)
+    const totalEnhancementAsBig = sumByDecimal(enhancementValues, "amount")
+
+    return preEnhancementAmountAsBig.plus(totalEnhancementAsBig).toFixed(4)
   }
 }
 
