@@ -156,6 +156,22 @@ Your text editor or IDE might require you to manually install the dependencies t
 
 4. Go to `./web` and run `npm install`
 
+5. Install Ruby dependencies for prettification and language server support:
+
+   ```bash
+   bundle install
+   ```
+
+   This installs Ruby gems for:
+   - Ruby LSP (language server for IDE support)
+   - Syntax Tree (Ruby code formatting)
+   - Prettier Print (pretty printing Ruby objects)
+
+6. Configure your editor to use Ruby LSP as the default formatter for `.rb` files:
+   - VS Code: Right-click on a `.rb` file → "Format Document With..." → "Configure Default Formatter..." → "Ruby (LSP)"
+   - Or use Command Palette: `Ctrl+Shift+P` → "Format Document With..." → "Ruby (LSP)"
+   - Other editors: Configure Ruby formatter to use `bundle exec stree format`
+
 ### Linting and Pretification
 
 Linting and prettification support easier collaborator by standardizing code.

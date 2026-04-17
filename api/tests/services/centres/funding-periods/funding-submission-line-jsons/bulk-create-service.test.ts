@@ -2,6 +2,7 @@ import {
   centreFactory,
   fiscalPeriodFactory,
   fundingPeriodFactory,
+  fundingRegionFactory,
   fundingSubmissionLineFactory,
 } from "@/factories"
 
@@ -159,6 +160,133 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
         await expect(BulkCreateService.perform(centre, fundingPeriod)).rejects.toThrow(
           "No funding submission lines found for the funding period."
         )
+      })
+
+      describe("hot meal enhancement", () => {
+        beforeEach(() => {
+          vi.useFakeTimers()
+        })
+
+        afterEach(() => {
+          vi.useRealTimers()
+        })
+
+        test("when provided with a centre with hot meal enabled and Quality Enhancement Program sections, applies enhancement", async () => {
+          // Arrange
+          vi.setSystemTime(new Date("2025-04-01"))
+
+          const fundingRegion = await fundingRegionFactory.create({
+            hotMealIncrementAmount: "32.06",
+          })
+          const centre = await centreFactory.create({
+            fundingRegionId: fundingRegion.id,
+            hotMeal: true,
+          })
+          const fundingPeriod = await fundingPeriodFactory.create({
+            fiscalYear: "2025-2026",
+            fromDate: new Date("2025-04-01"),
+            toDate: new Date("2025-05-30"),
+          })
+          await fiscalPeriodFactory.create({
+            fundingPeriodId: fundingPeriod.id,
+            fiscalYear: "2025-26",
+            dateStart: new Date("2025-04-01"),
+          })
+          const qualityLine = await fundingSubmissionLineFactory.create({
+            fiscalYear: "2025/26",
+            sectionName: "Quality Enhancement Program",
+            lineName: "Quality Enhancement",
+            monthlyAmount: "100.00",
+          })
+
+          // Act
+          const fundingSubmissionLineJsons = await BulkCreateService.perform(centre, fundingPeriod)
+
+          // Assert
+          expect(fundingSubmissionLineJsons).toEqual([
+            expect.objectContaining({
+              centreId: centre.id,
+              fiscalYear: "2025/26",
+              dateName: "April",
+              dateStart: new Date("2025-04-01T00:00:00.000Z"),
+              dateEnd: new Date("2025-04-30T23:59:59.000Z"),
+              values: JSON.stringify([
+                {
+                  submissionLineId: qualityLine.id,
+                  sectionName: "Quality Enhancement Program",
+                  lineName: "Quality Enhancement",
+                  monthlyAmount: "132.0600",
+                  estimatedChildOccupancyRate: "0",
+                  actualChildOccupancyRate: "0",
+                  estimatedComputedTotal: "0",
+                  actualComputedTotal: "0",
+                  programQualityEnhancements: {
+                    preEnhancementAmount: "100",
+                    hot_meal: {
+                      amount: "32.06",
+                      appliedAt: "2025-04-01T00:00:00.000Z",
+                    },
+                  },
+                },
+              ]),
+            }),
+          ])
+        })
+
+        test("when provided with a centre without hot meal enabled, even with Quality Enhancement Program sections, does not apply enhancement", async () => {
+          // Arrange
+          vi.setSystemTime(new Date("2025-04-01"))
+
+          const fundingRegion = await fundingRegionFactory.create({
+            hotMealIncrementAmount: "32.06",
+          })
+          const centre = await centreFactory.create({
+            fundingRegionId: fundingRegion.id,
+            hotMeal: false,
+          })
+          const fundingPeriod = await fundingPeriodFactory.create({
+            fiscalYear: "2025-2026",
+            fromDate: new Date("2025-04-01"),
+            toDate: new Date("2025-05-30"),
+          })
+          await fiscalPeriodFactory.create({
+            fundingPeriodId: fundingPeriod.id,
+            fiscalYear: "2025-26",
+            dateStart: new Date("2025-04-01"),
+          })
+          const qualityLine = await fundingSubmissionLineFactory.create({
+            fiscalYear: "2025/26",
+            sectionName: "Quality Enhancement Program",
+            lineName: "Quality Enhancement",
+            monthlyAmount: "100.00",
+          })
+
+          // Act
+          const fundingSubmissionLineJsons = await BulkCreateService.perform(centre, fundingPeriod)
+
+          // Assert
+          expect(fundingSubmissionLineJsons).toEqual([
+            expect.objectContaining({
+              centreId: centre.id,
+              fiscalYear: "2025/26",
+              dateName: "April",
+              dateStart: new Date("2025-04-01T00:00:00.000Z"),
+              dateEnd: new Date("2025-04-30T23:59:59.000Z"),
+              values: JSON.stringify([
+                {
+                  submissionLineId: qualityLine.id,
+                  sectionName: "Quality Enhancement Program",
+                  lineName: "Quality Enhancement",
+                  monthlyAmount: "100",
+                  estimatedChildOccupancyRate: "0",
+                  actualChildOccupancyRate: "0",
+                  estimatedComputedTotal: "0",
+                  actualComputedTotal: "0",
+                },
+              ]),
+            }),
+          ])
+        })
       })
     })
   })

@@ -50,7 +50,10 @@ services:
       - ./.gitignore:/usr/src/.gitignore
       - ./.prettierrc.yaml:/usr/src/.prettierrc.yaml
     depends_on:
-      - api
+      api:
+        condition: service_started
+      api_wait:
+        condition: service_completed_successfully
 
   test_api:
     build:
@@ -107,6 +110,16 @@ services:
       PLANTUML_LIMIT_SIZE: 8192
     profiles:
       - design
+
+  api_wait:
+    image: node:22.20.0-alpine3.22
+    depends_on:
+      api:
+        condition: service_started
+    volumes:
+      - ./bin/api-wait.mjs:/bin/api-wait.mjs:ro
+    entrypoint: ["node", "/bin/api-wait.mjs"]
+    restart: "no"
 
 volumes:
   db_data:

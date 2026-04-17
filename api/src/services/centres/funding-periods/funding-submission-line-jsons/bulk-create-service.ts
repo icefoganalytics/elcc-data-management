@@ -1,13 +1,22 @@
 import { type CreationAttributes } from "@sequelize/core"
+import { DateTime } from "luxon"
 import { isEmpty } from "lodash"
+import Big from "big.js"
+
+import sumByDecimal from "@/utils/sum-by-decimal"
 
 import {
   Centre,
   FiscalPeriod,
+  FundingPeriod,
+  FundingRegion,
   FundingSubmissionLine,
   FundingSubmissionLineJson,
-  type FundingPeriod,
 } from "@/models"
+import {
+  type FundingLineValue,
+  type FundingLineValueProgramQualityEnhancements,
+} from "@/models/funding-line-value"
 import BaseService from "@/services/base-service"
 
 export class BulkCreateService extends BaseService {
@@ -40,17 +49,42 @@ export class BulkCreateService extends BaseService {
       throw new Error("No funding submission lines found for the funding period.")
     }
 
+    const { fundingRegionId, hotMeal } = this.centre
+    const fundingRegion = await FundingRegion.findByPk(fundingRegionId, {
+      rejectOnEmpty: true,
+    })
+
+    const { hotMealIncrementAmount } = fundingRegion
+
     const fundingSubmissionLineJsonsDefaults = fundingSubmissionLines.map(
-      (fundingSubmissionLine) => ({
-        submissionLineId: fundingSubmissionLine.id,
-        sectionName: fundingSubmissionLine.sectionName,
-        lineName: fundingSubmissionLine.lineName,
-        monthlyAmount: fundingSubmissionLine.monthlyAmount,
-        estimatedChildOccupancyRate: "0",
-        actualChildOccupancyRate: "0",
-        estimatedComputedTotal: "0",
-        actualComputedTotal: "0",
-      })
+      (fundingSubmissionLine) => {
+        const {
+          id: submissionLineId,
+          sectionName,
+          lineName,
+          monthlyAmount: originalMonthlyAmount,
+        } = fundingSubmissionLine
+
+        const line = {
+          submissionLineId,
+          sectionName,
+          lineName,
+          monthlyAmount: originalMonthlyAmount,
+          estimatedChildOccupancyRate: "0",
+          actualChildOccupancyRate: "0",
+          estimatedComputedTotal: "0",
+          actualComputedTotal: "0",
+        }
+
+        if (
+          hotMeal &&
+          sectionName === FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM
+        ) {
+          return this.applyHotMealEnhancement(line, originalMonthlyAmount, hotMealIncrementAmount)
+        }
+
+        return line
+      }
     )
 
     const { id: centreId } = this.centre
@@ -69,6 +103,41 @@ export class BulkCreateService extends BaseService {
       })
 
     return FundingSubmissionLineJson.bulkCreate(fundingSubmissionLineJsonsAttributes)
+  }
+
+  private applyHotMealEnhancement(
+    line: FundingLineValue,
+    originalMonthlyAmount: string,
+    hotMealIncrementAmount: string
+  ) {
+    const programQualityEnhancements = {
+      preEnhancementAmount: originalMonthlyAmount,
+      [FundingSubmissionLine.EnhancementTypes.HOT_MEAL]: {
+        amount: hotMealIncrementAmount,
+        appliedAt: DateTime.utc().toISO(),
+      },
+    }
+
+    const monthlyAmount = this.calculateMonthlyAmountFromEnhancements(
+      originalMonthlyAmount,
+      programQualityEnhancements
+    )
+
+    return {
+      ...line,
+      monthlyAmount,
+      programQualityEnhancements,
+    }
+  }
+
+  private calculateMonthlyAmountFromEnhancements(
+    preEnhancementAmount: string,
+    programQualityEnhancements: FundingLineValueProgramQualityEnhancements
+  ): string {
+    const preEnhancementAmountAsBig = Big(preEnhancementAmount)
+    const enhancementValues = Object.values(programQualityEnhancements)
+    const totalEnhancementAsBig = sumByDecimal(enhancementValues, "amount")
+    return preEnhancementAmountAsBig.plus(totalEnhancementAsBig).toFixed(4)
   }
 }
 

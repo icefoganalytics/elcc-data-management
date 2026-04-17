@@ -1,5 +1,5 @@
 ---
-description: Create and edit well-structured pull requests following ELCC project patterns and conventions
+description: Create and edit well-structured pull requests following ELCC Data Management project patterns and conventions
 auto_execution_mode: 1
 ---
 
@@ -13,19 +13,21 @@ auto_execution_mode: 1
 - Clear title following naming conventions
 - Context explaining WHY the change is needed
 - Implementation summarizing WHAT was changed (purpose, not files)
-- A generated `# Testing Instructions` section
+- Testing instructions that verify correctness
 
 **Decision Rules:**
 - **Title format:** Use `Issue-<number>: Description` for GitHub issues, `TICKET-ID: Description` for Jira tickets, `Fix: Description` for bug fixes, or `Action Verb + Noun` for features. Always use AP style title case.
+- **Issue linkage wording:** Use `Fixes <issue-url>` only when the PR is intended to close the issue. Use `Part of <issue-url>` for one PR in a larger multi-PR effort.
 - **Ticket prefix rule:** Only use ticket prefixes (`ELCC-123:`, `Issue-123:`) when referencing actual external ticket entities. For internal work without external tracking, use descriptive titles without prefixes.
-- **Implementation section:** Focus on purpose and intent, not specific files. A reviewer can see file changes in the diff - the Implementation section explains the reasoning behind those changes.
+- **Implementation section:** Describe what the user or system can now do — not how it was built. Never name specific methods, services, controllers, or files unless the file itself is the subject of the change. A reviewer can see the diff; they don't need a guided tour of it.
 - **Screenshots:** Check the diff for `web/src/components/` or `web/src/pages/` changes. If present, write "TODO" and let user add screenshots. Only write "N/A - backend changes only" if there are truly no frontend changes.
 - **Draft mode:** Always create PRs as drafts first
-- **Testing instructions are delegated:** Do not author detailed QA steps in this workflow. Generate or refresh the entire `# Testing Instructions` section via `testing-instructions.md`.
-- **PR edits still need QA workflow:** When updating an existing PR body, if the change touches the `# Testing Instructions` section or could invalidate it, rerun the `testing-instructions` workflow before patching the PR.
+- **QA Testing:** Write testing instructions for someone with zero project knowledge, focusing on user interactions rather than technical implementation. Follow the `testing-instructions` workflow for comprehensive guidance on creating detailed, accurate testing instructions with exact UI element names and proper test case structure.
+- **Do not stop at PR body drafting:** If the user asks for a PR, assume the testing instructions workflow should also be used unless the user explicitly says not to include testing instructions.
+- **Use Jira workflow when the PR depends on issue framing:** If the task references a Jira ticket, a bug report, a PR comment that should become an issue, or asks for ticket creation/update as part of the same work, use the `jira-issue-management` workflow too.
 - **Complete workflow sequence:** This is step 3 of 4 in the complete PR creation process. Always use after jira-issue-management and code-review workflows, then follow with testing-instructions workflow for comprehensive test coverage.
 
-This workflow covers the process of creating and editing well-structured pull requests that follow the established patterns in the ELCC project.
+This workflow covers the process of creating and editing well-structured pull requests that follow the established patterns in the ELCC Data Management project.
 
 ## Quick Reference
 
@@ -57,7 +59,10 @@ TODO - check diff for web/src/components/ or web/src/pages/ changes
 
 # Testing Instructions
 
-Generated via `testing-instructions.md`
+1. Run the test suite via `dev test` (or `dev test_api`).
+2. Boot the app via `dev up`.
+3. Log in to the app at http://localhost:8080.
+4. <specific step>
 EOF
 )"
 ```
@@ -121,11 +126,14 @@ Relates to:
 
 # Screenshots
 
-<Screenshots or "N/A">
+TODO - check diff for web/src/components/ or web/src/pages/ changes
 
 # Testing Instructions
 
-<Paste the output from `testing-instructions.md`>
+1. Run the test suite via `dev test`.
+2. Boot the app via `dev up`.
+3. Log in to the app at http://localhost:3000.
+4. <specific step>
 ```
 
 **PR Template Usage:**
@@ -137,47 +145,68 @@ The GitHub PR template provides the basic structure. Fill in each section follow
 - **Context:** Explain the problem, user reports, or motivation for the change
 - **Implementation:** List all changes made in numbered format
 - **Screenshots:** Check diff for frontend changes; write "TODO" and let user add screenshots if UI changed, "N/A" only if no frontend files changed
-- **Testing Instructions:** Delegate the entire section to `testing-instructions.md` and paste that workflow's output
+- **Testing Instructions:** Always start with the standard 3 steps, then add specific steps using exact UI labels verified from the code
 
 ### 4. Section Guidelines
 
 #### Context Section
 
-- Explain **why** the change is needed
+- Explain **why** the change is needed (problem-first, not solution-first)
+- Should read like a bug report or motivation statement, not a summary of changes
 - Include user reports using blockquotes (`>`)
 - For bugs, describe root cause if known
 - Include "Steps to Reproduce" for bugs
 - **Use concise, direct language**: "Implements automatic group creation when agreements are signed" not "Implements automatic group creation when information sharing agreements is marked as signed"
 - **Focus on problem and solution**: Remove redundant words and unnecessary context
 
-**Example:**
+**Good Example (problem-first):**
 ```markdown
 # Context
 
-User Report
-> Building expenses are fairly informal and need to be customized on a per-month, per-center basis.
+Email notifications were being sent synchronously during request handling, blocking responses and reducing resilience to mail server outages.
 
-The existing interface only supported bulk management at the category level, with no way to individually adjust expenses.
+User Report
+
+> We seem to be having an issue with delegation not respecting the timeframes set.
+
+Investigation revealed that our background jobs were failing, and they didn't produce any logs either way.
+```
+
+**Bad Example (solution-first - avoid this):**
+```markdown
+# Context
+
+The mailer system needed to be integrated with the job queue system to enable asynchronous email processing. This was causing issues with mailer tests failing because transporter.sendMail spies weren't being called...
 ```
 
 #### Implementation Section
 
 - Use numbered list
-- Focus on **purpose and intent**, not specific file changes
-- Extract meaning from commits - what was the goal of each change?
-- A reviewer can see file diffs - tell them WHY, not WHERE
+- Focus on **what the user or system can now do**, not how it was built
+- Extract meaning from commits — what was the goal of each change?
+- A reviewer can see file diffs — tell them WHY, not WHERE
+- **Avoid naming specific methods, services, controllers, or files** unless the file/method itself is the subject (e.g. a renamed component)
 - Keep it concise: 5-10 items maximum
-- **Use direct, active voice**: "Add group creation service" not "Add proper group creation service for the entire system"
+- **Use direct, active voice**: "Require signed receipt upload before signing" not "Add validation in SignService"
 - **Avoid redundant qualifiers**: Remove words like "entire", "proper", "fully", "completely"
 
-**Good Example (purpose-focused):**
+**Good Example (user/outcome-focused):**
 ```markdown
 # Implementation
 
-1. Replace dialog-based editing with dedicated page routes
-2. Convert JavaScript API and composables to TypeScript
-3. Split monolithic table into modular Card and DataTable components
-4. Standardize component naming to match Vuetify patterns
+1. Generate a filled Section 68 Receipt for ISAs set to "Accepted in Confidence" — downloadable from the draft card and actions menu.
+2. Require the signed receipt to be uploaded before the ISA can be marked as signed.
+3. Make the signed receipt available for download after signing.
+4. Rename "Download Draft" to "Download Confidentiality Acknowledgement" to distinguish it from the new receipt document.
+```
+
+**Bad Example (technical-detail-focused - avoid this):**
+```markdown
+# Implementation
+
+1. Add `confidentialityAgreement` and `signedConfidentialityReceipt` HasOne associations to the ISA model, plus a `requiresConfidentialityAgreement()` helper.
+2. Add a generate service and serializer for the Section 68 Receipt DOCX template, mirroring the existing acknowledgement generation pattern.
+3. Add a download controller for the system-generated receipt and a separate controller for the uploaded signed receipt.
 ```
 
 **Bad Example (file-focused - avoid this):**
@@ -216,12 +245,30 @@ git diff main...HEAD --name-only | grep -E "^web/src/(components|pages)/"
 
 #### Testing Instructions Section
 
-Describe how a reviewer can verify the change with the least ambiguity possible.
+**Always start with these three steps:**
 
-- Include the relevant automated checks
-- List the main manual verification steps in the order a reviewer should perform them
-- Call out any setup, seed data, or permissions needed to exercise the change
-- Focus on the changed behavior, not generic project smoke tests
+```markdown
+1. Run the test suite via `dev test` (or `dev test_api`).
+2. Boot the app via `dev up`.
+3. Log in to the app at http://localhost:8080.
+```
+
+**Then add specific steps:**
+
+- Use **bold** for UI elements: **Create Entry**, **Save**
+- Use arrows for navigation: **Knowledge Base** → **Create New**
+- Include verification: "Verify that..." or "Check that..."
+- Number steps sequentially
+
+**QA Testing Principles:**
+
+Write testing instructions for someone with zero project knowledge:
+
+- **User-focused**: Focus on UI interactions ("Click on", "Verify", "Fill out")
+- **Sequential steps**: Clear, numbered steps with specific verification points
+- **Complete workflows**: Test creation, editing, saving, and navigation
+- **Browser behavior**: Include back button, refresh, and direct URL testing
+- **Simple language**: Avoid technical jargon, minimal bolding
 
 ### 5. Create the PR
 
@@ -425,6 +472,46 @@ TODO
 8. Verify the expense appears in the **Building Expenses** table.
 ```
 
+### Backend Refactor Example
+
+```markdown
+# Fix: Plug Centre Funding Period Initialization Leak
+
+Fixes https://yg-hpw.atlassian.net/browse/ELCC-150
+
+# Context
+
+When funding periods are deleted, the destroy service was using bulk `Model.destroy()` calls which bypass cleanup logic for dependent records.
+
+**Root cause:** 23 orphaned records in production.
+
+## Leaks Found and Fixed
+
+| Location | Issue | Fix |
+|----------|-------|-----|
+| `funding-periods/destroy-service.ts` | Bulk destroy bypassed cleanup | Uses `findEach` + `DestroyService.perform()` |
+
+# Implementation
+
+1. **FundingPeriods.DestroyService**: Replaced bulk destroys with `findEach` loops.
+2. **Centres.DestroyService**: Same pattern applied.
+3. Add assertion for dependent entity cleanup.
+
+# Screenshots
+
+N/A - backend changes only
+
+# Testing Instructions
+
+1. Run the test suite via `dev test` (or `dev test_api`).
+2. Boot the app via `dev up`.
+3. Log in to the app at http://localhost:8080.
+4. Navigate to **Administration** → **Funding Periods**.
+5. Create a test funding period with dependent records.
+6. Delete the funding period.
+7. Verify no orphaned dependent records exist.
+```
+
 ## Common Pitfalls
 
 | Pitfall | Solution |
@@ -437,13 +524,11 @@ TODO
 | Unclear scope | Separate core changes from side fixes |
 | Missing links | Include Fixes/Relates to URLs |
 | Wrong test commands | Use `dev test` not generic test commands |
-| Type checking ignored | Always run `npm run type-check` |
+| Type checking ignored | Always run `dev api npm run check-types` / `dev web npm run check-types` |
 
 ---
 
 ## Related Workflows
-
-- [`./testing-instructions.md`](./testing-instructions.md) - Generate the `# Testing Instructions` section with verified UI labels and QA scenarios
 
 - [`./jira-issue-management.md`](./jira-issue-management.md) - Creating well-structured Jira issues
 - [`./testing-instructions.md`](./testing-instructions.md) - Generate comprehensive testing instructions

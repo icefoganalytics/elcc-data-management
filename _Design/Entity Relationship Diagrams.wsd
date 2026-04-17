@@ -4,7 +4,7 @@ top to bottom direction
 note as Disclaimer
 PlantUML URL: https://plantuml.com/ie-diagram
 This diagram may be out of date and should be verified against the current database schema.
-Last updated (by Claude Opus 4.5): 2025-12-29
+Last updated (by Cascade): 2026-04-16
 end note
 
 together {
@@ -13,6 +13,8 @@ together {
     --
     * region : nvarchar(100)
     * subsidy_rate : decimal(5,4)
+    --
+    hot_meal_increment_amount : decimal(10,4) = 0.0000
     --
     * created_at : datetime2
     * updated_at : datetime2
@@ -98,18 +100,18 @@ together {
     --
     * funding_region_id : int [FK]
     --
+    * building_usage_percent : decimal(5,2) = 100
+    * community : nvarchar(255)
+    * hot_meal : bit = 0
+    * is_first_nation_program : bit
     * name : nvarchar(200)
     * status : nvarchar(255)
-    * community : nvarchar(255)
-    * is_first_nation_program : bit
-    * building_usage_percent : decimal(5,2)
     --
     alt_email : nvarchar(100)
     alt_phone_number : nvarchar(20)
     contact_name : nvarchar(100)
     email : nvarchar(100)
     fax_number : nvarchar(20)
-    hot_meal : bit
     inspector_name : nvarchar(100)
     last_submission : date
     license : nvarchar(255)
@@ -117,8 +119,8 @@ together {
     licensed_for : int
     mailing_address : nvarchar(250)
     neighborhood : nvarchar(100)
-    phone_number : nvarchar(20)
     physical_address : nvarchar(250)
+    phone_number : nvarchar(20)
     vendor_identifier : nvarchar(20)
     --
     * created_at : datetime2
@@ -129,16 +131,16 @@ together {
   entity "building_expenses" {
     * id : int [PK]
     --
-    * building_expense_category_id : int [FK]
+    * category_id : int [FK]
     * centre_id : int [FK]
     * fiscal_period_id : int [FK]
     --
+    * building_usage_percent : decimal(5,2)
     * funding_region_snapshot : nvarchar(100)
     * subsidy_rate : decimal(5,4)
-    * building_usage_percent : decimal(5,2)
-    * estimated_cost : decimal(15,4)
-    * actual_cost : decimal(15,4)
-    * total_cost : decimal(15,4)
+    actual_cost : decimal(15,4)
+    estimated_cost : decimal(15,4)
+    total_cost : decimal(15,4)
     notes : nvarchar(MAX)
     --
     * created_at : datetime2
@@ -152,13 +154,13 @@ together {
     * centre_id : int [FK]
     * fiscal_period_id : int [FK]
     --
-    * gross_payroll_monthly_actual : decimal(15,4)
-    * gross_payroll_monthly_estimated : decimal(15,4)
-    * cost_cap_percentage : decimal(5,2)
-    * employee_cost_actual : decimal(15,4)
-    * employee_cost_estimated : decimal(15,4)
-    * employer_cost_actual : decimal(15,4)
-    * employer_cost_estimated : decimal(15,4)
+    cost_cap_percentage : decimal(5,2)
+    employee_cost_actual : decimal(15,4)
+    employee_cost_estimated : decimal(15,4)
+    employer_cost_actual : decimal(15,4)
+    employer_cost_estimated : decimal(15,4)
+    gross_payroll_monthly_actual : decimal(15,4)
+    gross_payroll_monthly_estimated : decimal(15,4)
     --
     * created_at : datetime2
     * updated_at : datetime2
@@ -270,7 +272,7 @@ entity "logs" {
   * table_name : nvarchar(200)
   * operation : nvarchar(200)
   * user_email : nvarchar(200)
-  * data : nvarchar(2000)
+  * [data] : nvarchar(2000)
   --
   * created_at : datetime2
   * updated_at : datetime2
@@ -284,12 +286,12 @@ entity "users" {
   * [sub] : nvarchar(200)
   * first_name : nvarchar(100)
   * last_name : nvarchar(100)
+  * roles : nvarchar(255) = 'user'
   * status : nvarchar(50)
-  * is_admin : bit
-  * roles : nvarchar(255)
+  * is_admin : bit = 0
   --
-  ynet_id : nvarchar(50)
   directory_id : nvarchar(50)
+  ynet_id : nvarchar(50)
   --
   * created_at : datetime2
   * updated_at : datetime2
@@ -297,7 +299,7 @@ entity "users" {
 }
 
 ' Relationships
-building_expense_categories::id }o--|| building_expenses::building_expense_category_id
+building_expense_categories::id }o--|| building_expenses::category_id
 centres }o--o| logs::table_name
 centres::id }o--|| building_expenses::centre_id
 centres::id }o--|| employee_benefits::centre_id

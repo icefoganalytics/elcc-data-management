@@ -16,7 +16,7 @@ export class CreateService extends BaseService {
   }
 
   async perform(): Promise<FundingRegion> {
-    const { region, subsidyRate } = this.attributes
+    const { region, subsidyRate, ...optionalAttributes } = this.attributes
 
     if (isNil(region)) {
       throw new Error("Region is required")
@@ -28,6 +28,7 @@ export class CreateService extends BaseService {
 
     return db.transaction(async () => {
       const fundingRegion = await FundingRegion.create({
+        ...optionalAttributes,
         region,
         subsidyRate,
       })
@@ -38,9 +39,7 @@ export class CreateService extends BaseService {
     })
   }
 
-  private async ensureChildren(
-    newFundingRegion: FundingRegion
-  ): Promise<void> {
+  private async ensureChildren(newFundingRegion: FundingRegion): Promise<void> {
     await FundingRegions.EnsureChildrenService.perform(newFundingRegion)
   }
 }

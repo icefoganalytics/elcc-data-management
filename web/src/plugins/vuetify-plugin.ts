@@ -13,6 +13,7 @@ import { createVuetify } from "vuetify"
 // https://vuetifyjs.com/en/introduction/why-vuetify/#feature-guides
 export default createVuetify({
   theme: {
+    defaultTheme: "light",
     variations: {
       colors: ["primary", "secondary"],
       lighten: 2,
@@ -31,6 +32,10 @@ export default createVuetify({
           anchor: "#00818f",
           background: "#eeeeee",
           surface: "#ffffff",
+          "on-surface": "#323232",
+          "on-background": "#323232",
+          "on-primary": "#ffffff",
+          "on-secondary": "#ffffff",
           // Yukon Government brand colors
           "yg-moss": "#7A9A01",
           "yg-blue": "#0097a9",
@@ -48,6 +53,10 @@ export default createVuetify({
           accent: "#F2A900",
           success: "#7A9A01",
           warning: "#DC4405",
+          "on-surface": "#ffffff",
+          "on-background": "#ffffff",
+          "on-primary": "#ffffff",
+          "on-secondary": "#ffffff",
           "yg-moss": "#7A9A01",
           "yg-blue": "#0097a9",
           "yg-zinc": "#24405A",

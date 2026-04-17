@@ -16,24 +16,57 @@
       message="Loading fiscal year data..."
       style="height: calc(100dvh - 14em) !important"
     />
-    <template v-else-if="!isInitialized">
-      <v-empty-state
-        headline="Fiscal Year Not Initialized"
-        title="This fiscal year has not been set up for this centre yet."
-        text="The required data records (employee benefits, building expenses, worksheets, and reconciliation) need to be created before you can view or edit data for this fiscal year."
-        icon="mdi-calendar-alert"
-      >
-        <template #actions>
-          <v-btn
-            color="primary"
-            :loading="isInitializing"
-            @click="initializeFiscalYear"
-          >
-            Initialize Fiscal Year
-          </v-btn>
-        </template>
-      </v-empty-state>
-    </template>
+    <v-empty-state
+      v-else-if="isNil(fundingPeriodId) && isAdmin"
+      headline="Funding Period Not Found"
+      title="No funding period exists for this fiscal year."
+      text="Create a funding period for this fiscal year to initialize the centre."
+      icon="mdi-calendar-remove"
+    >
+      <template #actions>
+        <v-btn
+          color="primary"
+          :to="{
+            name: 'administration/funding-periods/FundingPeriodNewPage',
+          }"
+        >
+          Create Funding Period
+        </v-btn>
+      </template>
+    </v-empty-state>
+    <v-empty-state
+      v-else-if="isNil(fundingPeriodId) && !isAdmin"
+      headline="Funding Period Not Found"
+      title="No funding period exists for this fiscal year."
+      text="Contact your administrator to create a funding period for this fiscal year."
+      icon="mdi-calendar-remove"
+    >
+      <template #actions>
+        <v-btn
+          color="primary"
+          href="mailto:help+elcc@icefoganalytics.com"
+        >
+          Contact Administrator
+        </v-btn>
+      </template>
+    </v-empty-state>
+    <v-empty-state
+      v-else-if="!isInitialized"
+      headline="Fiscal Year Not Initialized"
+      title="This fiscal year has not been set up for this centre yet."
+      text="The required data records (employee benefits, building expenses, worksheets, and reconciliation) need to be created before you can view or edit data for this fiscal year."
+      icon="mdi-calendar-alert"
+    >
+      <template #actions>
+        <v-btn
+          color="primary"
+          :loading="isInitializing"
+          @click="initializeFiscalYear"
+        >
+          Initialize Fiscal Year
+        </v-btn>
+      </template>
+    </v-empty-state>
     <v-row v-else>
       <v-col
         cols="12"
@@ -107,7 +140,10 @@
 
             <v-divider></v-divider>
 
-            <router-view v-slot="{ Component }">
+            <router-view
+              :key="mainContentRefreshKey"
+              v-slot="{ Component }"
+            >
               <component
                 :is="Component"
                 @update:funding-submission-line-json="refreshFundingLineValuesEnrollmentChart"
@@ -123,12 +159,13 @@
 <script setup lang="ts">
 import { isEmpty, isNil } from "lodash"
 import { useRoute, useRouter } from "vue-router"
-import { computed, onMounted, useTemplateRef } from "vue"
+import { computed, onMounted, ref, useTemplateRef } from "vue"
 import { useDisplay } from "vuetify"
 
 import { getCurrentFiscalYearSlug, normalizeFiscalYearToLongForm } from "@/utils/fiscal-year"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useCentre from "@/use/use-centre"
+import useCurrentUser from "@/use/use-current-user"
 import useFundingPeriods from "@/use/use-funding-periods"
 import useCentreFundingPeriodInitialization from "@/use/use-centre-funding-period-initialization"
 
@@ -148,7 +185,16 @@ const props = withDefaults(
 )
 
 const centreIdAsNumber = computed(() => parseInt(props.centreId))
-const { centre, refresh } = useCentre(centreIdAsNumber)
+const { centre, refresh: refreshCentre } = useCentre(centreIdAsNumber)
+
+const mainContentRefreshKey = ref(0)
+
+async function refresh() {
+  await refreshCentre()
+  mainContentRefreshKey.value++
+}
+
+const { isAdmin } = useCurrentUser()
 
 const fiscalYearLegacy = computed<string | undefined>(() => props.fiscalYearSlug?.replace("-", "/"))
 const fiscalYearLong = computed<string | undefined>(() => {

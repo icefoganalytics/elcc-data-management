@@ -2,11 +2,16 @@ import { type Ref, reactive, toRefs, unref, watch } from "vue"
 import { isNil } from "lodash"
 
 import fundingSubmissionLinesApi, {
+  FundingSubmissionLineImmutableSectionNames,
   type FundingSubmissionLineAsShow,
   type FundingSubmissionLinePolicy,
 } from "@/api/funding-submission-lines-api"
 
-export { type FundingSubmissionLineAsShow, type FundingSubmissionLinePolicy }
+export {
+  FundingSubmissionLineImmutableSectionNames,
+  type FundingSubmissionLineAsShow,
+  type FundingSubmissionLinePolicy,
+}
 
 export function useFundingSubmissionLine(fundingSubmissionLineId: Ref<number | null | undefined>) {
   const state = reactive<{

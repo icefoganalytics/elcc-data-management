@@ -27,6 +27,17 @@
       </v-col>
     </v-row>
 
+    <v-row>
+      <v-col cols="12">
+        <CurrencyInput
+          v-model="fundingRegionAttributes.hotMealIncrementAmount"
+          label="Hot Meal Increment Amount *"
+          :rules="[required]"
+          required
+        />
+      </v-col>
+    </v-row>
+
     <template #actions>
       <v-btn
         :loading="isLoading"
@@ -69,6 +80,7 @@ import HeaderActionsFormCard from "@/components/common/HeaderActionsFormCard.vue
 const fundingRegionAttributes = ref<Partial<FundingRegion>>({
   region: "",
   subsidyRate: "",
+  hotMealIncrementAmount: "",
 })
 
 const headerActionsFormCard = ref<InstanceType<typeof HeaderActionsFormCard> | null>(null)
