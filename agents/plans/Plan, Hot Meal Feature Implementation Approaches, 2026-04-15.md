@@ -87,9 +87,8 @@ The hot meal increment logic needs to be applied in the following locations wher
 ### 2. Centre Update (Hot Meal Toggle)
 - **File**: `api/src/services/centres/update-service.ts`
 - **Trigger**: When centre.hotMeal is toggled on/off
-- **Current Behavior**: Only updates centre record, does not trigger JSON regeneration
-- **Required**: Add logic to regenerate `funding_submission_line_jsons` for current and future periods when hotMeal changes
-- **Status**: ❌ NOT IMPLEMENTED
+- **Current Behavior**: Detects hotMeal changes and triggers JSON regeneration for current and future periods using `synchronizeHotMealEnhancement` method
+- **Status**: ✅ IMPLEMENTED
 
 ### 3. Funding Region Creation
 - **File**: `api/src/services/funding-regions/create-service.ts`
@@ -104,6 +103,11 @@ The hot meal increment logic needs to be applied in the following locations wher
 - **Required**: Add logic to regenerate `funding_submission_line_jsons` for all centres in affected region for current and future periods
 - **Service Available**: `BulkApplyHotMealEnhancementForRegionService` - ready to use
 - **Status**: ❌ NOT IMPLEMENTED - Manual workaround available: users can update region, then toggle centre hotMeal off/on to trigger updates
+
+### 4b. Funding Region UI Forms
+- **File**: Frontend funding region create/edit forms
+- **Required**: Add `hotMealIncrementAmount` field to funding region create and edit forms in the UI
+- **Status**: ❌ NOT IMPLEMENTED
 
 ### 5. Bulk Create Service (JSON Generation)
 - **File**: `api/src/services/centres/funding-periods/funding-submission-line-jsons/bulk-create-service.ts`
@@ -126,9 +130,8 @@ The hot meal increment logic needs to be applied in the following locations wher
 ### 8. Replicate Estimates Service
 - **File**: `api/src/services/funding-submission-line-jsons/replicate-estimates-service.ts`
 - **Trigger**: When replicating estimates from current period to future periods
-- **Current Behavior**: Replicates estimates but does NOT include hot meal logic
-- **Required**: Add hot meal logic to ensure replicated estimates include proper hot meal increments
-- **Status**: ❌ NOT IMPLEMENTED
+- **Current Behavior**: Replicates lines as-is, which preserves hot meal enhancements if present in current period
+- **Status**: ✅ IMPLEMENTED (implicitly - copies lines with enhancements)
 
 ### 9. Bulk Apply Hot Meal Enhancement for Region Service
 - **File**: `api/src/services/funding-regions/program-enhancement-expenses/bulk-apply-hot-meal-enhancement-for-region-service.ts`
@@ -191,6 +194,10 @@ The hot meal increment logic needs to be applied in the following locations wher
 | `api/src/models/centre.ts`                                                              | ✅ Updated hotMeal to non-nullable boolean with default    |
 | `api/src/db/migrations/2026.04.16T16.00.00.make-hot-meal-not-nullable.ts`              | ✅ Migration to make hot_meal column not nullable         |
 | `api/src/services/centres/funding-periods/funding-submission-line-jsons/bulk-create-service.ts` | ✅ Added hot meal logic to JSON generation                 |
+| `api/src/services/centres/update-service.ts`                                           | ✅ Added JSON regeneration when hotMeal toggles            |
+| `api/src/services/centres/funding-periods/funding-submission-line-jsons/apply-hot-meal-enhancement-service.ts` | ✅ Refactored to use new programQualityEnhancements structure |
+| `api/src/services/centres/funding-periods/funding-submission-line-jsons/remove-hot-meal-enhancement-service.ts` | ✅ Refactored to use new programQualityEnhancements structure |
+| `api/src/models/funding-line-value.ts`                                                   | ✅ Updated programQualityEnhancements type with preEnhancementAmount at top level |
 | `api/src/services/funding-regions/program-enhancement-expenses/bulk-apply-hot-meal-enhancement-for-region-service.ts` | ✅ Created bulk apply hot meal enhancement service         |
 | `_Design/Entity Relationship Diagrams.wsd`                                             | ✅ Updated ERD with field names and defaults                |
 
@@ -198,10 +205,9 @@ The hot meal increment logic needs to be applied in the following locations wher
 
 | File                                                                                    | Required Change                                           |
 | --------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| `api/src/services/centres/update-service.ts`                                         | Add JSON regeneration when hotMeal toggles                 |
 | `api/src/services/funding-regions/update-service.ts`                                  | Add bulk update when hotMealIncrementAmount changes        |
-| `api/src/services/funding-submission-line-jsons/replicate-estimates-service.ts`        | Add hot meal logic to replicated estimates                 |
-| Frontend hot meal toggle component                                                     | Add refresh logic and loading state                         |
+| Frontend funding region create/edit forms                                             | Add hotMealIncrementAmount field to UI forms               |
+| Frontend centre hot meal toggle component                                             | Add refresh logic and loading state                         |
 
 ## Related Issues
 
