@@ -72,6 +72,13 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
             lines: [
               expect.objectContaining({
                 monthlyAmount: "132.0600",
+                programQualityEnhancements: {
+                  hot_meal: {
+                    preEnhancementAmount: "100.00",
+                    amount: "32.06",
+                    appliedAt: "2025-04-01T00:00:00.000Z",
+                  },
+                },
               }),
             ],
           })
@@ -179,6 +186,76 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
         await expect(ApplyHotMealEnhancementService.perform(centre)).resolves.not.toThrow()
       })
 
+      test("when enhancement has already been applied to a Quality Enhancement Program section, does not reapply enhancement", async () => {
+        // Arrange
+        vi.setSystemTime(new Date("2025-04-01"))
+
+        const fundingRegion = await fundingRegionFactory.create({
+          hotMealIncrementAmount: "32.06",
+        })
+        const centre = await centreFactory.create({
+          fundingRegionId: fundingRegion.id,
+          hotMeal: true,
+        })
+        const fundingPeriod = await fundingPeriodFactory.create({
+          fiscalYear: "2025-2026",
+        })
+        const futureFiscalPeriod = await fiscalPeriodFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          dateStart: new Date("2025-04-15"),
+        })
+        const fundingSubmissionLine = await fundingSubmissionLineFactory.create({
+          sectionName: "Quality Enhancement Program",
+          lineName: "Quality Enhancement",
+          monthlyAmount: "100.00",
+        })
+        const fundingSubmissionLineJson = await fundingSubmissionLineJsonFactory.create({
+          centreId: centre.id,
+          dateStart: futureFiscalPeriod.dateStart,
+          dateEnd: futureFiscalPeriod.dateEnd,
+          lines: [
+            {
+              submissionLineId: fundingSubmissionLine.id,
+              sectionName: "Quality Enhancement Program",
+              lineName: "Quality Enhancement",
+              monthlyAmount: "132.0600",
+              estimatedChildOccupancyRate: "0",
+              actualChildOccupancyRate: "0",
+              estimatedComputedTotal: "0",
+              actualComputedTotal: "0",
+              programQualityEnhancements: {
+                hot_meal: {
+                  preEnhancementAmount: "100.00",
+                  amount: "32.06",
+                  appliedAt: "2025-03-01T00:00:00.000Z",
+                },
+              },
+            },
+          ],
+        })
+
+        // Act
+        await ApplyHotMealEnhancementService.perform(centre)
+
+        // Assert
+        await expect(fundingSubmissionLineJson.reload()).resolves.toEqual(
+          expect.objectContaining({
+            lines: [
+              expect.objectContaining({
+                monthlyAmount: "132.0600",
+                programQualityEnhancements: {
+                  hot_meal: {
+                    preEnhancementAmount: "100.00",
+                    amount: "32.06",
+                    appliedAt: "2025-03-01T00:00:00.000Z",
+                  },
+                },
+              }),
+            ],
+          })
+        )
+      })
+
       test("when multiple lines exist including Quality Enhancement Program sections and non-Quality Enhancement Program sections, only applies enhancement to Quality Enhancement Program sections", async () => {
         // Arrange
         vi.setSystemTime(new Date("2025-04-01"))
@@ -244,6 +321,13 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
             lines: [
               expect.objectContaining({
                 monthlyAmount: "132.0600",
+                programQualityEnhancements: {
+                  hot_meal: {
+                    preEnhancementAmount: "100.00",
+                    amount: "32.06",
+                    appliedAt: "2025-04-01T00:00:00.000Z",
+                  },
+                },
               }),
               expect.objectContaining({
                 monthlyAmount: "200.00",
@@ -326,6 +410,13 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
             lines: [
               expect.objectContaining({
                 monthlyAmount: "132.0600",
+                programQualityEnhancements: {
+                  hot_meal: {
+                    preEnhancementAmount: "100.00",
+                    amount: "32.06",
+                    appliedAt: "2025-04-01T00:00:00.000Z",
+                  },
+                },
               }),
             ],
           }),
@@ -334,6 +425,13 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
             lines: [
               expect.objectContaining({
                 monthlyAmount: "132.0600",
+                programQualityEnhancements: {
+                  hot_meal: {
+                    preEnhancementAmount: "100.00",
+                    amount: "32.06",
+                    appliedAt: "2025-04-01T00:00:00.000Z",
+                  },
+                },
               }),
             ],
           }),

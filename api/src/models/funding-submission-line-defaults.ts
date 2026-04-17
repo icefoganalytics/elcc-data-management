@@ -4,6 +4,10 @@ export enum FundingSubmissionLineImmutableSectionNames {
   QUALITY_ENHANCEMENT_PROGRAM = "Quality Enhancement Program",
 }
 
+export enum FundingSubmissionLineEnhancementTypes {
+  HOT_MEAL = "hot_meal",
+}
+
 export type FundingSubmissionLineDefault = Pick<
   FundingSubmissionLine,
   "sectionName" | "lineName" | "fromAge" | "toAge" | "monthlyAmount"

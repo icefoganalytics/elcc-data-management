@@ -1,7 +1,7 @@
 import { Op } from "@sequelize/core"
 import Big from "big.js"
 import { DateTime } from "luxon"
-import { isEmpty } from "lodash"
+import { has, isEmpty } from "lodash"
 
 import {
   Centre,
@@ -55,7 +55,7 @@ export class ApplyHotMealEnhancementService extends BaseService {
       async (fundingSubmissionLineJson) => {
         const { lines } = fundingSubmissionLineJson
 
-        lines.map((line) => {
+        const newLines = lines.map((line) => {
           const { sectionName } = line
           if (
             sectionName !== FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM
@@ -63,29 +63,44 @@ export class ApplyHotMealEnhancementService extends BaseService {
             return line
           }
 
-          const { monthlyAmount: originalMonthlyAmount } = line
-          const monthlyAmount = this.calculateMonthlyAmountWithEnhancement(
-            originalMonthlyAmount,
+          const programQualityEnhancements = line.programQualityEnhancements ?? {}
+          if (has(programQualityEnhancements, FundingSubmissionLine.EnhancementTypes.HOT_MEAL)) {
+            return line
+          }
+
+          const preEnhancementAmount = line.monthlyAmount
+          programQualityEnhancements[FundingSubmissionLine.EnhancementTypes.HOT_MEAL] = {
+            preEnhancementAmount,
+            amount: hotMealIncrementAmount,
+            appliedAt: DateTime.utc().toISO(),
+          }
+
+          const monthlyAmount = this.calculateMonthlyAmountFromEnhancements(
+            preEnhancementAmount,
             hotMealIncrementAmount
           )
-          line.monthlyAmount = monthlyAmount
-          return line
+
+          return {
+            ...line,
+            monthlyAmount,
+            programQualityEnhancements,
+          }
         })
 
         await fundingSubmissionLineJson.update({
-          lines,
+          lines: newLines,
         })
       }
     )
   }
 
-  private calculateMonthlyAmountWithEnhancement(
-    monthlyAmount: string,
+  private calculateMonthlyAmountFromEnhancements(
+    preEnhancementAmount: string,
     hotMealIncrementAmount: string
   ): string {
-    const monthlyAmountAsBig = Big(monthlyAmount)
+    const preEnhancementAmountAsBig = Big(preEnhancementAmount)
     const hotMealIncrementAsBig = Big(hotMealIncrementAmount)
-    const enhancedAmountAsBig = monthlyAmountAsBig.plus(hotMealIncrementAsBig)
+    const enhancedAmountAsBig = preEnhancementAmountAsBig.plus(hotMealIncrementAsBig)
 
     return enhancedAmountAsBig.toFixed(4)
   }
