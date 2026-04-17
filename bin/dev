@@ -119,7 +119,9 @@ class DevHelper
 
   def test_api(*args, **kwargs)
     reformat_project_relative_path_filter_for_vitest!(args, "api/")
-    run(*%w[test_api npm run test], *args, **kwargs)
+    extra =
+      args.delete("--skip-setup") ? %w[-e VITEST_SKIP_GLOBAL_SETUP=true] : []
+    run(*extra, *%w[test_api npm run test], *args, **kwargs)
   end
 
   def test_web(*args, **kwargs)
