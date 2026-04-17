@@ -19,6 +19,9 @@
     <template #item.subsidyRate="{ item }">
       {{ Big(item.subsidyRate).mul(100).toFixed(0) }} cents / $
     </template>
+    <template #item.hotMealIncrementAmount="{ item }">
+      Fixed at {{ formatMoney(item.hotMealIncrementAmount) }}
+    </template>
     <template #item.createdAt="{ item }">
       {{ formatDate(item.createdAt) }}
     </template>
@@ -55,7 +58,7 @@ import { useRouter } from "vue-router"
 import { startCase } from "lodash"
 import Big from "big.js"
 
-import { formatDate } from "@/utils/formatters"
+import { formatDate, formatMoney } from "@/utils/formatters"
 import { integerTransformer } from "@/utils/use-route-query-transformers"
 
 import useVuetifySortByToSafeRouteQuery from "@/use/vuetify/use-vuetify-sort-by-to-safe-route-query"
@@ -89,6 +92,11 @@ const headers = computed(() => [
   {
     title: "Subsidy Rate",
     key: "subsidyRate",
+  },
+  {
+    title: "Hot Meal Increment Amount",
+    key: "hotMealIncrementAmount",
+    align: "center" as const,
   },
   {
     title: "Created At",

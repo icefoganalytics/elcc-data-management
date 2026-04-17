@@ -5,12 +5,19 @@ import BaseSerializer from "@/serializers/base-serializer"
 
 export type FundingRegionAsIndex = Pick<
   FundingRegion,
-  "id" | "region" | "subsidyRate" | "createdAt" | "updatedAt"
+  "id" | "region" | "subsidyRate" | "hotMealIncrementAmount" | "createdAt" | "updatedAt"
 >
 
 export class IndexSerializer extends BaseSerializer<FundingRegion> {
   perform(): FundingRegionAsIndex {
-    return pick(this.record, ["id", "region", "subsidyRate", "createdAt", "updatedAt"])
+    return pick(this.record, [
+      "id",
+      "region",
+      "subsidyRate",
+      "hotMealIncrementAmount",
+      "createdAt",
+      "updatedAt",
+    ])
   }
 }
 

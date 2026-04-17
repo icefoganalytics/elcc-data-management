@@ -28,7 +28,7 @@ export class FundingRegionPolicy extends PolicyFactory(FundingRegion) {
   }
 
   permittedAttributes(): Path[] {
-    return ["region", "subsidyRate"]
+    return ["region", "subsidyRate", "hotMealIncrementAmount"]
   }
 
   permittedAttributesForCreate(): Path[] {
