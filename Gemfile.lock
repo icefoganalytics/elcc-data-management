@@ -1,51 +1,12 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    activesupport (8.1.3)
-      base64
-      bigdecimal
-      concurrent-ruby (~> 1.0, >= 1.3.1)
-      connection_pool (>= 2.2.5)
-      drb
-      i18n (>= 1.6, < 2)
-      json
-      logger (>= 1.4.2)
-      minitest (>= 5.1)
-      securerandom (>= 0.3)
-      tzinfo (~> 2.0, >= 2.0.5)
-      uri (>= 0.13.1)
-    atlassian-jwt (0.2.1)
-      jwt (~> 2.1)
-    base64 (0.3.0)
-    bigdecimal (4.1.1)
-    concurrent-ruby (1.3.6)
-    connection_pool (3.0.2)
-    drb (2.2.3)
     haml (7.2.0)
       temple (>= 0.8.2)
       thor
       tilt
-    hashie (5.1.0)
-      logger
-    i18n (1.14.8)
-      concurrent-ruby (~> 1.0)
-    jira-ruby (2.3.0)
-      activesupport
-      atlassian-jwt
-      multipart-post
-      oauth (~> 0.5, >= 0.5.0)
-    json (2.19.3)
-    jwt (2.10.2)
-      base64
     language_server-protocol (3.17.0.5)
     logger (1.7.0)
-    minitest (6.0.4)
-      drb (~> 2.0)
-      prism (~> 1.5)
-    multipart-post (2.4.1)
-    oauth (0.6.2)
-      snaky_hash (~> 2.0)
-      version_gem (~> 1.1)
     prettier_print (1.2.1)
     prism (1.9.0)
     rbs (4.0.2)
@@ -56,10 +17,6 @@ GEM
       language_server-protocol (~> 3.17.0)
       prism (>= 1.2, < 2.0)
       rbs (>= 3, < 5)
-    securerandom (0.4.1)
-    snaky_hash (2.0.3)
-      hashie (>= 0.1.0, < 6)
-      version_gem (>= 1.1.8, < 3)
     syntax_tree (6.3.0)
       prettier_print (>= 1.2.0)
     syntax_tree-haml (4.0.3)
@@ -74,17 +31,12 @@ GEM
     thor (1.5.0)
     tilt (2.7.0)
     tsort (0.2.0)
-    tzinfo (2.0.6)
-      concurrent-ruby (~> 1.0)
-    uri (1.1.1)
-    version_gem (1.1.9)
 
 PLATFORMS
   ruby
   x86_64-linux
 
 DEPENDENCIES
-  jira-ruby (= 2.3.0)
   prettier_print (= 1.2.1)
   ruby-lsp (= 0.26.6)
   syntax_tree (= 6.3.0)
@@ -92,30 +44,13 @@ DEPENDENCIES
   syntax_tree-rbs (= 1.0.0)
 
 CHECKSUMS
-  activesupport (8.1.3) sha256=21a5e0dfbd4c3ddd9e1317ec6a4d782fa226e7867dc70b0743acda81a1dca20e
-  atlassian-jwt (0.2.1) sha256=2fd2d87418773f2e140c038cb22e049069708aff2bd0a423a7e1740574e97823
-  base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
-  bigdecimal (4.1.1) sha256=1c09efab961da45203c8316b0cdaec0ff391dfadb952dd459584b63ebf8054ca
-  concurrent-ruby (1.3.6) sha256=6b56837e1e7e5292f9864f34b69c5a2cbc75c0cf5338f1ce9903d10fa762d5ab
-  connection_pool (3.0.2) sha256=33fff5ba71a12d2aa26cb72b1db8bba2a1a01823559fb01d29eb74c286e62e0a
-  drb (2.2.3) sha256=0b00d6fdb50995fe4a45dea13663493c841112e4068656854646f418fda13373
   haml (7.2.0) sha256=87fd2b71f7feab1724337b090a7d767f5ab2d42f08c974f3ead673f18cfcd55a
-  hashie (5.1.0) sha256=c266471896f323c446ea8207f8ffac985d2718df0a0ba98651a3057096ca3870
-  i18n (1.14.8) sha256=285778639134865c5e0f6269e0b818256017e8cde89993fdfcbfb64d088824a5
-  jira-ruby (2.3.0) sha256=abf26e6bff4a8ea40bae06f7df6276a5776905c63fb2070934823ca54f62eb62
-  json (2.19.3) sha256=289b0bb53052a1fa8c34ab33cc750b659ba14a5c45f3fcf4b18762dc67c78646
-  jwt (2.10.2) sha256=31e1ee46f7359883d5e622446969fe9c118c3da87a0b1dca765ce269c3a0c4f4
   language_server-protocol (3.17.0.5) sha256=fd1e39a51a28bf3eec959379985a72e296e9f9acfce46f6a79d31ca8760803cc
   logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
-  minitest (6.0.4) sha256=df1304664589d40f46089247fdc451f866b0ce0d7cae1457a15fc1eb7d48dca1
-  multipart-post (2.4.1) sha256=9872d03a8e552020ca096adadbf5e3cb1cd1cdd6acd3c161136b8a5737cdb4a8
-  oauth (0.6.2) sha256=3d66b11ecb2c2d62fda5190e926e9fd2cd9e234ce148f6d8da6cc529cc5f1664
   prettier_print (1.2.1) sha256=a72838b5f23facff21f90a5423cdcdda19e4271092b41f4ea7f50b83929e6ff9
   prism (1.9.0) sha256=7b530c6a9f92c24300014919c9dcbc055bf4cdf51ec30aed099b06cd6674ef85
   rbs (4.0.2) sha256=af75671e66cd03434cc546622741ebf83f6197ec4328375805306330bf78ef25
   ruby-lsp (0.26.6) sha256=1f50b21cb300586d7742190fc8446c18387f488aa0e9d276cf2bc7f3684ccda2
-  securerandom (0.4.1) sha256=cc5193d414a4341b6e225f0cb4446aceca8e50d5e1888743fac16987638ea0b1
-  snaky_hash (2.0.3) sha256=25a3d299566e8153fb02fa23fd9a9358845950f7a523ddbbe1fa1e0d79a6d456
   syntax_tree (6.3.0) sha256=56e25a9692c798ec94c5442fe94c5e94af76bef91edc8bb02052cbdecf35f13d
   syntax_tree-haml (4.0.3) sha256=dcf676677dc28b0f4b908dd414c0e75721fbd6261a2d0f07b378246059196359
   syntax_tree-rbs (1.0.0) sha256=596728cb588a78a197f5b0c0d09e58a00bad1d9856dc3dfaa065199f521436bd
@@ -123,9 +58,6 @@ CHECKSUMS
   thor (1.5.0) sha256=e3a9e55fe857e44859ce104a84675ab6e8cd59c650a49106a05f55f136425e73
   tilt (2.7.0) sha256=0d5b9ba69f6a36490c64b0eee9f6e9aad517e20dcc848800a06eb116f08c6ab3
   tsort (0.2.0) sha256=9650a793f6859a43b6641671278f79cfead60ac714148aabe4e3f0060480089f
-  tzinfo (2.0.6) sha256=8daf828cc77bcf7d63b0e3bdb6caa47e2272dcfaf4fbfe46f8c3a9df087a829b
-  uri (1.1.1) sha256=379fa58d27ffb1387eaada68c749d1426738bd0f654d812fcc07e7568f5c57c6
-  version_gem (1.1.9) sha256=0c1a0962ae543c84a00889bb018d9f14d8f8af6029d26b295d98774e3d2eb9a4
 
 BUNDLED WITH
   4.0.3
