@@ -28,7 +28,7 @@ templates/
 ## Usage
 
 Templates are referenced by workflows. See:
-- [create-admin-ui](../workflows/create-admin-ui/) - Full CRUD admin interface
+- [create-admin-ui](../workflows/create-admin-ui.md) - Full CRUD admin interface
 
 Each template file contains:
 1. Location path for the new file

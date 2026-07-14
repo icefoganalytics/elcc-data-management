@@ -98,7 +98,7 @@ All commands are just strings joined together, so it's easy to add new commmands
 
 ### Boot the Application
 
-1. Create a `./api/.env.development` file with the following content:
+1. Create a `api/.env.development` file with the following content:
 
    ```bash
    VUE_APP_FRONTEND_URL=http://localhost:8080
@@ -193,7 +193,7 @@ This project is using [umzug](https://github.com/sequelize/umzug) instead of [se
 
 NOTE: while database table names use snake_case, sequelize models use camelCase to match the JS standard. This means that migrations need to either provide a "field" name for each column that is snake_case, or use snake_case for the column names.
 
-1. To create a new migration from the template [sample-migration](./api/src/db/template/sample-migration.ts) do:
+1. To create a new migration from the template [sample-migration](./api/src/db/templates/sample-migration.ts) do:
 
    ```bash
    dev migrate create -- --name create-users-table.ts
