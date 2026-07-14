@@ -63,13 +63,16 @@ export class ResourceName extends BaseModel<
   declare relatedModels: NonAttribute<RelatedModel[]>
 
   // Scopes
-  static scopes = {
-    active: {
+  static establishScopes() {
+    this.addSearchScope(["name"])
+
+    this.addScope("active", {
       where: {
         isActive: true,
       },
-    },
-    byName(name: string) {
+    })
+
+    this.addScope("byName", (name: string) => {
       return {
         where: {
           name: {
@@ -77,7 +80,7 @@ export class ResourceName extends BaseModel<
           },
         },
       }
-    },
+    })
   }
 
   // Getters
@@ -138,7 +141,7 @@ export class ResourceName extends BaseModel<
 - [ ] Proper DataTypes for all fields (DECIMAL for financial values)
 - [ ] Timestamps and paranoid mode inherited from BaseModel
 - [ ] Associations properly decorated with @HasMany/@BelongsTo
-- [ ] Scopes defined in static scopes object
+- [ ] Scopes defined in `static establishScopes()`
 - [ ] Getters for computed properties
 - [ ] Instance methods for business logic
 - [ ] Static methods for common queries
