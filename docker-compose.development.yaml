@@ -16,6 +16,7 @@ x-default-environment: &default-environment
 
 services:
   api:
+    image: "${COMPOSE_PROJECT_NAME:-elcc-data-management}-api"
     build:
       context: ./api
       dockerfile: development.Dockerfile
@@ -31,13 +32,43 @@ services:
     user: "${HOST_USER_ID:-0}:${HOST_GROUP_ID:-0}"
     volumes:
       - ./api:/usr/src/api
-      - /usr/src/api/node_modules
+      - api_node_modules:/usr/src/api/node_modules
       - ./.gitignore:/usr/src/.gitignore
       - ./.prettierrc.yaml:/usr/src/.prettierrc.yaml
     depends_on:
-      - db
+      db:
+        condition: service_started
+      api_dependencies:
+        condition: service_completed_successfully
+
+  api_dependencies:
+    image: "${COMPOSE_PROJECT_NAME:-elcc-data-management}-api"
+    user: root
+    environment:
+      HOST_GROUP_ID: "${HOST_GROUP_ID:-0}"
+      HOST_USER_ID: "${HOST_USER_ID:-0}"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        dependencies_changed=0
+        package_lock_hash="$$(sha256sum package-lock.json)"
+        installed_hash="$$(cat node_modules/.package-lock.sha256 2>/dev/null || true)"
+        if [ "$$package_lock_hash" != "$$installed_hash" ]; then
+          npm ci
+          printf '%s\n' "$$package_lock_hash" > node_modules/.package-lock.sha256
+          dependencies_changed=1
+        fi
+        expected_owner="$$HOST_USER_ID:$$HOST_GROUP_ID"
+        if [ "$$dependencies_changed" = 1 ] || [ "$$(stat -c '%u:%g' node_modules)" != "$$expected_owner" ]; then
+          chown -R "$$expected_owner" node_modules
+        fi
+    volumes:
+      - ./api:/usr/src/api
+      - api_node_modules:/usr/src/api/node_modules
 
   web:
+    image: "${COMPOSE_PROJECT_NAME:-elcc-data-management}-web"
     build:
       context: ./web
       dockerfile: development.Dockerfile
@@ -47,7 +78,7 @@ services:
     user: "${HOST_USER_ID:-0}:${HOST_GROUP_ID:-0}"
     volumes:
       - ./web:/usr/src/web
-      - /usr/src/web/node_modules
+      - web_node_modules:/usr/src/web/node_modules
       - ./.gitignore:/usr/src/.gitignore
       - ./.prettierrc.yaml:/usr/src/.prettierrc.yaml
     depends_on:
@@ -55,6 +86,34 @@ services:
         condition: service_started
       api_wait:
         condition: service_completed_successfully
+      web_dependencies:
+        condition: service_completed_successfully
+
+  web_dependencies:
+    image: "${COMPOSE_PROJECT_NAME:-elcc-data-management}-web"
+    user: root
+    environment:
+      HOST_GROUP_ID: "${HOST_GROUP_ID:-0}"
+      HOST_USER_ID: "${HOST_USER_ID:-0}"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        dependencies_changed=0
+        package_lock_hash="$$(sha256sum package-lock.json)"
+        installed_hash="$$(cat node_modules/.package-lock.sha256 2>/dev/null || true)"
+        if [ "$$package_lock_hash" != "$$installed_hash" ]; then
+          npm ci
+          printf '%s\n' "$$package_lock_hash" > node_modules/.package-lock.sha256
+          dependencies_changed=1
+        fi
+        expected_owner="$$HOST_USER_ID:$$HOST_GROUP_ID"
+        if [ "$$dependencies_changed" = 1 ] || [ "$$(stat -c '%u:%g' node_modules)" != "$$expected_owner" ]; then
+          chown -R "$$expected_owner" node_modules
+        fi
+    volumes:
+      - ./web:/usr/src/web
+      - web_node_modules:/usr/src/web/node_modules
 
   test_api:
     build:
@@ -123,4 +182,6 @@ services:
     restart: "no"
 
 volumes:
+  api_node_modules:
   db_data:
+  web_node_modules:
