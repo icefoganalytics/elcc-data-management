@@ -132,7 +132,11 @@ All commands are just strings joined together, so it's easy to add new commmands
    `issue-112-concurrent-local-development` is available at
    http://issue-112-concurrent-local-development.elcc-data-management.localhost.
 
-3. Connect a SQL Server client to `db.elcc-data-management.localhost` on port `1433`.
+3. Connect a SQL Server client on port `1433` using the hostname for the current checkout:
+   - Base checkout: `db.elcc-data-management.localhost`
+   - `issue-112-concurrent-local-development` worktree:
+     `db.issue-112-concurrent-local-development.elcc-data-management.localhost`
+
    Enable encryption and trust the server certificate.
 
 4. Run `dev down` to stop this checkout's services. The gateway stays running while other
