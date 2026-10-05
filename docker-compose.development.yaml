@@ -17,6 +17,7 @@ x-default-environment: &default-environment
 services:
   api:
     image: "${COMPOSE_PROJECT_NAME:-elcc-data-management}-api"
+    pull_policy: never
     build:
       context: ./api
       dockerfile: development.Dockerfile
@@ -70,6 +71,7 @@ services:
 
   web:
     image: "${COMPOSE_PROJECT_NAME:-elcc-data-management}-web"
+    pull_policy: never
     build:
       context: ./web
       dockerfile: development.Dockerfile
