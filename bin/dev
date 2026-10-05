@@ -2,6 +2,8 @@
 
 require "bundler/setup"
 require "local_development_gateway"
+
+require "fileutils"
 require "rdoc"
 require "shellwords"
 
@@ -58,6 +60,8 @@ class DevHelper
   end
 
   def up(*args, **kwargs)
+    prepare_dependency_mounts
+
     LocalDevelopmentGateway.with_running do
       OpenInEditorBridge.with_running do
         compose(
@@ -354,6 +358,14 @@ class DevHelper
 
   def project_root
     @project_root ||= File.absolute_path("#{__dir__}/..")
+  end
+
+  def prepare_dependency_mounts
+    api_node_modules_path = File.join(project_root, "api", "node_modules")
+    web_node_modules_path = File.join(project_root, "web", "node_modules")
+
+    FileUtils.mkdir_p(api_node_modules_path)
+    FileUtils.mkdir_p(web_node_modules_path)
   end
 
   def dynamic_environment_variables
