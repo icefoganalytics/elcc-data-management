@@ -22,6 +22,7 @@ export default defineConfig({
   build: {
     outDir: "./dist",
   },
+  cacheDir: "/tmp/vite",
   define: { "process.env": {} },
   resolve: {
     alias: {
