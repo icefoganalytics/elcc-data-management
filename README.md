@@ -82,9 +82,15 @@ All commands are just strings joined together, so it's easy to add new commmands
    asdf reshim ruby
    ```
 
-   You will now be able to run the `./bin/dev` command.
+3. Install the Ruby dependencies:
 
-3. (optional) Install [direnv](https://direnv.net/) and create an `.envrc` with
+   ```bash
+   bundle install
+   ```
+
+   You can now run the `./bin/dev` command.
+
+4. (optional) Install [direnv](https://direnv.net/) and create an `.envrc` with
 
    ```bash
     #!/usr/bin/env bash
@@ -94,14 +100,14 @@ All commands are just strings joined together, so it's easy to add new commmands
 
    and then run `direnv allow`.
 
-   You will now be able to do `dev xxx` instead ov `./bin/dev xxx`.
+   You can now run `dev xxx` instead of `./bin/dev xxx`.
 
 ### Boot the Application
 
 1. Create a `./api/.env.development` file with the following content:
 
    ```bash
-   VUE_APP_FRONTEND_URL=http://localhost:8080
+   VUE_APP_FRONTEND_URL=http://elcc-data-management.localhost
    VUE_APP_AUTH_DOMAIN=https://dev-0tc6bn14.eu.auth0.com
    VUE_APP_AUTH_CLIENTID=9LYlWVby1DLUu7SDUiCcvorVXqAlCMYs
    VUE_APP_AUTH_AUDIENCE=testing
@@ -112,19 +118,28 @@ All commands are just strings joined together, so it's easy to add new commmands
    APPLICATION_NAME=ELCC Data Management
    ```
 
-2. Boot the api, web, and database services, and run the migrations and seeds using
+2. Boot the API, web, and database services, and run migrations and seeds:
 
    ```bash
    dev up --build
-
-   # or
-
-   docker compose -f docker-compose.development.yaml up --remove-orphans --build
    ```
 
-   > You only need the --build option if it's your first time building the app, or if you are modifying the the Docker files.
+   The command starts or reuses the shared loopback gateway. The base checkout is available at
+   http://elcc-data-management.localhost and its API at
+   http://api.elcc-data-management.localhost.
 
-3. The front-end is viewable at http://localhost:8080.
+   A separately named worktree has its own hostname. For example, a checkout named
+   `issue-112-concurrent-local-development` is available at
+   http://issue-112-concurrent-local-development.elcc-data-management.localhost.
+
+3. Connect a SQL Server client to `db.elcc-data-management.localhost` on port `1433`.
+   Enable encryption and trust the server certificate.
+
+4. Run `dev down` to stop this checkout's services. The gateway stays running while other
+   projects use it.
+
+> The development Auth0 client must allow `http://*.elcc-data-management.localhost` as a
+> callback URL, logout URL, and web origin before sign-in can succeed.
 
 > NOTE: make sure you delete the .env file before runing a development setup again as it is auto-loaded by docker compose.
 

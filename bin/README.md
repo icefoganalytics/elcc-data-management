@@ -32,6 +32,10 @@ dev api npm install lodash  # Run npm in API container
 dev web npm install vue     # Run npm in web container
 ```
 
+`dev up` starts or reuses the shared local gateway. The base checkout is available at
+http://elcc-data-management.localhost; named worktrees receive their own
+`<worktree>.elcc-data-management.localhost` hostname.
+
 For example, you can run a sql script via
 
 ```bash
