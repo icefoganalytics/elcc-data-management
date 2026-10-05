@@ -43,6 +43,7 @@ services:
 
   api_dependencies:
     image: "${COMPOSE_PROJECT_NAME:-elcc-data-management}-api"
+    pull_policy: never
     user: root
     environment:
       HOST_GROUP_ID: "${HOST_GROUP_ID:-0}"
@@ -91,6 +92,7 @@ services:
 
   web_dependencies:
     image: "${COMPOSE_PROJECT_NAME:-elcc-data-management}-web"
+    pull_policy: never
     user: root
     environment:
       HOST_GROUP_ID: "${HOST_GROUP_ID:-0}"
