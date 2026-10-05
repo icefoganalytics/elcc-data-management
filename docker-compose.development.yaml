@@ -31,6 +31,7 @@ services:
     user: "${HOST_USER_ID:-0}:${HOST_GROUP_ID:-0}"
     volumes:
       - ./api:/usr/src/api
+      - /usr/src/api/node_modules
       - ./.gitignore:/usr/src/.gitignore
       - ./.prettierrc.yaml:/usr/src/.prettierrc.yaml
     depends_on:
@@ -43,8 +44,10 @@ services:
     environment:
       <<: *default-environment
       VITE_API_BASE_URL: "http://api.${GATEWAY_HOSTNAME:-elcc-data-management.localhost}"
+    user: "${HOST_USER_ID:-0}:${HOST_GROUP_ID:-0}"
     volumes:
       - ./web:/usr/src/web
+      - /usr/src/web/node_modules
       - ./.gitignore:/usr/src/.gitignore
       - ./.prettierrc.yaml:/usr/src/.prettierrc.yaml
     depends_on:
@@ -69,6 +72,7 @@ services:
     tty: true
     volumes:
       - ./api:/usr/src/api
+      - /usr/src/api/node_modules
     depends_on:
       - db
 
@@ -83,6 +87,7 @@ services:
     tty: true
     volumes:
       - ./web:/usr/src/web
+      - /usr/src/web/node_modules
 
   db:
     image: mcr.microsoft.com/mssql/server:2019-CU28-ubuntu-20.04
