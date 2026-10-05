@@ -80,12 +80,6 @@ Common entry points:
 ./bin/dev web npm run check-types
 ```
 
-Direct docker compose remains available:
-
-```bash
-docker compose -f docker-compose.development.yaml up --remove-orphans --build
-```
-
 ### Project Structure
 
 ```text
