@@ -61,7 +61,7 @@ class DevHelper
     LocalDevelopmentGateway.with_running do
       OpenInEditorBridge.with_running do
         compose(
-          *%w[up --remove-orphans --force-recreate],
+          *%w[up --remove-orphans --force-recreate --renew-anon-volumes],
           *args,
           execution_mode: WAIT_FOR_PROCESS,
           gateway: true,
