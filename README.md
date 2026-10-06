@@ -118,7 +118,14 @@ All commands are just strings joined together, so it's easy to add new commmands
    APPLICATION_NAME=ELCC Data Management
    ```
 
-2. Boot the API, web, and database services, and run migrations and seeds:
+2. In each new checkout, install the ignored source-bound dependencies before starting services:
+
+   ```bash
+   dev api npm clean-install
+   dev web npm clean-install
+   ```
+
+3. Boot the API, web, and database services, and run migrations and seeds:
 
    ```bash
    dev up --build
@@ -132,14 +139,14 @@ All commands are just strings joined together, so it's easy to add new commmands
    `issue-112-concurrent-local-development` is available at
    http://issue-112-concurrent-local-development.elcc-data-management.localhost.
 
-3. Connect a SQL Server client on port `1433` using the hostname for the current checkout:
+4. Connect a SQL Server client on port `1433` using the hostname for the current checkout:
    - Base checkout: `db.elcc-data-management.localhost`
    - `issue-112-concurrent-local-development` worktree:
      `db.issue-112-concurrent-local-development.elcc-data-management.localhost`
 
    Enable encryption and trust the server certificate.
 
-4. Run `dev down` to stop this checkout's services. The gateway stays running while other
+5. Run `dev down` to stop this checkout's services. The gateway stays running while other
    projects use it.
 
 > The development Auth0 client must allow `http://*.elcc-data-management.localhost` as a

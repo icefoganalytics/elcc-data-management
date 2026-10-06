@@ -36,6 +36,13 @@ dev web npm install vue     # Run npm in web container
 http://elcc-data-management.localhost; named worktrees receive their own
 `<worktree>.elcc-data-management.localhost` hostname.
 
+In each new checkout, initialize the ignored source-bound dependencies before the first `dev up`:
+
+```bash
+dev api npm clean-install
+dev web npm clean-install
+```
+
 For example, you can run a sql script via
 
 ```bash
