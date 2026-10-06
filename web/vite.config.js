@@ -34,7 +34,7 @@ export default defineConfig({
   server: {
     port: 8080,
     proxy: {
-      // Forward editor-open requests to a host-side bridge so Windsurf launches on the host.
+      // Forward editor-open requests to a host-side bridge so Devin Desktop launches on the host.
       "/__open-in-editor": {
         target: "http://host.docker.internal:3333",
       },
