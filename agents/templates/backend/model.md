@@ -9,22 +9,18 @@ import {
   DataTypes,
   Op,
   sql,
+  where,
   type CreationOptional,
   type InferAttributes,
   type InferCreationAttributes,
-  type NonAttribute,
 } from "@sequelize/core"
 import {
   Attribute,
   AutoIncrement,
   Default,
-  HasMany,
-  Index,
   NotNull,
   PrimaryKey,
 } from "@sequelize/core/decorators-legacy"
-
-import { arrayWrap } from "@/utils/array-wrap"
 
 import BaseModel from "@/models/base-model"
 
@@ -59,25 +55,25 @@ export class ResourceName extends BaseModel<
   declare deletedAt: CreationOptional<Date>
 
   // Associations
-  @HasMany(() => RelatedModel, "resourceNameId")
-  declare relatedModels: NonAttribute<RelatedModel[]>
+  // Add relationship decorators and declarations for this model.
 
   // Scopes
-  static scopes = {
-    active: {
+  static establishScopes() {
+    this.addSearchScope(["name"])
+
+    this.addScope("active", {
       where: {
         isActive: true,
       },
-    },
-    byName(name: string) {
+    })
+
+    this.addScope("byName", (name: string) => {
+      const namePattern = `%${name}%`
+
       return {
-        where: {
-          name: {
-            [Op.iLike]: `%${name}%`,
-          },
-        },
+        where: where(sql.fn("LOWER", sql.attribute("name")), Op.like, namePattern),
       }
-    },
+    })
   }
 
   // Getters
@@ -103,32 +99,36 @@ export class ResourceName extends BaseModel<
       },
     })
   }
-
-  static async findWithRelated(id: number): Promise<ResourceName | null> {
-    return this.findByPk(id, {
-      include: [
-        {
-          association: "relatedModels",
-        },
-      ],
-    })
-  }
 }
+
+export default ResourceName
 ```
 
 ## Integration
 
-1. Add to `api/src/models/index.ts`:
+1. Import the model in `api/src/models/index.ts`:
+
    ```typescript
-   export { ResourceName } from "./resource-name"
+   import ResourceName from "@/models/resource-name"
    ```
 
-2. Create migration:
+2. Add `ResourceName` to the existing `db.addModels([...])` list.
+
+3. Call `ResourceName.establishScopes()` after that list.
+
+4. Export the model:
+
+   ```typescript
+   export { ResourceName }
+   ```
+
+5. Create migration:
+
    ```bash
-   dev migrate make create-resource-names-table
+   dev migrate create -- --name create-resource-names-table.ts
    ```
 
-3. Add associations in related models.
+6. Add associations in related models.
 
 ## Verification Checklist
 
@@ -137,8 +137,8 @@ export class ResourceName extends BaseModel<
 - [ ] Optional fields use CreationOptional type
 - [ ] Proper DataTypes for all fields (DECIMAL for financial values)
 - [ ] Timestamps and paranoid mode inherited from BaseModel
-- [ ] Associations properly decorated with @HasMany/@BelongsTo
-- [ ] Scopes defined in static scopes object
+- [ ] Required associations use appropriate decorators
+- [ ] Scopes defined in `static establishScopes()`
 - [ ] Getters for computed properties
 - [ ] Instance methods for business logic
 - [ ] Static methods for common queries
