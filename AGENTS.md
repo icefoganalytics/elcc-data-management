@@ -80,6 +80,24 @@ Common entry points:
 ./bin/dev web npm run check-types
 ```
 
+Direct Docker Compose remains available from the base checkout on Linux:
+
+```bash
+bundle exec local-development-gateway up && \
+  HOST_USER_ID="$(id -u)" \
+  HOST_GROUP_ID="$(id -g)" \
+  COMPOSE_PROJECT_NAME=elcc-data-management \
+  GATEWAY_HOSTNAME=elcc-data-management.localhost \
+  docker compose \
+    -f docker-compose.development.yaml \
+    -f docker-compose.development.linux.yml \
+    -f docker-compose.development.gateway.yml \
+    up --remove-orphans --force-recreate --renew-anon-volumes --build
+```
+
+Use `./bin/dev up --build` for a worktree: it derives that worktree's Compose project name and
+gateway hostname automatically.
+
 ### Project Structure
 
 ```text
