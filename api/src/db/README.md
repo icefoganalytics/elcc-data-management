@@ -4,7 +4,7 @@ Umzug for migrations. Sequelize for ORM. Database: snake_case. Models: camelCase
 
 ## Migration Rules
 
-- **ALWAYS use `dev migrate make <description>`** — never manually generate timestamps.
+- **ALWAYS use `dev migrate create -- --name <description>.ts`** — never manually generate timestamps.
 - Keep migrations clean — no extraneous comments.
 - Find system user by email (`system.user@yukon.ca`), not `auth0Subject`.
 
