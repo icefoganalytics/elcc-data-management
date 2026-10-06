@@ -4,7 +4,7 @@ WORKDIR /usr/src/web
 
 COPY package*.json ./
 
-RUN npm install && sha256sum package-lock.json > node_modules/.package-lock.sha256
+RUN npm clean-install && sha256sum package-lock.json > node_modules/.package-lock.sha256
 
 COPY . .
 
