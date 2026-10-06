@@ -25,7 +25,7 @@ When the frontend runs in Docker, Vue Devtools cannot launch your host editor di
 
 - Proxying Vite `"/__open-in-editor"` requests from the container to a small host-side bridge.
 - Translating container paths like `/usr/src/web/...` back to your host checkout path.
-- Launching `windsurf --goto ...` on the host by default.
+- Launching `devin-desktop --goto ...` on the host by default.
 
 If you use the repo-level `dev` wrapper, this is automatic:
 
@@ -34,4 +34,4 @@ If you use the repo-level `dev` wrapper, this is automatic:
 
 If you run Docker Compose manually on Linux, include `docker-compose.development.linux.yml` so the container can resolve `host.docker.internal`.
 
-The bridge prefers `OPEN_IN_EDITOR_COMMAND`, then `EDITOR`, and falls back to `windsurf`.
+The bridge prefers `OPEN_IN_EDITOR_COMMAND`, then `EDITOR`, and falls back to `devin-desktop`.
