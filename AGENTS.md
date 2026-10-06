@@ -80,11 +80,27 @@ Common entry points:
 ./bin/dev web npm run check-types
 ```
 
-Direct docker compose remains available:
+Direct Docker Compose remains available from the base checkout on Linux:
 
 ```bash
-docker compose -f docker-compose.development.yaml up --remove-orphans --build
+bundle exec local-development-gateway up && \
+  bin/open-in-editor-bridge.rb --ensure-running && \
+  HOST_USER_ID="$(id -u)" \
+  HOST_GROUP_ID="$(id -g)" \
+  COMPOSE_PROJECT_NAME=elcc-data-management \
+  GATEWAY_HOSTNAME=elcc-data-management.localhost \
+  docker compose \
+    -f docker-compose.development.yaml \
+    -f docker-compose.development.linux.yml \
+    -f docker-compose.development.gateway.yml \
+    up --remove-orphans --force-recreate --renew-anon-volumes --build
 ```
+
+After Docker Compose exits, stop the bridge with `bin/open-in-editor-bridge.rb --shutdown`. Stop the
+shared gateway only when no participating local project needs it.
+
+Use `./bin/dev up --build` for a worktree: it derives that worktree's Compose project name and
+gateway hostname automatically.
 
 ### Project Structure
 

@@ -18,6 +18,8 @@ Changes since v2025.11.24.1 that will be included in the next release.
 ### Changed
 
 - Improved accuracy of funding reconciliation and payroll adjustment totals, especially for wage enhancements and employee benefits, by using more precise financial calculations.
+- Development stacks now use the shared local gateway, so ELCC can run beside other projects
+  and independently named worktrees.
 - More reliable fiscal period creation and seeding so that fiscal periods align with the correct funding period and fiscal year.
 - Increased data validation on funding submission line json records to prevent invalid data from entering reporting and reconciliation flows.
 - Various developer experience improvements for funding reconciliation services, seeds, and documentation.

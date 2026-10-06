@@ -28,7 +28,7 @@ class OpenInEditorBridge
   HOST_WEB_ROOT =
     ENV.fetch("OPEN_IN_EDITOR_HOST_WEB_ROOT", File.join(PROJECT_ROOT, "web"))
   EDITOR_COMMAND =
-    ENV.fetch("OPEN_IN_EDITOR_COMMAND", ENV.fetch("EDITOR", "windsurf"))
+    ENV.fetch("OPEN_IN_EDITOR_COMMAND", ENV.fetch("EDITOR", "devin-desktop"))
 
   def self.call(*args)
     new.call(*args)

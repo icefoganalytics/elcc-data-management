@@ -11,9 +11,13 @@ x-default-environment: &default-environment
   DB_HEALTH_CHECK_TIMEOUT_SECONDS: 10
   DB_HEALTH_CHECK_RETRIES: 3
   DB_HEALTH_CHECK_START_PERIOD_SECONDS: 5
+  GATEWAY_HOSTNAME: "${GATEWAY_HOSTNAME:-elcc-data-management.localhost}"
+  VUE_APP_FRONTEND_URL: "http://${GATEWAY_HOSTNAME:-elcc-data-management.localhost}"
 
 services:
   api:
+    image: "${COMPOSE_PROJECT_NAME:-elcc-data-management}-api"
+    pull_policy: never
     build:
       context: ./api
       dockerfile: development.Dockerfile
@@ -27,24 +31,24 @@ services:
     init: true
     # stdin_open: true # equivalent of docker exec -i
     user: "${HOST_USER_ID:-0}:${HOST_GROUP_ID:-0}"
-    ports:
-      - "3000:3000"
     volumes:
       - ./api:/usr/src/api
       - ./.gitignore:/usr/src/.gitignore
       - ./.prettierrc.yaml:/usr/src/.prettierrc.yaml
     depends_on:
-      - db
+      db:
+        condition: service_started
 
   web:
+    image: "${COMPOSE_PROJECT_NAME:-elcc-data-management}-web"
+    pull_policy: never
     build:
       context: ./web
       dockerfile: development.Dockerfile
     environment:
       <<: *default-environment
-      VITE_API_BASE_URL: "http://localhost:3000"
-    ports:
-      - "8080:8080"
+      VITE_API_BASE_URL: "http://api.${GATEWAY_HOSTNAME:-elcc-data-management.localhost}"
+    user: "${HOST_USER_ID:-0}:${HOST_GROUP_ID:-0}"
     volumes:
       - ./web:/usr/src/web
       - ./.gitignore:/usr/src/.gitignore
@@ -71,6 +75,7 @@ services:
     tty: true
     volumes:
       - ./api:/usr/src/api
+      - /usr/src/api/node_modules
     depends_on:
       - db
 
@@ -85,6 +90,7 @@ services:
     tty: true
     volumes:
       - ./web:/usr/src/web
+      - /usr/src/web/node_modules
 
   db:
     image: mcr.microsoft.com/mssql/server:2019-CU28-ubuntu-20.04
@@ -94,8 +100,6 @@ services:
       DB_HOST: "localhost"
       MSSQL_SA_PASSWORD: *default-db-password
       ACCEPT_EULA: "Y"
-    ports:
-      - "1433:1433"
     volumes:
       - db_data:/var/opt/mssql/data
 

@@ -1,7 +1,10 @@
 #!/usr/bin/env ruby
 
-require "shellwords"
+require "bundler/setup"
+require "local_development_gateway"
+
 require "rdoc"
+require "shellwords"
 
 require_relative "./jira_api"
 require_relative "./open-in-editor-bridge"
@@ -56,24 +59,29 @@ class DevHelper
   end
 
   def up(*args, **kwargs)
-    OpenInEditorBridge.with_running do
-      compose(
-        *%w[up --remove-orphans --force-recreate],
-        *args,
-        execution_mode: WAIT_FOR_PROCESS,
-        **kwargs
-      )
+    LocalDevelopmentGateway.with_running do
+      OpenInEditorBridge.with_running do
+        compose(
+          *%w[up --remove-orphans --force-recreate --renew-anon-volumes],
+          *args,
+          execution_mode: WAIT_FOR_PROCESS,
+          gateway: true,
+          **kwargs
+        )
+      end
     end
   end
 
   def down(*args, **kwargs)
-    OpenInEditorBridge.with_running(ensure_running: false) do
-      compose(
-        *%w[down --remove-orphans],
-        *args,
-        execution_mode: WAIT_FOR_PROCESS,
-        **kwargs
-      )
+    LocalDevelopmentGateway.with_running(ensure_running: false) do
+      OpenInEditorBridge.with_running(ensure_running: false) do
+        compose(
+          *%w[down --remove-orphans],
+          *args,
+          execution_mode: WAIT_FOR_PROCESS,
+          **kwargs
+        )
+      end
     end
   end
 
@@ -82,7 +90,9 @@ class DevHelper
   end
 
   def run(*args, **kwargs)
-    compose(*%w[run --rm], *args, **kwargs)
+    LocalDevelopmentGateway.with_running do
+      compose(*%w[run --rm], *args, gateway: true, **kwargs)
+    end
   end
 
   # Custom helpers
@@ -310,6 +320,7 @@ class DevHelper
 
   def compose_command(*args, **kwargs)
     environment = kwargs.delete(:environment) { "development" }
+    gateway = kwargs.delete(:gateway)
     pipe_input = kwargs.delete(:pipe_input)
 
     go_to_project_root = "cd #{project_root}"
@@ -322,7 +333,9 @@ class DevHelper
         compose_file_args << "-f #{linux_override}"
       end
     end
-
+    if gateway && environment == "development"
+      compose_file_args << "-f docker-compose.development.gateway.yml"
+    end
     bootstrap_docker =
       "docker compose #{compose_file_args.join(" ")} #{args.join(" ")}"
 
@@ -347,11 +360,29 @@ class DevHelper
   end
 
   def dynamic_environment_variables
+    variables = []
+
     if RUBY_PLATFORM =~ /linux/
-      %(HOST_USER_ID="#{user_id}" HOST_GROUP_ID="#{group_id}")
-    else
-      ""
+      variables << %(HOST_USER_ID="#{user_id}")
+      variables << %(HOST_GROUP_ID="#{group_id}")
     end
+
+    variables << %(COMPOSE_PROJECT_NAME="#{checkout_name}")
+    variables << %(GATEWAY_HOSTNAME="#{Shellwords.escape(gateway_hostname)}")
+    variables.join(" ")
+  end
+
+  def checkout_name
+    @checkout_name ||=
+      File.basename(project_root).downcase.gsub(/[^a-z0-9]+/, "-")
+  end
+
+  def gateway_hostname
+    if checkout_name == "elcc-data-management"
+      return "elcc-data-management.localhost"
+    end
+
+    "#{checkout_name}.elcc-data-management.localhost"
   end
 
   def user_id
