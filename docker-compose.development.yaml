@@ -33,31 +33,11 @@ services:
     user: "${HOST_USER_ID:-0}:${HOST_GROUP_ID:-0}"
     volumes:
       - ./api:/usr/src/api
-      - api_node_modules:/usr/src/api/node_modules
       - ./.gitignore:/usr/src/.gitignore
       - ./.prettierrc.yaml:/usr/src/.prettierrc.yaml
     depends_on:
       db:
         condition: service_started
-      api_dependencies:
-        condition: service_completed_successfully
-
-  api_dependencies:
-    image: "${COMPOSE_PROJECT_NAME:-elcc-data-management}-api"
-    pull_policy: never
-    user: root
-    environment:
-      HOST_GROUP_ID: "${HOST_GROUP_ID:-0}"
-      HOST_USER_ID: "${HOST_USER_ID:-0}"
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        set -e
-        npm clean-install
-        chown -R "$$HOST_USER_ID:$$HOST_GROUP_ID" node_modules
-    volumes:
-      - ./api:/usr/src/api
-      - api_node_modules:/usr/src/api/node_modules
 
   web:
     image: "${COMPOSE_PROJECT_NAME:-elcc-data-management}-web"
@@ -71,7 +51,6 @@ services:
     user: "${HOST_USER_ID:-0}:${HOST_GROUP_ID:-0}"
     volumes:
       - ./web:/usr/src/web
-      - web_node_modules:/usr/src/web/node_modules
       - ./.gitignore:/usr/src/.gitignore
       - ./.prettierrc.yaml:/usr/src/.prettierrc.yaml
     depends_on:
@@ -79,25 +58,6 @@ services:
         condition: service_started
       api_wait:
         condition: service_completed_successfully
-      web_dependencies:
-        condition: service_completed_successfully
-
-  web_dependencies:
-    image: "${COMPOSE_PROJECT_NAME:-elcc-data-management}-web"
-    pull_policy: never
-    user: root
-    environment:
-      HOST_GROUP_ID: "${HOST_GROUP_ID:-0}"
-      HOST_USER_ID: "${HOST_USER_ID:-0}"
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        set -e
-        npm clean-install
-        chown -R "$$HOST_USER_ID:$$HOST_GROUP_ID" node_modules
-    volumes:
-      - ./web:/usr/src/web
-      - web_node_modules:/usr/src/web/node_modules
 
   test_api:
     build:
@@ -166,6 +126,4 @@ services:
     restart: "no"
 
 volumes:
-  api_node_modules:
   db_data:
-  web_node_modules:
