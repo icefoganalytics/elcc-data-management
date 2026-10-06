@@ -90,7 +90,9 @@ class DevHelper
   end
 
   def run(*args, **kwargs)
-    compose(*%w[run --rm], *args, **kwargs)
+    LocalDevelopmentGateway.with_running do
+      compose(*%w[run --rm], *args, gateway: true, **kwargs)
+    end
   end
 
   # Custom helpers
