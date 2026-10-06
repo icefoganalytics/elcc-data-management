@@ -53,18 +53,8 @@ services:
     command:
       - |
         set -e
-        dependencies_changed=0
-        package_lock_hash="$$(sha256sum package-lock.json)"
-        installed_hash="$$(cat node_modules/.package-lock.sha256 2>/dev/null || true)"
-        if [ "$$package_lock_hash" != "$$installed_hash" ]; then
-          npm ci
-          printf '%s\n' "$$package_lock_hash" > node_modules/.package-lock.sha256
-          dependencies_changed=1
-        fi
-        expected_owner="$$HOST_USER_ID:$$HOST_GROUP_ID"
-        if [ "$$dependencies_changed" = 1 ] || [ "$$(stat -c '%u:%g' node_modules)" != "$$expected_owner" ]; then
-          chown -R "$$expected_owner" node_modules
-        fi
+        npm clean-install
+        chown -R "$$HOST_USER_ID:$$HOST_GROUP_ID" node_modules
     volumes:
       - ./api:/usr/src/api
       - api_node_modules:/usr/src/api/node_modules
@@ -103,18 +93,8 @@ services:
     command:
       - |
         set -e
-        dependencies_changed=0
-        package_lock_hash="$$(sha256sum package-lock.json)"
-        installed_hash="$$(cat node_modules/.package-lock.sha256 2>/dev/null || true)"
-        if [ "$$package_lock_hash" != "$$installed_hash" ]; then
-          npm ci
-          printf '%s\n' "$$package_lock_hash" > node_modules/.package-lock.sha256
-          dependencies_changed=1
-        fi
-        expected_owner="$$HOST_USER_ID:$$HOST_GROUP_ID"
-        if [ "$$dependencies_changed" = 1 ] || [ "$$(stat -c '%u:%g' node_modules)" != "$$expected_owner" ]; then
-          chown -R "$$expected_owner" node_modules
-        fi
+        npm clean-install
+        chown -R "$$HOST_USER_ID:$$HOST_GROUP_ID" node_modules
     volumes:
       - ./web:/usr/src/web
       - web_node_modules:/usr/src/web/node_modules
