@@ -84,6 +84,7 @@ Direct Docker Compose remains available from the base checkout on Linux:
 
 ```bash
 bundle exec local-development-gateway up && \
+  bin/open-in-editor-bridge.rb --ensure-running && \
   HOST_USER_ID="$(id -u)" \
   HOST_GROUP_ID="$(id -g)" \
   COMPOSE_PROJECT_NAME=elcc-data-management \
@@ -94,6 +95,9 @@ bundle exec local-development-gateway up && \
     -f docker-compose.development.gateway.yml \
     up --remove-orphans --force-recreate --renew-anon-volumes --build
 ```
+
+After Docker Compose exits, stop the bridge with `bin/open-in-editor-bridge.rb --shutdown`. Stop the
+shared gateway only when no participating local project needs it.
 
 Use `./bin/dev up --build` for a worktree: it derives that worktree's Compose project name and
 gateway hostname automatically.
