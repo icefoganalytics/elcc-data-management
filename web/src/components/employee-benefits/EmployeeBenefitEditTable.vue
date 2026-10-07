@@ -63,7 +63,8 @@
             aria-label="Cost Cap Percentage"
             color="primary"
             density="compact"
-            type="number"
+            type="text"
+            inputmode="decimal"
             variant="plain"
             hide-details
             @update:model-value="updateCostCapPercentage"
@@ -289,11 +290,10 @@ function updateCostCapPercentage(newValue: string | number) {
     return
   }
 
-  const newValueNumber = parseFloat(String(newValue))
-  if (isNaN(newValueNumber)) {
+  try {
+    employeeBenefit.value.costCapPercentage = Big(String(newValue)).div("100").toFixed(4)
+  } catch {
     employeeBenefit.value.costCapPercentage = "0"
-  } else {
-    employeeBenefit.value.costCapPercentage = Big(newValueNumber).div(100).toFixed(4)
   }
 }
 
@@ -367,17 +367,16 @@ function updateEmployeeBenefitCurrencyValue(
     | "employeeCostEstimated"
     | "employerCostActual"
     | "employerCostEstimated",
-  newValue: string | number | null
+  newValue: string | null
 ) {
   if (isNil(employeeBenefit.value)) {
     return
   }
 
-  if (["-", "", null].includes(newValue as string | null)) {
+  if (newValue === "-" || newValue === "" || newValue === null) {
     employeeBenefit.value[attribute] = "0"
   } else {
-    const newValueNumber = parseFloat(String(newValue))
-    employeeBenefit.value[attribute] = String(newValueNumber)
+    employeeBenefit.value[attribute] = newValue
   }
 }
 

@@ -1,112 +1,118 @@
 <template>
   <v-text-field
-    ref="inputRef"
-    :model-value="formattedValue"
+    :model-value="displayValue"
     :rules="transformedRules"
     type="text"
-    @focus="onFocus"
-    @blur="onBlur"
-    @keydown.escape="resetValue"
-    @keydown.enter="onEnter"
+    inputmode="decimal"
+    @update:model-value="updateInputValue"
+    @focus="startEditing"
+    @blur="commitInputValue"
+    @keydown.escape="resetInputValue"
+    @keydown.enter.prevent="commitInputValueWhileEditing"
   />
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from "vue"
-import { useCurrencyInput, type CurrencyInputOptions, CurrencyDisplay } from "vue-currency-input"
-import { isNil, isString } from "lodash"
+import Big from "big.js"
+import { isNil } from "lodash"
+import { computed, ref, watch } from "vue"
+
+import { formatMoney } from "@/utils/formatters"
 
 type ValidationRule = (value: unknown) => boolean | string
 
-const DEFAULT_OPTIONS = {
-  currency: "CAD",
-  locale: "en-CA",
-  currencyDisplay: CurrencyDisplay.symbol,
-  precision: 2,
-  // accountingSign: true,
-  hideCurrencySymbolOnFocus: true,
-}
-
 const props = withDefaults(
   defineProps<{
-    modelValue: number | string | null | undefined
-    options?: Partial<CurrencyInputOptions>
+    modelValue: string | null | undefined
     rules?: ValidationRule[]
   }>(),
   {
-    options: () => ({}),
     rules: () => [],
   }
 )
+const emit = defineEmits<{
+  "update:modelValue": [value: string]
+}>()
 
-const initialNumberValue = ref(props.modelValue)
-const emit = defineEmits(["update:modelValue"])
+const isEditing = ref(false)
+const inputValue = ref(props.modelValue ?? "")
 
-const { inputRef, numberValue, setValue, setOptions, formattedValue } = useCurrencyInput(
-  {
-    ...DEFAULT_OPTIONS,
-    ...props.options,
-  },
-  false
-)
-
-// NOTE: This is required to validate against numberValue instead of formattedValue
-// formatedValue includes currency symbol and thousand separators and is impractical to validate against.
 const transformedRules = computed(() =>
   props.rules.map((rule) => {
-    return () => rule(numberValue.value)
+    return () => rule(inputValue.value)
   })
 )
+
+const displayValue = computed(() => {
+  if (isEditing.value) {
+    return inputValue.value
+  }
+
+  if (isNil(props.modelValue) || props.modelValue === "") {
+    return ""
+  }
+
+  return formatMoney(props.modelValue)
+})
 
 watch(
   () => props.modelValue,
   (value) => {
-    if (isNil(value)) {
-      setValue(null)
-    } else if (isString(value)) {
-      const valueAsNumber = parseFloat(value)
-      setValue(valueAsNumber)
-    } else {
-      setValue(value)
+    if (isEditing.value) {
+      return
     }
+
+    inputValue.value = value ?? ""
   }
 )
 
-watch(
-  () => props.options,
-  (options) => {
-    setOptions({
-      ...DEFAULT_OPTIONS,
-      ...options,
-    })
-  }
-)
-
-function onFocus() {
-  initialNumberValue.value = numberValue.value
+function updateInputValue(value: string | null) {
+  inputValue.value = value ?? ""
 }
 
-async function onBlur() {
-  if (numberValue.value === null) {
-    resetValue()
-  } else {
-    emit("update:modelValue", numberValue.value)
+function startEditing() {
+  isEditing.value = true
+  inputValue.value = props.modelValue ?? ""
+}
+
+function commitInputValue() {
+  const decimalValue = normalizeInputValue()
+
+  if (decimalValue === undefined) {
+    return
+  }
+
+  isEditing.value = false
+  emit("update:modelValue", decimalValue)
+}
+
+function commitInputValueWhileEditing() {
+  const decimalValue = normalizeInputValue()
+
+  if (decimalValue === undefined) {
+    return
+  }
+
+  emit("update:modelValue", decimalValue)
+}
+
+function normalizeInputValue(): string | undefined {
+  if (inputValue.value === "") {
+    resetInputValue()
+    return
+  }
+
+  try {
+    const decimalValue = Big(inputValue.value).toFixed(4)
+
+    inputValue.value = decimalValue
+    return decimalValue
+  } catch {
+    resetInputValue()
   }
 }
 
-function onEnter() {
-  emit("update:modelValue", numberValue.value)
-}
-
-function resetValue() {
-  if (isNil(initialNumberValue.value)) {
-    setValue(null)
-  } else if (isString(initialNumberValue.value)) {
-    const valueAsNumber = parseFloat(initialNumberValue.value)
-    setValue(valueAsNumber)
-  } else {
-    setValue(initialNumberValue.value)
-  }
-  emit("update:modelValue", initialNumberValue.value)
+function resetInputValue() {
+  inputValue.value = props.modelValue ?? ""
 }
 </script>

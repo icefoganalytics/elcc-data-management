@@ -53,8 +53,8 @@
         <v-text-field
           v-model="fundingSubmissionLineAttributes.monthlyAmount"
           label="Monthly Amount *"
-          type="number"
-          step="0.01"
+          type="text"
+          inputmode="decimal"
           required
           :rules="[required, greaterThanOrEqualTo(0)]"
         />

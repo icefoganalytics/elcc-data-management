@@ -21,7 +21,7 @@ import EmployeeWageTier from "@/models/employee-wage-tier"
 
 // TODO: store this in the database, probably in the fiscal_periods table?
 // I think having it changeable on a monthly basis would be sufficient?
-export const EI_CPP_WCB_RATE = 0.14
+export const EI_CPP_WCB_RATE = "0.14"
 
 export class WageEnhancement extends BaseModel<
   InferAttributes<WageEnhancement>,
