@@ -10,7 +10,7 @@ const VTextFieldStub = defineComponent({
     modelValue: String,
     rules: Array,
   },
-  emits: ["update:modelValue", "focus", "blur", "keydown.enter", "keydown.escape"],
+  emits: ["update:modelValue", "focus", "blur", "keydown"],
   template: "<input />",
 })
 
@@ -124,14 +124,14 @@ describe("web/src/components/CurrencyInput.vue", () => {
       // Act
       await currencyInput.vm.$emit("focus")
       await currencyInput.vm.$emit("update:modelValue", "100")
-      await currencyInput.vm.$emit("keydown.enter")
+      await currencyInput.vm.$emit("keydown", new KeyboardEvent("keydown", { key: "Enter" }))
       await currencyInput.vm.$emit("update:modelValue", "100.0001")
 
       // Assert
       expect(currencyInput.props("modelValue")).toBe("100.0001")
     })
 
-    test("when cancelling with Escape, keeps the original decimal editable", async () => {
+    test("when cancelling with Escape, restores the original decimal then allows a new value", async () => {
       // Arrange
       const wrapper = mount(CurrencyInput, {
         props: {
@@ -148,11 +148,67 @@ describe("web/src/components/CurrencyInput.vue", () => {
       // Act
       await currencyInput.vm.$emit("focus")
       await currencyInput.vm.$emit("update:modelValue", "200")
-      await currencyInput.vm.$emit("keydown.escape")
+      await currencyInput.vm.$emit("keydown", new KeyboardEvent("keydown", { key: "Escape" }))
+      const inputValueAfterEscape = currencyInput.props("modelValue")
       await currencyInput.vm.$emit("update:modelValue", "100.0001")
+      await currencyInput.vm.$emit("blur")
 
       // Assert
-      expect(currencyInput.props("modelValue")).toBe("100.0001")
+      expect({
+        inputValueAfterEscape,
+        emitted: wrapper.emitted("update:modelValue"),
+      }).toEqual({
+        inputValueAfterEscape: "100.0000",
+        emitted: [["100.0001"]],
+      })
+    })
+
+    test("when committing with Enter then blurring, emits the decimal once", async () => {
+      // Arrange
+      const wrapper = mount(CurrencyInput, {
+        props: {
+          modelValue: "0.0000",
+        },
+        global: {
+          stubs: {
+            VTextField: VTextFieldStub,
+          },
+        },
+      })
+      const currencyInput = wrapper.findComponent(VTextFieldStub)
+
+      // Act
+      await currencyInput.vm.$emit("focus")
+      await currencyInput.vm.$emit("update:modelValue", "100")
+      await currencyInput.vm.$emit("keydown", new KeyboardEvent("keydown", { key: "Enter" }))
+      await currencyInput.vm.$emit("blur")
+
+      // Assert
+      expect(wrapper.emitted("update:modelValue")).toEqual([["100.0000"]])
+    })
+
+    test("when cancelling with Escape then blurring, does not emit", async () => {
+      // Arrange
+      const wrapper = mount(CurrencyInput, {
+        props: {
+          modelValue: "100.0000",
+        },
+        global: {
+          stubs: {
+            VTextField: VTextFieldStub,
+          },
+        },
+      })
+      const currencyInput = wrapper.findComponent(VTextFieldStub)
+
+      // Act
+      await currencyInput.vm.$emit("focus")
+      await currencyInput.vm.$emit("update:modelValue", "200")
+      await currencyInput.vm.$emit("keydown", new KeyboardEvent("keydown", { key: "Escape" }))
+      await currencyInput.vm.$emit("blur")
+
+      // Assert
+      expect(wrapper.emitted("update:modelValue")).toBeUndefined()
     })
   })
 })

@@ -35,6 +35,7 @@ const emit = defineEmits<{
 }>()
 
 const isEditing = ref(false)
+const shouldCommitOnBlur = ref(false)
 const inputValue = ref(props.modelValue ?? "")
 
 const transformedRules = computed(() =>
@@ -68,20 +69,30 @@ watch(
 
 function updateInputValue(value: string | null) {
   inputValue.value = value ?? ""
+  shouldCommitOnBlur.value = true
 }
 
 function startEditing() {
   isEditing.value = true
+  shouldCommitOnBlur.value = true
   inputValue.value = props.modelValue ?? ""
 }
 
 function commitInputValue() {
-  const decimalValue = normalizeInputValue()
-
-  if (decimalValue === undefined) {
+  if (!shouldCommitOnBlur.value) {
+    isEditing.value = false
     return
   }
 
+  const decimalValue = normalizeInputValue()
+
+  if (decimalValue === undefined) {
+    resetInputValue()
+    isEditing.value = false
+    return
+  }
+
+  shouldCommitOnBlur.value = false
   isEditing.value = false
   emit("update:modelValue", decimalValue)
 }
@@ -90,29 +101,29 @@ function commitInputValueWhileEditing() {
   const decimalValue = normalizeInputValue()
 
   if (decimalValue === undefined) {
+    resetInputValue()
     return
   }
 
+  inputValue.value = decimalValue
+  shouldCommitOnBlur.value = false
   emit("update:modelValue", decimalValue)
 }
 
 function normalizeInputValue(): string | undefined {
   if (inputValue.value === "") {
-    resetInputValue()
     return
   }
 
   try {
-    const decimalValue = Big(inputValue.value).toFixed(4)
-
-    inputValue.value = decimalValue
-    return decimalValue
+    return Big(inputValue.value).toFixed(4)
   } catch {
-    resetInputValue()
+    return
   }
 }
 
 function resetInputValue() {
   inputValue.value = props.modelValue ?? ""
+  shouldCommitOnBlur.value = false
 }
 </script>
