@@ -1,6 +1,7 @@
 # API — Backend Patterns & Conventions
 
-Node.js + Express + TypeScript. Sequelize 7 ORM + Knex migrations. MSSQL database.
+Node.js + Express + TypeScript. Sequelize 7 ORM, with Umzug historical migrations and Knex for
+new migrations. MSSQL database.
 
 ---
 
@@ -18,6 +19,7 @@ Node.js + Express + TypeScript. Sequelize 7 ORM + Knex migrations. MSSQL databas
 - camelCase for variables/functions, PascalCase for classes/types.
 - **Import formatting:** multi-line expanded imports for 4+ named items.
 - **Extract and rename pattern:** extract and rename on separate lines before constructing objects:
+
   ```typescript
   // Good
   const { order: fundingSubmissionOrder } = this.fundingSubmission
@@ -26,6 +28,7 @@ Node.js + Express + TypeScript. Sequelize 7 ORM + Knex migrations. MSSQL databas
   // Bad
   const data = { fundingSubmissionOrder: this.fundingSubmission.order, ...otherProps }
   ```
+
 - **Orchestrate up front:** load associations near the top-level `perform()`, pass simple values into helpers — don't hide async lookups inside helpers.
 
 **Import ordering (PEP8-style):**

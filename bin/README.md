@@ -20,10 +20,10 @@ dev test web -- --run src/components/SomeComponent.test.ts # Run single frontend
 dev web npm run check-types         # Check frontend types
 dev api npm run check-types         # Check backend types
 
-dev migrate create -- --name create-users-table.ts  # Create migration
-dev migrate up                                       # Run pending migrations
-dev migrate down                                     # Rollback last migration
-dev migrate down -- --to 0                          # Rollback all migrations
+dev migrate                         # Run the complete migration pipeline
+dev migrate make add-users-status   # Create a new Knex migration
+dev migrate list                    # List Knex migration state
+dev migrate down                    # Roll back the latest Knex batch (development only)
 
 dev seed create -- --name fill-users-table.ts       # Create seed file
 dev seed up                                          # Run seeds
