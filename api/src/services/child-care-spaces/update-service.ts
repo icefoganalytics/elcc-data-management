@@ -19,7 +19,7 @@ export class UpdateService extends BaseService {
   async perform(): Promise<ChildCareSpace> {
     await this.childCareSpace.update(this.attributes)
 
-    return this.childCareSpace
+    return this.childCareSpace.reload()
   }
 }
 

@@ -85,6 +85,12 @@ describe("web/src/components/funding-line-values/FundingLineValuesEnrollmentChar
         },
         global: {
           plugins: [mockVuetify()],
+          stubs: {
+            apexchart: {
+              props: ["options", "series"],
+              template: '<div>{{ options.labels.join(",") }}:{{ series.join(",") }}</div>',
+            },
+          },
         },
       })
       await flushPromises()
@@ -94,16 +100,24 @@ describe("web/src/components/funding-line-values/FundingLineValuesEnrollmentChar
         chart: wrapper.text(),
         requests: httpClientMock.get.mock.calls,
       }).toEqual({
-        chart: "33.3%66.7%InfantsToddlers",
+        chart: "Infants,Toddlers:0.25,0.5",
         requests: [
           [
             "/api/child-care-spaces",
             {
-              params: expect.objectContaining({
+              params: {
+                where: {
+                  centreId: 1,
+                },
                 filters: {
                   byFiscalYear: "2024-25",
                 },
-              }),
+                order: [
+                  ["fiscalPeriod", "dateStart", "DESC"],
+                  ["fundingSubmissionLineId", "ASC"],
+                ],
+                perPage: -1,
+              },
             },
           ],
         ],

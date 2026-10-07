@@ -1,6 +1,7 @@
 import { isNil } from "lodash"
 
 import { ChildCareSpace } from "@/models"
+import { ChildCareSpacePolicy } from "@/policies"
 import BaseController from "@/controllers/base-controller"
 import { ReplicateEstimatesService } from "@/services/child-care-spaces"
 
@@ -11,6 +12,13 @@ export class ReplicateEstimatesController extends BaseController {
       if (isNil(childCareSpace)) {
         return this.response.status(404).json({
           message: "Child Care Space not found",
+        })
+      }
+
+      const policy = new ChildCareSpacePolicy(this.currentUser, childCareSpace)
+      if (!policy.replicateEstimates()) {
+        return this.response.status(403).json({
+          message: "You are not authorized to replicate Child Care Spaces estimates",
         })
       }
 
