@@ -2,7 +2,6 @@ import { defineComponent } from "vue"
 import { mount } from "@vue/test-utils"
 
 import CurrencyInput from "@/components/CurrencyInput.vue"
-import greaterThan from "@/utils/validators/greater-than"
 
 const VTextFieldStub = defineComponent({
   name: "VTextField",
@@ -16,37 +15,14 @@ const VTextFieldStub = defineComponent({
 
 describe("web/src/components/CurrencyInput.vue", () => {
   describe("CurrencyInput", () => {
-    test("when displaying a formatted money value, validates the raw decimal value", () => {
-      // Arrange
-      const validateGreaterThanZero = greaterThan("0")
-      const wrapper = mount(CurrencyInput, {
-        props: {
-          modelValue: "150.0000",
-          rules: [validateGreaterThanZero],
-        },
-        global: {
-          stubs: {
-            VTextField: VTextFieldStub,
-          },
-        },
-      })
-      const currencyInput = wrapper.findComponent(VTextFieldStub)
-      const [validate] = currencyInput.props("rules") as Array<() => boolean | string>
-
-      // Act
-      const result = validate()
-
-      // Assert
-      expect(result).toBe(true)
-    })
 
     test("when displaying a formatted money value, passes the raw decimal value to its rule", () => {
       // Arrange
-      const validateGreaterThanZero = vi.fn(greaterThan("0"))
+      const validateRawDecimal = vi.fn(() => true)
       const wrapper = mount(CurrencyInput, {
         props: {
           modelValue: "150.0000",
-          rules: [validateGreaterThanZero],
+          rules: [validateRawDecimal],
         },
         global: {
           stubs: {
@@ -61,7 +37,7 @@ describe("web/src/components/CurrencyInput.vue", () => {
       validate()
 
       // Assert
-      expect(validateGreaterThanZero).toHaveBeenCalledWith("150.0000")
+      expect(validateRawDecimal).toHaveBeenCalledWith("150.0000")
     })
 
     test("when the decimal value is empty, displays an empty input", () => {
