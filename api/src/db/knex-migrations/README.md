@@ -1,12 +1,12 @@
 # Knex Migration Patterns
 
-Use this directory for every migration created after the Knex transition. The Knex baseline migration
-creates the production schema only for a database without a historical Umzug ledger. Existing
-databases first complete their historical ledger, then record the Knex migrations without replaying
-their schema changes.
+Use this directory for every migration created after the Knex transition. The ordered baseline
+migrations create the production schema only for a database without a historical Umzug ledger.
+Existing databases first complete their historical ledger, then record the Knex migrations without
+replaying their schema changes.
 
-The transition marker retains both previously recorded filenames so databases that ran an earlier
-branch revision can continue without a corrupt Knex ledger.
+Keep the earlier no-op transition files. Knex validates every recorded filename before it runs the
+current migrations.
 
 
 ## Commands

@@ -1,8 +1,9 @@
 # Database & Migrations
 
 Existing databases with a `SequelizeMeta` ledger use Umzug to complete any historical migrations.
-New databases use the aggregated Knex production-schema migration. Sequelize remains the application
-ORM. The migration pipeline detects the historical ledger before deciding which path to run.
+New databases create the production schema through small, ordered Knex migrations. Sequelize remains
+the application ORM. The migration pipeline detects the historical ledger before deciding which path
+to run.
 
 ## Migration Rules
 

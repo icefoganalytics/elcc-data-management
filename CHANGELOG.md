@@ -26,7 +26,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
 - Increased data validation on funding submission line json records to prevent invalid data from entering reporting and reconciliation flows.
 - Various developer experience improvements for funding reconciliation services, seeds, and documentation.
   (Refactors, new tests, and internal tooling changes.)
-- Adopted Knex for new database migrations. New databases now begin from the production schema,
+- Adopted Knex for new database migrations. New installations use model-sized schema migrations,
   while existing databases retain their historical migration ledger and do not replay schema changes.
 
 ### Fixed
