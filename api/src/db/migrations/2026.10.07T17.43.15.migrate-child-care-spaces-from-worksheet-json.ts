@@ -34,6 +34,8 @@ type ChildCareSpaceAttributes = {
   actualComputedTotal: string
 }
 
+type ExistingChildCareSpace = Omit<ChildCareSpaceAttributes, "fundingSubmissionLineId">
+
 export async function up({ context: { sequelize } }: Migration) {
   let offset = 0
 
@@ -180,11 +182,18 @@ async function migrateChildCareSpaces(
     if (isNil(activeFundingSubmissionLine)) return false
   }
 
+  const childCareSpacesToInsert: ChildCareSpaceAttributes[] = []
+
   for (const childCareSpaceAttributes of childCareSpacesAttributes) {
-    const existingChildCareSpace = await sequelize.query<{ id: number }>(
+    const [existingChildCareSpace] = await sequelize.query<ExistingChildCareSpace>(
       sql`
         SELECT
-          id
+          line_name AS lineName,
+          monthly_amount AS monthlyAmount,
+          estimated_child_occupancy_rate AS estimatedChildOccupancyRate,
+          actual_child_occupancy_rate AS actualChildOccupancyRate,
+          estimated_computed_total AS estimatedComputedTotal,
+          actual_computed_total AS actualComputedTotal
         FROM
           child_care_spaces
         WHERE
@@ -202,8 +211,22 @@ async function migrateChildCareSpaces(
         },
       }
     )
-    if (existingChildCareSpace.length > 0) continue
+    if (isNil(existingChildCareSpace)) {
+      childCareSpacesToInsert.push(childCareSpaceAttributes)
+      continue
+    }
 
+    if (hasMatchingChildCareSpaceAttributes(existingChildCareSpace, childCareSpaceAttributes)) {
+      continue
+    }
+
+    console.warn(
+      `Existing Child Care Space for centre ${centreId}, fiscal period ${fiscalPeriodId}, and funding submission line ${childCareSpaceAttributes.fundingSubmissionLineId} conflicts with the source JSON values; retaining source JSON values.`
+    )
+    return false
+  }
+
+  for (const childCareSpaceAttributes of childCareSpacesToInsert) {
     await sequelize.query(
       sql`
         INSERT INTO
@@ -247,6 +270,26 @@ async function migrateChildCareSpaces(
   }
 
   return true
+}
+
+function hasMatchingChildCareSpaceAttributes(
+  existingChildCareSpace: ExistingChildCareSpace,
+  childCareSpaceAttributes: ChildCareSpaceAttributes
+): boolean {
+  return (
+    existingChildCareSpace.lineName === childCareSpaceAttributes.lineName &&
+    Big(existingChildCareSpace.monthlyAmount).eq(childCareSpaceAttributes.monthlyAmount) &&
+    Big(existingChildCareSpace.estimatedChildOccupancyRate).eq(
+      childCareSpaceAttributes.estimatedChildOccupancyRate
+    ) &&
+    Big(existingChildCareSpace.actualChildOccupancyRate).eq(
+      childCareSpaceAttributes.actualChildOccupancyRate
+    ) &&
+    Big(existingChildCareSpace.estimatedComputedTotal).eq(
+      childCareSpaceAttributes.estimatedComputedTotal
+    ) &&
+    Big(existingChildCareSpace.actualComputedTotal).eq(childCareSpaceAttributes.actualComputedTotal)
+  )
 }
 
 async function findActiveChildCareSpacesFundingSubmissionLine(
