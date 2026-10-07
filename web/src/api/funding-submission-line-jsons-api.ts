@@ -35,13 +35,9 @@ export type FundingSubmissionLineJsonWhereOptions = WhereOptions<
   "centreId" | "fiscalYear" | "dateName" | "dateStart" | "dateEnd"
 >
 
-export type FundingSubmissionLineJsonFiltersOptions = FiltersOptions<{
-  withChildOccupancyRate: string
-}>
-
 export type FundingSubmissionLineJsonQueryOptions = QueryOptions<
   FundingSubmissionLineJsonWhereOptions,
-  FundingSubmissionLineJsonFiltersOptions
+  FiltersOptions
 >
 
 export const fundingSubmissionLineJsonsApi = {

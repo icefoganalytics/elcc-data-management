@@ -4,6 +4,7 @@ import { FundingSubmissionLineJson } from "@/models"
 
 import {
   buildingExpenseFactory,
+  childCareSpaceFactory,
   centreFactory,
   fiscalPeriodFactory,
   fundingPeriodFactory,
@@ -215,6 +216,13 @@ describe("api/src/services/funding-reconciliations/calculate-eligible-expenses-p
           totalCost: "30.0000",
         })
 
+        await childCareSpaceFactory.create({
+          centreId: centre.id,
+          fiscalPeriodId: fiscalPeriod.id,
+          monthlyAmount: "100.0000",
+          actualChildOccupancyRate: "0.2500",
+        })
+
         // Act
         const result = await CalculateEligibleExpensesPeriodAmountService.perform(
           centre.id,
@@ -222,7 +230,7 @@ describe("api/src/services/funding-reconciliations/calculate-eligible-expenses-p
         )
 
         // Assert
-        expect(result).toBe("80.0000")
+        expect(result).toBe("105.0000")
       })
 
       test("when there are only building expenses and no funding submission lines, returns building expenses total", async () => {

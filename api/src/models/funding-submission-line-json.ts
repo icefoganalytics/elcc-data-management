@@ -162,8 +162,7 @@ export class FundingSubmissionLineJson extends BaseModel<
             funding_submission_line_jsons
           WHERE
             funding_submission_line_jsons.deleted_at IS NULL
-            AND
-            EXISTS (
+            AND EXISTS (
               SELECT
                 1
               FROM
@@ -184,46 +183,6 @@ export class FundingSubmissionLineJson extends BaseModel<
           id: {
             [Op.in]: fundingSubmissionLineJsonsByFundingPeriodIdQuery,
           },
-        },
-      }
-    })
-
-    this.addScope("withChildOccupancyRate", (sectionName: string) => {
-      const withChildOccupancyRateQuery = sql`
-        (
-          SELECT
-            funding_submission_line_jsons.id
-          FROM
-            funding_submission_line_jsons
-            CROSS APPLY OPENJSON (funding_submission_line_jsons.[values]) AS json_array_element
-          WHERE
-            funding_submission_line_jsons.deleted_at IS NULL
-            AND JSON_VALUE(json_array_element.value, '$.sectionName') = :sectionName
-          GROUP BY
-            funding_submission_line_jsons.id,
-            JSON_VALUE(json_array_element.value, '$.sectionName')
-          HAVING
-            SUM(
-              COALESCE(
-                TRY_CAST(
-                  JSON_VALUE(
-                    json_array_element.value,
-                    '$.actualChildOccupancyRate'
-                  ) AS decimal(10, 2)
-                ),
-                0
-              )
-            ) > 0
-        )
-      `
-      return {
-        where: {
-          id: {
-            [Op.in]: withChildOccupancyRateQuery,
-          },
-        },
-        replacements: {
-          sectionName,
         },
       }
     })
