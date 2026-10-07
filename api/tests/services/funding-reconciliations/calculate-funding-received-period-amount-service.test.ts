@@ -112,6 +112,51 @@ describe("api/src/services/funding-reconciliations/calculate-funding-received-pe
         // Assert
         expect(result).toBe("300.0000")
       })
+
+      test("when a payment aggregate exceeds JavaScript precision, preserves its fourth decimal", async () => {
+        // Arrange
+        const centre = await centreFactory.create()
+        const fundingPeriod = await fundingPeriodFactory.create({
+          fiscalYear: "2025-2026",
+          fromDate: new Date("2025-04-01"),
+          toDate: new Date("2026-03-31"),
+        })
+        const fiscalPeriod = await fiscalPeriodFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          fiscalYear: "2025-26",
+          month: FiscalPeriod.Months.APRIL,
+          dateStart: new Date("2025-04-01"),
+          dateEnd: new Date("2025-04-30"),
+        })
+        const numberOfMaximumPayments = 9
+        const maximumPaymentAmount = "99999999999.9999"
+        const largePayments = Array.from({ length: numberOfMaximumPayments }, () =>
+          paymentFactory.create({
+            centreId: centre.id,
+            fiscalPeriodId: fiscalPeriod.id,
+            fiscalYear: "2025/26",
+            paidOn: "2025-04-15",
+            amount: maximumPaymentAmount,
+          })
+        )
+        await Promise.all(largePayments)
+        await paymentFactory.create({
+          centreId: centre.id,
+          fiscalPeriodId: fiscalPeriod.id,
+          fiscalYear: "2025/26",
+          paidOn: "2025-04-15",
+          amount: "99999999999.0001",
+        })
+
+        // Act
+        const result = await CalculateFundingReceivedPeriodAmountService.perform(
+          centre.id,
+          fiscalPeriod.id
+        )
+
+        // Assert
+        expect(result).toBe("999999999998.9992")
+      })
     })
   })
 })
