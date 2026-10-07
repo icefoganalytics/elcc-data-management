@@ -55,16 +55,6 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
             dateEnd: new Date("2024-04-30T23:59:59.000Z"),
             values: JSON.stringify([
               {
-                submissionLineId: fundingSubmissionLine1.id,
-                sectionName: "Child Care Spaces",
-                lineName: "Infants",
-                monthlyAmount: "100",
-                estimatedChildOccupancyRate: "0",
-                actualChildOccupancyRate: "0",
-                estimatedComputedTotal: "0",
-                actualComputedTotal: "0",
-              },
-              {
                 submissionLineId: fundingSubmissionLine2.id,
                 sectionName: "Administration (10% of Spaces)",
                 lineName: "Toddlers",
@@ -83,16 +73,6 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
             dateStart: new Date("2024-05-01T00:00:00.000Z"),
             dateEnd: new Date("2024-05-31T23:59:59.000Z"),
             values: JSON.stringify([
-              {
-                submissionLineId: fundingSubmissionLine1.id,
-                sectionName: "Child Care Spaces",
-                lineName: "Infants",
-                monthlyAmount: "100",
-                estimatedChildOccupancyRate: "0",
-                actualChildOccupancyRate: "0",
-                estimatedComputedTotal: "0",
-                actualComputedTotal: "0",
-              },
               {
                 submissionLineId: fundingSubmissionLine2.id,
                 sectionName: "Administration (10% of Spaces)",
@@ -129,9 +109,11 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
           monthlyAmount: "200",
         })
 
-        // Act & Assert
-        expect.assertions(1)
-        await expect(BulkCreateService.perform(centre, fundingPeriod)).rejects.toThrow(
+        // Act
+        const bulkCreatePromise = BulkCreateService.perform(centre, fundingPeriod)
+
+        // Assert
+        await expect(bulkCreatePromise).rejects.toThrow(
           "No fiscal periods found for the given funding period"
         )
       })
@@ -155,9 +137,11 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
           dateStart: new Date("2024-05-01"),
         })
 
-        // Act & Assert
-        expect.assertions(1)
-        await expect(BulkCreateService.perform(centre, fundingPeriod)).rejects.toThrow(
+        // Act
+        const bulkCreatePromise = BulkCreateService.perform(centre, fundingPeriod)
+
+        // Assert
+        await expect(bulkCreatePromise).rejects.toThrow(
           "No funding submission lines found for the funding period."
         )
       })

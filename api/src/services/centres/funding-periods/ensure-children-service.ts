@@ -19,6 +19,10 @@ export class EnsureChildrenService extends BaseService {
       this.centre,
       this.fundingPeriod
     )
+    await Centres.FundingPeriods.ChildCareSpaces.BulkEnsureService.perform(
+      this.centre,
+      this.fundingPeriod
+    )
     await Centres.FundingPeriods.FundingSubmissionLineJsons.BulkEnsureService.perform(
       this.centre,
       this.fundingPeriod

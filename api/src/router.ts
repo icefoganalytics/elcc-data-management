@@ -17,6 +17,8 @@ import {
   BuildingExpensesController,
   Centres,
   CentresController,
+  ChildCareSpaces,
+  ChildCareSpacesController,
   CurrentUserController,
   EmployeeBenefitsController,
   EmployeeWageTiersController,
@@ -111,6 +113,15 @@ router
   .get(BuildingExpensesController.show)
   .patch(BuildingExpensesController.update)
   .delete(BuildingExpensesController.destroy)
+
+router.route("/api/child-care-spaces").get(ChildCareSpacesController.index)
+router
+  .route("/api/child-care-spaces/:childCareSpaceId")
+  .get(ChildCareSpacesController.show)
+  .patch(ChildCareSpacesController.update)
+router
+  .route("/api/child-care-spaces/:childCareSpaceId/replicate-estimates")
+  .post(ChildCareSpaces.ReplicateEstimatesController.create)
 
 router
   .route("/api/funding-reconciliations")

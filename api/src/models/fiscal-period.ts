@@ -24,6 +24,7 @@ import { isValidFiscalYearShort } from "@/models/validators"
 
 import BaseModel from "@/models/base-model"
 import BuildingExpense from "@/models/building-expense"
+import ChildCareSpace from "@/models/child-care-space"
 import EmployeeBenefit from "@/models/employee-benefit"
 import EmployeeWageTier from "@/models/employee-wage-tier"
 import FundingPeriod from "@/models/funding-period"
@@ -164,6 +165,14 @@ export class FiscalPeriod extends BaseModel<
     },
   })
   declare buildingExpenses?: NonAttribute<BuildingExpense[]>
+
+  @HasMany(() => ChildCareSpace, {
+    foreignKey: "fiscalPeriodId",
+    inverse: {
+      as: "fiscalPeriod",
+    },
+  })
+  declare childCareSpaces?: NonAttribute<ChildCareSpace[]>
 
   @HasMany(() => EmployeeBenefit, {
     foreignKey: "fiscalPeriodId",

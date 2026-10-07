@@ -4,7 +4,6 @@ import { isNil } from "lodash"
 import fundingSubmissionLineJsonsApi, {
   type FundingLineValue,
   type FundingSubmissionLineJsonAsIndex,
-  type FundingSubmissionLineJsonFiltersOptions,
   type FundingSubmissionLineJsonWhereOptions,
   type FundingSubmissionLineJsonQueryOptions,
 } from "@/api/funding-submission-line-jsons-api"
@@ -13,7 +12,6 @@ export {
   type FundingLineValue,
   type FundingSubmissionLineJsonAsIndex,
   type FundingSubmissionLineJsonWhereOptions,
-  type FundingSubmissionLineJsonFiltersOptions,
   type FundingSubmissionLineJsonQueryOptions,
 }
 

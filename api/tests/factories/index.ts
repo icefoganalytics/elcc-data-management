@@ -1,5 +1,6 @@
 export { buildingExpenseCategoryFactory } from "./building-expense-category-factory"
 export { buildingExpenseFactory } from "./building-expense-factory"
+export { childCareSpaceFactory } from "./child-care-space-factory"
 export { centreFactory } from "./centre-factory"
 export { employeeBenefitFactory } from "./employee-benefit-factory"
 export { employeeWageTierFactory } from "./employee-wage-tier-factory"

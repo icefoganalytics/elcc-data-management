@@ -50,7 +50,7 @@
         :lines="lines"
         @focus-beyond-last-in-column="goToNextSection(sectionIndex, $event)"
         @focus-beyond-first-in-column="goToPreviousSection(sectionIndex, $event)"
-        @line-changed="propagateUpdatesAsNeeded(sectionIndex, $event)"
+        @line-changed="propagateUpdatesAsNeeded($event)"
       />
     </section>
     <KeyboardShortcutsModal ref="keyboardShortcutsModal" />
@@ -60,12 +60,14 @@
 <script setup lang="ts">
 import { DateTime } from "luxon"
 import { computed, ref, toRefs } from "vue"
-import { groupBy, isEmpty, isNil } from "lodash"
+import { groupBy, isNil } from "lodash"
 
+import childCareSpacesApi, { CHILD_CARE_SPACES_SECTION_NAME } from "@/api/child-care-spaces-api"
 import fundingSubmissionLineJsonsApi, {
   type FundingLineValue,
 } from "@/api/funding-submission-line-jsons-api"
 import { useNotificationStore } from "@/store/NotificationStore"
+import useChildCareSpaces from "@/use/use-child-care-spaces"
 import useFundingSubmissionLineJson from "@/use/use-funding-submission-line-json"
 
 import KeyboardShortcutsModal from "@/components/common/KeyboardShortcutsModal.vue"
@@ -74,9 +76,12 @@ import FundingSubmissionLineJsonSectionTable, {
 } from "@/components/funding-submission-line-jsons/FundingSubmissionLineJsonSectionTable.vue"
 
 const FIRST_FISCAL_MONTH_NAME = "April"
+const LINKED_SECTION_NAMES = ["Administration (10% of Spaces)", "Quality Enhancement Program"]
 
 const props = defineProps<{
   fundingSubmissionLineJsonId: number
+  centreId: number
+  fiscalPeriodId: number
 }>()
 
 const emit = defineEmits<{
@@ -84,10 +89,27 @@ const emit = defineEmits<{
 }>()
 
 const { fundingSubmissionLineJsonId } = toRefs(props)
-const { fundingSubmissionLineJson, isLoading } = useFundingSubmissionLineJson(
-  fundingSubmissionLineJsonId
-)
+const {
+  fundingSubmissionLineJson,
+  isLoading: isLoadingFundingSubmissionLineJson,
+  refresh: refreshFundingSubmissionLineJson,
+} = useFundingSubmissionLineJson(fundingSubmissionLineJsonId)
+const childCareSpacesQuery = computed(() => ({
+  where: {
+    centreId: props.centreId,
+    fiscalPeriodId: props.fiscalPeriodId,
+  },
+  perPage: -1,
+}))
+const {
+  childCareSpaces,
+  isLoading: isLoadingChildCareSpaces,
+  refresh: refreshChildCareSpaces,
+} = useChildCareSpaces(childCareSpacesQuery)
 
+const isLoading = computed(
+  () => isLoadingFundingSubmissionLineJson.value || isLoadingChildCareSpaces.value
+)
 const isSaving = ref(false)
 const isReplicatingEstimates = ref(false)
 const dateName = computed(() => fundingSubmissionLineJson.value?.dateName)
@@ -100,12 +122,29 @@ const calendarYear = computed(() => {
   return DateTime.fromISO(dateStart).toFormat("yyyy")
 })
 
+const childCareSpacesAsFundingLineValues = computed<FundingLineValue[]>(() => {
+  return childCareSpaces.value.map((childCareSpace) => {
+    return {
+      submissionLineId: childCareSpace.fundingSubmissionLineId,
+      sectionName: CHILD_CARE_SPACES_SECTION_NAME,
+      lineName: childCareSpace.lineName,
+      monthlyAmount: childCareSpace.monthlyAmount,
+      estimatedChildOccupancyRate: childCareSpace.estimatedChildOccupancyRate,
+      actualChildOccupancyRate: childCareSpace.actualChildOccupancyRate,
+      estimatedComputedTotal: childCareSpace.estimatedComputedTotal,
+      actualComputedTotal: childCareSpace.actualComputedTotal,
+    }
+  })
+})
 const sections = computed<{ sectionName: string; lines: FundingLineValue[] }[]>(() => {
-  if (isEmpty(fundingSubmissionLineJson.value)) {
+  if (isNil(fundingSubmissionLineJson.value)) {
     return []
   }
 
-  const lines = fundingSubmissionLineJson.value.lines
+  const lines = [
+    ...childCareSpacesAsFundingLineValues.value,
+    ...fundingSubmissionLineJson.value.lines,
+  ]
   const sectionGroups = groupBy(lines, "sectionName")
   return Object.entries(sectionGroups).map(([sectionName, lines]) => {
     return { sectionName, lines }
@@ -116,18 +155,61 @@ const fundingSubmissionLineJsonSectionTables = ref<
 >([])
 const notificationStore = useNotificationStore()
 
-async function saveFundingSubmissionLineJson() {
+async function saveFundingSubmissionLineJson(): Promise<boolean> {
   isSaving.value = true
   try {
-    const lines = sections.value.flatMap((section) => section.lines)
-    await fundingSubmissionLineJsonsApi.update(fundingSubmissionLineJsonId.value, { lines })
+    const childCareSpaceLines = sections.value.find(
+      ({ sectionName }) => sectionName === CHILD_CARE_SPACES_SECTION_NAME
+    )?.lines
+    const childCareSpacesByFundingSubmissionLineId = new Map(
+      childCareSpaces.value.map((childCareSpace) => {
+        return [childCareSpace.fundingSubmissionLineId, childCareSpace]
+      })
+    )
+    const childCareSpaceUpdates = []
+
+    for (const childCareSpaceLine of childCareSpaceLines ?? []) {
+      const childCareSpace = childCareSpacesByFundingSubmissionLineId.get(
+        childCareSpaceLine.submissionLineId
+      )
+      if (isNil(childCareSpace)) {
+        throw new Error(
+          `Child Care Space for funding submission line ${childCareSpaceLine.submissionLineId} is missing`
+        )
+      }
+
+      const isUnchanged =
+        childCareSpace.estimatedChildOccupancyRate ===
+          childCareSpaceLine.estimatedChildOccupancyRate &&
+        childCareSpace.actualChildOccupancyRate === childCareSpaceLine.actualChildOccupancyRate
+      if (isUnchanged) continue
+
+      childCareSpaceUpdates.push(
+        childCareSpacesApi.update(childCareSpace.id, {
+          estimatedChildOccupancyRate: childCareSpaceLine.estimatedChildOccupancyRate,
+          actualChildOccupancyRate: childCareSpaceLine.actualChildOccupancyRate,
+        })
+      )
+    }
+    const fundingSubmissionLineJsonLines = sections.value
+      .filter(({ sectionName }) => sectionName !== CHILD_CARE_SPACES_SECTION_NAME)
+      .flatMap(({ lines }) => lines)
+
+    await Promise.all(childCareSpaceUpdates)
+    await fundingSubmissionLineJsonsApi.update(fundingSubmissionLineJsonId.value, {
+      lines: fundingSubmissionLineJsonLines,
+    })
+    await Promise.all([refreshChildCareSpaces(), refreshFundingSubmissionLineJson()])
+
     emit("update:fundingSubmissionLineJson", fundingSubmissionLineJsonId.value)
+    return true
   } catch (error) {
     console.error(error)
     notificationStore.notify({
       text: `Failed to save worksheet: ${error}`,
       variant: "error",
     })
+    return false
   } finally {
     isSaving.value = false
   }
@@ -136,8 +218,18 @@ async function saveFundingSubmissionLineJson() {
 async function replicateEstimatesForward() {
   isReplicatingEstimates.value = true
   try {
-    await saveFundingSubmissionLineJson()
-    await fundingSubmissionLineJsonsApi.replicateEstimates(fundingSubmissionLineJsonId.value)
+    const wasSaved = await saveFundingSubmissionLineJson()
+    if (!wasSaved) return
+
+    await Promise.all([
+      fundingSubmissionLineJsonsApi.replicateEstimates(fundingSubmissionLineJsonId.value),
+      ...childCareSpaces.value.map((childCareSpace) =>
+        childCareSpacesApi.replicateEstimates(childCareSpace.id)
+      ),
+    ])
+    await Promise.all([refreshChildCareSpaces(), refreshFundingSubmissionLineJson()])
+
+    emit("update:fundingSubmissionLineJson", fundingSubmissionLineJsonId.value)
   } catch (error) {
     notificationStore.notify({
       text: `Failed to replicate estimates: ${error}`,
@@ -148,23 +240,43 @@ async function replicateEstimatesForward() {
   }
 }
 
-function propagateUpdatesAsNeeded(
-  sectionIndex: number,
-  { line, lineIndex }: { line: FundingLineValue; lineIndex: number }
-) {
-  // Bind section 1 to sections 2 and 3
-  // When you update the values in section 1, it will propagated the values to section 2 and 3
-  if (sectionIndex === 0) {
-    const section1Line = sections.value[1].lines[lineIndex]
-    section1Line.estimatedChildOccupancyRate = line.estimatedChildOccupancyRate
-    section1Line.actualChildOccupancyRate = line.actualChildOccupancyRate
+function propagateUpdatesAsNeeded({ line }: { line: FundingLineValue }) {
+  if (line.sectionName !== CHILD_CARE_SPACES_SECTION_NAME) return
 
-    fundingSubmissionLineJsonSectionTables.value[1].refreshLineTotals(section1Line)
+  try {
+    for (const linkedSectionName of LINKED_SECTION_NAMES) {
+      const linkedSectionIndex = sections.value.findIndex(
+        ({ sectionName }) => sectionName === linkedSectionName
+      )
+      if (linkedSectionIndex === -1) {
+        throw new Error(`Expected "${linkedSectionName}" section`)
+      }
 
-    const section2Line = sections.value[2].lines[lineIndex]
-    section2Line.estimatedChildOccupancyRate = line.estimatedChildOccupancyRate
-    section2Line.actualChildOccupancyRate = line.actualChildOccupancyRate
-    fundingSubmissionLineJsonSectionTables.value[2].refreshLineTotals(section2Line)
+      const linkedSection = sections.value[linkedSectionIndex]
+      const matchingLines = linkedSection.lines.filter(({ lineName }) => lineName === line.lineName)
+      if (matchingLines.length !== 1) {
+        throw new Error(
+          `Expected one "${line.lineName}" line in "${linkedSectionName}", found ${matchingLines.length}`
+        )
+      }
+
+      const linkedLine = matchingLines[0]
+      linkedLine.estimatedChildOccupancyRate = line.estimatedChildOccupancyRate
+      linkedLine.actualChildOccupancyRate = line.actualChildOccupancyRate
+
+      const linkedSectionTable = fundingSubmissionLineJsonSectionTables.value[linkedSectionIndex]
+      if (isNil(linkedSectionTable)) {
+        throw new Error(`Expected "${linkedSectionName}" section table`)
+      }
+
+      linkedSectionTable.refreshLineTotals(linkedLine)
+    }
+  } catch (error) {
+    notificationStore.notify({
+      text: `Failed to propagate Child Care Spaces values: ${error}`,
+      variant: "error",
+    })
+    throw error
   }
 }
 
