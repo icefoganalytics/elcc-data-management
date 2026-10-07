@@ -74,7 +74,6 @@ function updateInputValue(value: string | null) {
 
 function startEditing() {
   isEditing.value = true
-  shouldCommitOnBlur.value = true
   inputValue.value = props.modelValue ?? ""
 }
 

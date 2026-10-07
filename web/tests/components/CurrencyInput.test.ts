@@ -60,6 +60,28 @@ describe("web/src/components/CurrencyInput.vue", () => {
       expect(currencyInput.props("modelValue")).toBe("")
     })
 
+    test("when focusing and blurring without an edit, does not emit", async () => {
+      // Arrange
+      const wrapper = mount(CurrencyInput, {
+        props: {
+          modelValue: "100.0000",
+        },
+        global: {
+          stubs: {
+            VTextField: VTextFieldStub,
+          },
+        },
+      })
+      const currencyInput = wrapper.findComponent(VTextFieldStub)
+
+      // Act
+      await currencyInput.vm.$emit("focus")
+      await currencyInput.vm.$emit("blur")
+
+      // Assert
+      expect(wrapper.emitted("update:modelValue")).toBeUndefined()
+    })
+
     test("when committing a high-precision decimal, emits the exact decimal string", async () => {
       // Arrange
       const wrapper = mount(CurrencyInput, {
