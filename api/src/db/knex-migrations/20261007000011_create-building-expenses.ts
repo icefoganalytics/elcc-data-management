@@ -1,0 +1,48 @@
+import type { Knex } from "knex"
+
+import { shouldSkipBaselineTableCreation } from "@/db/has-historical-migration-ledger"
+
+export async function up(knex: Knex): Promise<void> {
+  if (await shouldSkipBaselineTableCreation(knex, "building_expenses")) return
+
+  await knex.schema.createTable("building_expenses", (table) => {
+    table.increments("id").notNullable().primary()
+    table.integer("category_id").notNullable()
+    table.integer("centre_id").notNullable()
+    table.integer("fiscal_period_id").notNullable()
+    table.decimal("subsidy_rate", 5, 4).notNullable()
+    table.decimal("building_usage_percent", 5, 2).notNullable()
+    table.decimal("estimated_cost", 15, 4).notNullable()
+    table.decimal("actual_cost", 15, 4).notNullable()
+    table.decimal("total_cost", 15, 4).notNullable()
+    table.text("notes")
+    table.specificType("created_at", "DATETIME2").notNullable().defaultTo(knex.raw("GETUTCDATE()"))
+    table.specificType("updated_at", "DATETIME2").notNullable().defaultTo(knex.raw("GETUTCDATE()"))
+    table.specificType("deleted_at", "DATETIME2")
+    table.string("funding_region_snapshot", 100).notNullable()
+
+    table
+      .foreign(["category_id"], "FK__building___build__589C25F3")
+      .references(["id"])
+      .inTable("building_expense_categories")
+
+    table
+      .foreign(["centre_id"], "FK__building___centr__59904A2C")
+      .references(["id"])
+      .inTable("centres")
+
+    table
+      .foreign(["fiscal_period_id"], "FK__building___fisca__5A846E65")
+      .references(["id"])
+      .inTable("fiscal_periods")
+
+    table.unique(["centre_id", "fiscal_period_id", "category_id"], {
+      indexName: "unique_building_expenses_on_centre_id_fiscal_period_id_category_id",
+      predicate: knex.whereNull("deleted_at"),
+    })
+  })
+}
+
+export async function down(_knex: Knex): Promise<void> {
+  throw new Error("The building_expenses baseline cannot be rolled back.")
+}
