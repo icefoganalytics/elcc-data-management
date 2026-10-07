@@ -1,5 +1,4 @@
 import { Sequelize } from "@sequelize/core"
-import { merge } from "lodash"
 
 import {
   DB_HEALTH_CHECK_INTERVAL_SECONDS,
@@ -65,7 +64,7 @@ export async function waitForDatabase({
           console.info(
             "Falling back to database server-level connection (database might not exist)..."
           )
-          const serverLevelConfig = merge(SEQUELIZE_CONFIG, { database: "" })
+          const serverLevelConfig = { ...SEQUELIZE_CONFIG, database: "" }
           dbMigrationClient = new Sequelize(serverLevelConfig)
           i -= 1
           isDatabaseSocketReady = true

@@ -1,5 +1,4 @@
 import { QueryTypes, Sequelize } from "@sequelize/core"
-import { merge } from "lodash"
 
 import { DB_NAME } from "@/config"
 import { SEQUELIZE_CONFIG } from "@/db/db-client"
@@ -41,7 +40,7 @@ async function ensureDatabase(): Promise<true> {
 
   if (isCredentialFailureError) {
     console.info("Attempting server-level connection to determine if database exists...")
-    const serverLevelConfig = merge(SEQUELIZE_CONFIG, { database: "" })
+    const serverLevelConfig = { ...SEQUELIZE_CONFIG, database: "" }
     dbMigrationClient = new Sequelize(serverLevelConfig)
     try {
       if (await databaseExists(dbMigrationClient, DB_NAME)) {

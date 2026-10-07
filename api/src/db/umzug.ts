@@ -28,16 +28,35 @@ class SequelizeMeta extends Model {
 
 sequelize.addModels([SequelizeMeta])
 
+export class RuntimeAwareSequelizeStorage extends SequelizeStorage {
+  async executed(): Promise<string[]> {
+    const migrationNames = await super.executed()
+    const runtimeExtension = path.extname(__filename)
+
+    return migrationNames.map((migrationName) =>
+      migrationName.replace(/\.(?:ts|js)$/, runtimeExtension),
+    )
+  }
+
+  async unlogMigration({ name: migrationName }: { name: string }): Promise<void> {
+    const runtimeExtension = path.extname(__filename)
+    const alternateExtension = runtimeExtension === ".ts" ? ".js" : ".ts"
+    const alternateMigrationName = migrationName.replace(/\.(?:ts|js)$/, alternateExtension)
+
+    await super.unlogMigration({ name: alternateMigrationName })
+    await super.unlogMigration({ name: migrationName })
+  }
+}
+
 export const migrator = new Umzug({
   migrations: {
     glob: ["migrations/*.{ts,js}", { cwd: __dirname }],
     resolve: sequelizeAutoTransactionResolver,
   },
   context: sequelize.queryInterface,
-  storage: new SequelizeStorage({
+  storage: new RuntimeAwareSequelizeStorage({
     sequelize,
     model: SequelizeMeta,
-    // FUTURE: 2023-10-28 enable this once api/src/db/migrations/2023.09.28T23.58.04.add-timestamp-columns-to-sequelize-meta-table.ts
     // has run in all environments.
     // timestamps: true,
   }),

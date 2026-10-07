@@ -26,14 +26,13 @@ export async function importAndExecuteInitializers() {
 }
 
 if (require.main === module) {
-  // TODO: add some kind of middleware that 503s? if initialization failed?
   ;(async () => {
     try {
       await importAndExecuteInitializers()
+      process.exit(0)
     } catch {
       console.error("Failed to complete initialization!")
+      process.exit(1)
     }
-
-    process.exit(0)
   })()
 }

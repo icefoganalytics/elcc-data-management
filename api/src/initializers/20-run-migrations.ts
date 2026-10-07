@@ -1,35 +1,48 @@
+import knexMigrationClient from "@/db/db-migration-client"
 import { migrator } from "@/db/umzug"
 
-export async function runMigrations(): Promise<void> {
-  migrator.on("migrating", (event) => {
-    console.info(`Running migration: ${event.name}`)
-  })
-
-  migrator.on("migrated", (event) => {
-    console.info(`Completed migration: ${event.name}`)
-  })
-
+async function runLegacyMigrations(): Promise<void> {
   try {
     const executedMigrations = await migrator.up()
 
     if (executedMigrations.length === 0) {
-      console.info("No new migrations to run. Database is up to date.")
-    } else {
-      console.info("All migrations completed successfully.")
+      console.info("No pending legacy migrations.")
+      return
     }
+
+    console.info("All legacy migrations completed successfully.")
   } catch (error) {
-    console.error(`Migration failed: ${error}`, { error })
+    console.error(`Legacy migration failed: ${error}`, { error })
 
     const pendingMigrations = await migrator.pending()
 
     if (pendingMigrations.length > 0) {
-      console.error(`Failed migration file: ${pendingMigrations[0].name}`)
+      console.error(`Failed legacy migration file: ${pendingMigrations[0].name}`)
     }
 
     throw error
   }
+}
 
-  return
+async function runKnexMigrations(): Promise<void> {
+  try {
+    const [_batchNumber, executedMigrations] = await knexMigrationClient.migrate.latest()
+
+    if (executedMigrations.length === 0) {
+      console.info("No pending Knex migrations.")
+      return
+    }
+
+    console.info(`Completed Knex migrations: ${executedMigrations.join(", ")}`)
+  } catch (error) {
+    console.error(`Knex migration failed: ${error}`, { error })
+    throw error
+  }
+}
+
+export async function runMigrations(): Promise<void> {
+  await runLegacyMigrations()
+  await runKnexMigrations()
 }
 
 export default runMigrations
