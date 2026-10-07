@@ -163,25 +163,18 @@ class DevHelper
         raise ArgumentError, "The migrate command does not accept arguments."
       end
 
-      migrate_api(**kwargs)
+      run(*%w[api npm run migrate], **kwargs)
     when "make"
-      knex_migrate_api("migrate:make", *args, **kwargs)
-    when "down"
-      knex_migrate_api("migrate:rollback", *args, **kwargs)
+      run(*%w[api npm run migrate:make --], *args, **kwargs)
     when "list"
-      knex_migrate_api("migrate:list", *args, **kwargs)
+      run(*%w[api npm run migrate:list], *args, **kwargs)
     else
       raise ArgumentError, "Unknown migration action: #{action}"
     end
   end
 
-  def knex_migrate_api(script, *args, **kwargs)
-    arguments = args.drop_while { |argument| argument == "--" }
-    run(*%W[api npm run #{script} --], *arguments, **kwargs)
-  end
-
-  def migrate_api(**kwargs)
-    run(*%w[api npm run migrate], **kwargs)
+  def knex_migrate_api(*args, **kwargs)
+    run(*%w[api npm run knex --], *args, **kwargs)
   end
 
   def seed(*args, **kwargs)

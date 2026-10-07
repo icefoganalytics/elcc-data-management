@@ -4,14 +4,21 @@ import path from "path"
 import knex, { type Knex } from "knex"
 import { isEmpty, isNil } from "lodash"
 
-import { DB_HOST, DB_NAME, DB_PASS, DB_PORT, DB_TRUST_SERVER_CERTIFICATE, DB_USER } from "@/config"
+import {
+  DB_HOST,
+  DB_NAME,
+  DB_PASS,
+  DB_PORT,
+  DB_TRUST_SERVER_CERTIFICATE,
+  DB_USER,
+} from "@/config"
+
 export const KNEX_MIGRATION_DIRECTORY = path.resolve(__dirname, "knex-migrations")
 export const KNEX_MIGRATION_EXTENSION = path.extname(__filename) === ".ts" ? "ts" : "js"
 export const KNEX_MIGRATION_TEMPLATE = path.resolve(
   __dirname,
   `templates/sample-knex-migration.${KNEX_MIGRATION_EXTENSION}`
 )
-
 
 class MigrationFile {
   constructor(
@@ -84,6 +91,41 @@ export function buildKnexConfig(): Knex.Config {
   }
 }
 
-const knexMigrationClient = knex(buildKnexConfig())
+export function createKnexMigrationClient(): Knex {
+  return knex(buildKnexConfig())
+}
 
-export default knexMigrationClient
+export async function normalizeKnexMigrationLedger(migrationClient: Knex): Promise<void> {
+  if (!(await migrationClient.schema.hasTable("knex_migrations"))) return
+
+  const migrationSource = new MigrationFileSource(KNEX_MIGRATION_DIRECTORY)
+  const migrations = await migrationSource.getMigrations([".ts", ".js"])
+
+  await migrationClient.transaction(async (transaction) => {
+    for (const migration of migrations) {
+      const legacyNames = [`${migration.name}.ts`, `${migration.name}.js`]
+      const legacyMigrations = await transaction<{ id: number; name: string }>("knex_migrations")
+        .whereIn("name", legacyNames)
+        .select("id", "name")
+
+      if (legacyMigrations.length === 0) continue
+
+      const canonicalMigration = await transaction<{
+        id: number
+        name: string
+      }>("knex_migrations")
+        .where({ name: migration.name })
+        .first()
+
+      if (canonicalMigration || legacyMigrations.length > 1) {
+        throw new Error(
+          `Cannot normalize duplicate Knex migration ledger entries for ${migration.name}.`
+        )
+      }
+
+      await transaction("knex_migrations")
+        .where({ id: legacyMigrations[0].id })
+        .update({ name: migration.name })
+    }
+  })
+}

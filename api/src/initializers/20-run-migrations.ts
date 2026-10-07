@@ -1,7 +1,21 @@
-import knexMigrationClient from "@/db/db-migration-client"
+import sequelize from "@/db/db-client"
+import {
+  createKnexMigrationClient,
+  normalizeKnexMigrationLedger,
+} from "@/db/db-migration-client"
 import { migrator } from "@/db/umzug"
 
 async function runLegacyMigrations(): Promise<void> {
+  const tableNames = await sequelize.queryInterface.listTables()
+  const hasLegacyMigrationLedger = tableNames.some(
+    ({ tableName }) => tableName === "SequelizeMeta"
+  )
+
+  if (!hasLegacyMigrationLedger) {
+    console.info("No legacy migration ledger; using the production schema baseline.")
+    return
+  }
+
   try {
     const executedMigrations = await migrator.up()
 
@@ -25,8 +39,12 @@ async function runLegacyMigrations(): Promise<void> {
 }
 
 async function runKnexMigrations(): Promise<void> {
+  const migrationClient = createKnexMigrationClient()
+
   try {
-    const [_batchNumber, executedMigrations] = await knexMigrationClient.migrate.latest()
+    await normalizeKnexMigrationLedger(migrationClient)
+
+    const [_batchNumber, executedMigrations] = await migrationClient.migrate.latest()
 
     if (executedMigrations.length === 0) {
       console.info("No pending Knex migrations.")
@@ -37,6 +55,8 @@ async function runKnexMigrations(): Promise<void> {
   } catch (error) {
     console.error(`Knex migration failed: ${error}`, { error })
     throw error
+  } finally {
+    await migrationClient.destroy()
   }
 }
 
