@@ -43,20 +43,21 @@ It matches the project’s recent ledger extraction pattern, gives each monthly 
 1. **Add the schema and model.**
    - Create a timestamped schema migration for `child_care_spaces` with `id`, foreign keys to `centres`, `fiscal_periods`, and `funding_submission_lines`, snapshots for `line_name` and `monthly_amount`, editable `estimated_child_occupancy_rate` and `actual_child_occupancy_rate`, derived `estimated_computed_total` and `actual_computed_total`, UTC timestamps, and `deleted_at`.
    - Add the partial unique index for active `(centre_id, fiscal_period_id, funding_submission_line_id)` rows and an index decorator with the project’s duplicate-record message pattern.
-   - Add `ChildCareSpace` to the Sequelize registry and establish its `Centre` and `FiscalPeriod` associations. Give it a `byFundingPeriod` scope like `BuildingExpense` and a fiscal-year filter scope for the chart.
-   - Compute both totals in a model hook with `big.js`, using the persisted `monthlyAmount` snapshot and the occupancy rates, so server persistence—not just the browser—enforces the total invariant.
+   - Add `ChildCareSpace` to the Sequelize registry and establish its `Centre` and `FiscalPeriod` associations. Its `byFundingPeriod` scope must use a SQL `WHERE` subquery, not just an included association: bulk deletion ignores include predicates.
+   - Compute both totals in a model hook with `big.js`, using the persisted `monthlyAmount` snapshot and the occupancy rates. Reject occupancy inputs that cannot be represented exactly at the ledger's four-decimal scale before calculating totals.
 
 2. **Provision new fiscal years from the existing seed-generated configuration.**
    - Add `centres/funding-periods/child-care-spaces/BulkCreateService` and `BulkEnsureService` plus exports. The ensure service must compare expected `(fiscalPeriodId, fundingSubmissionLineId)` pairs with persisted rows and create only missing pairs; a nonempty result is not proof that a partially provisioned ledger is complete.
    - Resolve the funding period’s fiscal periods and legacy funding year, select only `FundingSubmissionLine` records with `sectionName === "Child Care Spaces"`, and create one zeroed ledger row for each selected line in each fiscal period. Copy the configured line name and monthly amount into the new rows.
-   - Register this ensure step in `EnsureChildrenService` and include a `hasChildCareSpaces` check in `IsInitializedService`; a fiscal year is not initialized until the ledger exists.
-   - Exclude Child Care Spaces from `FundingSubmissionLineJsons.BulkCreateService`, so new worksheets retain only JSON-owned sections.
+   - Register this ensure step in `EnsureChildrenService` and include a `hasChildCareSpaces` check in `IsInitializedService`. Every expected active configuration/month pair must exist; additional historical snapshots must not invalidate initialization. An empty active template set requires no new rows.
+   - Exclude Child Care Spaces from `FundingSubmissionLineJsons.BulkCreateService`, so new worksheets retain only JSON-owned sections. Reject the extracted section in both `lines` and raw `values` writes, so clients opened before deployment cannot reintroduce duplicate reporting data.
 
 3. **Migrate existing worksheet data and remove the old source.**
    - Add a separate timestamped data migration after the schema migration, following the batched `move-building-expenses-from-submission-lines-to-building-expenses` structure.
    - For each worksheet JSON record, isolate `sectionName === "Child Care Spaces"`, resolve its fiscal period from the legacy fiscal year and lower-case month, and create an idempotent ledger row for each source `submissionLineId`.
-   - Preserve the existing line-name/rate snapshots and rate inputs; calculate both persisted totals with the same decimal formula used by the model. Do not infer rows from today’s configuration.
-   - Rebuild that JSON record from the non-Child-Care-Spaces entries only after its values have been represented in the new table. Warn and retain the source JSON if no matching fiscal period or required source configuration can be found. Make `down` a documented no-op warning, as with the Building Expenses extraction.
+   - Preserve the existing line-name/rate snapshots and rate inputs. Resolve each source configuration by persisted ID, including soft-deleted or subsequently changed templates; historical snapshots do not depend on today's configuration fields.
+   - Validate that money and occupancy inputs are exactly representable in the ledger and supplied historical totals match the decimal formula. Abort on lossy conversion, inconsistent totals, conflicting rows, missing references, or unresolved fiscal periods. The existing migration resolver rolls back the entire data migration, retaining all source JSON instead of activating mixed-source readers.
+   - Rebuild each JSON record from its remaining sections only after the ledger represents all its Child Care Spaces values. Keep success idempotent. `down` remains a documented no-op warning because restoring pre-cutover JSON requires the original data.
 
 4. **Expose the ledger through the existing resource rails.**
    - Add controller, policy, serializers, service exports, routes, and a typed web API client/composable for list/show/update operations. Provisioning owns creation and deletion; worksheet users can update only the two occupancy-rate inputs, never identifiers, snapshots, or computed totals.
@@ -70,7 +71,7 @@ It matches the project’s recent ledger extraction pattern, gives each monthly 
    - On **Replicate Estimates**, save both stores, run both replication operations, and refresh the editor. Surface either failure rather than claiming a complete replicate.
 
 6. **Move reporting reads and delete obsolete JSON behavior.**
-   - Change `FundingLineValuesEnrollmentChart.vue` to read the latest actual Child Care Spaces ledger rows for the requested centre/fiscal year; use their `lineName` and `actualChildOccupancyRate` directly.
+   - Change `FundingLineValuesEnrollmentChart.vue` to select the latest fiscal month with actual enrollment for the requested centre/fiscal year, then display every category from that month. Zeroed future months must not hide existing enrollment.
    - Change `CalculateEligibleExpensesPeriodAmountService` to sum JSON-owned worksheet totals plus `child_care_spaces.actual_computed_total` for the requested `centreId` and `fiscalPeriodId`, then add Building Expenses. This replaces the fragile date-name/fiscal-year lookup for the extracted section while retaining remaining JSON-backed funding rows.
    - Delete the JSON model’s `withChildOccupancyRate` scope and its web filter type after the chart no longer uses it. Keep the generic JSON line type only for the sections it still represents.
    - Add Child Care Spaces to centre and funding-period destruction before its parent records are removed.
@@ -120,9 +121,9 @@ The worksheet would have two mutable copies of the same occupancy values, reconc
 ## Verification Plan
 
 1. **Model and provisioning tests:** Verify the unique key, server-side total calculation, all seven seeded space lines × all fiscal periods, zero defaults, and no Child Care Spaces lines in newly created JSON worksheets.
-2. **Migration test/rehearsal:** Seed a worksheet with Child Care Spaces and another section; run the migrations; assert ledger snapshots/rates/totals, retained non-Child JSON entries, no duplicate active rows, and safe handling of an unresolved fiscal period.
-3. **Workflow-service tests:** Verify initialization requires/provisions Child Care Spaces, centre/funding-period cleanup removes them, and replication copies estimates while clearing actuals for later months only.
-4. **Reconciliation and chart tests:** Assert the reconciliation amount equals remaining JSON actual totals + Child Care Spaces `actualComputedTotal` + Building Expenses, and that the enrollment chart receives the latest ledger rates for its fiscal year.
+2. **Migration test/rehearsal:** Verify idempotent cutover with exact historical snapshots, matching preexisting rows, and changed/soft-deleted configuration references. Verify an unresolved or conflicting later worksheet rolls back earlier inserts and JSON removal; also cover duplicate lines, inconsistent totals, and lossy decimal conversion.
+3. **Workflow-service tests:** Verify initialization requires every active configuration/month pair without discarding historical extras, an empty active template set remains usable, funding-period cleanup preserves other periods, and replication copies estimates while clearing actuals only in later months.
+4. **Reconciliation and chart tests:** Assert the reconciliation amount equals remaining JSON actual totals + ledger totals + Building Expenses, reject stale legacy writes before they can double-count, and select the latest month with enrollment despite zeroed future months.
 5. **Worksheet component test:** Exercise a Child Care Spaces edit, explicit propagation to Administration and Quality Enhancement Program by section name, separated save payloads, and dual replication requests. This protects the source-order regression created by the extraction.
 6. **Release smoke:** Run the focused API and web tests through `bin/dev`, run API/web type checks, boot the worktree with `bin/dev up`, edit/save a Child Care Spaces value, confirm dependent section totals, use **Replicate Estimates**, verify the enrollment chart, and refresh the monthly reconciliation total.
 
