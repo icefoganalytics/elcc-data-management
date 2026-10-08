@@ -123,5 +123,42 @@ describe("web/src/components/funding-line-values/FundingLineValuesEnrollmentChar
         ],
       })
     })
+
+    test("when future months have no enrollment, displays every line from the latest month with enrollment", async () => {
+      // Arrange
+      vi.mocked(httpClient, true).get.mockResolvedValue({
+        data: {
+          childCareSpaces: [
+            { fiscalPeriodId: 12, lineName: "Infants", actualChildOccupancyRate: "0" },
+            { fiscalPeriodId: 12, lineName: "Toddlers", actualChildOccupancyRate: "0" },
+            { fiscalPeriodId: 2, lineName: "Infants", actualChildOccupancyRate: "0.25" },
+            { fiscalPeriodId: 2, lineName: "Toddlers", actualChildOccupancyRate: "0" },
+            { fiscalPeriodId: 1, lineName: "Infants", actualChildOccupancyRate: "0.75" },
+          ],
+          totalCount: 5,
+        },
+      })
+      const wrapper = mount(FundingLineValuesEnrollmentChart, {
+        props: {
+          centreId: 1,
+          fiscalYear: "2024-2025",
+        },
+        global: {
+          plugins: [mockVuetify()],
+          stubs: {
+            apexchart: {
+              props: ["options", "series"],
+              template: '<div>{{ options.labels.join(",") }}:{{ series.join(",") }}</div>',
+            },
+          },
+        },
+      })
+
+      // Act
+      await flushPromises()
+
+      // Assert
+      expect(wrapper.text()).toBe("Infants,Toddlers:0.25,0")
+    })
   })
 })

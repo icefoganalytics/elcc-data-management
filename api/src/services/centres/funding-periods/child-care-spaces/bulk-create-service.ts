@@ -35,9 +35,7 @@ export class BulkCreateService extends BaseService {
         sectionName: ChildCareSpace.SECTION_NAME,
       },
     })
-    if (isEmpty(fundingSubmissionLines)) {
-      throw new Error("No Child Care Spaces funding submission lines found for the funding period.")
-    }
+    if (isEmpty(fundingSubmissionLines)) return []
 
     const childCareSpaces = await ChildCareSpace.withScope({
       method: ["byFundingPeriod", this.fundingPeriod.id],
