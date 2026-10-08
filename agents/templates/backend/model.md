@@ -125,7 +125,7 @@ export default ResourceName
 5. Create migration:
 
    ```bash
-   dev migrate create -- --name create-resource-names-table.ts
+   ./bin/dev migrate make create-resource-names
    ```
 
 6. Add associations in related models.

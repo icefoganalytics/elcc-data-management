@@ -1,7 +1,6 @@
 # API — Backend Patterns & Conventions
 
-Node.js + Express + TypeScript. Sequelize 7 ORM, with Umzug historical migrations and Knex for
-new migrations. MSSQL database.
+Node.js + Express + TypeScript. Sequelize 7 ORM, Knex migrations and seeds, MSSQL database.
 
 ---
 

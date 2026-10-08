@@ -215,63 +215,50 @@ To enable linting and prettification:
 
 ## Migrations - Database Management
 
-This project is using [umzug](https://github.com/sequelize/umzug) instead of [sequelize-cli](https://github.com/sequelize/cli) because `sequelize-cli` doesn't have TypeScript support.
+This project uses [Knex](https://knexjs.org/) for migrations and seeds, and Sequelize for the
+application ORM. Database table and column names use snake_case.
 
-NOTE: while database table names use snake_case, sequelize models use camelCase to match the JS standard. This means that migrations need to either provide a "field" name for each column that is snake_case, or use snake_case for the column names.
+```bash
+./bin/dev migrate make add-field-to-table
+./bin/dev migrate
+./bin/dev migrate list
+```
 
-1. To create a new migration from the template [sample-migration](./api/src/db/templates/sample-migration.ts) do:
+Migration files live in [`api/src/db/migrations`](./api/src/db/migrations/README.md).
+The initial table migrations create a fresh database or leave each existing table untouched.
+On an existing, current production schema, the cutover adds only `knex_migrations` and
+`knex_migrations_lock`; it does not rename tables, rewrite application data, or modify
+the unused `SequelizeMeta` history.
 
-   ```bash
-   dev migrate create -- --name create-users-table.ts
+Existing databases must already have the current application schema before this cutover.
+Historical migrations are no longer executed. Validate a restored production backup before
+deployment. The initial table migrations deliberately reject rollback to avoid dropping
+existing production tables.
 
-   # Or
+Production runs compiled JavaScript migrations through `node dist/initializers/index.js`.
+Development uses TypeScript migrations. Keep those environments on separate databases:
+Knex stores the actual filenames, and this project does not rename ledger entries between
+`.ts` and `.js` or support obsolete, unreleased PR migration names.
 
-   dev sh
-   npm run migrate create --name create-users-table.ts
-   ```
-
-   > If you are using Linux, all files created in docker will be created as `root` so you won't be able to edit them. Luckily, this is handle by the `dev migrate` command, when using Linux, after you provide your `sudo` password.
-
-2. To run the all new migrations do:
-
-   ```bash
-   dev migrate up
-   ```
-
-3. To rollback the last executed migration:
-
-   ```bash
-   dev migrate down
-   ```
-
-4. To rollback all migrations:
-
-   ```bash
-   dev migrate down -- --to 0
-   ```
+Initialization errors are logged and return a failing status, but `boot-app.sh` intentionally
+starts the API afterward so Azure deployments remain accessible for debugging.
+An API responding does not mean migrations succeeded; inspect initialization logs.
 
 ### Seeding
 
-Seeding is effectively the same as migrating, you just replace the `dev migrate` command with `dev seed`.
+```bash
+./bin/dev api npm run knex -- seed:make fill-users-table
+./bin/dev seed
+```
 
-e.g.
-
-- `dev seed create -- --name fill-users-table.ts`
-
-Seeds are separated by environment.
-i.e. api/src/db/seeds/development vs. api/src/db/seeds/production
-
-This allows for the convenient loading of required defaults in production, with more complex seeds in development, for easy QA.
-
-Seed code should be idempotent, so that it can be executed at any point in every environment.
-
-Seeds currently don't keep track of whether they have run or not. An alternative to this would be to store seeds in a `SequelizeData` table. via `new SequelizeStorage({ sequelize, tablename: "SequelizeData" })` in the umzug seeder config.
+Seeds are separated into `api/src/db/seeds/development` and `api/src/db/seeds/production`.
+Export `seed(knex)` and keep seeds idempotent: Knex reruns them without a seed-history table.
+Tests use factories rather than startup seeds.
 
 ### References
 
-- [umzug](https://github.com/sequelize/umzug)
-- [query-interface](https://sequelize.org/docs/v6/other-topics/query-interface/) migration examples.
-- [query interface api](https://sequelize.org/api/v6/class/src/dialects/abstract/query-interface.js~queryinterface) for full details.
+- [Knex migrations and seeds](https://knexjs.org/guide/migrations.html)
+- [Knex schema builder](https://knexjs.org/guide/schema-builder.html)
 
 ### Extras
 

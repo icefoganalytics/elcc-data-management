@@ -1,8 +1,42 @@
-# Historical Umzug Migration Archive
+# Knex Migration Patterns
 
-Do not add or edit files in this directory. They remain the upgrade path only for existing databases
-with a `SequelizeMeta` ledger that has not completed the historical migration sequence.
+Use this directory for all migrations. Create one migration per application model or inseparable
+group of related models; separate schema changes from data backfills.
 
-New databases use the ordered production-schema migrations in
-[`../knex-migrations/`](../knex-migrations/). Create every subsequent migration with
-`dev migrate make <description>`.
+## Commands
+
+```bash
+./bin/dev migrate make add-field-to-table
+./bin/dev migrate
+./bin/dev migrate list
+```
+
+## Migration Structure
+
+```typescript
+import type { Knex } from "knex"
+
+export async function up(knex: Knex): Promise<void> {
+  await knex.schema.alterTable("table_name", (table) => {
+    table.string("field_name", 100)
+  })
+}
+
+export async function down(knex: Knex): Promise<void> {
+  await knex.schema.alterTable("table_name", (table) => {
+    table.dropColumn("field_name")
+  })
+}
+```
+
+Use SQL `DECIMAL` types for financial values and snake_case for database names.
+Use `GETUTCDATE()` for timestamp defaults. Unique indexes on paranoid models must exclude
+soft-deleted rows, using `predicate: knex.whereNull("deleted_at")`.
+
+The initial `create-*` migrations use `knex.schema.hasTable` to leave existing tables untouched.
+They are a fresh-install baseline, not an upgrade path for old application schemas.
+Their `down` methods throw instead of dropping tables. Inspect a restored production backup
+before cutover; leave its unused `SequelizeMeta` history intact.
+
+Knex uses its native filename-based history and migration lock. Do not rename ledger entries,
+retain obsolete transition-marker files, or add a second migration directory.

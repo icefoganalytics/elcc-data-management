@@ -1,22 +1,25 @@
 # Database & Migrations
 
-Existing databases with a `SequelizeMeta` ledger use Umzug to complete any historical migrations.
-New databases create the production schema through small, ordered Knex migrations. Sequelize remains
-the application ORM. The migration pipeline detects the historical ledger before deciding which path
-to run.
+Knex runs migrations and environment-specific seeds. Sequelize remains the application ORM.
 
 ## Migration Rules
 
-- Keep files in `migrations/` unchanged; they are the historical `SequelizeMeta` upgrade path.
-- Create new migrations with `dev migrate make <description>`.
-- Run the complete pipeline with `dev migrate`.
-- Inspect the Knex ledger with `dev migrate list`.
-- The production-schema baseline fails before making changes if application tables exist without the
-  historical ledger.
-- Before Knex validates its ledger, `.ts` and `.js` entries for current migration files are normalized
-  to extensionless names. A duplicate entry fails without changing schema or application data.
+- Create migrations with `./bin/dev migrate make <description>` in `migrations/`.
+- Run migrations with `./bin/dev migrate`; inspect their state with `./bin/dev migrate list`.
+- The initial, model-sized table migrations create missing tables and never alter existing ones.
+- Existing installations must have the current application schema before this cutover. Historical
+  migrations are no longer executed; the existing `SequelizeMeta` table is left unused and unchanged.
+- Knex owns the new `knex_migrations` and `knex_migrations_lock` tables. Do not rename their entries.
+- Use compiled JavaScript for production and source TypeScript for development, on separate databases.
+- Initial table migrations cannot be rolled back: a rollback must not drop pre-existing tables.
+- Separate schema changes from data backfills and keep backfills idempotent.
 - Keep migrations clean — no extraneous comments.
-- Find system user by email (`system.user@yukon.ca`), not `auth0Subject`.
+- Find system users by email, not `auth0Subject`.
 
-**Historical Migration Patterns** → [`migrations/README.md`](migrations/README.md)
-**New Knex Migration Patterns** → [`knex-migrations/README.md`](knex-migrations/README.md)
+## Seeds
+
+- Export `seed(knex)` and preserve idempotence; Knex has no seed-execution ledger.
+- Use `seeds/development/` or `seeds/production/`. Tests use factories and skip startup seeds.
+- The seed code may use existing Sequelize models and services.
+
+**Migration Patterns** → [`migrations/README.md`](migrations/README.md)
