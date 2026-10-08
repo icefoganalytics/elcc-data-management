@@ -148,6 +148,39 @@ describe("api/src/services/funding-reconciliations/calculate-funding-received-pe
           amount: "99999999999.0001",
         })
 
+        const otherCentre = await centreFactory.create()
+        await paymentFactory.create({
+          centreId: otherCentre.id,
+          fiscalPeriodId: fiscalPeriod.id,
+          fiscalYear: "2025/26",
+          paidOn: "2025-04-15",
+          amount: maximumPaymentAmount,
+        })
+
+        const otherFiscalPeriod = await fiscalPeriodFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          fiscalYear: "2025-26",
+          month: FiscalPeriod.Months.MAY,
+          dateStart: new Date("2025-05-01"),
+          dateEnd: new Date("2025-05-31"),
+        })
+        await paymentFactory.create({
+          centreId: centre.id,
+          fiscalPeriodId: otherFiscalPeriod.id,
+          fiscalYear: "2025/26",
+          paidOn: "2025-05-15",
+          amount: maximumPaymentAmount,
+        })
+
+        const deletedPayment = await paymentFactory.create({
+          centreId: centre.id,
+          fiscalPeriodId: fiscalPeriod.id,
+          fiscalYear: "2025/26",
+          paidOn: "2025-04-15",
+          amount: maximumPaymentAmount,
+        })
+        await deletedPayment.destroy()
+
         // Act
         const result = await CalculateFundingReceivedPeriodAmountService.perform(
           centre.id,

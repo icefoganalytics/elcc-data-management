@@ -1,7 +1,7 @@
 import Big from "big.js"
-import { QueryTypes } from "@sequelize/core"
+import { sql } from "@sequelize/core"
 
-import db from "@/models"
+import { Payment } from "@/models"
 import BaseService from "@/services/base-service"
 
 export class CalculateFundingReceivedPeriodAmountService extends BaseService {
@@ -13,27 +13,19 @@ export class CalculateFundingReceivedPeriodAmountService extends BaseService {
   }
 
   async perform(): Promise<string> {
-    const [paymentTotals] = await db.query<{
-      paymentsTotalAmount: string
-    }>(
-      /* sql */ `
-        SELECT
-          CONVERT(VARCHAR(50), COALESCE(SUM(amount), 0)) AS paymentsTotalAmount
-        FROM
-          payments
-        WHERE
-          centre_id = :centreId
-          AND fiscal_period_id = :fiscalPeriodId
-          AND deleted_at IS NULL
-      `,
-      {
-        type: QueryTypes.SELECT,
-        replacements: {
-          centreId: this.centreId,
-          fiscalPeriodId: this.fiscalPeriodId,
-        },
-      }
-    )
+    const [paymentTotals] = await Payment.findAll<Payment, { paymentsTotalAmount: string }>({
+      attributes: [
+        [
+          sql.cast(sql.fn("COALESCE", sql.fn("SUM", sql.attribute("amount")), 0), "VARCHAR(50)"),
+          "paymentsTotalAmount",
+        ],
+      ],
+      where: {
+        centreId: this.centreId,
+        fiscalPeriodId: this.fiscalPeriodId,
+      },
+      raw: true,
+    })
     const { paymentsTotalAmount } = paymentTotals
 
     return Big(paymentsTotalAmount).toFixed(4)
