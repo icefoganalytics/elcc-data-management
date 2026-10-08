@@ -14,6 +14,8 @@ type FundingLineValue = {
   monthlyAmount?: string
   estimatedChildOccupancyRate?: string
   actualChildOccupancyRate?: string
+  estimatedComputedTotal?: string
+  actualComputedTotal?: string
 }
 
 type FundingSubmissionLineJson = {
@@ -37,9 +39,7 @@ type ChildCareSpaceAttributes = {
 type ExistingChildCareSpace = Omit<ChildCareSpaceAttributes, "fundingSubmissionLineId">
 
 export async function up({ context: { sequelize } }: Migration) {
-  let offset = 0
-
-  while (true) {
+  for (let offset = 0; ; offset += BATCH_SIZE) {
     const fundingSubmissionLineJsons = await sequelize.query<FundingSubmissionLineJson>(
       sql`
         SELECT
@@ -78,21 +78,22 @@ export async function up({ context: { sequelize } }: Migration) {
 
       const fiscalPeriodId = await findFiscalPeriodId(sequelize, fundingSubmissionLineJson)
       if (isNil(fiscalPeriodId)) {
-        console.warn(
-          `No fiscal period found for ${fundingSubmissionLineJson.fiscalYearLegacy} ${fundingSubmissionLineJson.monthNameCapitalized}; retaining Child Care Spaces JSON values for worksheet ${fundingSubmissionLineJson.id}.`
+        throw new Error(
+          `No fiscal period found for ${fundingSubmissionLineJson.fiscalYearLegacy} ${fundingSubmissionLineJson.monthNameCapitalized}; cannot migrate Child Care Spaces for worksheet ${fundingSubmissionLineJson.id}.`
         )
-        continue
       }
 
       const wereAllLinesMigrated = await migrateChildCareSpaces(
         sequelize,
         fundingSubmissionLineJson.centreId,
         fiscalPeriodId,
-        fundingSubmissionLineJson.fiscalYearLegacy,
         childCareSpaces
       )
-      if (!wereAllLinesMigrated) continue
-
+      if (!wereAllLinesMigrated) {
+        throw new Error(
+          `Unable to migrate all Child Care Spaces values for worksheet ${fundingSubmissionLineJson.id}; source values are unresolved or conflict with existing ledger data.`
+        )
+      }
       const remainingLines = lines.filter(
         (line) => line.sectionName !== CHILD_CARE_SPACES_SECTION_NAME
       )
@@ -113,8 +114,6 @@ export async function up({ context: { sequelize } }: Migration) {
         }
       )
     }
-
-    offset += BATCH_SIZE
   }
 }
 
@@ -151,7 +150,6 @@ async function migrateChildCareSpaces(
   sequelize: Parameters<typeof up>[0]["context"]["sequelize"],
   centreId: number,
   fiscalPeriodId: number,
-  fiscalYearLegacy: string,
   childCareSpaces: FundingLineValue[]
 ): Promise<boolean> {
   const childCareSpacesAttributes: ChildCareSpaceAttributes[] = []
@@ -174,12 +172,11 @@ async function migrateChildCareSpaces(
 
   for (const childCareSpaceAttributes of childCareSpacesAttributes) {
     const fundingSubmissionLineId = childCareSpaceAttributes.fundingSubmissionLineId
-    const activeFundingSubmissionLine = await findActiveChildCareSpacesFundingSubmissionLine(
+    const fundingSubmissionLine = await findFundingSubmissionLine(
       sequelize,
-      fundingSubmissionLineId,
-      fiscalYearLegacy
+      fundingSubmissionLineId
     )
-    if (isNil(activeFundingSubmissionLine)) return false
+    if (isNil(fundingSubmissionLine)) return false
   }
 
   const childCareSpacesToInsert: ChildCareSpaceAttributes[] = []
@@ -292,10 +289,9 @@ function hasMatchingChildCareSpaceAttributes(
   )
 }
 
-async function findActiveChildCareSpacesFundingSubmissionLine(
+async function findFundingSubmissionLine(
   sequelize: Parameters<typeof up>[0]["context"]["sequelize"],
-  fundingSubmissionLineId: number,
-  fiscalYearLegacy: string
+  fundingSubmissionLineId: number
 ): Promise<number | undefined> {
   const [fundingSubmissionLine] = await sequelize.query<{ id: number }>(
     sql`
@@ -305,22 +301,17 @@ async function findActiveChildCareSpacesFundingSubmissionLine(
         funding_submission_lines
       WHERE
         id = :fundingSubmissionLineId
-        AND fiscal_year = :fiscalYearLegacy
-        AND section_name = :sectionName
-        AND deleted_at IS NULL
     `,
     {
       type: QueryTypes.SELECT,
       replacements: {
         fundingSubmissionLineId,
-        fiscalYearLegacy,
-        sectionName: CHILD_CARE_SPACES_SECTION_NAME,
       },
     }
   )
   if (isNil(fundingSubmissionLine)) {
     console.warn(
-      `No active Child Care Spaces funding submission line found for ID ${fundingSubmissionLineId}; retaining source JSON values.`
+      `No funding submission line found for ID ${fundingSubmissionLineId}; retaining source JSON values.`
     )
   }
 
@@ -345,14 +336,46 @@ function attributesForChildCareSpace(
   }
 
   try {
+    const monthlyAmountValue = Big(monthlyAmount)
+    const estimatedChildOccupancyRateValue = Big(estimatedChildOccupancyRate)
+    const actualChildOccupancyRateValue = Big(actualChildOccupancyRate)
+
+    if (
+      !monthlyAmountValue.eq(monthlyAmountValue.toFixed(4)) ||
+      !estimatedChildOccupancyRateValue.eq(estimatedChildOccupancyRateValue.toFixed(4)) ||
+      !actualChildOccupancyRateValue.eq(actualChildOccupancyRateValue.toFixed(4))
+    ) {
+      console.warn(
+        `Child Care Spaces line ${JSON.stringify(childCareSpace)} contains a value that would lose precision in the ledger; retaining its source JSON values.`
+      )
+      return
+    }
+
+    const estimatedComputedTotal = monthlyAmountValue
+      .mul(estimatedChildOccupancyRateValue)
+      .toFixed(4)
+    const actualComputedTotal = monthlyAmountValue.mul(actualChildOccupancyRateValue).toFixed(4)
+
+    if (
+      (!isNil(childCareSpace.estimatedComputedTotal) &&
+        !Big(childCareSpace.estimatedComputedTotal).eq(estimatedComputedTotal)) ||
+      (!isNil(childCareSpace.actualComputedTotal) &&
+        !Big(childCareSpace.actualComputedTotal).eq(actualComputedTotal))
+    ) {
+      console.warn(
+        `Child Care Spaces line ${JSON.stringify(childCareSpace)} has computed totals that do not match its source rates; retaining its source JSON values.`
+      )
+      return
+    }
+
     return {
       fundingSubmissionLineId,
       lineName,
       monthlyAmount,
       estimatedChildOccupancyRate,
       actualChildOccupancyRate,
-      estimatedComputedTotal: Big(monthlyAmount).mul(estimatedChildOccupancyRate).toFixed(4),
-      actualComputedTotal: Big(monthlyAmount).mul(actualChildOccupancyRate).toFixed(4),
+      estimatedComputedTotal: childCareSpace.estimatedComputedTotal ?? estimatedComputedTotal,
+      actualComputedTotal: childCareSpace.actualComputedTotal ?? actualComputedTotal,
     }
   } catch {
     console.warn(
