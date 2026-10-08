@@ -97,7 +97,8 @@ export class IsInitializedService extends BaseService {
         sectionName: ChildCareSpace.SECTION_NAME,
       },
     })
-    if (isEmpty(fiscalPeriods) || isEmpty(fundingSubmissionLines)) return false
+    if (isEmpty(fiscalPeriods)) return false
+    if (isEmpty(fundingSubmissionLines)) return true
 
     const childCareSpaces = await ChildCareSpace.withScope({
       method: ["byFundingPeriod", fundingPeriodId],
@@ -117,8 +118,6 @@ export class IsInitializedService extends BaseService {
         expectedPairKeys.add(`${fiscalPeriod.id}:${fundingSubmissionLine.id}`)
       }
     }
-
-    if (childCareSpacePairKeys.size !== expectedPairKeys.size) return false
 
     for (const expectedPairKey of expectedPairKeys) {
       if (!childCareSpacePairKeys.has(expectedPairKey)) return false

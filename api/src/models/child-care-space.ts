@@ -1,5 +1,6 @@
 import {
   DataTypes,
+  Op,
   sql,
   type CreationOptional,
   type InferAttributes,
@@ -96,13 +97,19 @@ export class ChildCareSpace extends BaseModel<
   @BeforeSave
   static updateComputedTotals(childCareSpace: ChildCareSpace) {
     const monthlyAmount = new Big(childCareSpace.monthlyAmount)
+    const estimatedChildOccupancyRate = new Big(childCareSpace.estimatedChildOccupancyRate)
+    const actualChildOccupancyRate = new Big(childCareSpace.actualChildOccupancyRate)
+    if (
+      !estimatedChildOccupancyRate.eq(estimatedChildOccupancyRate.toFixed(4)) ||
+      !actualChildOccupancyRate.eq(actualChildOccupancyRate.toFixed(4))
+    ) {
+      throw new Error("Child Care Spaces occupancy rates support at most four decimal places")
+    }
 
     childCareSpace.estimatedComputedTotal = monthlyAmount
-      .mul(childCareSpace.estimatedChildOccupancyRate)
+      .mul(estimatedChildOccupancyRate)
       .toFixed(4)
-    childCareSpace.actualComputedTotal = monthlyAmount
-      .mul(childCareSpace.actualChildOccupancyRate)
-      .toFixed(4)
+    childCareSpace.actualComputedTotal = monthlyAmount.mul(actualChildOccupancyRate).toFixed(4)
   }
 
   @BelongsTo(() => Centre, {
@@ -133,16 +140,26 @@ export class ChildCareSpace extends BaseModel<
   declare fundingSubmissionLine?: NonAttribute<FundingSubmissionLine>
 
   static establishScopes() {
-    this.addScope("byFundingPeriod", (fundingPeriodId: number) => ({
-      include: [
-        {
-          association: "fiscalPeriod",
-          where: {
-            fundingPeriodId,
+    this.addScope("byFundingPeriod", (fundingPeriodId: number) => {
+      const fiscalPeriodIdsByFundingPeriodIdQuery = sql`
+        (
+          SELECT
+            id
+          FROM
+            fiscal_periods
+          WHERE
+            fiscal_periods.funding_period_id = ${fundingPeriodId}
+            AND fiscal_periods.deleted_at IS NULL
+        )
+      `
+      return {
+        where: {
+          fiscalPeriodId: {
+            [Op.in]: fiscalPeriodIdsByFundingPeriodIdQuery,
           },
         },
-      ],
-    }))
+      }
+    })
 
     this.addScope("byFiscalYear", (fiscalYear: string) => ({
       include: [

@@ -33,6 +33,37 @@ describe("api/src/models/child-care-space.ts", () => {
           })
         )
       })
+
+      test.each([
+        { estimatedChildOccupancyRate: "0.12345" },
+        { actualChildOccupancyRate: "0.12345" },
+      ])(
+        "when an occupancy input exceeds storage precision, rejects the update without changing persisted money: %o",
+        async (attributes) => {
+          // Arrange
+          const childCareSpace = await childCareSpaceFactory.create({
+            monthlyAmount: "100.0000",
+            estimatedChildOccupancyRate: "0.2500",
+            actualChildOccupancyRate: "0.5000",
+          })
+
+          // Act
+          // marlens-test-alignment: allow-multiple-expects -- rejection and unchanged persisted money are independent observable contracts.
+          await expect(childCareSpace.update(attributes)).rejects.toThrow(
+            "Child Care Spaces occupancy rates support at most four decimal places"
+          )
+
+          // Assert
+          await expect(childCareSpace.reload()).resolves.toEqual(
+            expect.objectContaining({
+              estimatedChildOccupancyRate: "0.25",
+              actualChildOccupancyRate: "0.5",
+              estimatedComputedTotal: "25",
+              actualComputedTotal: "50",
+            })
+          )
+        }
+      )
     })
 
     describe(".withScopes", () => {

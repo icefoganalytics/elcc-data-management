@@ -23,8 +23,33 @@ import { upperFirst } from "lodash"
 import { isValidFiscalYearLegacy } from "@/models/validators"
 
 import BaseModel from "@/models/base-model"
+import ChildCareSpace from "@/models/child-care-space"
 import Centre from "@/models/centre"
 import FundingLineValue from "@/models/funding-line-value"
+
+function doesNotContainChildCareSpaces(values: string) {
+  let lines: unknown
+  try {
+    lines = JSON.parse(values)
+  } catch {
+    return
+  }
+
+  if (
+    Array.isArray(lines) &&
+    lines.some(
+      (line) =>
+        typeof line === "object" &&
+        line !== null &&
+        "sectionName" in line &&
+        line.sectionName === ChildCareSpace.SECTION_NAME
+    )
+  ) {
+    throw new Error(
+      `${ChildCareSpace.SECTION_NAME} values must be written through the Child Care Spaces ledger.`
+    )
+  }
+}
 
 export enum FundingSubmissionLineJsonMonths {
   APRIL = "April",
@@ -91,6 +116,9 @@ export class FundingSubmissionLineJson extends BaseModel<
 
   @Attribute(DataTypes.TEXT)
   @NotNull
+  @ValidateAttribute({
+    doesNotContainChildCareSpaces,
+  })
   declare values: string
 
   @Attribute({

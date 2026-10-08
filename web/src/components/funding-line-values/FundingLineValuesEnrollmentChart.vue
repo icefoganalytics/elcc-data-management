@@ -47,7 +47,12 @@ const childCareSpacesQuery = computed<ChildCareSpaceQueryOptions>(() => ({
 }))
 const { childCareSpaces, isLoading, refresh } = useChildCareSpaces(childCareSpacesQuery)
 
-const latestFiscalPeriodId = computed(() => childCareSpaces.value[0]?.fiscalPeriodId)
+const latestFiscalPeriodId = computed(
+  () =>
+    childCareSpaces.value.find((childCareSpace) =>
+      Big(childCareSpace.actualChildOccupancyRate).gt(0)
+    )?.fiscalPeriodId
+)
 const latestChildCareSpaces = computed(() => {
   if (isNil(latestFiscalPeriodId.value)) return []
 
