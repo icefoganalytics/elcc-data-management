@@ -1,9 +1,16 @@
-import { seeder } from "@/db/umzug"
+import dbMigrationClient from "@/db/db-migration-client"
 
-seeder
-  .runAsCLI()
-  .then(() => process.exit(0))
-  .catch((error) => {
+async function seed(): Promise<void> {
+  try {
+    await dbMigrationClient.seed.run()
+  } catch (error) {
     console.error(`Seeding Failed: ${error}`, { error })
-    process.exit(1)
-  })
+    throw error
+  } finally {
+    await dbMigrationClient.destroy()
+  }
+}
+
+seed().catch(() => {
+  process.exitCode = 1
+})

@@ -1,8 +1,10 @@
+import type { Knex } from "knex"
+
 import { isNil } from "lodash"
 
 import { User } from "@/models"
 
-export async function up() {
+export async function seed(_knex: Knex): Promise<void> {
   let systemUser = await User.findOne({
     where: {
       email: "system.user@elcc.com",
@@ -18,9 +20,4 @@ export async function up() {
       roles: [User.Roles.SYSTEM_ADMINISTRATOR],
     })
   }
-}
-
-export async function down() {
-  // this method needs to exist, but does not need to be implemented.
-  // Seeds should be idempotent.
 }

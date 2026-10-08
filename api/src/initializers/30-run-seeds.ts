@@ -1,7 +1,10 @@
-import { seeder } from "@/db/umzug"
+import { NODE_ENV } from "@/config"
+import dbMigrationClient from "@/db/db-migration-client"
 import { Centre } from "@/models"
 
 export async function runSeeds(): Promise<void> {
+  if (NODE_ENV === "test") return
+
   if (process.env.SKIP_SEEDING_UNLESS_EMPTY === "true") {
     const count = await Centre.count({ logging: false })
 
@@ -12,7 +15,7 @@ export async function runSeeds(): Promise<void> {
   }
 
   try {
-    await seeder.up()
+    await dbMigrationClient.seed.run()
   } catch (error) {
     console.error(`Error running seeds: ${error}`, { error })
     throw error

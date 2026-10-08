@@ -1,5 +1,6 @@
 #!/bin/sh
 
+# Continue boot after initializer failure so Azure logs and the API remain available for debugging.
 if [ "$NODE_ENV" != "production" ]; then
   # Run initializers in development
   npm run initializers
