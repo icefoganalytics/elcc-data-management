@@ -173,10 +173,6 @@ class DevHelper
     end
   end
 
-  def knex_migrate_api(*args, **kwargs)
-    run(*%w[api npm run knex --], *args, **kwargs)
-  end
-
   def seed(*args, **kwargs)
     run(*%w[api npm run seed], *args, **kwargs)
   end
