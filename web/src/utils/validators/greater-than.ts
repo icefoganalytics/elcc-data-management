@@ -1,4 +1,3 @@
-import Big from "big.js"
 import { isEmpty, isNil, isString } from "lodash"
 
 export function greaterThan(
@@ -8,19 +7,30 @@ export function greaterThan(
   return (value: unknown) => {
     if (isNil(minimum) || (isString(minimum) && isEmpty(minimum))) return true
     if (isNil(value) || (isString(value) && isEmpty(value))) return true
-    if (typeof minimum !== "string" && typeof minimum !== "number") {
-      return `This field must be a number`
-    }
-    if (typeof value !== "string" && typeof value !== "number") {
+
+    let numericMinimum: number
+    if (typeof minimum === "string") {
+      numericMinimum = parseFloat(minimum)
+    } else if (typeof minimum === "number") {
+      numericMinimum = minimum
+    } else {
       return `This field must be a number`
     }
 
-    try {
-      if (Big(value).gt(Big(minimum))) {
-        return true
-      }
-    } catch {
+    let numericValue: number
+    if (typeof value === "string") {
+      numericValue = parseFloat(value)
+    } else if (typeof value === "number") {
+      numericValue = value
+    } else {
       return `This field must be a number`
+    }
+
+    const hasValidNumericValue = !Number.isNaN(numericValue)
+    const isGreaterThan = hasValidNumericValue && numericValue > numericMinimum
+
+    if (isGreaterThan) {
+      return true
     }
 
     const minimumLabel = referenceFieldLabel || minimum
