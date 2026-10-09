@@ -2,13 +2,17 @@
 
 require "bundler/setup"
 require "local_development_gateway"
+require "open_in_editor_bridge"
 
 require "rdoc"
 require "shellwords"
 
 require_relative "./jira_api"
-require_relative "./open-in-editor-bridge"
 require_relative "./pull_request_editor"
+
+ENV["OPEN_IN_EDITOR_PROJECT_ROOT"] = File.absolute_path("#{__dir__}/..")
+ENV["OPEN_IN_EDITOR_BRIDGE_BIND_ADDRESS"] ||= "0.0.0.0"
+ENV["OPEN_IN_EDITOR_COMMAND"] ||= ENV.fetch("EDITOR", "devin-desktop")
 
 class DevHelper
   # Support dashes in command names
@@ -60,14 +64,15 @@ class DevHelper
 
   def up(*args, **kwargs)
     LocalDevelopmentGateway.with_running do
-      OpenInEditorBridge.with_running do
-        compose(
-          *%w[up --remove-orphans --force-recreate --renew-anon-volumes],
-          *args,
-          execution_mode: WAIT_FOR_PROCESS,
-          gateway: true,
-          **kwargs
-        )
+      detached =
+        args.include?("-d") || args.include?("--detach") ||
+          args.include?("--wait")
+
+      if detached
+        OpenInEditorBridge.call("--ensure-running")
+        compose_up(*args, **kwargs)
+      else
+        OpenInEditorBridge.with_running { compose_up(*args, **kwargs) }
       end
     end
   end
@@ -304,6 +309,16 @@ class DevHelper
 
   private
 
+  def compose_up(*args, **kwargs)
+    compose(
+      *%w[up --remove-orphans --force-recreate --renew-anon-volumes],
+      *args,
+      execution_mode: WAIT_FOR_PROCESS,
+      gateway: true,
+      **kwargs
+    )
+  end
+
   def container_id(container_name, *args, **kwargs)
     command = compose_command(*%w[ps -q], container_name, *args, **kwargs)
     puts "Running: #{command}"
@@ -363,6 +378,7 @@ class DevHelper
 
     variables << %(COMPOSE_PROJECT_NAME="#{checkout_name}")
     variables << %(GATEWAY_HOSTNAME="#{Shellwords.escape(gateway_hostname)}")
+    variables << %(OPEN_IN_EDITOR_SESSION_ID="#{OpenInEditorBridge.session_id}")
     variables.join(" ")
   end
 
