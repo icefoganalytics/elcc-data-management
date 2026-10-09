@@ -1,6 +1,7 @@
 # Database & Migrations
 
 Knex runs migrations and environment-specific seeds. Sequelize remains the application ORM.
+The Knex CLI hoists the migration client's configuration for each environment.
 
 ## Migration Rules
 
@@ -18,6 +19,7 @@ Knex runs migrations and environment-specific seeds. Sequelize remains the appli
 
 ## Seeds
 
+- Run seeds with `./bin/dev seed`; the package command delegates to native `knex seed:run`.
 - Export `seed(knex)` and preserve idempotence; Knex has no seed-execution ledger.
 - Use `seeds/development/` or `seeds/production/`. Tests use factories and skip startup seeds.
 - The seed code may use existing Sequelize models and services.
