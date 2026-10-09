@@ -31,6 +31,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
   application tables or data. Obsolete migration history is removed after the table baseline succeeds.
   Development commands forward native Knex migration actions; use `dev migrate latest` for all
   pending migrations and `dev migrate up` for one migration.
+  Fresh-schema foreign keys use Knex-generated names; unique indexes retain their explicit names.
 
 ### Fixed
 
