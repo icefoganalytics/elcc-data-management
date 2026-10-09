@@ -1,4 +1,6 @@
-import db, { ChildCareSpace } from "@/models"
+import { TransactionNestMode } from "@sequelize/core"
+
+import db from "@/models"
 import type Centre from "@/models/centre"
 import type FundingSubmissionLine from "@/models/funding-submission-line"
 import { FiscalPeriodMonths } from "@/models/fiscal-period"
@@ -7,12 +9,16 @@ import { up as migrateChildCareSpaces } from "@/db/migrations/2026.10.07T17.43.1
 import { type Migration } from "@/db/umzug"
 import {
   centreFactory,
-  childCareSpaceFactory,
   fiscalPeriodFactory,
   fundingPeriodFactory,
   fundingSubmissionLineFactory,
   fundingSubmissionLineJsonFactory,
 } from "@/factories"
+import {
+  createLegacyChildCareSpace,
+  findLegacyChildCareSpaces,
+  withLegacyChildCareSpaceSchema,
+} from "@/db/migrations/legacy-child-care-spaces"
 
 const FISCAL_YEAR = "2024-2025"
 const FISCAL_YEAR_LEGACY = "2024/25"
@@ -66,275 +72,277 @@ async function createHistoricalWorksheet(
 describe("api/src/db/migrations/2026.10.07T17.43.15.migrate-child-care-spaces-from-worksheet-json.ts", () => {
   describe("#up", () => {
     test("when historical snapshots reference changed and deleted configuration, migrates represented values idempotently", async () => {
-      // Arrange
-      const centre = await centreFactory.create()
-      const fiscalPeriod = await createAprilFiscalPeriod()
-      const newFundingSubmissionLine = await fundingSubmissionLineFactory.create({
-        fiscalYear: FISCAL_YEAR_LEGACY,
-        sectionName: "Child Care Spaces",
-        lineName: "Infants",
-        monthlyAmount: "100.0000",
-      })
-      const existingFundingSubmissionLine = await fundingSubmissionLineFactory.create({
-        fiscalYear: FISCAL_YEAR_LEGACY,
-        sectionName: "Child Care Spaces",
-        lineName: "Toddlers",
-        monthlyAmount: "80.0000",
-      })
-
-      const newChildCareSpaceLine = {
-        submissionLineId: newFundingSubmissionLine.id,
-        sectionName: "Child Care Spaces",
-        lineName: "Historical Infant Cohort",
-        monthlyAmount: "125.5000",
-        estimatedChildOccupancyRate: "0.4000",
-        actualChildOccupancyRate: "0.2000",
-        estimatedComputedTotal: "50.2000",
-      }
-      const existingChildCareSpaceLine = {
-        submissionLineId: existingFundingSubmissionLine.id,
-        sectionName: "Child Care Spaces",
-        lineName: "Historical Toddler Cohort",
-        monthlyAmount: "80.0000",
-        estimatedChildOccupancyRate: "0.2500",
-        actualChildOccupancyRate: "0.1250",
-        estimatedComputedTotal: "20.00000",
-        actualComputedTotal: "10.0000",
-      }
-      const administrationLine = {
-        submissionLineId: 901,
-        sectionName: "Administration (10% of Spaces)",
-        lineName: "Infants",
-        monthlyAmount: "12.5500",
-        estimatedChildOccupancyRate: "0.4000",
-        actualChildOccupancyRate: "0.2000",
-        estimatedComputedTotal: "5.0200",
-        actualComputedTotal: "2.5100",
-      }
-      const otherRetainedLine = {
-        sectionName: "Quality Program Enhancement",
-        lineName: "Learning materials",
-        monthlyAmount: "7.2500",
-        historicalNote: "retained without transformation",
-      }
-      const originalWorksheetLines = [
-        newChildCareSpaceLine,
-        administrationLine,
-        existingChildCareSpaceLine,
-        otherRetainedLine,
-      ]
-      const worksheet = await createHistoricalWorksheet(centre, originalWorksheetLines)
-
-      const existingChildCareSpace = await childCareSpaceFactory
-        .associations({
-          centre,
-          fiscalPeriod,
-          fundingSubmissionLine: existingFundingSubmissionLine,
+      await withLegacyChildCareSpaceSchema(async () => {
+        // Arrange
+        const centre = await centreFactory.create()
+        const fiscalPeriod = await createAprilFiscalPeriod()
+        const newFundingSubmissionLine = await fundingSubmissionLineFactory.create({
+          fiscalYear: FISCAL_YEAR_LEGACY,
+          sectionName: "Child Care Spaces",
+          lineName: "Infants",
+          monthlyAmount: "100.0000",
         })
-        .create({
+        const existingFundingSubmissionLine = await fundingSubmissionLineFactory.create({
+          fiscalYear: FISCAL_YEAR_LEGACY,
+          sectionName: "Child Care Spaces",
+          lineName: "Toddlers",
+          monthlyAmount: "80.0000",
+        })
+
+        const newChildCareSpaceLine = {
+          submissionLineId: newFundingSubmissionLine.id,
+          sectionName: "Child Care Spaces",
+          lineName: "Historical Infant Cohort",
+          monthlyAmount: "125.5000",
+          estimatedChildOccupancyRate: "0.4000",
+          actualChildOccupancyRate: "0.2000",
+          estimatedComputedTotal: "50.2000",
+        }
+        const existingChildCareSpaceLine = {
+          submissionLineId: existingFundingSubmissionLine.id,
+          sectionName: "Child Care Spaces",
+          lineName: "Historical Toddler Cohort",
+          monthlyAmount: "80.0000",
+          estimatedChildOccupancyRate: "0.2500",
+          actualChildOccupancyRate: "0.1250",
+          estimatedComputedTotal: "20.00000",
+          actualComputedTotal: "10.0000",
+        }
+        const administrationLine = {
+          submissionLineId: 901,
+          sectionName: "Administration (10% of Spaces)",
+          lineName: "Infants",
+          monthlyAmount: "12.5500",
+          estimatedChildOccupancyRate: "0.4000",
+          actualChildOccupancyRate: "0.2000",
+          estimatedComputedTotal: "5.0200",
+          actualComputedTotal: "2.5100",
+        }
+        const otherRetainedLine = {
+          sectionName: "Quality Program Enhancement",
+          lineName: "Learning materials",
+          monthlyAmount: "7.2500",
+          historicalNote: "retained without transformation",
+        }
+        const originalWorksheetLines = [
+          newChildCareSpaceLine,
+          administrationLine,
+          existingChildCareSpaceLine,
+          otherRetainedLine,
+        ]
+        const worksheet = await createHistoricalWorksheet(centre, originalWorksheetLines)
+
+        const existingChildCareSpace = await createLegacyChildCareSpace({
+          centreId: centre.id,
+          fiscalPeriodId: fiscalPeriod.id,
+          fundingSubmissionLineId: existingFundingSubmissionLine.id,
           lineName: existingChildCareSpaceLine.lineName,
           monthlyAmount: existingChildCareSpaceLine.monthlyAmount,
           estimatedChildOccupancyRate: existingChildCareSpaceLine.estimatedChildOccupancyRate,
           actualChildOccupancyRate: existingChildCareSpaceLine.actualChildOccupancyRate,
         })
 
-      await newFundingSubmissionLine.update({
-        fiscalYear: "2025/26",
-        sectionName: "Archived Child Care Spaces",
-      })
-      await existingFundingSubmissionLine.update({
-        fiscalYear: "2025/26",
-        sectionName: "Archived Child Care Spaces",
-      })
-      await newFundingSubmissionLine.destroy()
-      await existingFundingSubmissionLine.destroy()
+        await newFundingSubmissionLine.update({
+          fiscalYear: "2025/26",
+          sectionName: "Archived Child Care Spaces",
+        })
+        await existingFundingSubmissionLine.update({
+          fiscalYear: "2025/26",
+          sectionName: "Archived Child Care Spaces",
+        })
+        await newFundingSubmissionLine.destroy()
+        await existingFundingSubmissionLine.destroy()
 
-      // Act
+        // Act
 
-      await db.transaction(() => migrateChildCareSpaces(migration))
-      await db.transaction(() => migrateChildCareSpaces(migration))
+        await db.transaction({ nestMode: TransactionNestMode.savepoint }, () =>
+          migrateChildCareSpaces(migration)
+        )
+        await db.transaction({ nestMode: TransactionNestMode.savepoint }, () =>
+          migrateChildCareSpaces(migration)
+        )
 
-      // Assert
-      await worksheet.reload()
-      await newFundingSubmissionLine.reload({ paranoid: false })
-      await existingFundingSubmissionLine.reload({ paranoid: false })
-      const migratedChildCareSpaces = await ChildCareSpace.findAll({
-        where: { centreId: centre.id, fiscalPeriodId: fiscalPeriod.id },
-        order: [["fundingSubmissionLineId", "ASC"]],
-      })
+        // Assert
+        await worksheet.reload()
+        await newFundingSubmissionLine.reload({ paranoid: false })
+        await existingFundingSubmissionLine.reload({ paranoid: false })
+        const migratedChildCareSpaces = await findLegacyChildCareSpaces()
 
-      expect({
-        worksheetLines: worksheet.lines,
-        childCareSpaces: migratedChildCareSpaces,
-      }).toEqual({
-        worksheetLines: [administrationLine, otherRetainedLine],
-        childCareSpaces: [
-          expect.objectContaining({
-            fundingSubmissionLineId: newFundingSubmissionLine.id,
-            lineName: "Historical Infant Cohort",
-            monthlyAmount: "125.5",
-            estimatedChildOccupancyRate: "0.4",
-            actualChildOccupancyRate: "0.2",
-            estimatedComputedTotal: "50.2",
-            actualComputedTotal: "25.1",
-          }),
-          expect.objectContaining({
-            id: existingChildCareSpace.id,
-            fundingSubmissionLineId: existingFundingSubmissionLine.id,
-            lineName: "Historical Toddler Cohort",
-            monthlyAmount: "80",
-            estimatedChildOccupancyRate: "0.25",
-            actualChildOccupancyRate: "0.125",
-            estimatedComputedTotal: "20",
-            actualComputedTotal: "10",
-          }),
-        ],
+        expect({
+          worksheetLines: worksheet.lines,
+          childCareSpaces: migratedChildCareSpaces,
+        }).toEqual({
+          worksheetLines: [administrationLine, otherRetainedLine],
+          childCareSpaces: [
+            expect.objectContaining({
+              fundingSubmissionLineId: newFundingSubmissionLine.id,
+              lineName: "Historical Infant Cohort",
+              monthlyAmount: "125.5",
+              estimatedChildOccupancyRate: "0.4",
+              actualChildOccupancyRate: "0.2",
+              estimatedComputedTotal: "50.2",
+              actualComputedTotal: "25.1",
+            }),
+            expect.objectContaining({
+              id: existingChildCareSpace.id,
+              fundingSubmissionLineId: existingFundingSubmissionLine.id,
+              lineName: "Historical Toddler Cohort",
+              monthlyAmount: "80",
+              estimatedChildOccupancyRate: "0.25",
+              actualChildOccupancyRate: "0.125",
+              estimatedComputedTotal: "20",
+              actualComputedTotal: "10",
+            }),
+          ],
+        })
       })
     })
 
     test.each(migrationFailureCases)(
       "when a later worksheet has $description, rolls back earlier worksheet migration",
       async ({ kind }) => {
-        // Arrange
-        const earlierCentre = await centreFactory.create()
-        const laterCentre = await centreFactory.create()
-        const fiscalPeriod = await createAprilFiscalPeriod()
-        const earlierFundingSubmissionLine = await fundingSubmissionLineFactory.create({
-          fiscalYear: FISCAL_YEAR_LEGACY,
-          sectionName: "Child Care Spaces",
-          lineName: "Infants",
-          monthlyAmount: "100.0000",
-        })
-        const earlierChildCareSpaceLine = {
-          submissionLineId: earlierFundingSubmissionLine.id,
-          sectionName: "Child Care Spaces",
-          lineName: "Infants",
-          monthlyAmount: "100.0000",
-          estimatedChildOccupancyRate: "0.5000",
-          actualChildOccupancyRate: "0.2500",
-          estimatedComputedTotal: "50.0000",
-          actualComputedTotal: "25.0000",
-        }
-        const earlierWorksheetLines = [earlierChildCareSpaceLine]
-        const earlierWorksheet = await createHistoricalWorksheet(
-          earlierCentre,
-          earlierWorksheetLines
-        )
+        await withLegacyChildCareSpaceSchema(async () => {
+          // Arrange
+          const earlierCentre = await centreFactory.create()
+          const laterCentre = await centreFactory.create()
+          const fiscalPeriod = await createAprilFiscalPeriod()
+          const earlierFundingSubmissionLine = await fundingSubmissionLineFactory.create({
+            fiscalYear: FISCAL_YEAR_LEGACY,
+            sectionName: "Child Care Spaces",
+            lineName: "Infants",
+            monthlyAmount: "100.0000",
+          })
+          const earlierChildCareSpaceLine = {
+            submissionLineId: earlierFundingSubmissionLine.id,
+            sectionName: "Child Care Spaces",
+            lineName: "Infants",
+            monthlyAmount: "100.0000",
+            estimatedChildOccupancyRate: "0.5000",
+            actualChildOccupancyRate: "0.2500",
+            estimatedComputedTotal: "50.0000",
+            actualComputedTotal: "25.0000",
+          }
+          const earlierWorksheetLines = [earlierChildCareSpaceLine]
+          const earlierWorksheet = await createHistoricalWorksheet(
+            earlierCentre,
+            earlierWorksheetLines
+          )
 
-        const laterFiscalYear = kind === "unresolved-fiscal-period" ? "2023/24" : FISCAL_YEAR_LEGACY
-        let laterFundingSubmissionLineId = 999_999_999
-        let laterFundingSubmissionLine: FundingSubmissionLine | undefined
-        if (kind !== "unresolved-funding-submission-line") {
-          laterFundingSubmissionLine = await fundingSubmissionLineFactory.create({
-            fiscalYear: laterFiscalYear,
+          const laterFiscalYear =
+            kind === "unresolved-fiscal-period" ? "2023/24" : FISCAL_YEAR_LEGACY
+          let laterFundingSubmissionLineId = 999_999_999
+          let laterFundingSubmissionLine: FundingSubmissionLine | undefined
+          if (kind !== "unresolved-funding-submission-line") {
+            laterFundingSubmissionLine = await fundingSubmissionLineFactory.create({
+              fiscalYear: laterFiscalYear,
+              sectionName: "Child Care Spaces",
+              lineName: "Toddlers",
+              monthlyAmount: "100.0000",
+            })
+            laterFundingSubmissionLineId = laterFundingSubmissionLine.id
+          }
+
+          const laterChildCareSpaceLine = {
+            submissionLineId: laterFundingSubmissionLineId,
             sectionName: "Child Care Spaces",
             lineName: "Toddlers",
             monthlyAmount: "100.0000",
-          })
-          laterFundingSubmissionLineId = laterFundingSubmissionLine.id
-        }
-
-        const laterChildCareSpaceLine = {
-          submissionLineId: laterFundingSubmissionLineId,
-          sectionName: "Child Care Spaces",
-          lineName: "Toddlers",
-          monthlyAmount: "100.0000",
-          estimatedChildOccupancyRate: "0.5000",
-          actualChildOccupancyRate: "0.2500",
-          estimatedComputedTotal: "50.0000",
-          actualComputedTotal: "25.0000",
-        }
-        let laterWorksheetLines: Record<string, unknown>[] = [laterChildCareSpaceLine]
-
-        if (kind === "conflict") {
-          if (laterFundingSubmissionLine === undefined) {
-            throw new Error("The conflict scenario requires a persisted funding submission line.")
+            estimatedChildOccupancyRate: "0.5000",
+            actualChildOccupancyRate: "0.2500",
+            estimatedComputedTotal: "50.0000",
+            actualComputedTotal: "25.0000",
           }
+          let laterWorksheetLines: Record<string, unknown>[] = [laterChildCareSpaceLine]
 
-          await childCareSpaceFactory
-            .associations({
-              centre: laterCentre,
-              fiscalPeriod,
-              fundingSubmissionLine: laterFundingSubmissionLine,
-            })
-            .create({
+          if (kind === "conflict") {
+            if (laterFundingSubmissionLine === undefined) {
+              throw new Error("The conflict scenario requires a persisted funding submission line.")
+            }
+
+            await createLegacyChildCareSpace({
+              centreId: laterCentre.id,
+              fiscalPeriodId: fiscalPeriod.id,
+              fundingSubmissionLineId: laterFundingSubmissionLine.id,
               lineName: laterChildCareSpaceLine.lineName,
               monthlyAmount: "100.0000",
               estimatedChildOccupancyRate: "0.7500",
               actualChildOccupancyRate: "0.2500",
             })
-        } else if (kind === "duplicate-source-lines") {
-          laterWorksheetLines = [laterChildCareSpaceLine, laterChildCareSpaceLine]
-        } else if (kind === "malformed-source-line") {
-          const malformedChildCareSpaceLine: Record<string, unknown> = {
-            ...laterChildCareSpaceLine,
+          } else if (kind === "duplicate-source-lines") {
+            laterWorksheetLines = [laterChildCareSpaceLine, laterChildCareSpaceLine]
+          } else if (kind === "malformed-source-line") {
+            const malformedChildCareSpaceLine: Record<string, unknown> = {
+              ...laterChildCareSpaceLine,
+            }
+            delete malformedChildCareSpaceLine.monthlyAmount
+            laterWorksheetLines = [malformedChildCareSpaceLine]
+          } else if (kind === "inconsistent-totals") {
+            laterWorksheetLines = [
+              {
+                ...laterChildCareSpaceLine,
+                estimatedComputedTotal: "49.0000",
+              },
+            ]
+          } else if (kind === "lossy-occupancy-precision") {
+            laterWorksheetLines = [
+              {
+                ...laterChildCareSpaceLine,
+                estimatedChildOccupancyRate: "0.12345",
+                estimatedComputedTotal: "12.3450",
+              },
+            ]
+          } else if (kind === "lossy-monthly-amount-precision") {
+            laterWorksheetLines = [
+              {
+                ...laterChildCareSpaceLine,
+                monthlyAmount: "100.00001",
+              },
+            ]
           }
-          delete malformedChildCareSpaceLine.monthlyAmount
-          laterWorksheetLines = [malformedChildCareSpaceLine]
-        } else if (kind === "inconsistent-totals") {
-          laterWorksheetLines = [
-            {
-              ...laterChildCareSpaceLine,
-              estimatedComputedTotal: "49.0000",
-            },
-          ]
-        } else if (kind === "lossy-occupancy-precision") {
-          laterWorksheetLines = [
-            {
-              ...laterChildCareSpaceLine,
-              estimatedChildOccupancyRate: "0.12345",
-              estimatedComputedTotal: "12.3450",
-            },
-          ]
-        } else if (kind === "lossy-monthly-amount-precision") {
-          laterWorksheetLines = [
-            {
-              ...laterChildCareSpaceLine,
-              monthlyAmount: "100.00001",
-            },
-          ]
-        }
 
-        const laterWorksheet = await createHistoricalWorksheet(
-          laterCentre,
-          laterWorksheetLines,
-          laterFiscalYear
-        )
+          const laterWorksheet = await createHistoricalWorksheet(
+            laterCentre,
+            laterWorksheetLines,
+            laterFiscalYear
+          )
 
-        // Act
-        // marlens-test-alignment: allow-multiple-expects -- failure and complete rollback are independent observable contracts.
-        await expect(db.transaction(() => migrateChildCareSpaces(migration))).rejects.toThrow(
-          `worksheet ${laterWorksheet.id}`
-        )
+          // Act
+          // marlens-test-alignment: allow-multiple-expects -- failure and complete rollback are independent observable contracts.
+          await expect(
+            db.transaction({ nestMode: TransactionNestMode.savepoint }, () =>
+              migrateChildCareSpaces(migration)
+            )
+          ).rejects.toThrow(`worksheet ${laterWorksheet.id}`)
 
-        // Assert
-        await earlierWorksheet.reload()
-        await laterWorksheet.reload()
+          // Assert
+          await earlierWorksheet.reload()
+          await laterWorksheet.reload()
 
-        const childCareSpaces = await ChildCareSpace.findAll()
-        const expectedChildCareSpaces =
-          kind === "conflict"
-            ? [
-                expect.objectContaining({
-                  centreId: laterCentre.id,
-                  fiscalPeriodId: fiscalPeriod.id,
-                  fundingSubmissionLineId: laterFundingSubmissionLineId,
-                  monthlyAmount: "100",
-                  estimatedChildOccupancyRate: "0.75",
-                  actualChildOccupancyRate: "0.25",
-                  estimatedComputedTotal: "75",
-                  actualComputedTotal: "25",
-                }),
-              ]
-            : []
-        expect({
-          earlierWorksheetLines: earlierWorksheet.lines,
-          laterWorksheetLines: laterWorksheet.lines,
-          childCareSpaces,
-        }).toEqual({
-          earlierWorksheetLines,
-          laterWorksheetLines,
-          childCareSpaces: expectedChildCareSpaces,
+          const childCareSpaces = await findLegacyChildCareSpaces()
+          const expectedChildCareSpaces =
+            kind === "conflict"
+              ? [
+                  expect.objectContaining({
+                    centreId: laterCentre.id,
+                    fiscalPeriodId: fiscalPeriod.id,
+                    fundingSubmissionLineId: laterFundingSubmissionLineId,
+                    monthlyAmount: "100",
+                    estimatedChildOccupancyRate: "0.75",
+                    actualChildOccupancyRate: "0.25",
+                    estimatedComputedTotal: "75",
+                    actualComputedTotal: "25",
+                  }),
+                ]
+              : []
+          expect({
+            earlierWorksheetLines: earlierWorksheet.lines,
+            laterWorksheetLines: laterWorksheet.lines,
+            childCareSpaces,
+          }).toEqual({
+            earlierWorksheetLines,
+            laterWorksheetLines,
+            childCareSpaces: expectedChildCareSpaces,
+          })
         })
       }
     )
