@@ -11,6 +11,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
 ### Added
 
 - Child Care Spaces now saves per centre and month, preserving historic rates while keeping worksheets, enrollment charts, and reconciliations in sync.
+- Child Care Space categories now have dedicated administration pages and funding-period configuration. Existing names, age ranges, and rates move out of shared submission lines without changing historical monthly records.
 
 - Funding reconciliation feature to calculate and display monthly funding reconciliation amounts based on adjustment records for each funding period.
   Why? To provide a clear, authoritative view of how funding amounts are reconciled over time.
