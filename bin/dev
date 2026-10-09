@@ -154,23 +154,13 @@ class DevHelper
     run(*%w[test_web npm run test], *args, **kwargs)
   end
 
+  def knex(*args, **kwargs)
+    run(*%w[api npm run knex], *args, **kwargs)
+  end
+
   def migrate(*args, **kwargs)
-    action = args.shift
-
-    case action
-    when nil, "up"
-      if args.any?
-        raise ArgumentError, "The migrate command does not accept arguments."
-      end
-
-      run(*%w[api npm run migrate], **kwargs)
-    when "make"
-      run(*%w[api npm run migrate:make --], *args, **kwargs)
-    when "list"
-      run(*%w[api npm run migrate:list], *args, **kwargs)
-    else
-      raise ArgumentError, "Unknown migration action: #{action}"
-    end
+    action = args[0]
+    knex("migrate:#{action}", *args.drop(1), **kwargs)
   end
 
   def seed(*args, **kwargs)
