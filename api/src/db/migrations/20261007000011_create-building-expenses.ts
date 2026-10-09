@@ -20,19 +20,14 @@ export async function up(knex: Knex): Promise<void> {
     table.string("funding_region_snapshot", 100).notNullable()
 
     table
-      .foreign(["category_id"], "FK__building___build__589C25F3")
-      .references(["id"])
-      .inTable("building_expense_categories")
+      .foreign("category_id", "FK__building___build__589C25F3")
+      .references("building_expense_categories.id")
+
+    table.foreign("centre_id", "FK__building___centr__59904A2C").references("centres.id")
 
     table
-      .foreign(["centre_id"], "FK__building___centr__59904A2C")
-      .references(["id"])
-      .inTable("centres")
-
-    table
-      .foreign(["fiscal_period_id"], "FK__building___fisca__5A846E65")
-      .references(["id"])
-      .inTable("fiscal_periods")
+      .foreign("fiscal_period_id", "FK__building___fisca__5A846E65")
+      .references("fiscal_periods.id")
 
     table.unique(["centre_id", "fiscal_period_id", "category_id"], {
       indexName: "unique_building_expenses_on_centre_id_fiscal_period_id_category_id",

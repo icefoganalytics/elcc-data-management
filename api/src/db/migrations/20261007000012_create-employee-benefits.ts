@@ -18,15 +18,11 @@ export async function up(knex: Knex): Promise<void> {
     table.specificType("updated_at", "DATETIME2").notNullable().defaultTo(knex.raw("GETUTCDATE()"))
     table.specificType("deleted_at", "DATETIMEOFFSET")
 
-    table
-      .foreign(["centre_id"], "FK__employee___centr__24285DB4")
-      .references(["id"])
-      .inTable("centres")
+    table.foreign("centre_id", "FK__employee___centr__24285DB4").references("centres.id")
 
     table
-      .foreign(["fiscal_period_id"], "employee_benefits_fiscal_period_id_fiscal_periods_fk")
-      .references(["id"])
-      .inTable("fiscal_periods")
+      .foreign("fiscal_period_id", "employee_benefits_fiscal_period_id_fiscal_periods_fk")
+      .references("fiscal_periods.id")
 
     table.unique(["centre_id", "fiscal_period_id"], {
       indexName: "employee_benefits_centre_id_fiscal_period_id_unique",

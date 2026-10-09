@@ -16,14 +16,12 @@ export async function up(knex: Knex): Promise<void> {
     table.specificType("deleted_at", "DATETIME2")
 
     table
-      .foreign(["fiscal_period_id"], "FK__funding_r__fisca__4959E263")
-      .references(["id"])
-      .inTable("fiscal_periods")
+      .foreign("fiscal_period_id", "FK__funding_r__fisca__4959E263")
+      .references("fiscal_periods.id")
 
     table
-      .foreign(["funding_reconciliation_id"], "FK__funding_r__fundi__4865BE2A")
-      .references(["id"])
-      .inTable("funding_reconciliations")
+      .foreign("funding_reconciliation_id", "FK__funding_r__fundi__4865BE2A")
+      .references("funding_reconciliations.id")
       .onDelete("CASCADE")
 
     table.unique(["funding_reconciliation_id", "fiscal_period_id"], {

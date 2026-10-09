@@ -19,20 +19,13 @@ export async function up(knex: Knex): Promise<void> {
     table.specificType("updated_at", "DATETIME2").notNullable().defaultTo(knex.raw("GETUTCDATE()"))
     table.specificType("deleted_at", "DATETIME2")
 
-    table
-      .foreign(["centre_id"], "FK__funding_r__centr__3DE82FB7")
-      .references(["id"])
-      .inTable("centres")
+    table.foreign("centre_id", "FK__funding_r__centr__3DE82FB7").references("centres.id")
+
+    table.foreign("finalized_by_id", "FK__funding_r__final__3FD07829").references("users.id")
 
     table
-      .foreign(["finalized_by_id"], "FK__funding_r__final__3FD07829")
-      .references(["id"])
-      .inTable("users")
-
-    table
-      .foreign(["funding_period_id"], "FK__funding_r__fundi__3EDC53F0")
-      .references(["id"])
-      .inTable("funding_periods")
+      .foreign("funding_period_id", "FK__funding_r__fundi__3EDC53F0")
+      .references("funding_periods.id")
 
     table.unique(["centre_id", "funding_period_id"], {
       indexName: "unique_funding_reconciliations_on_centre_id_funding_period_id",
