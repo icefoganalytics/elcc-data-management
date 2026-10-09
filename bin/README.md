@@ -48,6 +48,7 @@ running 0.1.x or vendored bridge using its original CLI; the protocols cannot sh
 `dev up` registers this checkout with the shared editor bridge. The wrapper passes its
 session ID into the web container, and Vite adds `session=<checkout-id>` to editor requests.
 The session ID selects the checkout; it is not an authentication token.
+Compose commands do not require this ID; without it, Vite omits the session parameter.
 
 `dev up` releases its editor lease when Compose returns. Use foreground startup for
 editor links; detached startup does not retain a session. Releasing one checkout's
