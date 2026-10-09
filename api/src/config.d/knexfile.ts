@@ -1,13 +1,17 @@
 import type { Knex } from "knex"
 
-import { buildKnexConfig } from "@/db/db-migration-client"
-
-const knexConfig = buildKnexConfig()
+import dbMigrationClient from "@/db/db-migration-client"
 
 const config: Record<string, Knex.Config> = {
-  development: knexConfig,
-  test: knexConfig,
-  production: knexConfig,
+  development: {
+    ...dbMigrationClient.client.config,
+  },
+  test: {
+    ...dbMigrationClient.client.config,
+  },
+  production: {
+    ...dbMigrationClient.client.config,
+  },
 }
 
 export default config
