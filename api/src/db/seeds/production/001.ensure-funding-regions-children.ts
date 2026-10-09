@@ -5,16 +5,13 @@
  * Can be removed once all funding regions have their dependencies properly created.
  */
 
+import type { Knex } from "knex"
+
 import { FundingRegion } from "@/models"
 import { FundingRegions } from "@/services"
 
-export async function up() {
+export async function seed(_knex: Knex): Promise<void> {
   await FundingRegion.findEach(async (fundingRegion) => {
     await FundingRegions.EnsureChildrenService.perform(fundingRegion)
   })
-}
-
-export async function down() {
-  // this method needs to exist, but does not need to be implemented.
-  // Seeds should be idempotent.
 }

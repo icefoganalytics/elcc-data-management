@@ -1,10 +1,12 @@
+import type { Knex } from "knex"
+
 import { CreationAttributes } from "@sequelize/core"
 import { isNil } from "lodash"
 
 import { Centre, FundingRegion, User } from "@/models"
 import { Centres } from "@/services"
 
-export async function up() {
+export async function seed(_knex: Knex): Promise<void> {
   const systemUser = await User.findOne({
     where: {
       email: "system.user@elcc.com",
@@ -57,9 +59,4 @@ export async function up() {
       await Centres.CreateService.perform(centreAttributes, systemUser)
     }
   }
-}
-
-export async function down() {
-  // this method needs to exist, but does not need to be implemented.
-  // Seeds should be idempotent.
 }

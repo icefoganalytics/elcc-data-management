@@ -20,13 +20,13 @@ dev test web -- --run src/components/SomeComponent.test.ts # Run single frontend
 dev web npm run check-types         # Check frontend types
 dev api npm run check-types         # Check backend types
 
-dev migrate create -- --name create-users-table.ts  # Create migration
-dev migrate up                                       # Run pending migrations
-dev migrate down                                     # Rollback last migration
-dev migrate down -- --to 0                          # Rollback all migrations
+dev migrate latest                 # Run all pending Knex migrations
+dev migrate make add-users-status   # Create a new Knex migration
+dev migrate list                    # List Knex migration state
+dev migrate list -- --env test      # Forward Knex options after npm's -- separator
 
-dev seed create -- --name fill-users-table.ts       # Create seed file
-dev seed up                                          # Run seeds
+dev api npm run knex -- seed:make fill-users-table  # Create an environment-specific seed
+dev seed                                           # Run environment-specific seeds
 
 dev api npm install lodash  # Run npm in API container
 dev web npm install vue     # Run npm in web container

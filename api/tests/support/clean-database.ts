@@ -12,7 +12,7 @@ async function getTableNames() {
     WHERE
       table_schema = 'dbo'
       AND table_type = 'BASE TABLE'
-      AND table_name NOT IN ('SequelizeMeta')
+      AND table_name NOT IN ('knex_migrations', 'knex_migrations_lock')
   `
 
   try {

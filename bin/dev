@@ -154,19 +154,13 @@ class DevHelper
     run(*%w[test_web npm run test], *args, **kwargs)
   end
 
-  def migrate(*args, **kwargs)
-    action = args[0]
-    if action == "up"
-      migrate_api(*%w[up -- --step=1], *args.drop(1), **kwargs)
-    elsif action == "down"
-      migrate_api(*%w[down -- --step=1], *args.drop(1), **kwargs)
-    else
-      migrate_api(*args, **kwargs)
-    end
+  def knex(*args, **kwargs)
+    run(*%w[api npm run knex], *args, **kwargs)
   end
 
-  def migrate_api(*args, **kwargs)
-    run(*%w[api npm run migrate], *args, **kwargs)
+  def migrate(*args, **kwargs)
+    action = args[0]
+    knex("migrate:#{action}", *args.drop(1), **kwargs)
   end
 
   def seed(*args, **kwargs)
