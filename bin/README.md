@@ -42,7 +42,7 @@ gateway hostname.
 
 ### Editor Bridge
 
-Run `bundle install` to install `open-in-editor-bridge` 0.2.x. Before upgrading, stop any
+Run `bundle install` to install `open-in-editor-bridge` 0.2.0. Before upgrading, stop any
 running 0.1.x or vendored bridge using its original CLI; the protocols cannot share a port.
 
 `dev up` registers this checkout with the shared editor bridge. The wrapper passes its
