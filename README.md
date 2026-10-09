@@ -1,5 +1,9 @@
 # Early Learning Childcare Centre - Data Management Application
 
+## Project Knowledge
+
+See the [project knowledge base](docs/README.md) for durable domain rules, architecture decisions, and regression references.
+
 ## Production - building locally
 
 1. Create an `api/.env.production` file from the `api/.env.sample` file and fill with the appropriate matching the local development config with some minor changes.
