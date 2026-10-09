@@ -96,8 +96,12 @@ async function onBlur() {
 }
 
 function onEnter() {
-  const value = numberValue.value === null ? null : new Big(numberValue.value).toFixed(4)
-  emit("update:modelValue", value)
+  if (numberValue.value === null) {
+    emit("update:modelValue", null)
+    return
+  }
+
+  emit("update:modelValue", new Big(numberValue.value).toFixed(4))
 }
 
 function resetValue() {
