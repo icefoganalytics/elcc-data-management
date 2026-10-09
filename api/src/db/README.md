@@ -16,7 +16,9 @@ The Knex CLI hoists the migration client's configuration for each environment.
 - Use compiled JavaScript for production and source TypeScript for development, on separate databases.
 - Keep `extension: "ts"` and `.ts` stubs for generation. Use Knex's default loader extensions,
   as Wrap does, to run source TypeScript or compiled JavaScript from their respective directories.
-- Initial table migrations cannot be rolled back: a rollback must not drop pre-existing tables.
+- Initial table rollbacks drop their tables and data, including pre-existing tables. Use backups
+  for production data recovery. The history-removal rollback recreates an empty `SequelizeMeta`
+  table without recovering deleted history rows.
 - Separate schema changes from data backfills and keep backfills idempotent.
 - Keep migrations clean — no extraneous comments.
 - Find system users by email, not `auth0Subject`.
