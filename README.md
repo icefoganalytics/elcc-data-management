@@ -125,6 +125,11 @@ All commands are just strings joined together, so it's easy to add new commmands
    dev web npm clean-install
    ```
 
+   Repeat the affected service's install command after pulling or switching branches when its
+   `package-lock.json` changes. Rebuilding an image does not refresh the host `node_modules`
+   directory covered by the source bind mount. For missing-package startup errors, see the
+   [dependency recovery command](bin/README.md).
+
 3. Boot the API, web, and database services, and run migrations and seeds:
 
    ```bash

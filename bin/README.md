@@ -46,6 +46,18 @@ dev api npm clean-install
 dev web npm clean-install
 ```
 
+Repeat the affected service's install command when its `package-lock.json` changes after pulling
+or switching branches. The source bind mount includes the host `node_modules` directory, so
+`dev up --build` does not refresh those dependencies.
+
+If a missing package prevents API startup, refresh the installation without starting dependent services:
+
+```bash
+./bin/dev run --no-deps api npm clean-install
+```
+
+For frontend dependency changes, use `web` instead of `api`.
+
 For example, you can run a sql script via
 
 ```bash
