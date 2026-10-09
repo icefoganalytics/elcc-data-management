@@ -16,7 +16,7 @@ export class ReplicateEstimatesController extends BaseController {
       }
 
       const policy = new ChildCareSpacePolicy(this.currentUser, childCareSpace)
-      if (!policy.replicateEstimates()) {
+      if (!policy.update()) {
         return this.response.status(403).json({
           message: "You are not authorized to replicate Child Care Spaces estimates",
         })

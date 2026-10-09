@@ -13,10 +13,6 @@ export class ChildCareSpacePolicy extends PolicyFactory(ChildCareSpace) {
     return true
   }
 
-  replicateEstimates(): boolean {
-    return this.update()
-  }
-
   permittedAttributes(): Path[] {
     return ["estimatedChildOccupancyRate", "actualChildOccupancyRate"]
   }
