@@ -14,6 +14,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
   Why? To provide a clear, authoritative view of how funding amounts are reconciled over time.
 - Improved administration pages for funding lines, funding periods, and funding submission lines, with dedicated read pages and a shared fiscal year selector.
   Why? To make administration tasks easier, more consistent, and more usable on mobile devices.
+- Development startup now prints the checkout's browser URL from the shared local gateway.
 
 ### Changed
 
