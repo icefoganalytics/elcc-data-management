@@ -12,6 +12,8 @@ The Knex CLI hoists the migration client's configuration for each environment.
   migrations are no longer executed; obsolete migration history is dropped after the table baseline succeeds.
 - Knex owns the new `knex_migrations` and `knex_migrations_lock` tables. Do not rename their entries.
 - Use compiled JavaScript for production and source TypeScript for development, on separate databases.
+- Keep `extension: "ts"` and `.ts` stubs for generation. Use Knex's default loader extensions,
+  as Wrap does, to run source TypeScript or compiled JavaScript from their respective directories.
 - Initial table migrations cannot be rolled back: a rollback must not drop pre-existing tables.
 - Separate schema changes from data backfills and keep backfills idempotent.
 - Keep migrations clean — no extraneous comments.
