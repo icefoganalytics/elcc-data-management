@@ -48,7 +48,7 @@ services:
     environment:
       <<: *default-environment
       VITE_API_BASE_URL: "http://api.${GATEWAY_HOSTNAME:-elcc-data-management.localhost}"
-      OPEN_IN_EDITOR_SESSION_ID: "${OPEN_IN_EDITOR_SESSION_ID:?Run ./bin/dev or set the checkout session ID}"
+      OPEN_IN_EDITOR_SESSION_ID:
       OPEN_IN_EDITOR_BRIDGE_PORT: "${OPEN_IN_EDITOR_BRIDGE_PORT:-3333}"
     user: "${HOST_USER_ID:-0}:${HOST_GROUP_ID:-0}"
     volumes:
