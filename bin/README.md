@@ -40,6 +40,32 @@ http://elcc-data-management.localhost; named worktrees receive their own
 Once Vite starts, the web service prints `Open ELCC: http://<hostname>/` with that checkout's
 gateway hostname.
 
+### Editor Bridge
+
+Run `bundle install` to install `open-in-editor-bridge` 0.2.x. Before upgrading, stop any
+running 0.1.x or vendored bridge using its original CLI; the protocols cannot share a port.
+
+`dev up` registers this checkout with the shared editor bridge. The wrapper passes its
+session ID into the web container, and Vite adds `session=<checkout-id>` to editor requests.
+The session ID selects the checkout; it is not an authentication token.
+
+Foreground startup releases its lease when Compose exits. `dev up -d`, `dev up --detach`,
+and `dev up --wait` retain a session until `dev down`. Stopping one checkout does not
+release another checkout's session.
+
+The wrapper defaults `OPEN_IN_EDITOR_COMMAND` to `EDITOR`, or `devin-desktop` when unset.
+It defaults `OPEN_IN_EDITOR_BRIDGE_BIND_ADDRESS` to `0.0.0.0` for Docker access.
+Editor requests are unauthenticated: use only a trusted development network with host
+firewall restrictions, never public port forwarding. Set the bind address to a specific
+Docker-reachable host interface to narrow exposure. All clients sharing a listener must
+agree on bind address, `OPEN_IN_EDITOR_BRIDGE_PORT` (default `3333`), and runtime directory.
+
+After a broker crash or manual stop, rerun `dev up -d` to register surviving applications.
+See the [released bridge documentation](https://github.com/klondikemarlen/open-in-editor-bridge)
+for direct CLI use and shared-runtime configuration.
+
+### Dependencies and SQL Scripts
+
 In each new checkout, initialize the ignored source-bound dependencies before the first `dev up`:
 
 ```bash

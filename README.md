@@ -90,6 +90,9 @@ All commands are just strings joined together, so it's easy to add new commmands
 
    You can now run the `./bin/dev` command.
 
+   For Docker editor links, see [editor bridge setup](bin/README.md#editor-bridge), including
+   the 0.1.x shutdown prerequisite and listener network-exposure restrictions.
+
 4. (optional) Install [direnv](https://direnv.net/) and create an `.envrc` with
 
    ```bash

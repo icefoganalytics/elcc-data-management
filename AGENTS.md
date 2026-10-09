@@ -83,8 +83,11 @@ Common entry points:
 Direct Docker Compose remains available from the base checkout on Linux:
 
 ```bash
+export OPEN_IN_EDITOR_COMMAND="${OPEN_IN_EDITOR_COMMAND:-${EDITOR:-devin-desktop}}"
+export OPEN_IN_EDITOR_BRIDGE_BIND_ADDRESS="${OPEN_IN_EDITOR_BRIDGE_BIND_ADDRESS:-0.0.0.0}"
+export OPEN_IN_EDITOR_SESSION_ID="$(bundle exec open-in-editor-bridge --session-id)"
 bundle exec local-development-gateway up && \
-  bin/open-in-editor-bridge.rb --ensure-running && \
+  bundle exec open-in-editor-bridge --ensure-running && \
   HOST_USER_ID="$(id -u)" \
   HOST_GROUP_ID="$(id -g)" \
   COMPOSE_PROJECT_NAME=elcc-data-management \
@@ -96,8 +99,10 @@ bundle exec local-development-gateway up && \
     up --remove-orphans --force-recreate --renew-anon-volumes --build
 ```
 
-After Docker Compose exits, stop the bridge with `bin/open-in-editor-bridge.rb --shutdown`. Stop the
-shared gateway only when no participating local project needs it.
+After Docker Compose exits, release this checkout's editor session with
+`bundle exec open-in-editor-bridge --shutdown`. Stop the shared gateway only when no
+participating local project needs it. See [editor bridge setup](bin/README.md#editor-bridge)
+for upgrade requirements and listener security.
 
 Use `./bin/dev up --build` for a worktree: it derives that worktree's Compose project name and
 gateway hostname automatically.

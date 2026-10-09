@@ -42,6 +42,8 @@ Changes since v2025.11.24.1 that will be included in the next release.
 
 - Prevented employee benefits from being double counted in employee adjustment amounts during funding reconciliation calculations.
 - Resolved occasional authentication issues caused by plugin load order.
+- Editor links now reach the correct Docker worktree through shared checkout sessions, which
+  remain available after detached startup and are released independently at shutdown.
 - Database startup now applies its grace period once and bounds readiness timeouts, including
   connection-pool cleanup.
 - Frontend build cleanup now works with `dev run --no-deps web npm run clean`, matching the API's
