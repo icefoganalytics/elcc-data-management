@@ -44,6 +44,8 @@ Changes since v2025.11.24.1 that will be included in the next release.
 - Resolved occasional authentication issues caused by plugin load order.
 - Database startup now applies its grace period once and bounds readiness timeouts, including
   connection-pool cleanup.
+- Frontend build cleanup now works with `dev run --no-deps web npm run clean`, matching the API's
+  build-output-only cleanup.
 
 ### Removed
 

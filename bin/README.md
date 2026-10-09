@@ -19,6 +19,7 @@ dev test web -- --run src/components/SomeComponent.test.ts # Run single frontend
 
 dev web npm run check-types         # Check frontend types
 dev api npm run check-types         # Check backend types
+dev run --no-deps web npm run clean # Remove frontend build output only
 
 dev migrate latest                 # Run all pending Knex migrations
 dev migrate make add-users-status   # Create a new Knex migration
