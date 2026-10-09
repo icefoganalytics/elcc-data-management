@@ -15,6 +15,8 @@ The [worksheet editor](../../web/src/components/funding-submission-line-jsons/Fu
 
 These are separate API requests, not one worksheet-wide transaction. A save or replication failure is surfaced, but completed requests are not rolled back across stores. Each [Child Care Spaces replication operation](../../api/src/services/child-care-spaces/replicate-estimates-service.ts) does transact its own later-month updates.
 
+Occupancy edits and estimate replication use the standard `update()` authorization action on the [Child Care Spaces policy](../../api/src/policies/child-care-space-policy.ts).
+
 ## Historical JSON cutover
 
 The [data migration](../../api/src/db/migrations/2026.10.07T17.43.15.migrate-child-care-spaces-from-worksheet-json.ts) processes active worksheets in batches. It resolves their fiscal month and preserves each source line's name, monthly amount, occupancy inputs, and matching supplied totals; absent totals are calculated. Source configuration is resolved by persisted ID, including changed or soft-deleted configuration.
