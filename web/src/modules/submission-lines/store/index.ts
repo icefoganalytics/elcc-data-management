@@ -111,7 +111,7 @@ export interface FundingSubmissionLine {
   lineName: string
   fromAge: number
   toAge: number
-  monthlyAmount: number
+  monthlyAmount: string
 }
 
 export interface NewFiscalYear {

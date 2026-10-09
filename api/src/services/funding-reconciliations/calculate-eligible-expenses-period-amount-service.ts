@@ -35,18 +35,21 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
     // TODO: find out, or ensure that there can only be one funding submission line json per month
     // TODO: link FundingSubmissionLineJson model to a fiscal period so this query can be simplified
     const [fundingSubmissionResult] = await db.query<{
-      fundingSubmissionExpensesAmount: number
+      fundingSubmissionExpensesAmount: string
     }>(
       /* sql */ `
         SELECT
-          COALESCE(
-            SUM(
-              CAST(
-                JSON_VALUE(json_array_element.value, '$.actualComputedTotal') AS DECIMAL(15, 4)
-              )
-            ),
-            0
-          ) as fundingSubmissionExpensesAmount
+          CONVERT(
+            VARCHAR(50),
+            COALESCE(
+              SUM(
+                CAST(
+                  JSON_VALUE(json_array_element.value, '$.actualComputedTotal') AS DECIMAL(15, 4)
+                )
+              ),
+              0
+            )
+          ) AS fundingSubmissionExpensesAmount
         FROM
           funding_submission_line_jsons
           CROSS APPLY OPENJSON (funding_submission_line_jsons.[values]) AS json_array_element
@@ -72,11 +75,11 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
 
   private async calculateBuildingExpenses(): Promise<string> {
     const [buildingExpensesResult] = await db.query<{
-      buildingExpensesTotalAmount: number
+      buildingExpensesTotalAmount: string
     }>(
       /* sql */ `
         SELECT
-          COALESCE(SUM(total_cost), 0) as buildingExpensesTotalAmount
+          CONVERT(VARCHAR(50), COALESCE(SUM(total_cost), 0)) AS buildingExpensesTotalAmount
         FROM
           building_expenses
         WHERE

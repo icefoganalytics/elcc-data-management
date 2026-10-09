@@ -210,14 +210,14 @@ const wageEnhancementsActualEiCppWcbTotal = computed(() =>
 )
 
 const wageEnhancementsEstimatedTotal = computed(() =>
-  wageEnhancementsEstimatedSubtotal.value.mul(Big(1).plus(Big(EI_CPP_WCB_RATE)))
+  wageEnhancementsEstimatedSubtotal.value.mul(Big("1").plus(Big(EI_CPP_WCB_RATE)))
 )
 
 const wageEnhancementsActualTotal = computed(() =>
-  wageEnhancementsActualSubtotal.value.mul(Big(1).plus(Big(EI_CPP_WCB_RATE)))
+  wageEnhancementsActualSubtotal.value.mul(Big("1").plus(Big(EI_CPP_WCB_RATE)))
 )
 
-const eiCppWcbRatePercentage = computed(() => Big(EI_CPP_WCB_RATE).mul(Big(100)).toFixed(2))
+const eiCppWcbRatePercentage = computed(() => Big(EI_CPP_WCB_RATE).mul(Big("100")).toFixed(2))
 
 const isLoading = ref(false)
 const snack = useSnack()

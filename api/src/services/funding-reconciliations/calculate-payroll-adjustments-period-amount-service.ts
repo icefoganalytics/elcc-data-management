@@ -27,15 +27,24 @@ export class CalculatePayrollAdjustmentsPeriodAmountService extends BaseService 
 
   private async determineEmployeeBenefitActualPaidAmount(): Promise<Big> {
     const [employeeBenefitTotals] = await db.query<{
-      employerCostActualTotal: number
-      grossPayrollMonthlyActualTotal: number
-      costCapPercentageTotal: number
+      employerCostActualTotal: string
+      grossPayrollMonthlyActualTotal: string
+      costCapPercentageTotal: string
     }>(
       /* sql */ `
         SELECT
-          COALESCE(SUM(employer_cost_actual), 0) as employerCostActualTotal,
-          COALESCE(SUM(gross_payroll_monthly_actual), 0) as grossPayrollMonthlyActualTotal,
-          COALESCE(SUM(cost_cap_percentage), 0) as costCapPercentageTotal
+          CONVERT(
+            VARCHAR(50),
+            COALESCE(SUM(employer_cost_actual), 0)
+          ) AS employerCostActualTotal,
+          CONVERT(
+            VARCHAR(50),
+            COALESCE(SUM(gross_payroll_monthly_actual), 0)
+          ) AS grossPayrollMonthlyActualTotal,
+          CONVERT(
+            VARCHAR(50),
+            COALESCE(SUM(cost_cap_percentage), 0)
+          ) AS costCapPercentageTotal
         FROM
           employee_benefits
         WHERE
@@ -63,16 +72,19 @@ export class CalculatePayrollAdjustmentsPeriodAmountService extends BaseService 
 
   private async determineWageEnhancementsActualTotal(): Promise<Big> {
     const [wageEnhancementTotals] = await db.query<{
-      wageEnhancementsActualSubtotal: number
+      wageEnhancementsActualSubtotal: string
     }>(
       /* sql */ `
         SELECT
-          COALESCE(
-            SUM(
-              wage_enhancements.hours_actual * employee_wage_tiers.wage_rate_per_hour
-            ),
-            0
-          ) as wageEnhancementsActualSubtotal
+          CONVERT(
+            VARCHAR(50),
+            COALESCE(
+              SUM(
+                wage_enhancements.hours_actual * employee_wage_tiers.wage_rate_per_hour
+              ),
+              0
+            )
+          ) AS wageEnhancementsActualSubtotal
         FROM
           wage_enhancements
           INNER JOIN employee_wage_tiers ON wage_enhancements.employee_wage_tier_id = employee_wage_tiers.id
@@ -93,7 +105,7 @@ export class CalculatePayrollAdjustmentsPeriodAmountService extends BaseService 
 
     const { wageEnhancementsActualSubtotal } = wageEnhancementTotals
     const wageEnhancementsActualTotal = Big(wageEnhancementsActualSubtotal).mul(
-      Big(1).plus(WageEnhancement.EI_CPP_WCB_RATE)
+      Big("1").plus(WageEnhancement.EI_CPP_WCB_RATE)
     )
 
     return wageEnhancementsActualTotal
