@@ -8,7 +8,7 @@ export type ChildCareSpaceAsShow = Pick<
   | "id"
   | "centreId"
   | "fiscalPeriodId"
-  | "fundingSubmissionLineId"
+  | "categoryId"
   | "lineName"
   | "monthlyAmount"
   | "estimatedChildOccupancyRate"
@@ -25,7 +25,7 @@ export class ShowSerializer extends BaseSerializer<ChildCareSpace> {
       "id",
       "centreId",
       "fiscalPeriodId",
-      "fundingSubmissionLineId",
+      "categoryId",
       "lineName",
       "monthlyAmount",
       "estimatedChildOccupancyRate",

@@ -4,7 +4,7 @@ import {
   childCareSpaceFactory,
   fiscalPeriodFactory,
   fundingPeriodFactory,
-  fundingSubmissionLineFactory,
+  childCareSpaceCategoryFactory,
   userFactory,
 } from "@/factories"
 import { User } from "@/models"
@@ -38,17 +38,16 @@ describe("api/src/controllers/child-care-spaces-controller.ts", () => {
           fiscalYear: "2025-26",
           dateStart: new Date("2025-04-01"),
         })
-        const fundingSubmissionLine = await fundingSubmissionLineFactory.create({
-          fiscalYear: "2024/25",
-          sectionName: "Child Care Spaces",
-          lineName: "Infants",
+        const category = await childCareSpaceCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
           monthlyAmount: "100.0000",
         })
         const aprilChildCareSpace = await childCareSpaceFactory
           .associations({
             centre,
             fiscalPeriod: aprilFiscalPeriod,
-            fundingSubmissionLine,
+            category,
           })
           .create({
             monthlyAmount: "100.0000",
@@ -59,7 +58,7 @@ describe("api/src/controllers/child-care-spaces-controller.ts", () => {
           .associations({
             centre,
             fiscalPeriod: mayFiscalPeriod,
-            fundingSubmissionLine,
+            category,
           })
           .create({
             monthlyAmount: "100.0000",
@@ -70,7 +69,7 @@ describe("api/src/controllers/child-care-spaces-controller.ts", () => {
           .associations({
             centre,
             fiscalPeriod: otherFiscalPeriod,
-            fundingSubmissionLine,
+            category,
           })
           .create({
             monthlyAmount: "100.0000",
@@ -80,7 +79,7 @@ describe("api/src/controllers/child-care-spaces-controller.ts", () => {
 
         // Act
         const response = await request().get(
-          "/api/child-care-spaces?filters%5BbyFiscalYear%5D=2024-25&order%5B0%5D%5B0%5D=fiscalPeriod&order%5B0%5D%5B1%5D=dateStart&order%5B0%5D%5B2%5D=DESC&order%5B1%5D%5B0%5D=fundingSubmissionLineId&order%5B1%5D%5B1%5D=ASC&perPage=-1"
+          "/api/child-care-spaces?filters%5BbyFiscalYear%5D=2024-25&order%5B0%5D%5B0%5D=fiscalPeriod&order%5B0%5D%5B1%5D=dateStart&order%5B0%5D%5B2%5D=DESC&order%5B1%5D%5B0%5D=categoryId&order%5B1%5D%5B1%5D=ASC&perPage=-1"
         )
         const [persistedMayChildCareSpace, persistedAprilChildCareSpace] = await Promise.all([
           mayChildCareSpace.reload(),
@@ -96,7 +95,7 @@ describe("api/src/controllers/child-care-spaces-controller.ts", () => {
               id: mayChildCareSpace.id,
               centreId: centre.id,
               fiscalPeriodId: mayFiscalPeriod.id,
-              fundingSubmissionLineId: fundingSubmissionLine.id,
+              categoryId: category.id,
               lineName: "Infants",
               monthlyAmount: "100",
               estimatedChildOccupancyRate: "0.5",
@@ -116,7 +115,7 @@ describe("api/src/controllers/child-care-spaces-controller.ts", () => {
               id: aprilChildCareSpace.id,
               centreId: centre.id,
               fiscalPeriodId: aprilFiscalPeriod.id,
-              fundingSubmissionLineId: fundingSubmissionLine.id,
+              categoryId: category.id,
               lineName: "Infants",
               monthlyAmount: "100",
               estimatedChildOccupancyRate: "0.5",
@@ -168,7 +167,7 @@ describe("api/src/controllers/child-care-spaces-controller.ts", () => {
             id: childCareSpace.id,
             centreId: childCareSpace.centreId,
             fiscalPeriodId: childCareSpace.fiscalPeriodId,
-            fundingSubmissionLineId: childCareSpace.fundingSubmissionLineId,
+            categoryId: childCareSpace.categoryId,
             lineName: childCareSpace.lineName,
             monthlyAmount: "100",
             estimatedChildOccupancyRate: "0.25",

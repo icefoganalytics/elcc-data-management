@@ -12,7 +12,7 @@ export class ChildCareSpacesController extends BaseController<ChildCareSpace> {
     try {
       const where = this.buildWhere()
       const scopes = this.buildFilterScopes()
-      const order = this.buildOrder([["fundingSubmissionLineId", "ASC"]])
+      const order = this.buildOrder([["categoryId", "ASC"]])
       const scopedChildCareSpaces = ChildCareSpacePolicy.applyScope(scopes, this.currentUser)
 
       const totalCount = await scopedChildCareSpaces.count({ where })

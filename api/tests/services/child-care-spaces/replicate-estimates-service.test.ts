@@ -2,7 +2,7 @@ import {
   centreFactory,
   fiscalPeriodFactory,
   fundingPeriodFactory,
-  fundingSubmissionLineFactory,
+  childCareSpaceCategoryFactory,
 } from "@/factories"
 import { childCareSpaceFactory } from "@/factories/child-care-space-factory"
 
@@ -27,15 +27,14 @@ describe("api/src/services/child-care-spaces/replicate-estimates-service.ts", ()
           fiscalYear: "2024-25",
           dateStart: new Date("2024-05-01"),
         })
-        const fundingSubmissionLine = await fundingSubmissionLineFactory.create({
-          fiscalYear: "2024/25",
-          sectionName: "Child Care Spaces",
-        })
+        const category = await childCareSpaceCategoryFactory
+          .associations({ fundingPeriod })
+          .create({ categoryName: "Infants" })
         const sourceChildCareSpace = await childCareSpaceFactory
           .associations({
             centre,
             fiscalPeriod: aprilFiscalPeriod,
-            fundingSubmissionLine,
+            category,
           })
           .create({
             monthlyAmount: "100.0000",
@@ -46,7 +45,7 @@ describe("api/src/services/child-care-spaces/replicate-estimates-service.ts", ()
           .associations({
             centre,
             fiscalPeriod: mayFiscalPeriod,
-            fundingSubmissionLine,
+            category,
           })
           .create({
             monthlyAmount: "100.0000",

@@ -5,10 +5,12 @@ import {
   type CreationOptional,
   type InferAttributes,
   type InferCreationAttributes,
+  type NonAttribute,
 } from "@sequelize/core"
 import {
   Attribute,
   AutoIncrement,
+  BelongsTo,
   Default,
   ModelValidator,
   NotNull,
@@ -20,6 +22,7 @@ import { isNil } from "lodash"
 import { isValidFiscalYearLegacy } from "@/models/validators"
 
 import BaseModel from "@/models/base-model"
+import ChildCareSpaceCategory from "@/models/child-care-space-category"
 import FUNDING_SUBMISSION_LINE_DEFAULTS, {
   FundingSubmissionLineEnhancementTypes,
   FundingSubmissionLineImmutableSectionNames,
@@ -53,6 +56,9 @@ export class FundingSubmissionLine extends BaseModel<
   @Attribute(DataTypes.STRING(200))
   @NotNull
   declare lineName: string
+
+  @Attribute(DataTypes.INTEGER)
+  declare childCareSpaceCategoryId: number | null
 
   @Attribute(DataTypes.INTEGER)
   declare fromAge: number | null
@@ -110,6 +116,11 @@ export class FundingSubmissionLine extends BaseModel<
       throw new Error(`Section name "${previousSectionName}" is immutable and cannot be changed.`)
     }
   }
+
+  @BelongsTo(() => ChildCareSpaceCategory, {
+    foreignKey: "childCareSpaceCategoryId",
+  })
+  declare childCareSpaceCategory?: NonAttribute<ChildCareSpaceCategory>
 
   static establishScopes() {
     this.addSearchScope(["fiscalYear", "sectionName", "lineName"])

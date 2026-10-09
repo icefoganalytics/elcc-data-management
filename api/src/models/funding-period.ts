@@ -22,6 +22,7 @@ import { isValidFiscalYearLong } from "@/models/validators"
 import BaseModel from "@/models/base-model"
 import FiscalPeriod, { FiscalPeriodMonths } from "@/models/fiscal-period"
 import FundingReconciliation from "@/models/funding-reconciliation"
+import ChildCareSpaceCategory from "@/models/child-care-space-category"
 
 /**
  * Represents a fiscal year for funding reconciliation purposes.
@@ -89,6 +90,12 @@ export class FundingPeriod extends BaseModel<
     },
   })
   declare fiscalPeriods?: NonAttribute<FiscalPeriod[]>
+
+  @HasMany(() => ChildCareSpaceCategory, {
+    foreignKey: "fundingPeriodId",
+    inverse: { as: "fundingPeriod" },
+  })
+  declare childCareSpaceCategories?: NonAttribute<ChildCareSpaceCategory[]>
 
   // Helpers
   forEachMonth(

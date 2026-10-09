@@ -4,10 +4,10 @@ import { Factory } from "fishery"
 import { ChildCareSpace } from "@/models"
 
 import { nestedSaveAndAssociateIfNew } from "@/factories/helpers"
+import childCareSpaceCategoryFactory from "@/factories/child-care-space-category-factory"
 import centreFactory from "@/factories/centre-factory"
 import fiscalPeriodFactory from "@/factories/fiscal-period-factory"
 import fundingPeriodFactory from "@/factories/funding-period-factory"
-import { fundingSubmissionLineFactory } from "@/factories/funding-submission-line-factory"
 
 export const childCareSpaceFactory = Factory.define<ChildCareSpace>(
   ({ associations, params, onCreate }) => {
@@ -23,27 +23,18 @@ export const childCareSpaceFactory = Factory.define<ChildCareSpace>(
       }
     })
 
-    const centre =
-      associations.centre ??
-      centreFactory.build({
-        id: params.centreId,
-      })
+    const centre = associations.centre ?? centreFactory.build({ id: params.centreId })
     const fiscalPeriod =
-      associations.fiscalPeriod ??
-      fiscalPeriodFactory.build({
-        id: params.fiscalPeriodId,
+      associations.fiscalPeriod ?? fiscalPeriodFactory.build({ id: params.fiscalPeriodId })
+    const fundingPeriod =
+      fiscalPeriod.fundingPeriod ?? fundingPeriodFactory.build({ id: fiscalPeriod.fundingPeriodId })
+    fiscalPeriod.fundingPeriod = fundingPeriod
+    const category =
+      associations.category ??
+      childCareSpaceCategoryFactory.associations({ fundingPeriod }).build({
+        id: params.categoryId,
       })
-
-    if (fiscalPeriod.fundingPeriodId === null || fiscalPeriod.fundingPeriodId === undefined) {
-      fiscalPeriod.fundingPeriod = fundingPeriodFactory.build()
-    }
-    const fundingSubmissionLine =
-      associations.fundingSubmissionLine ??
-      fundingSubmissionLineFactory.build({
-        id: params.fundingSubmissionLineId,
-      })
-    const monthlyAmount =
-      params.monthlyAmount ?? faker.finance.amount({ min: 10, max: 1000, dec: 4 })
+    const monthlyAmount = params.monthlyAmount ?? category.monthlyAmount
     const estimatedChildOccupancyRate =
       params.estimatedChildOccupancyRate ?? faker.finance.amount({ min: 0, max: 1, dec: 4 })
     const actualChildOccupancyRate =
@@ -52,8 +43,8 @@ export const childCareSpaceFactory = Factory.define<ChildCareSpace>(
     const childCareSpace = ChildCareSpace.build({
       centreId: centre.id,
       fiscalPeriodId: fiscalPeriod.id,
-      fundingSubmissionLineId: fundingSubmissionLine.id,
-      lineName: params.lineName ?? fundingSubmissionLine.lineName,
+      categoryId: category.id,
+      lineName: params.lineName ?? category.categoryName,
       monthlyAmount,
       estimatedChildOccupancyRate,
       actualChildOccupancyRate,
@@ -63,8 +54,7 @@ export const childCareSpaceFactory = Factory.define<ChildCareSpace>(
 
     childCareSpace.centre = centre
     childCareSpace.fiscalPeriod = fiscalPeriod
-    childCareSpace.fundingSubmissionLine = fundingSubmissionLine
-
+    childCareSpace.category = category
     return childCareSpace
   }
 )

@@ -41,7 +41,7 @@ const childCareSpacesQuery = computed<ChildCareSpaceQueryOptions>(() => ({
   },
   order: [
     ["fiscalPeriod", "dateStart", "DESC"],
-    ["fundingSubmissionLineId", "ASC"],
+    ["categoryId", "ASC"],
   ],
   perPage: -1,
 }))

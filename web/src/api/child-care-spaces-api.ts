@@ -12,7 +12,7 @@ export type ChildCareSpace = {
   id: number
   centreId: number
   fiscalPeriodId: number
-  fundingSubmissionLineId: number
+  categoryId: number
   lineName: string
   monthlyAmount: string
   estimatedChildOccupancyRate: string
@@ -33,7 +33,7 @@ export type ChildCareSpaceAsIndex = ChildCareSpace & {
 
 export type ChildCareSpaceWhereOptions = WhereOptions<
   ChildCareSpace,
-  "id" | "centreId" | "fiscalPeriodId" | "fundingSubmissionLineId"
+  "id" | "centreId" | "fiscalPeriodId" | "categoryId"
 >
 
 export type ChildCareSpaceFiltersOptions = FiltersOptions<{

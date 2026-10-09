@@ -19,12 +19,12 @@ import {
 } from "@sequelize/core/decorators-legacy"
 import Big from "big.js"
 
-import { ChildCareSpacesCentreIdFiscalPeriodIdFundingSubmissionLineIdUniqueIndex } from "@/models/indexes"
+import { ChildCareSpacesCentreIdFiscalPeriodIdCategoryIdUniqueIndex } from "@/models/indexes"
 
 import BaseModel from "@/models/base-model"
+import ChildCareSpaceCategory from "@/models/child-care-space-category"
 import Centre from "@/models/centre"
 import FiscalPeriod from "@/models/fiscal-period"
-import FundingSubmissionLine from "@/models/funding-submission-line"
 
 const CHILD_CARE_SPACES_SECTION_NAME = "Child Care Spaces"
 
@@ -44,18 +44,18 @@ export class ChildCareSpace extends BaseModel<
 
   @Attribute(DataTypes.INTEGER)
   @NotNull
-  @ChildCareSpacesCentreIdFiscalPeriodIdFundingSubmissionLineIdUniqueIndex
+  @ChildCareSpacesCentreIdFiscalPeriodIdCategoryIdUniqueIndex
   declare centreId: number
 
   @Attribute(DataTypes.INTEGER)
   @NotNull
-  @ChildCareSpacesCentreIdFiscalPeriodIdFundingSubmissionLineIdUniqueIndex
+  @ChildCareSpacesCentreIdFiscalPeriodIdCategoryIdUniqueIndex
   declare fiscalPeriodId: number
 
   @Attribute(DataTypes.INTEGER)
   @NotNull
-  @ChildCareSpacesCentreIdFiscalPeriodIdFundingSubmissionLineIdUniqueIndex
-  declare fundingSubmissionLineId: number
+  @ChildCareSpacesCentreIdFiscalPeriodIdCategoryIdUniqueIndex
+  declare categoryId: number
 
   @Attribute(DataTypes.STRING(200))
   @NotNull
@@ -130,14 +130,14 @@ export class ChildCareSpace extends BaseModel<
   })
   declare fiscalPeriod?: NonAttribute<FiscalPeriod>
 
-  @BelongsTo(() => FundingSubmissionLine, {
-    foreignKey: "fundingSubmissionLineId",
+  @BelongsTo(() => ChildCareSpaceCategory, {
+    foreignKey: "categoryId",
     inverse: {
       as: "childCareSpaces",
       type: "hasMany",
     },
   })
-  declare fundingSubmissionLine?: NonAttribute<FundingSubmissionLine>
+  declare category?: NonAttribute<ChildCareSpaceCategory>
 
   static establishScopes() {
     this.addScope("byFundingPeriod", (fundingPeriodId: number) => {

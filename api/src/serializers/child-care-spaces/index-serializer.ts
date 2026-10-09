@@ -9,8 +9,7 @@ export type ChildCareSpaceAsIndex = Pick<
   ChildCareSpace,
   | "id"
   | "centreId"
-  | "fiscalPeriodId"
-  | "fundingSubmissionLineId"
+  | "categoryId"
   | "lineName"
   | "monthlyAmount"
   | "estimatedChildOccupancyRate"
@@ -39,7 +38,7 @@ export class IndexSerializer extends BaseSerializer<ChildCareSpace> {
         "id",
         "centreId",
         "fiscalPeriodId",
-        "fundingSubmissionLineId",
+        "categoryId",
         "lineName",
         "monthlyAmount",
         "estimatedChildOccupancyRate",

@@ -5,7 +5,7 @@ import {
   childCareSpaceFactory,
   fiscalPeriodFactory,
   fundingPeriodFactory,
-  fundingSubmissionLineFactory,
+  childCareSpaceCategoryFactory,
 } from "@/factories"
 
 describe("api/src/models/child-care-space.ts", () => {
@@ -85,19 +85,26 @@ describe("api/src/models/child-care-space.ts", () => {
             fundingPeriodId: otherFundingPeriod.id,
             fiscalYear: "2025-26",
           })
-          const fundingSubmissionLine = await fundingSubmissionLineFactory.create()
+          const category = await childCareSpaceCategoryFactory.create({
+            fundingPeriodId: matchingFundingPeriod.id,
+            categoryName: "Matching",
+          })
           const matchingChildCareSpace = await childCareSpaceFactory
             .associations({
               centre,
               fiscalPeriod: matchingFiscalPeriod,
-              fundingSubmissionLine,
+              category,
             })
             .create()
+          const otherCategory = await childCareSpaceCategoryFactory.create({
+            fundingPeriodId: otherFundingPeriod.id,
+            categoryName: "Other",
+          })
           await childCareSpaceFactory
             .associations({
               centre,
               fiscalPeriod: otherFiscalPeriod,
-              fundingSubmissionLine,
+              category: otherCategory,
             })
             .create()
 

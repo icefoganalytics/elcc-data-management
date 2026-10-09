@@ -31,7 +31,7 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
         })
         const fundingSubmissionLine1 = await fundingSubmissionLineFactory.create({
           fiscalYear: "2024/25",
-          sectionName: "Child Care Spaces",
+          sectionName: "Quality Enhancement Program",
           lineName: "Infants",
           monthlyAmount: "100",
         })
@@ -55,6 +55,16 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
             dateEnd: new Date("2024-04-30T23:59:59.000Z"),
             values: JSON.stringify([
               {
+                submissionLineId: fundingSubmissionLine1.id,
+                sectionName: "Quality Enhancement Program",
+                lineName: "Infants",
+                monthlyAmount: "100",
+                estimatedChildOccupancyRate: "0",
+                actualChildOccupancyRate: "0",
+                estimatedComputedTotal: "0",
+                actualComputedTotal: "0",
+              },
+              {
                 submissionLineId: fundingSubmissionLine2.id,
                 sectionName: "Administration (10% of Spaces)",
                 lineName: "Toddlers",
@@ -73,6 +83,16 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
             dateStart: new Date("2024-05-01T00:00:00.000Z"),
             dateEnd: new Date("2024-05-31T23:59:59.000Z"),
             values: JSON.stringify([
+              {
+                submissionLineId: fundingSubmissionLine1.id,
+                sectionName: "Quality Enhancement Program",
+                lineName: "Infants",
+                monthlyAmount: "100",
+                estimatedChildOccupancyRate: "0",
+                actualChildOccupancyRate: "0",
+                estimatedComputedTotal: "0",
+                actualComputedTotal: "0",
+              },
               {
                 submissionLineId: fundingSubmissionLine2.id,
                 sectionName: "Administration (10% of Spaces)",
@@ -98,7 +118,7 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
         })
         await fundingSubmissionLineFactory.create({
           fiscalYear: "2024/25",
-          sectionName: "Child Care Spaces",
+          sectionName: "Quality Enhancement Program",
           lineName: "Infants",
           monthlyAmount: "100",
         })

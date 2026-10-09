@@ -3,6 +3,7 @@ import { type FiltersOptions, type QueryOptions, type WhereOptions } from "@/api
 
 export type FundingLineValue = {
   submissionLineId: number
+  childCareSpaceCategoryId?: number
   sectionName: string
   lineName: string
   monthlyAmount: string

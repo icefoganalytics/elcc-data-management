@@ -1,6 +1,7 @@
 export { BuildingExpenseCategoryPolicy } from "./building-expense-category-policy"
 export { BuildingExpensePolicy } from "./building-expense-policy"
 export { ChildCareSpacePolicy } from "./child-care-space-policy"
+export { ChildCareSpaceCategoryPolicy } from "./child-care-space-category-policy"
 export { EmployeeBenefitPolicy } from "./employee-benefit-policy"
 export { EmployeeWageTierPolicy } from "./employee-wage-tier-policy"
 export { FundingPeriodPolicy } from "./funding-period-policy"
