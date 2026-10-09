@@ -50,7 +50,13 @@ export default defineConfig({
         target: `http://host.docker.internal:${process.env.OPEN_IN_EDITOR_BRIDGE_PORT || "3333"}`,
         rewrite(path) {
           const editorRequest = new URL(path, "http://host.docker.internal")
-          editorRequest.searchParams.set("session", process.env.OPEN_IN_EDITOR_SESSION_ID)
+          const sessionId = process.env.OPEN_IN_EDITOR_SESSION_ID
+          if (sessionId) {
+            editorRequest.searchParams.set("session", sessionId)
+          } else {
+            editorRequest.searchParams.delete("session")
+          }
+
           return `${editorRequest.pathname}${editorRequest.search}`
         },
       },
