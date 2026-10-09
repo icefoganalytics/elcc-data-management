@@ -3,6 +3,20 @@
     v-if="isLoading"
     type="table"
   />
+  <v-alert
+    v-else-if="isErrored"
+    type="error"
+    variant="tonal"
+  >
+    Worksheet data could not be loaded. Reload both sources before editing.
+    <v-btn
+      class="ml-3"
+      variant="outlined"
+      @click="reloadWorksheet"
+    >
+      Reload Worksheet
+    </v-btn>
+  </v-alert>
   <v-sheet
     v-else
     @keydown="activateKeyboardShortcutsModalIfCorrectEvent($event)"
@@ -59,7 +73,7 @@
 
 <script setup lang="ts">
 import { DateTime } from "luxon"
-import { computed, ref, toRefs } from "vue"
+import { computed, reactive, ref, toRefs } from "vue"
 import { groupBy, isNil } from "lodash"
 
 import childCareSpacesApi, { CHILD_CARE_SPACES_SECTION_NAME } from "@/api/child-care-spaces-api"
@@ -92,6 +106,7 @@ const { fundingSubmissionLineJsonId } = toRefs(props)
 const {
   fundingSubmissionLineJson,
   isLoading: isLoadingFundingSubmissionLineJson,
+  isErrored: isErroredFundingSubmissionLineJson,
   refresh: refreshFundingSubmissionLineJson,
 } = useFundingSubmissionLineJson(fundingSubmissionLineJsonId)
 const childCareSpacesQuery = computed(() => ({
@@ -104,11 +119,18 @@ const childCareSpacesQuery = computed(() => ({
 const {
   childCareSpaces,
   isLoading: isLoadingChildCareSpaces,
+  isErrored: isErroredChildCareSpaces,
   refresh: refreshChildCareSpaces,
 } = useChildCareSpaces(childCareSpacesQuery)
 
 const isLoading = computed(
   () => isLoadingFundingSubmissionLineJson.value || isLoadingChildCareSpaces.value
+)
+const isErrored = computed(
+  () =>
+    isErroredFundingSubmissionLineJson.value ||
+    isErroredChildCareSpaces.value ||
+    isNil(fundingSubmissionLineJson.value)
 )
 const isSaving = ref(false)
 const isReplicatingEstimates = ref(false)
@@ -124,8 +146,8 @@ const calendarYear = computed(() => {
 
 const childCareSpacesAsFundingLineValues = computed<FundingLineValue[]>(() => {
   return childCareSpaces.value.map((childCareSpace) => {
-    return {
-      submissionLineId: childCareSpace.fundingSubmissionLineId,
+    return reactive({
+      submissionLineId: childCareSpace.categoryId,
       sectionName: CHILD_CARE_SPACES_SECTION_NAME,
       lineName: childCareSpace.lineName,
       monthlyAmount: childCareSpace.monthlyAmount,
@@ -133,7 +155,7 @@ const childCareSpacesAsFundingLineValues = computed<FundingLineValue[]>(() => {
       actualChildOccupancyRate: childCareSpace.actualChildOccupancyRate,
       estimatedComputedTotal: childCareSpace.estimatedComputedTotal,
       actualComputedTotal: childCareSpace.actualComputedTotal,
-    }
+    })
   })
 })
 const sections = computed<{ sectionName: string; lines: FundingLineValue[] }[]>(() => {
@@ -155,26 +177,37 @@ const fundingSubmissionLineJsonSectionTables = ref<
 >([])
 const notificationStore = useNotificationStore()
 
+async function reloadWorksheet() {
+  try {
+    await Promise.all([refreshChildCareSpaces(), refreshFundingSubmissionLineJson()])
+  } catch (error) {
+    notificationStore.notify({
+      text: `Failed to load worksheet: ${error}`,
+      variant: "error",
+    })
+  }
+}
+
 async function saveFundingSubmissionLineJson(): Promise<boolean> {
+  if (isLoading.value || isErrored.value) return false
+
   isSaving.value = true
   try {
     const childCareSpaceLines = sections.value.find(
       ({ sectionName }) => sectionName === CHILD_CARE_SPACES_SECTION_NAME
     )?.lines
-    const childCareSpacesByFundingSubmissionLineId = new Map(
+    const childCareSpacesByCategoryId = new Map(
       childCareSpaces.value.map((childCareSpace) => {
-        return [childCareSpace.fundingSubmissionLineId, childCareSpace]
+        return [childCareSpace.categoryId, childCareSpace]
       })
     )
     const childCareSpaceUpdates = []
 
     for (const childCareSpaceLine of childCareSpaceLines ?? []) {
-      const childCareSpace = childCareSpacesByFundingSubmissionLineId.get(
-        childCareSpaceLine.submissionLineId
-      )
+      const childCareSpace = childCareSpacesByCategoryId.get(childCareSpaceLine.submissionLineId)
       if (isNil(childCareSpace)) {
         throw new Error(
-          `Child Care Space for funding submission line ${childCareSpaceLine.submissionLineId} is missing`
+          `Child Care Space for category ${childCareSpaceLine.submissionLineId} is missing`
         )
       }
 
@@ -248,28 +281,24 @@ function propagateUpdatesAsNeeded({ line }: { line: FundingLineValue }) {
       const linkedSectionIndex = sections.value.findIndex(
         ({ sectionName }) => sectionName === linkedSectionName
       )
-      if (linkedSectionIndex === -1) {
-        throw new Error(`Expected "${linkedSectionName}" section`)
-      }
+      if (linkedSectionIndex === -1) continue
 
       const linkedSection = sections.value[linkedSectionIndex]
-      const matchingLines = linkedSection.lines.filter(({ lineName }) => lineName === line.lineName)
-      if (matchingLines.length !== 1) {
-        throw new Error(
-          `Expected one "${line.lineName}" line in "${linkedSectionName}", found ${matchingLines.length}`
-        )
-      }
-
-      const linkedLine = matchingLines[0]
-      linkedLine.estimatedChildOccupancyRate = line.estimatedChildOccupancyRate
-      linkedLine.actualChildOccupancyRate = line.actualChildOccupancyRate
+      const matchingLines = linkedSection.lines.filter(
+        ({ childCareSpaceCategoryId }) => childCareSpaceCategoryId === line.submissionLineId
+      )
+      if (matchingLines.length === 0) continue
 
       const linkedSectionTable = fundingSubmissionLineJsonSectionTables.value[linkedSectionIndex]
       if (isNil(linkedSectionTable)) {
         throw new Error(`Expected "${linkedSectionName}" section table`)
       }
 
-      linkedSectionTable.refreshLineTotals(linkedLine)
+      for (const linkedLine of matchingLines) {
+        linkedLine.estimatedChildOccupancyRate = line.estimatedChildOccupancyRate
+        linkedLine.actualChildOccupancyRate = line.actualChildOccupancyRate
+        linkedSectionTable.refreshLineTotals(linkedLine)
+      }
     }
   } catch (error) {
     notificationStore.notify({

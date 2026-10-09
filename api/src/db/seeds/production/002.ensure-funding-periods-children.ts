@@ -14,6 +14,7 @@ export async function seed(_knex: Knex): Promise<void> {
   await FundingPeriod.findEach(async (fundingPeriod) => {
     await FundingPeriods.FiscalPeriods.BulkEnsureService.perform(fundingPeriod)
     await FundingPeriods.EmployeeWageTiers.BulkEnsureService.perform(fundingPeriod)
+    await FundingPeriods.ChildCareSpaceCategories.BulkEnsureService.perform(fundingPeriod)
     await FundingPeriods.FundingSubmissionLines.BulkEnsureService.perform(fundingPeriod)
   })
 }

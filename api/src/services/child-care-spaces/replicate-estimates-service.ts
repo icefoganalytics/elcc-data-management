@@ -30,12 +30,12 @@ export class ReplicateEstimatesService extends BaseService {
           where: {
             centreId: this.childCareSpace.centreId,
             fiscalPeriodId: futureFiscalPeriod.id,
-            fundingSubmissionLineId: this.childCareSpace.fundingSubmissionLineId,
+            categoryId: this.childCareSpace.categoryId,
           },
         })
         if (isNil(futureChildCareSpace)) {
           throw new Error(
-            `Expected Child Care Space for fiscal period ${futureFiscalPeriod.id} and funding submission line ${this.childCareSpace.fundingSubmissionLineId}`
+            `Expected Child Care Space for fiscal period ${futureFiscalPeriod.id} and category ${this.childCareSpace.categoryId}`
           )
         }
 

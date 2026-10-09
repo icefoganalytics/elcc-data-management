@@ -5,7 +5,7 @@ import {
   childCareSpaceFactory,
   fiscalPeriodFactory,
   fundingPeriodFactory,
-  fundingSubmissionLineFactory,
+  childCareSpaceCategoryFactory,
 } from "@/factories"
 
 import { DestroyService } from "@/services/funding-periods/destroy-service"
@@ -30,26 +30,26 @@ describe("api/src/services/funding-periods/destroy-service.ts", () => {
           fundingPeriodId: unrelatedFundingPeriod.id,
           fiscalYear: "2025-26",
         })
-        const selectedFundingSubmissionLine = await fundingSubmissionLineFactory.create({
-          fiscalYear: "2024/25",
-          sectionName: "Child Care Spaces",
+        const selectedCategory = await childCareSpaceCategoryFactory.create({
+          fundingPeriodId: selectedFundingPeriod.id,
+          categoryName: "Selected",
         })
-        const unrelatedFundingSubmissionLine = await fundingSubmissionLineFactory.create({
-          fiscalYear: "2025/26",
-          sectionName: "Child Care Spaces",
+        const unrelatedCategory = await childCareSpaceCategoryFactory.create({
+          fundingPeriodId: unrelatedFundingPeriod.id,
+          categoryName: "Unrelated",
         })
         const selectedChildCareSpace = await childCareSpaceFactory
           .associations({
             centre,
             fiscalPeriod: selectedFiscalPeriod,
-            fundingSubmissionLine: selectedFundingSubmissionLine,
+            category: selectedCategory,
           })
           .create()
         const unrelatedChildCareSpace = await childCareSpaceFactory
           .associations({
             centre,
             fiscalPeriod: unrelatedFiscalPeriod,
-            fundingSubmissionLine: unrelatedFundingSubmissionLine,
+            category: unrelatedCategory,
           })
           .create()
 

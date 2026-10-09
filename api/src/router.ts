@@ -17,6 +17,7 @@ import {
   BuildingExpensesController,
   Centres,
   CentresController,
+  ChildCareSpaceCategoriesController,
   ChildCareSpaces,
   ChildCareSpacesController,
   CurrentUserController,
@@ -103,6 +104,15 @@ router
   .get(BuildingExpenseCategoriesController.show)
   .patch(BuildingExpenseCategoriesController.update)
   .delete(BuildingExpenseCategoriesController.destroy)
+router
+  .route("/api/child-care-space-categories")
+  .get(ChildCareSpaceCategoriesController.index)
+  .post(ChildCareSpaceCategoriesController.create)
+router
+  .route("/api/child-care-space-categories/:childCareSpaceCategoryId")
+  .get(ChildCareSpaceCategoriesController.show)
+  .patch(ChildCareSpaceCategoriesController.update)
+  .delete(ChildCareSpaceCategoriesController.destroy)
 
 router
   .route("/api/building-expenses")

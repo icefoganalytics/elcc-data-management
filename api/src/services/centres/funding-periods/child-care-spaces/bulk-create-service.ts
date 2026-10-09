@@ -3,10 +3,10 @@ import { isEmpty } from "lodash"
 
 import {
   ChildCareSpace,
+  ChildCareSpaceCategory,
   Centre,
   FiscalPeriod,
   FundingPeriod,
-  FundingSubmissionLine,
 } from "@/models"
 import BaseService from "@/services/base-service"
 
@@ -35,44 +35,41 @@ export class BulkCreateService extends BaseService {
       throw new Error("No fiscal periods found for the given funding period.")
     }
 
-    const fiscalYear = FundingSubmissionLine.toLegacyFiscalYearFormat(this.fundingPeriod.fiscalYear)
-    const fundingSubmissionLines = await FundingSubmissionLine.findAll({
-      attributes: ["id", "lineName", "monthlyAmount"],
-      where: {
-        fiscalYear,
-        sectionName: ChildCareSpace.SECTION_NAME,
-      },
+    const categories = await ChildCareSpaceCategory.findAll({
+      attributes: ["id", "categoryName", "monthlyAmount"],
+      where: { fundingPeriodId: this.fundingPeriod.id },
+      order: [["id", "ASC"]],
     })
-    if (isEmpty(fundingSubmissionLines)) return []
+    if (isEmpty(categories)) return []
 
     const existingPairKeys = new Set<string>()
     await ChildCareSpace.withScope({
       method: ["byFundingPeriod", this.fundingPeriod.id],
     }).findEach(
       {
-        attributes: ["fiscalPeriodId", "fundingSubmissionLineId"],
+        attributes: ["fiscalPeriodId", "categoryId"],
         where: {
           centreId: this.centre.id,
         },
       },
       async (childCareSpace) => {
-        const pairKey = `${childCareSpace.fiscalPeriodId}:${childCareSpace.fundingSubmissionLineId}`
+        const pairKey = `${childCareSpace.fiscalPeriodId}:${childCareSpace.categoryId}`
         existingPairKeys.add(pairKey)
       }
     )
     const childCareSpacesAttributes: CreationAttributes<ChildCareSpace>[] = []
 
     for (const fiscalPeriodId of fiscalPeriodIds) {
-      for (const fundingSubmissionLine of fundingSubmissionLines) {
-        const pairKey = `${fiscalPeriodId}:${fundingSubmissionLine.id}`
+      for (const category of categories) {
+        const pairKey = `${fiscalPeriodId}:${category.id}`
         if (existingPairKeys.has(pairKey)) continue
 
         childCareSpacesAttributes.push({
           centreId: this.centre.id,
           fiscalPeriodId,
-          fundingSubmissionLineId: fundingSubmissionLine.id,
-          lineName: fundingSubmissionLine.lineName,
-          monthlyAmount: fundingSubmissionLine.monthlyAmount,
+          categoryId: category.id,
+          lineName: category.categoryName,
+          monthlyAmount: category.monthlyAmount,
           estimatedChildOccupancyRate: "0.0000",
           actualChildOccupancyRate: "0.0000",
           estimatedComputedTotal: "0.0000",

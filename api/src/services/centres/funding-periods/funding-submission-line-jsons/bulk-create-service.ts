@@ -7,7 +7,6 @@ import sumByDecimal from "@/utils/sum-by-decimal"
 
 import {
   Centre,
-  ChildCareSpace,
   FiscalPeriod,
   FundingPeriod,
   FundingRegion,
@@ -50,10 +49,6 @@ export class BulkCreateService extends BaseService {
       throw new Error("No funding submission lines found for the funding period.")
     }
 
-    const fundingSubmissionLinesForJson = fundingSubmissionLines.filter(
-      ({ sectionName }) => sectionName !== ChildCareSpace.SECTION_NAME
-    )
-
     const { fundingRegionId, hotMeal } = this.centre
     const fundingRegion = await FundingRegion.findByPk(fundingRegionId, {
       rejectOnEmpty: true,
@@ -61,16 +56,17 @@ export class BulkCreateService extends BaseService {
 
     const { hotMealIncrementAmount } = fundingRegion
 
-    const fundingSubmissionLineJsonsDefaults = fundingSubmissionLinesForJson.map(
+    const fundingSubmissionLineJsonsDefaults = fundingSubmissionLines.map(
       (fundingSubmissionLine) => {
         const {
           id: submissionLineId,
           sectionName,
           lineName,
           monthlyAmount: originalMonthlyAmount,
+          childCareSpaceCategoryId,
         } = fundingSubmissionLine
 
-        const line = {
+        const line: FundingLineValue = {
           submissionLineId,
           sectionName,
           lineName,
@@ -79,6 +75,7 @@ export class BulkCreateService extends BaseService {
           actualChildOccupancyRate: "0",
           estimatedComputedTotal: "0",
           actualComputedTotal: "0",
+          ...(childCareSpaceCategoryId === null ? {} : { childCareSpaceCategoryId }),
         }
 
         if (

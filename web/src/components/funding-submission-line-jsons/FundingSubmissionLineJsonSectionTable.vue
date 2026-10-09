@@ -45,7 +45,7 @@
         <td>
           <v-text-field
             ref="estimatesFields"
-            v-model.number="line.estimatedChildOccupancyRate"
+            v-model="line.estimatedChildOccupancyRate"
             density="compact"
             hide-details
             @keydown="changeFocusInColumn($event, 'estimates', lineIndex)"
@@ -60,7 +60,7 @@
         <td>
           <v-text-field
             ref="actualsFields"
-            v-model.number="line.actualChildOccupancyRate"
+            v-model="line.actualChildOccupancyRate"
             density="compact"
             hide-details
             @keydown="changeFocusInColumn($event, 'actuals', lineIndex)"

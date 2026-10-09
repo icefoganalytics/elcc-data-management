@@ -2,6 +2,7 @@ export { BuildingExpenseCategoriesController } from "./building-expense-categori
 export { BuildingExpensesController } from "./building-expenses-controller"
 export { CentresController } from "./centres-controller"
 export { ChildCareSpacesController } from "./child-care-spaces-controller"
+export { ChildCareSpaceCategoriesController } from "./child-care-space-categories-controller"
 export { CurrentUserController } from "./current-user-controller"
 export { EmployeeBenefitsController } from "./employee-benefits-controller"
 export { EmployeeWageTiersController } from "./employee-wage-tiers-controller"

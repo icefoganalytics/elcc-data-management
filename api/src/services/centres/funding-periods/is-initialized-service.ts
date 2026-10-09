@@ -8,7 +8,7 @@ import {
   FiscalPeriod,
   FundingPeriod,
   FundingReconciliation,
-  FundingSubmissionLine,
+  ChildCareSpaceCategory,
   FundingSubmissionLineJson,
 } from "@/models"
 import BaseService from "@/services/base-service"
@@ -86,41 +86,35 @@ export class IsInitializedService extends BaseService {
 
   private async checkChildCareSpaces(centreId: number, fundingPeriodId: number): Promise<boolean> {
     const fiscalPeriods = await FiscalPeriod.findAll({
+      attributes: ["id"],
       where: {
         fundingPeriodId,
       },
     })
-    const fiscalYear = FundingSubmissionLine.toLegacyFiscalYearFormat(this.fundingPeriod.fiscalYear)
-    const fundingSubmissionLines = await FundingSubmissionLine.findAll({
-      where: {
-        fiscalYear,
-        sectionName: ChildCareSpace.SECTION_NAME,
-      },
+    const categories = await ChildCareSpaceCategory.findAll({
+      attributes: ["id"],
+      where: { fundingPeriodId },
     })
     if (isEmpty(fiscalPeriods)) return false
-    if (isEmpty(fundingSubmissionLines)) return true
-
-    const childCareSpaces = await ChildCareSpace.withScope({
+    if (isEmpty(categories)) return true
+    const childCareSpacePairKeys = new Set<string>()
+    await ChildCareSpace.withScope({
       method: ["byFundingPeriod", fundingPeriodId],
-    }).findAll({
-      where: {
-        centreId,
+    }).findEach(
+      {
+        attributes: ["fiscalPeriodId", "categoryId"],
+        where: { centreId },
       },
-    })
-    const childCareSpacePairKeys = new Set(
-      childCareSpaces.map(({ fiscalPeriodId, fundingSubmissionLineId }) => {
-        return `${fiscalPeriodId}:${fundingSubmissionLineId}`
-      })
-    )
-    const expectedPairKeys = new Set<string>()
-    for (const fiscalPeriod of fiscalPeriods) {
-      for (const fundingSubmissionLine of fundingSubmissionLines) {
-        expectedPairKeys.add(`${fiscalPeriod.id}:${fundingSubmissionLine.id}`)
+      async ({ fiscalPeriodId, categoryId }) => {
+        childCareSpacePairKeys.add(`${fiscalPeriodId}:${categoryId}`)
       }
-    }
+    )
 
-    for (const expectedPairKey of expectedPairKeys) {
-      if (!childCareSpacePairKeys.has(expectedPairKey)) return false
+    for (const fiscalPeriod of fiscalPeriods) {
+      for (const category of categories) {
+        const expectedPairKey = `${fiscalPeriod.id}:${category.id}`
+        if (!childCareSpacePairKeys.has(expectedPairKey)) return false
+      }
     }
 
     return true
