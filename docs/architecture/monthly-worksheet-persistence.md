@@ -9,7 +9,7 @@ A monthly worksheet combines records with different persistence owners. The shar
 | Child Care Spaces                                                                        | `child_care_spaces`, identified by centre, fiscal period, and funding submission line | Only the two occupancy inputs are updated through the Child Care Spaces API. |
 | Remaining JSON-backed sections, including Administration and Quality Enhancement Program | `funding_submission_line_jsons.values`                                                | The worksheet JSON API receives only its own sections.                       |
 
-The [JSON model](../../api/src/models/funding-submission-line-json.ts) rejects Child Care Spaces in both virtual `lines` and raw `values` writes. This prevents clients opened before a deployment from reintroducing a second copy and double-counting reconciliation.
+The [JSON model](../../api/src/models/funding-submission-line-json.ts) attaches the named [Child Care Spaces exclusion validator](../../api/src/models/validators/does-not-contain-child-care-spaces.ts) to `values`, covering both virtual `lines` and raw `values` writes. This prevents clients opened before a deployment from reintroducing a second copy and double-counting reconciliation. The model imports this model-dependent validator directly; the shared validator barrel remains independent of model initialization.
 
 The [worksheet editor](../../web/src/components/funding-submission-line-jsons/FundingSubmissionLineJsonEditSheet.vue) composes both stores for display, persists changed ledger rows before saving JSON-owned lines, and refreshes both resources after success. **Replicate Estimates** first saves, then invokes each store's replication operation.
 
