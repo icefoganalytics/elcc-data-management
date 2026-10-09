@@ -9,7 +9,7 @@ The Knex CLI hoists the migration client's configuration for each environment.
 - Run migrations with `./bin/dev migrate`; inspect their state with `./bin/dev migrate list`.
 - The initial, model-sized table migrations create missing tables and never alter existing ones.
 - Existing installations must have the current application schema before this cutover. Historical
-  migrations are no longer executed; the existing `SequelizeMeta` table is left unused and unchanged.
+  migrations are no longer executed; obsolete migration history is dropped after the table baseline succeeds.
 - Knex owns the new `knex_migrations` and `knex_migrations_lock` tables. Do not rename their entries.
 - Use compiled JavaScript for production and source TypeScript for development, on separate databases.
 - Initial table migrations cannot be rolled back: a rollback must not drop pre-existing tables.

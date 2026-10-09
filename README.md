@@ -226,9 +226,9 @@ application ORM. Database table and column names use snake_case.
 
 Migration files live in [`api/src/db/migrations`](./api/src/db/migrations/README.md).
 The initial table migrations create a fresh database or leave each existing table untouched.
-On an existing, current production schema, the cutover adds only `knex_migrations` and
-`knex_migrations_lock`; it does not rename tables, rewrite application data, or modify
-the unused `SequelizeMeta` history.
+On an existing, current production schema, the cutover adds `knex_migrations` and
+`knex_migrations_lock`, then drops obsolete migration history after the table baseline succeeds.
+Application tables and data remain unchanged.
 
 Existing databases must already have the current application schema before this cutover.
 Historical migrations are no longer executed. Validate a restored production backup before

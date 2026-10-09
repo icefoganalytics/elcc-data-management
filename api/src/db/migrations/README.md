@@ -44,7 +44,7 @@ Preserve existing constraint names and cascade actions when refactoring; use arr
 The initial `create-*` migrations use `knex.schema.hasTable` to leave existing tables untouched.
 They are a fresh-install baseline, not an upgrade path for old application schemas.
 Their `down` methods throw instead of dropping tables. Inspect a restored production backup
-before cutover; leave its unused `SequelizeMeta` history intact.
+before cutover. A final migration drops obsolete migration history after all table migrations succeed.
 
 Knex uses its native filename-based history and migration lock. Do not rename ledger entries,
 retain obsolete transition-marker files, or add a second migration directory.
