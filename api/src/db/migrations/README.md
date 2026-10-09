@@ -7,7 +7,7 @@ group of related models; separate schema changes from data backfills.
 
 ```bash
 ./bin/dev migrate make add-field-to-table
-./bin/dev migrate
+./bin/dev migrate latest
 ./bin/dev migrate list
 ```
 

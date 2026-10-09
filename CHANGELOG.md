@@ -29,6 +29,8 @@ Changes since v2025.11.24.1 that will be included in the next release.
 - Replaced Umzug with Knex for database migrations and seeds. Fresh installations use model-sized
   schema migrations; current existing installations gain Knex tracking tables without changing
   application tables or data. Obsolete migration history is removed after the table baseline succeeds.
+  Development commands forward native Knex migration actions; use `dev migrate latest` for all
+  pending migrations and `dev migrate up` for one migration.
 
 ### Fixed
 

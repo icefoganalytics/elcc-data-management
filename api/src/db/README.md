@@ -6,7 +6,9 @@ The Knex CLI hoists the migration client's configuration for each environment.
 ## Migration Rules
 
 - Create migrations with `./bin/dev migrate make <description>` in `migrations/`.
-- Run migrations with `./bin/dev migrate`; inspect their state with `./bin/dev migrate list`.
+- Run all pending migrations with `./bin/dev migrate latest`; inspect their state with `./bin/dev migrate list`.
+  The helper forwards native Knex actions, as Wrap does: `up` runs one migration, not the full batch.
+  Put Knex options after npm's `--` separator, for example `./bin/dev migrate list -- --env test`.
 - The initial, model-sized table migrations create missing tables and never alter existing ones.
 - Existing installations must have the current application schema before this cutover. Historical
   migrations are no longer executed; obsolete migration history is dropped after the table baseline succeeds.

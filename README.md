@@ -220,7 +220,7 @@ application ORM. Database table and column names use snake_case.
 
 ```bash
 ./bin/dev migrate make add-field-to-table
-./bin/dev migrate
+./bin/dev migrate latest
 ./bin/dev migrate list
 ```
 

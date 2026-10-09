@@ -20,9 +20,10 @@ dev test web -- --run src/components/SomeComponent.test.ts # Run single frontend
 dev web npm run check-types         # Check frontend types
 dev api npm run check-types         # Check backend types
 
-dev migrate                         # Run pending Knex migrations
+dev migrate latest                 # Run all pending Knex migrations
 dev migrate make add-users-status   # Create a new Knex migration
 dev migrate list                    # List Knex migration state
+dev migrate list -- --env test      # Forward Knex options after npm's -- separator
 
 dev api npm run knex -- seed:make fill-users-table  # Create an environment-specific seed
 dev seed                                           # Run environment-specific seeds
