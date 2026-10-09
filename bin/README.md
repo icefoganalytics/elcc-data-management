@@ -49,9 +49,9 @@ running 0.1.x or vendored bridge using its original CLI; the protocols cannot sh
 session ID into the web container, and Vite adds `session=<checkout-id>` to editor requests.
 The session ID selects the checkout; it is not an authentication token.
 
-Foreground startup releases its lease when Compose exits. `dev up -d`, `dev up --detach`,
-and `dev up --wait` retain a session until `dev down`. Stopping one checkout does not
-release another checkout's session.
+`dev up` releases its editor lease when Compose returns. Use foreground startup for
+editor links; detached startup does not retain a session. Releasing one checkout's
+lease does not release another checkout's session.
 
 The wrapper defaults `OPEN_IN_EDITOR_COMMAND` to `EDITOR`, or `devin-desktop` when unset.
 It defaults `OPEN_IN_EDITOR_BRIDGE_BIND_ADDRESS` to `0.0.0.0` for Docker access.
@@ -60,7 +60,6 @@ firewall restrictions, never public port forwarding. Set the bind address to a s
 Docker-reachable host interface to narrow exposure. All clients sharing a listener must
 agree on bind address, `OPEN_IN_EDITOR_BRIDGE_PORT` (default `3333`), and runtime directory.
 
-After a broker crash or manual stop, rerun `dev up -d` to register surviving applications.
 See the [released bridge documentation](https://github.com/klondikemarlen/open-in-editor-bridge)
 for direct CLI use and shared-runtime configuration.
 
