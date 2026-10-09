@@ -36,6 +36,9 @@ dev web npm install vue     # Run npm in web container
 http://elcc-data-management.localhost; named worktrees receive their own
 `<worktree>.elcc-data-management.localhost` hostname.
 
+Once Vite starts, the web service prints `Open ELCC: http://<hostname>/` with that checkout's
+gateway hostname.
+
 In each new checkout, initialize the ignored source-bound dependencies before the first `dev up`:
 
 ```bash
