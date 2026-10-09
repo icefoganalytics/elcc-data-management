@@ -21,6 +21,6 @@ export async function up(knex: Knex): Promise<void> {
   })
 }
 
-export async function down(_knex: Knex): Promise<void> {
-  throw new Error("The building_expense_categories baseline cannot be rolled back.")
+export async function down(knex: Knex): Promise<void> {
+  await knex.schema.dropTable("building_expense_categories")
 }

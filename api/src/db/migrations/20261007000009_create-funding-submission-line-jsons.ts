@@ -19,6 +19,6 @@ export async function up(knex: Knex): Promise<void> {
   })
 }
 
-export async function down(_knex: Knex): Promise<void> {
-  throw new Error("The funding_submission_line_jsons baseline cannot be rolled back.")
+export async function down(knex: Knex): Promise<void> {
+  await knex.schema.dropTable("funding_submission_line_jsons")
 }
