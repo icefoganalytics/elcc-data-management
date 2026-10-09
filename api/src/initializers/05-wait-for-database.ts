@@ -1,4 +1,6 @@
-import { Sequelize } from "@sequelize/core"
+import knex, { type Knex } from "knex"
+
+import { setTimeout } from "timers/promises"
 
 import {
   DB_HEALTH_CHECK_INTERVAL_SECONDS,
@@ -6,20 +8,24 @@ import {
   DB_HEALTH_CHECK_START_PERIOD_SECONDS,
   DB_HEALTH_CHECK_TIMEOUT_SECONDS,
 } from "@/config"
-import { SEQUELIZE_CONFIG } from "@/db/db-client"
+import { buildKnexConfig } from "@/db/db-migration-client"
 import sleep from "@/utils/sleep"
 import { isCredentialFailure, isNetworkFailure, isSocketFailure } from "@/utils/db-error-helpers"
 
-function checkHealth(db: Sequelize, timeoutSeconds: number) {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("Connection timeout")), timeoutSeconds * 1000)
-    db.authenticate()
-      .then(() => {
-        clearTimeout(timer)
-        resolve(null)
-      })
-      .catch(reject)
+async function checkHealth(dbMigrationClient: Knex, timeoutSeconds: number): Promise<void> {
+  const timeoutController = new AbortController()
+  const timeout = setTimeout(timeoutSeconds * 1000, undefined, {
+    signal: timeoutController.signal,
   })
+  const deadline = timeout.then(() => {
+    throw new Error("Connection timeout")
+  })
+
+  try {
+    await Promise.race([dbMigrationClient.raw("SELECT 1"), deadline])
+  } finally {
+    timeoutController.abort()
+  }
 }
 
 export async function waitForDatabase({
@@ -36,48 +42,67 @@ export async function waitForDatabase({
   await sleep(startPeriodSeconds)
 
   console.info("Attempting direct to database connection...")
-  const databaseConfig = SEQUELIZE_CONFIG
-  let dbMigrationClient = new Sequelize(databaseConfig)
-  let isDatabaseSocketReady = false
+  const timeoutMilliseconds = timeoutSeconds * 1000
+  const connectionConfig = {
+    connectionTimeout: timeoutMilliseconds,
+    requestTimeout: timeoutMilliseconds,
+  }
+  const databaseConfig = buildKnexConfig({
+    acquireConnectionTimeout: timeoutMilliseconds,
+    connection: connectionConfig,
+  })
+  let dbMigrationClient = knex(databaseConfig)
+  let isServerLevelConnection = false
 
-  await sleep(startPeriodSeconds)
+  try {
+    for (let attempt = 0; attempt < retries; attempt++) {
+      try {
+        await checkHealth(dbMigrationClient, timeoutSeconds)
+        console.info("Database connection successful.")
+        return
+      } catch (error) {
+        if (isSocketFailure(error)) {
+          console.info(`Database socket is not ready, retrying... ${error}`, { error })
+          await sleep(intervalSeconds)
+          continue
+        }
 
-  for (let i = 0; i < retries; i++) {
-    try {
-      await checkHealth(dbMigrationClient, timeoutSeconds)
-      console.info("Database connection successful.")
-      return
-    } catch (error) {
-      if (isSocketFailure(error)) {
-        console.info(`Database socket is not ready, retrying... ${error}`, { error })
-        await sleep(intervalSeconds)
-      } else if (isNetworkFailure(error)) {
-        console.info(`Network error, retrying... ${error}`, { error })
-        await sleep(intervalSeconds)
-      } else if (isCredentialFailure(error)) {
-        if (isDatabaseSocketReady) {
+        if (isNetworkFailure(error)) {
+          console.info(`Network error, retrying... ${error}`, { error })
+          await sleep(intervalSeconds)
+          continue
+        }
+
+        if (!isCredentialFailure(error)) {
+          console.error(`Unknown database connection error: ${error}`, { error })
+          throw error
+        }
+
+        if (isServerLevelConnection) {
           console.error(`Database connection failed due to invalid credentials: ${error}`, {
             error,
           })
           throw error
-        } else {
-          console.info(
-            "Falling back to database server-level connection (database might not exist)..."
-          )
-          const serverLevelConfig = { ...SEQUELIZE_CONFIG, database: "" }
-          dbMigrationClient = new Sequelize(serverLevelConfig)
-          i -= 1
-          isDatabaseSocketReady = true
-          continue
         }
-      } else {
-        console.error(`Unknown database connection error: ${error}`, { error })
-        throw error
+
+        console.info(
+          "Falling back to database server-level connection (database might not exist)..."
+        )
+        await dbMigrationClient.destroy()
+        const serverLevelConfig = buildKnexConfig({
+          acquireConnectionTimeout: timeoutMilliseconds,
+          connection: { ...connectionConfig, database: "" },
+        })
+        dbMigrationClient = knex(serverLevelConfig)
+        isServerLevelConnection = true
+        attempt -= 1
       }
     }
-  }
 
-  throw new Error(`Failed to connect to the database due to timeout.`)
+    throw new Error("Failed to connect to the database due to timeout.")
+  } finally {
+    await dbMigrationClient.destroy()
+  }
 }
 
 export default waitForDatabase

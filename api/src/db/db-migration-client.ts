@@ -19,7 +19,9 @@ if (isEmpty(DB_PASS)) throw new Error("database password is unset.")
 if (isEmpty(DB_HOST)) throw new Error("database host is unset.")
 if (isNil(DB_PORT) || Number.isNaN(DB_PORT)) throw new Error("database port is unset.")
 
-export function buildKnexConfig(options?: Knex.Config): Knex.Config {
+export function buildKnexConfig(
+  options?: Omit<Knex.Config, "connection"> & { connection?: Partial<Knex.MsSqlConnectionConfig> }
+): Knex.Config {
   return merge(
     {
       client: "mssql",

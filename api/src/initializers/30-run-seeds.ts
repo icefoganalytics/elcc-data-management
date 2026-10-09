@@ -16,12 +16,11 @@ export async function runSeeds(): Promise<void> {
 
   try {
     await dbMigrationClient.seed.run()
+    console.info("All seeds ran successfully.")
   } catch (error) {
     console.error(`Error running seeds: ${error}`, { error })
     throw error
   }
-
-  return
 }
 
 export default runSeeds
