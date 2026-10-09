@@ -58,8 +58,8 @@ The wrapper defaults `OPEN_IN_EDITOR_COMMAND` to `EDITOR`, or `devin-desktop` wh
 It defaults `OPEN_IN_EDITOR_BRIDGE_BIND_ADDRESS` to `0.0.0.0` for Docker access.
 Editor requests are unauthenticated: use only a trusted development network with host
 firewall restrictions, never public port forwarding. Set the bind address to a specific
-Docker-reachable host interface to narrow exposure. All clients sharing a listener must
-agree on bind address, `OPEN_IN_EDITOR_BRIDGE_PORT` (default `3333`), and runtime directory.
+Docker-reachable host interface to narrow exposure. The development proxy uses port `3333`.
+All clients sharing the listener must agree on bind address and runtime directory.
 
 See the [released bridge documentation](https://github.com/klondikemarlen/open-in-editor-bridge)
 for direct CLI use and shared-runtime configuration.
