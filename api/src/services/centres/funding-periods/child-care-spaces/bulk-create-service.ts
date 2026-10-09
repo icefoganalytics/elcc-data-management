@@ -19,17 +19,25 @@ export class BulkCreateService extends BaseService {
   }
 
   async perform(): Promise<ChildCareSpace[]> {
-    const fiscalPeriods = await FiscalPeriod.findAll({
-      where: {
-        fundingPeriodId: this.fundingPeriod.id,
+    const fiscalPeriodIds: number[] = []
+    await FiscalPeriod.findEach(
+      {
+        attributes: ["id"],
+        where: {
+          fundingPeriodId: this.fundingPeriod.id,
+        },
       },
-    })
-    if (isEmpty(fiscalPeriods)) {
+      async (fiscalPeriod) => {
+        fiscalPeriodIds.push(fiscalPeriod.id)
+      }
+    )
+    if (isEmpty(fiscalPeriodIds)) {
       throw new Error("No fiscal periods found for the given funding period.")
     }
 
     const fiscalYear = FundingSubmissionLine.toLegacyFiscalYearFormat(this.fundingPeriod.fiscalYear)
     const fundingSubmissionLines = await FundingSubmissionLine.findAll({
+      attributes: ["id", "lineName", "monthlyAmount"],
       where: {
         fiscalYear,
         sectionName: ChildCareSpace.SECTION_NAME,
@@ -37,28 +45,31 @@ export class BulkCreateService extends BaseService {
     })
     if (isEmpty(fundingSubmissionLines)) return []
 
-    const childCareSpaces = await ChildCareSpace.withScope({
+    const existingPairKeys = new Set<string>()
+    await ChildCareSpace.withScope({
       method: ["byFundingPeriod", this.fundingPeriod.id],
-    }).findAll({
-      where: {
-        centreId: this.centre.id,
+    }).findEach(
+      {
+        attributes: ["fiscalPeriodId", "fundingSubmissionLineId"],
+        where: {
+          centreId: this.centre.id,
+        },
       },
-    })
-    const existingPairKeys = new Set(
-      childCareSpaces.map(({ fiscalPeriodId, fundingSubmissionLineId }) => {
-        return `${fiscalPeriodId}:${fundingSubmissionLineId}`
-      })
+      async (childCareSpace) => {
+        const pairKey = `${childCareSpace.fiscalPeriodId}:${childCareSpace.fundingSubmissionLineId}`
+        existingPairKeys.add(pairKey)
+      }
     )
     const childCareSpacesAttributes: CreationAttributes<ChildCareSpace>[] = []
 
-    for (const fiscalPeriod of fiscalPeriods) {
+    for (const fiscalPeriodId of fiscalPeriodIds) {
       for (const fundingSubmissionLine of fundingSubmissionLines) {
-        const pairKey = `${fiscalPeriod.id}:${fundingSubmissionLine.id}`
+        const pairKey = `${fiscalPeriodId}:${fundingSubmissionLine.id}`
         if (existingPairKeys.has(pairKey)) continue
 
         childCareSpacesAttributes.push({
           centreId: this.centre.id,
-          fiscalPeriodId: fiscalPeriod.id,
+          fiscalPeriodId,
           fundingSubmissionLineId: fundingSubmissionLine.id,
           lineName: fundingSubmissionLine.lineName,
           monthlyAmount: fundingSubmissionLine.monthlyAmount,
