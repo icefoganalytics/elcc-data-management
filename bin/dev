@@ -64,15 +64,14 @@ class DevHelper
 
   def up(*args, **kwargs)
     LocalDevelopmentGateway.with_running do
-      detached =
-        args.include?("-d") || args.include?("--detach") ||
-          args.include?("--wait")
-
-      if detached
-        OpenInEditorBridge.call("--ensure-running")
-        compose_up(*args, **kwargs)
-      else
-        OpenInEditorBridge.with_running { compose_up(*args, **kwargs) }
+      OpenInEditorBridge.with_running do
+        compose(
+          *%w[up --remove-orphans --force-recreate --renew-anon-volumes],
+          *args,
+          execution_mode: WAIT_FOR_PROCESS,
+          gateway: true,
+          **kwargs
+        )
       end
     end
   end
@@ -308,16 +307,6 @@ class DevHelper
   end
 
   private
-
-  def compose_up(*args, **kwargs)
-    compose(
-      *%w[up --remove-orphans --force-recreate --renew-anon-volumes],
-      *args,
-      execution_mode: WAIT_FOR_PROCESS,
-      gateway: true,
-      **kwargs
-    )
-  end
 
   def container_id(container_name, *args, **kwargs)
     command = compose_command(*%w[ps -q], container_name, *args, **kwargs)
