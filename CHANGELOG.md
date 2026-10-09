@@ -24,6 +24,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
 - Preserved four-decimal currency entry and exact financial calculations when reconciling money amounts.
 - Improved accuracy of funding reconciliation and payroll adjustment totals, especially for wage enhancements and employee benefits, by using more precise financial calculations.
 - Child Care Spaces occupancy inputs now reject precision beyond four decimal places rather than silently rounding saved rates and changing financial totals on later edits.
+- Child Care Spaces cutover now uses native Knex migrations and seeds, preserving historical values and rolling back a failed pending migration batch without partial data removal.
 - Development stacks now use the shared local gateway, so ELCC can run beside other projects
   and independently named worktrees.
 - Development setup guidance now covers dependency refreshes after lockfile changes and recovery
