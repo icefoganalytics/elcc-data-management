@@ -47,8 +47,8 @@ They are a fresh-install baseline, not an upgrade path for old application schem
 Their `down` methods use `dropTable`, deleting the table and its rows even when it predated cutover.
 Inspect a restored production backup before cutover; use a backup for production data recovery.
 A final migration drops obsolete migration history after all table migrations succeed.
-Its `down` recreates an empty `SequelizeMeta` table with its primary key and timestamp defaults,
-not the deleted history rows.
+Its cleanup is irreversible: `down` warns and continues without restoring obsolete history
+or preventing the remaining migrations from rolling back.
 
 Knex uses its native filename-based history and migration lock. Do not rename ledger entries,
 retain obsolete transition-marker files, or add a second migration directory.

@@ -232,10 +232,9 @@ Application tables and data remain unchanged.
 
 Existing databases must already have the current application schema before this cutover.
 Historical migrations are no longer executed. Validate a restored production backup before
-deployment. Rollback uses standard Knex operations: initial table migrations drop their tables
-and data, including tables that existed before cutover. The history-removal rollback recreates
-an empty `SequelizeMeta` table; deleted history rows are not restored. Use a database backup
-to recover production data, not baseline rollback.
+deployment. Initial table rollbacks drop their tables and data, including tables that existed
+before cutover. Obsolete history cleanup is irreversible: rollback warns and continues without
+restoring it. Use a database backup to recover production data, not baseline rollback.
 
 Production runs compiled JavaScript migrations through `node dist/initializers/index.js`.
 Development uses TypeScript migrations. Keep those environments on separate databases:
