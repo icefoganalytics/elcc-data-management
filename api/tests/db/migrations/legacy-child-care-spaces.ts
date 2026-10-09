@@ -1,9 +1,8 @@
-import { DataTypes, QueryTypes, sql } from "@sequelize/core"
 import Big from "big.js"
+import knex, { type Knex } from "knex"
 
-import db from "@/models"
-import { up as createLegacyChildCareSpaces } from "@/db/migrations/2026.10.07T17.43.12.create-child-care-spaces-table"
-import { type Migration } from "@/db/umzug"
+import { buildKnexConfig } from "@/db/db-migration-client"
+import { up as createLegacyChildCareSpaces } from "@/db/migrations/20261007174312_create-child-care-spaces-table"
 
 export type LegacyChildCareSpaceAttributes = {
   centreId: number
@@ -22,107 +21,77 @@ export type LegacyChildCareSpaceRow = LegacyChildCareSpaceAttributes & {
   actualComputedTotal: string
 }
 
-export async function withLegacyChildCareSpaceSchema(scenario: () => Promise<void>): Promise<void> {
+export async function withLegacyChildCareSpaceSchema(
+  scenario: (transaction: Knex.Transaction) => Promise<void>
+): Promise<void> {
+  const transactionClient = knex(buildKnexConfig())
   const rollback = new Error("Roll back historical migration fixture schema")
-  const migration = { context: db.queryInterface } as Migration
 
   try {
-    await db.transaction(async () => {
-      await db.queryInterface.dropTable("child_care_spaces")
-      await createLegacyChildCareSpaces(migration)
-      await db.queryInterface.addColumn(
-        "child_care_space_categories",
-        "source_funding_submission_line_id",
-        {
-          type: DataTypes.INTEGER,
-          allowNull: true,
-        }
-      )
-      await scenario()
-      throw rollback
-    })
-  } catch (error) {
-    if (error !== rollback) throw error
+    try {
+      await transactionClient.transaction(async (transaction) => {
+        await transaction.schema.dropTable("child_care_spaces")
+        await createLegacyChildCareSpaces(transaction)
+        await transaction.schema.alterTable("child_care_space_categories", (table) => {
+          table.integer("source_funding_submission_line_id").nullable()
+        })
+        await scenario(transaction)
+        await transaction.rollback(rollback)
+      })
+    } catch (error) {
+      if (error !== rollback) throw error
+    }
+  } finally {
+    await transactionClient.destroy()
   }
 }
 
-export async function createLegacyChildCareSpace(attributes: LegacyChildCareSpaceAttributes) {
+export async function createLegacyChildCareSpace(
+  transaction: Knex.Transaction,
+  attributes: LegacyChildCareSpaceAttributes
+): Promise<{ id: number }> {
   const estimatedComputedTotal = Big(attributes.monthlyAmount)
     .mul(attributes.estimatedChildOccupancyRate)
     .toFixed(4)
   const actualComputedTotal = Big(attributes.monthlyAmount)
     .mul(attributes.actualChildOccupancyRate)
     .toFixed(4)
-  const [row] = await db.query<{ id: number }>(
-    sql`
-      DECLARE @inserted_child_care_spaces
-      TABLE (id INTEGER);
-
-      INSERT INTO
-        child_care_spaces (
-          centre_id,
-          fiscal_period_id,
-          funding_submission_line_id,
-          line_name,
-          monthly_amount,
-          estimated_child_occupancy_rate,
-          actual_child_occupancy_rate,
-          estimated_computed_total,
-          actual_computed_total
-        ) OUTPUT INSERTED.id
-      INTO
-        @inserted_child_care_spaces
-      VALUES
-        (
-          :centreId,
-          :fiscalPeriodId,
-          :fundingSubmissionLineId,
-          :lineName,
-          :monthlyAmount,
-          :estimatedChildOccupancyRate,
-          :actualChildOccupancyRate,
-          :estimatedComputedTotal,
-          :actualComputedTotal
-        )
-      SELECT
-        id
-      FROM
-        @inserted_child_care_spaces;
-    `,
-    {
-      type: QueryTypes.SELECT,
-      replacements: { ...attributes, estimatedComputedTotal, actualComputedTotal },
-    }
-  )
+  const [row] = await transaction("child_care_spaces")
+    .insert({
+      centre_id: attributes.centreId,
+      fiscal_period_id: attributes.fiscalPeriodId,
+      funding_submission_line_id: attributes.fundingSubmissionLineId,
+      line_name: attributes.lineName,
+      monthly_amount: attributes.monthlyAmount,
+      estimated_child_occupancy_rate: attributes.estimatedChildOccupancyRate,
+      actual_child_occupancy_rate: attributes.actualChildOccupancyRate,
+      estimated_computed_total: estimatedComputedTotal,
+      actual_computed_total: actualComputedTotal,
+    })
+    .returning<{ id: number }[]>("id")
   if (row === undefined) throw new Error("Historical ledger fixture was not inserted.")
 
-  return row
+  return { id: row.id }
 }
 
-export async function findLegacyChildCareSpaces(): Promise<
-  Omit<LegacyChildCareSpaceRow, "categoryId">[]
-> {
-  const rows = await db.query<Omit<LegacyChildCareSpaceRow, "categoryId">>(
-    sql`
-      SELECT
-        id,
-        centre_id AS centreId,
-        fiscal_period_id AS fiscalPeriodId,
-        funding_submission_line_id AS fundingSubmissionLineId,
-        line_name AS lineName,
-        monthly_amount AS monthlyAmount,
-        estimated_child_occupancy_rate AS estimatedChildOccupancyRate,
-        actual_child_occupancy_rate AS actualChildOccupancyRate,
-        estimated_computed_total AS estimatedComputedTotal,
-        actual_computed_total AS actualComputedTotal
-      FROM
-        child_care_spaces
-      ORDER BY
-        funding_submission_line_id,
-        id
-    `,
-    { type: QueryTypes.SELECT }
-  )
+export async function findLegacyChildCareSpaces(
+  transaction: Knex.Transaction
+): Promise<Omit<LegacyChildCareSpaceRow, "categoryId">[]> {
+  const rows = await transaction("child_care_spaces")
+    .select(
+      "id",
+      { centreId: "centre_id" },
+      { fiscalPeriodId: "fiscal_period_id" },
+      { fundingSubmissionLineId: "funding_submission_line_id" },
+      { lineName: "line_name" },
+      { monthlyAmount: "monthly_amount" },
+      { estimatedChildOccupancyRate: "estimated_child_occupancy_rate" },
+      { actualChildOccupancyRate: "actual_child_occupancy_rate" },
+      { estimatedComputedTotal: "estimated_computed_total" },
+      { actualComputedTotal: "actual_computed_total" }
+    )
+    .orderBy("funding_submission_line_id")
+    .orderBy("id")
   return rows.map((row) => ({
     ...row,
     monthlyAmount: Big(row.monthlyAmount).toString(),

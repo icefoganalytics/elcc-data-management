@@ -1,12 +1,10 @@
-import { QueryTypes, sql } from "@sequelize/core"
-
-import { type Migration } from "@/db/umzug"
+import type { Knex } from "knex"
 
 const CHILD_CARE_SPACES_SECTION_NAME = "Child Care Spaces"
 
-export async function up({ context: { sequelize } }: Migration) {
-  const [unresolvedConfiguration] = await sequelize.query<{ id: number }>(
-    sql`
+export async function up(knex: Knex): Promise<void> {
+  const [unresolvedConfiguration] = await knex.raw<{ id: number }[]>(
+    `
       SELECT
         TOP 1 funding_submission_lines.id
       FROM
@@ -22,10 +20,7 @@ export async function up({ context: { sequelize } }: Migration) {
             funding_submission_lines.fiscal_year = LEFT(funding_periods.fiscal_year, 4) + '/' + RIGHT(funding_periods.fiscal_year, 2)
         )
     `,
-    {
-      type: QueryTypes.SELECT,
-      replacements: { sectionName: CHILD_CARE_SPACES_SECTION_NAME },
-    }
+    { sectionName: CHILD_CARE_SPACES_SECTION_NAME }
   )
   if (unresolvedConfiguration !== undefined) {
     throw new Error(
@@ -33,8 +28,8 @@ export async function up({ context: { sequelize } }: Migration) {
     )
   }
 
-  await sequelize.query(
-    sql`
+  await knex.raw(
+    `
       INSERT INTO
         child_care_space_categories (
           funding_period_id,
@@ -88,14 +83,11 @@ export async function up({ context: { sequelize } }: Migration) {
             AND child_care_space_categories.source_funding_submission_line_id = funding_submission_lines.id
         )
     `,
-    {
-      type: QueryTypes.INSERT,
-      replacements: { sectionName: CHILD_CARE_SPACES_SECTION_NAME },
-    }
+    { sectionName: CHILD_CARE_SPACES_SECTION_NAME }
   )
 
-  await sequelize.query(
-    sql`
+  await knex.raw(
+    `
       UPDATE child_care_spaces
       SET
         category_id = child_care_space_categories.id
@@ -106,12 +98,11 @@ export async function up({ context: { sequelize } }: Migration) {
         AND child_care_space_categories.source_funding_submission_line_id = child_care_spaces.funding_submission_line_id
       WHERE
         child_care_spaces.category_id IS NULL
-    `,
-    { type: QueryTypes.UPDATE }
+    `
   )
 
-  const [unresolvedLedgerRow] = await sequelize.query<{ id: number }>(
-    sql`
+  const [unresolvedLedgerRow] = await knex.raw<{ id: number }[]>(
+    `
       SELECT
         TOP 1 child_care_spaces.id
       FROM
@@ -128,9 +119,9 @@ export async function up({ context: { sequelize } }: Migration) {
             AND child_care_space_categories.funding_period_id = fiscal_periods.funding_period_id
             AND child_care_space_categories.source_funding_submission_line_id = child_care_spaces.funding_submission_line_id
         )
-    `,
-    { type: QueryTypes.SELECT }
+    `
   )
+
   if (unresolvedLedgerRow !== undefined) {
     throw new Error(
       `Unable to resolve the category for Child Care Space ${unresolvedLedgerRow.id}.`
@@ -138,6 +129,6 @@ export async function up({ context: { sequelize } }: Migration) {
   }
 }
 
-export async function down({ context: _context }: Migration) {
+export async function down(_knex: Knex): Promise<void> {
   throw new Error("Child Care Spaces category backfill cannot be automatically reversed.")
 }

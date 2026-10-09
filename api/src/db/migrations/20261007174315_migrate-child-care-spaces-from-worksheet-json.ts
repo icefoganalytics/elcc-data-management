@@ -1,8 +1,6 @@
-import { QueryTypes, sql } from "@sequelize/core"
+import type { Knex } from "knex"
 import Big from "big.js"
 import { isNil } from "lodash"
-
-import { type Migration } from "@/db/umzug"
 
 const CHILD_CARE_SPACES_SECTION_NAME = "Child Care Spaces"
 const BATCH_SIZE = 1000
@@ -38,10 +36,10 @@ type ChildCareSpaceAttributes = {
 
 type ExistingChildCareSpace = Omit<ChildCareSpaceAttributes, "fundingSubmissionLineId">
 
-export async function up({ context: { sequelize } }: Migration) {
+export async function up(knex: Knex): Promise<void> {
   for (let offset = 0; ; offset += BATCH_SIZE) {
-    const fundingSubmissionLineJsons = await sequelize.query<FundingSubmissionLineJson>(
-      sql`
+    const fundingSubmissionLineJsons = await knex.raw<FundingSubmissionLineJson[]>(
+      `
         SELECT
           id,
           centre_id AS centreId,
@@ -59,13 +57,7 @@ export async function up({ context: { sequelize } }: Migration) {
         FETCH NEXT
           :batchSize ROWS ONLY
       `,
-      {
-        type: QueryTypes.SELECT,
-        replacements: {
-          offset,
-          batchSize: BATCH_SIZE,
-        },
-      }
+      { offset, batchSize: BATCH_SIZE }
     )
     if (fundingSubmissionLineJsons.length === 0) return
 
@@ -76,7 +68,7 @@ export async function up({ context: { sequelize } }: Migration) {
       )
       if (childCareSpaces.length === 0) continue
 
-      const fiscalPeriodId = await findFiscalPeriodId(sequelize, fundingSubmissionLineJson)
+      const fiscalPeriodId = await findFiscalPeriodId(knex, fundingSubmissionLineJson)
       if (isNil(fiscalPeriodId)) {
         throw new Error(
           `No fiscal period found for ${fundingSubmissionLineJson.fiscalYearLegacy} ${fundingSubmissionLineJson.monthNameCapitalized}; cannot migrate Child Care Spaces for worksheet ${fundingSubmissionLineJson.id}.`
@@ -84,7 +76,7 @@ export async function up({ context: { sequelize } }: Migration) {
       }
 
       const wereAllLinesMigrated = await migrateChildCareSpaces(
-        sequelize,
+        knex,
         fundingSubmissionLineJson.centreId,
         fiscalPeriodId,
         childCareSpaces
@@ -97,34 +89,21 @@ export async function up({ context: { sequelize } }: Migration) {
       const remainingLines = lines.filter(
         (line) => line.sectionName !== CHILD_CARE_SPACES_SECTION_NAME
       )
-      await sequelize.query(
-        sql`
-          UPDATE funding_submission_line_jsons
-          SET
-            [values] = :values
-          WHERE
-            id = :fundingSubmissionLineJsonId
-        `,
-        {
-          type: QueryTypes.UPDATE,
-          replacements: {
-            fundingSubmissionLineJsonId: fundingSubmissionLineJson.id,
-            values: JSON.stringify(remainingLines),
-          },
-        }
-      )
+      await knex("funding_submission_line_jsons")
+        .where({ id: fundingSubmissionLineJson.id })
+        .update({ values: JSON.stringify(remainingLines) })
     }
   }
 }
 
 async function findFiscalPeriodId(
-  sequelize: Parameters<typeof up>[0]["context"]["sequelize"],
+  knex: Knex,
   fundingSubmissionLineJson: FundingSubmissionLineJson
 ): Promise<number | undefined> {
   const fiscalYear = fundingSubmissionLineJson.fiscalYearLegacy.replace("/", "-")
   const month = fundingSubmissionLineJson.monthNameCapitalized.toLowerCase()
-  const [fiscalPeriod] = await sequelize.query<{ id: number }>(
-    sql`
+  const [fiscalPeriod] = await knex.raw<{ id: number }[]>(
+    `
       SELECT
         id
       FROM
@@ -134,20 +113,14 @@ async function findFiscalPeriodId(
         AND month = :month
         AND deleted_at IS NULL
     `,
-    {
-      type: QueryTypes.SELECT,
-      replacements: {
-        fiscalYear,
-        month,
-      },
-    }
+    { fiscalYear, month }
   )
 
   return fiscalPeriod?.id
 }
 
 async function migrateChildCareSpaces(
-  sequelize: Parameters<typeof up>[0]["context"]["sequelize"],
+  knex: Knex,
   centreId: number,
   fiscalPeriodId: number,
   childCareSpaces: FundingLineValue[]
@@ -172,18 +145,15 @@ async function migrateChildCareSpaces(
 
   for (const childCareSpaceAttributes of childCareSpacesAttributes) {
     const fundingSubmissionLineId = childCareSpaceAttributes.fundingSubmissionLineId
-    const fundingSubmissionLine = await findFundingSubmissionLine(
-      sequelize,
-      fundingSubmissionLineId
-    )
+    const fundingSubmissionLine = await findFundingSubmissionLine(knex, fundingSubmissionLineId)
     if (isNil(fundingSubmissionLine)) return false
   }
 
   const childCareSpacesToInsert: ChildCareSpaceAttributes[] = []
 
   for (const childCareSpaceAttributes of childCareSpacesAttributes) {
-    const [existingChildCareSpace] = await sequelize.query<ExistingChildCareSpace>(
-      sql`
+    const [existingChildCareSpace] = await knex.raw<ExistingChildCareSpace[]>(
+      `
         SELECT
           line_name AS lineName,
           monthly_amount AS monthlyAmount,
@@ -200,12 +170,9 @@ async function migrateChildCareSpaces(
           AND deleted_at IS NULL
       `,
       {
-        type: QueryTypes.SELECT,
-        replacements: {
-          centreId,
-          fiscalPeriodId,
-          fundingSubmissionLineId: childCareSpaceAttributes.fundingSubmissionLineId,
-        },
+        centreId,
+        fiscalPeriodId,
+        fundingSubmissionLineId: childCareSpaceAttributes.fundingSubmissionLineId,
       }
     )
     if (isNil(existingChildCareSpace)) {
@@ -224,46 +191,19 @@ async function migrateChildCareSpaces(
   }
 
   for (const childCareSpaceAttributes of childCareSpacesToInsert) {
-    await sequelize.query(
-      sql`
-        INSERT INTO
-          child_care_spaces (
-            centre_id,
-            fiscal_period_id,
-            funding_submission_line_id,
-            line_name,
-            monthly_amount,
-            estimated_child_occupancy_rate,
-            actual_child_occupancy_rate,
-            estimated_computed_total,
-            actual_computed_total,
-            created_at,
-            updated_at
-          )
-        VALUES
-          (
-            :centreId,
-            :fiscalPeriodId,
-            :fundingSubmissionLineId,
-            :lineName,
-            :monthlyAmount,
-            :estimatedChildOccupancyRate,
-            :actualChildOccupancyRate,
-            :estimatedComputedTotal,
-            :actualComputedTotal,
-            GETUTCDATE(),
-            GETUTCDATE()
-          )
-      `,
-      {
-        type: QueryTypes.INSERT,
-        replacements: {
-          centreId,
-          fiscalPeriodId,
-          ...childCareSpaceAttributes,
-        },
-      }
-    )
+    await knex("child_care_spaces").insert({
+      centre_id: centreId,
+      fiscal_period_id: fiscalPeriodId,
+      funding_submission_line_id: childCareSpaceAttributes.fundingSubmissionLineId,
+      line_name: childCareSpaceAttributes.lineName,
+      monthly_amount: childCareSpaceAttributes.monthlyAmount,
+      estimated_child_occupancy_rate: childCareSpaceAttributes.estimatedChildOccupancyRate,
+      actual_child_occupancy_rate: childCareSpaceAttributes.actualChildOccupancyRate,
+      estimated_computed_total: childCareSpaceAttributes.estimatedComputedTotal,
+      actual_computed_total: childCareSpaceAttributes.actualComputedTotal,
+      created_at: knex.raw("GETUTCDATE()"),
+      updated_at: knex.raw("GETUTCDATE()"),
+    })
   }
 
   return true
@@ -290,11 +230,11 @@ function hasMatchingChildCareSpaceAttributes(
 }
 
 async function findFundingSubmissionLine(
-  sequelize: Parameters<typeof up>[0]["context"]["sequelize"],
+  knex: Knex,
   fundingSubmissionLineId: number
 ): Promise<number | undefined> {
-  const [fundingSubmissionLine] = await sequelize.query<{ id: number }>(
-    sql`
+  const [fundingSubmissionLine] = await knex.raw<{ id: number }[]>(
+    `
       SELECT
         id
       FROM
@@ -302,12 +242,7 @@ async function findFundingSubmissionLine(
       WHERE
         id = :fundingSubmissionLineId
     `,
-    {
-      type: QueryTypes.SELECT,
-      replacements: {
-        fundingSubmissionLineId,
-      },
-    }
+    { fundingSubmissionLineId }
   )
   if (isNil(fundingSubmissionLine)) {
     console.warn(
@@ -384,7 +319,7 @@ function attributesForChildCareSpace(
   }
 }
 
-export async function down({ context: _context }: Migration) {
+export async function down(_knex: Knex): Promise<void> {
   console.warn(
     "WARNING: This migration is not reversible. Child Care Spaces were moved from funding_submission_line_jsons to child_care_spaces. Rolling back requires manual restoration of the original JSON data."
   )
