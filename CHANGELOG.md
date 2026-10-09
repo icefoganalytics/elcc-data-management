@@ -34,6 +34,8 @@ Changes since v2025.11.24.1 that will be included in the next release.
 
 - Prevented employee benefits from being double counted in employee adjustment amounts during funding reconciliation calculations.
 - Resolved occasional authentication issues caused by plugin load order.
+- Database startup now applies its grace period once and bounds readiness timeouts, including
+  connection-pool cleanup.
 
 ### Removed
 

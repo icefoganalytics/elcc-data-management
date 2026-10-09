@@ -19,6 +19,16 @@ The Knex CLI hoists the migration client's configuration for each environment.
 - Keep migrations clean — no extraneous comments.
 - Find system users by email, not `auth0Subject`.
 
+## Startup
+
+- Database readiness and creation use Knex, with a server-level fallback when the target database is missing.
+- Apply the startup grace period once. Bound readiness connection, query, and pool-acquisition timeouts,
+  cancel completed health deadlines, and close initializer-owned clients.
+- Run pending migrations in one atomic Knex batch so a failed baseline preserves application data
+  and obsolete history.
+- Keep initialization errors observable and return a failing status. The boot script intentionally
+  starts the API afterward for Azure diagnostics; API availability does not prove migration success.
+
 ## Seeds
 
 - Run seeds with `./bin/dev seed`; the package command delegates to native `knex seed:run`.
