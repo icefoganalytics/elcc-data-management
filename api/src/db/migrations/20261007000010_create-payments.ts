@@ -15,15 +15,9 @@ export async function up(knex: Knex): Promise<void> {
     table.decimal("amount", 15, 4).notNullable()
     table.specificType("deleted_at", "DATETIMEOFFSET")
 
-    table.foreign("centre_id", "FK__payments__centre__1B9317B3").references("centres.id")
+    table.foreign("centre_id").references("centres.id")
 
-    table
-      .foreign("fiscal_period_id", "FK__payments__fiscal__32767D0B")
-      .references("fiscal_periods.id")
-
-    table
-      .foreign("fiscal_period_id", "FK__payments__fiscal__336AA144")
-      .references("fiscal_periods.id")
+    table.foreign("fiscal_period_id").references("fiscal_periods.id")
   })
 }
 

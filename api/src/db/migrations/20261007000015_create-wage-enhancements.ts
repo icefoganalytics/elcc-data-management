@@ -14,11 +14,9 @@ export async function up(knex: Knex): Promise<void> {
     table.specificType("updated_at", "DATETIME2").notNullable().defaultTo(knex.raw("GETUTCDATE()"))
     table.specificType("deleted_at", "DATETIMEOFFSET")
 
-    table.foreign("centre_id", "FK__wage_enha__centr__2F9A1060").references("centres.id")
+    table.foreign("centre_id").references("centres.id")
 
-    table
-      .foreign("employee_wage_tier_id", "FK__wage_enha__emplo__308E3499")
-      .references("employee_wage_tiers.id")
+    table.foreign("employee_wage_tier_id").references("employee_wage_tiers.id")
   })
 }
 

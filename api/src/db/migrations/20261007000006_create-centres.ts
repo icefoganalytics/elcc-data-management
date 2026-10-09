@@ -31,9 +31,7 @@ export async function up(knex: Knex): Promise<void> {
     table.integer("funding_region_id").notNullable()
     table.specificType("deleted_at", "DATETIMEOFFSET")
 
-    table
-      .foreign("funding_region_id", "centres_funding_region_id_funding_regions_fk")
-      .references("funding_regions.id")
+    table.foreign("funding_region_id").references("funding_regions.id")
   })
 }
 

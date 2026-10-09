@@ -15,7 +15,7 @@ export async function up(knex: Knex): Promise<void> {
     table.specificType("deleted_at", "DATETIMEOFFSET")
 
     table
-      .foreign("funding_period_id", "fiscal_periods_funding_period_id_funding_periods_fk")
+      .foreign("funding_period_id")
       .references("funding_periods.id")
       .onDelete("CASCADE")
       .onUpdate("CASCADE")

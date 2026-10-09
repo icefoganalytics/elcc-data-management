@@ -15,12 +15,10 @@ export async function up(knex: Knex): Promise<void> {
     table.specificType("updated_at", "DATETIME2").notNullable().defaultTo(knex.raw("GETUTCDATE()"))
     table.specificType("deleted_at", "DATETIME2")
 
-    table
-      .foreign("fiscal_period_id", "FK__funding_r__fisca__4959E263")
-      .references("fiscal_periods.id")
+    table.foreign("fiscal_period_id").references("fiscal_periods.id")
 
     table
-      .foreign("funding_reconciliation_id", "FK__funding_r__fundi__4865BE2A")
+      .foreign("funding_reconciliation_id")
       .references("funding_reconciliations.id")
       .onDelete("CASCADE")
 
