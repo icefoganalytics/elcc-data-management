@@ -1,6 +1,4 @@
-import { DataTypes, QueryTypes, sql } from "@sequelize/core"
-
-import { type Migration } from "@/db/umzug"
+import type { Knex } from "knex"
 
 const ADMINISTRATION_SECTION_NAME = "Administration (10% of Spaces)"
 const QUALITY_ENHANCEMENT_PROGRAM_SECTION_NAME = "Quality Enhancement Program"
@@ -21,18 +19,18 @@ type HistoricalFundingLineValue = {
   [key: string]: unknown
 }
 
-export async function up({ context: queryInterface }: Migration) {
-  const { sequelize } = queryInterface
-  await queryInterface.addColumn("funding_submission_lines", "child_care_space_category_id", {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    references: { table: "child_care_space_categories", key: "id" },
-    onDelete: "SET NULL",
+export async function up(knex: Knex): Promise<void> {
+  await knex.schema.alterTable("funding_submission_lines", (table) => {
+    table.integer("child_care_space_category_id").nullable()
+    table
+      .foreign("child_care_space_category_id")
+      .references("child_care_space_categories.id")
+      .onDelete("SET NULL")
   })
 
-  await assertUnambiguousConfigurationMatches(sequelize)
-  await sequelize.query(
-    sql`
+  await assertUnambiguousConfigurationMatches(knex)
+  await knex.raw(
+    `
       UPDATE funding_submission_lines
       SET
         child_care_space_category_id = matching_categories.id
@@ -55,15 +53,12 @@ export async function up({ context: queryInterface }: Migration) {
       AND funding_submission_lines.deleted_at IS NULL
     `,
     {
-      type: QueryTypes.UPDATE,
-      replacements: {
-        administration: ADMINISTRATION_SECTION_NAME,
-        qualityEnhancementProgram: QUALITY_ENHANCEMENT_PROGRAM_SECTION_NAME,
-      },
+      administration: ADMINISTRATION_SECTION_NAME,
+      qualityEnhancementProgram: QUALITY_ENHANCEMENT_PROGRAM_SECTION_NAME,
     }
   )
-  await backfillHistoricalConfigurationAssociations(sequelize)
-  await backfillWorksheetMetadata(sequelize)
+  await backfillHistoricalConfigurationAssociations(knex)
+  await backfillWorksheetMetadata(knex)
 }
 
 type HistoricalConfigCategoryMatch = {
@@ -71,11 +66,9 @@ type HistoricalConfigCategoryMatch = {
   categoryId: number
 }
 
-async function backfillHistoricalConfigurationAssociations(
-  sequelize: Parameters<typeof up>[0]["context"]["sequelize"]
-) {
-  const matches = await sequelize.query<HistoricalConfigCategoryMatch>(
-    sql`
+async function backfillHistoricalConfigurationAssociations(knex: Knex) {
+  const matches = await knex.raw<HistoricalConfigCategoryMatch[]>(
+    `
       SELECT DISTINCT
         funding_submission_lines.id AS submissionLineId,
         child_care_spaces.category_id AS categoryId
@@ -113,11 +106,8 @@ async function backfillHistoricalConfigurationAssociations(
       COLLATE Latin1_General_100_BIN2
     `,
     {
-      type: QueryTypes.SELECT,
-      replacements: {
-        administration: ADMINISTRATION_SECTION_NAME,
-        qualityEnhancementProgram: QUALITY_ENHANCEMENT_PROGRAM_SECTION_NAME,
-      },
+      administration: ADMINISTRATION_SECTION_NAME,
+      qualityEnhancementProgram: QUALITY_ENHANCEMENT_PROGRAM_SECTION_NAME,
     }
   )
 
@@ -139,8 +129,8 @@ async function backfillHistoricalConfigurationAssociations(
     const categoryId = Array.from(categoryIds)[0]
     if (categoryId === undefined) continue
 
-    const [existingAssociation] = await sequelize.query<{ categoryId: number | null }>(
-      sql`
+    const [existingAssociation] = await knex.raw<{ categoryId: number | null }[]>(
+      `
         SELECT
           child_care_space_category_id AS categoryId
         FROM
@@ -148,10 +138,7 @@ async function backfillHistoricalConfigurationAssociations(
         WHERE
           id = :submissionLineId
       `,
-      {
-        type: QueryTypes.SELECT,
-        replacements: { submissionLineId },
-      }
+      { submissionLineId }
     )
     if (
       existingAssociation !== undefined &&
@@ -163,28 +150,16 @@ async function backfillHistoricalConfigurationAssociations(
       )
     }
 
-    await sequelize.query(
-      sql`
-        UPDATE funding_submission_lines
-        SET
-          child_care_space_category_id = :categoryId
-        WHERE
-          id = :submissionLineId
-          AND child_care_space_category_id IS NULL
-      `,
-      {
-        type: QueryTypes.UPDATE,
-        replacements: { submissionLineId, categoryId },
-      }
-    )
+    await knex("funding_submission_lines")
+      .where({ id: submissionLineId })
+      .whereNull("child_care_space_category_id")
+      .update({ child_care_space_category_id: categoryId })
   }
 }
 
-async function assertUnambiguousConfigurationMatches(
-  sequelize: Parameters<typeof up>[0]["context"]["sequelize"]
-) {
-  const [ambiguousLine] = await sequelize.query<{ id: number }>(
-    sql`
+async function assertUnambiguousConfigurationMatches(knex: Knex) {
+  const [ambiguousLine] = await knex.raw<{ id: number }[]>(
+    `
       SELECT
         TOP 1 funding_submission_lines.id
       FROM
@@ -213,11 +188,8 @@ async function assertUnambiguousConfigurationMatches(
       ) > 1
     `,
     {
-      type: QueryTypes.SELECT,
-      replacements: {
-        administration: ADMINISTRATION_SECTION_NAME,
-        qualityEnhancementProgram: QUALITY_ENHANCEMENT_PROGRAM_SECTION_NAME,
-      },
+      administration: ADMINISTRATION_SECTION_NAME,
+      qualityEnhancementProgram: QUALITY_ENHANCEMENT_PROGRAM_SECTION_NAME,
     }
   )
   if (ambiguousLine !== undefined) {
@@ -227,11 +199,9 @@ async function assertUnambiguousConfigurationMatches(
   }
 }
 
-async function backfillWorksheetMetadata(
-  sequelize: Parameters<typeof up>[0]["context"]["sequelize"]
-) {
-  const configCategoryIds = await sequelize.query<{ id: number; categoryId: number }>(
-    sql`
+async function backfillWorksheetMetadata(knex: Knex) {
+  const configCategoryIds = await knex.raw<{ id: number; categoryId: number }[]>(
+    `
       SELECT
         id,
         child_care_space_category_id AS categoryId
@@ -239,16 +209,15 @@ async function backfillWorksheetMetadata(
         funding_submission_lines
       WHERE
         child_care_space_category_id IS NOT NULL
-    `,
-    { type: QueryTypes.SELECT }
+    `
   )
   const categoryIdBySubmissionLineId = new Map(
     configCategoryIds.map(({ id, categoryId }) => [id, categoryId])
   )
 
   for (let offset = 0; ; offset += BATCH_SIZE) {
-    const worksheets = await sequelize.query<WorksheetRow>(
-      sql`
+    const worksheets = await knex.raw<WorksheetRow[]>(
+      `
         SELECT
           id,
           centre_id AS centreId,
@@ -266,15 +235,12 @@ async function backfillWorksheetMetadata(
         FETCH NEXT
           :batchSize ROWS ONLY
       `,
-      {
-        type: QueryTypes.SELECT,
-        replacements: { offset, batchSize: BATCH_SIZE },
-      }
+      { offset, batchSize: BATCH_SIZE }
     )
     if (worksheets.length === 0) return
 
     for (const worksheet of worksheets) {
-      const categoriesInMonth = await categoryIdsUsedByCentreMonth(sequelize, worksheet)
+      const categoriesInMonth = await categoryIdsUsedByCentreMonth(knex, worksheet)
       const values: HistoricalFundingLineValue[] = JSON.parse(worksheet.values)
       let changed = false
 
@@ -301,19 +267,9 @@ async function backfillWorksheetMetadata(
 
       if (!changed) continue
 
-      await sequelize.query(
-        sql`
-          UPDATE funding_submission_line_jsons
-          SET
-            [values] = :values
-          WHERE
-            id = :id
-        `,
-        {
-          type: QueryTypes.UPDATE,
-          replacements: { id: worksheet.id, values: JSON.stringify(values) },
-        }
-      )
+      await knex("funding_submission_line_jsons")
+        .where({ id: worksheet.id })
+        .update({ values: JSON.stringify(values) })
     }
   }
 }
@@ -322,12 +278,9 @@ type MonthlyCategorySnapshot = {
   categoryId: number
 }
 
-async function categoryIdsUsedByCentreMonth(
-  sequelize: Parameters<typeof up>[0]["context"]["sequelize"],
-  worksheet: WorksheetRow
-) {
-  return sequelize.query<MonthlyCategorySnapshot>(
-    sql`
+async function categoryIdsUsedByCentreMonth(knex: Knex, worksheet: WorksheetRow) {
+  return knex.raw<MonthlyCategorySnapshot[]>(
+    `
       SELECT DISTINCT
         child_care_spaces.category_id AS categoryId
       FROM
@@ -342,16 +295,16 @@ async function categoryIdsUsedByCentreMonth(
         AND child_care_spaces.category_id IS NOT NULL
     `,
     {
-      type: QueryTypes.SELECT,
-      replacements: {
-        centreId: worksheet.centreId,
-        fiscalYear: worksheet.fiscalYear,
-        dateName: worksheet.dateName,
-      },
+      centreId: worksheet.centreId,
+      fiscalYear: worksheet.fiscalYear,
+      dateName: worksheet.dateName,
     }
   )
 }
 
-export async function down({ context: queryInterface }: Migration) {
-  await queryInterface.removeColumn("funding_submission_lines", "child_care_space_category_id")
+export async function down(knex: Knex): Promise<void> {
+  await knex.schema.alterTable("funding_submission_lines", (table) => {
+    table.dropForeign("child_care_space_category_id")
+    table.dropColumn("child_care_space_category_id")
+  })
 }
