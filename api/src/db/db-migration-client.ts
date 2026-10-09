@@ -19,8 +19,6 @@ if (isEmpty(DB_PASS)) throw new Error("database password is unset.")
 if (isEmpty(DB_HOST)) throw new Error("database host is unset.")
 if (isNil(DB_PORT) || Number.isNaN(DB_PORT)) throw new Error("database port is unset.")
 
-const runtimeExtension = path.extname(__filename)
-
 export function buildKnexConfig(options?: Knex.Config): Knex.Config {
   return merge(
     {
@@ -37,16 +35,14 @@ export function buildKnexConfig(options?: Knex.Config): Knex.Config {
         },
       },
       migrations: {
-        directory: path.resolve(__dirname, "migrations"),
+        directory: path.resolve(__dirname, "./migrations"),
         extension: "ts",
-        loadExtensions: [runtimeExtension],
-        stub: path.resolve(__dirname, `templates/sample-migration${runtimeExtension}`),
+        stub: path.resolve(__dirname, "./templates/sample-migration.ts"),
       },
       seeds: {
-        directory: path.resolve(__dirname, `seeds/${NODE_ENV}`),
+        directory: path.resolve(__dirname, `./seeds/${NODE_ENV}`),
         extension: "ts",
-        loadExtensions: [runtimeExtension],
-        stub: path.resolve(__dirname, `templates/sample-seed${runtimeExtension}`),
+        stub: path.resolve(__dirname, "./templates/sample-seed.ts"),
       },
     },
     options
