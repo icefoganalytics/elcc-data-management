@@ -19,6 +19,9 @@ The Knex CLI hoists the migration client's configuration for each environment.
 - Initial table rollbacks drop their tables and data, including pre-existing tables. Use backups
   for production data recovery. Obsolete history cleanup is irreversible: rollback warns and
   continues without restoring it.
+- The final payment fixup removes only the known redundant production foreign key, preserving its
+  enabled, trusted counterpart and all payment data. Fresh databases skip it; rollback warns
+  without recreating the duplicate.
 - Separate schema changes from data backfills and keep backfills idempotent.
 - Keep migrations clean — no extraneous comments.
 - Find system users by email, not `auth0Subject`.

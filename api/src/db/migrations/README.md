@@ -46,9 +46,15 @@ The initial `create-*` migrations use `knex.schema.hasTable` to leave existing t
 They are a fresh-install baseline, not an upgrade path for old application schemas.
 Their `down` methods use `dropTable`, deleting the table and its rows even when it predated cutover.
 Inspect a restored production backup before cutover; use a backup for production data recovery.
-A final migration drops obsolete migration history after all table migrations succeed.
+The migration after the table baseline drops obsolete migration history.
 Its cleanup is irreversible: `down` warns and continues without restoring obsolete history
 or preventing the remaining migrations from rolling back.
+
+The final payment fixup removes the production duplicate `FK__payments__fiscal__336AA144`,
+retaining `FK__payments__fiscal__32767D0B`. Fresh installations skip this cleanup. If the duplicate
+exists without its enabled, trusted counterpart, the migration fails instead of removing it.
+Rollback warns and continues without recreating the duplicate. Payment rows and column defaults
+remain unchanged.
 
 Knex uses its native filename-based history and migration lock. Do not rename ledger entries,
 retain obsolete transition-marker files, or add a second migration directory.
