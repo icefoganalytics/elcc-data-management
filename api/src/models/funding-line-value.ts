@@ -23,6 +23,7 @@ export type FundingLineValue = {
   actualChildOccupancyRate: string
   estimatedComputedTotal: string
   actualComputedTotal: string
+  childCareSpaceCategoryId?: number
   programQualityEnhancements?: FundingLineValueProgramQualityEnhancements
 }
 

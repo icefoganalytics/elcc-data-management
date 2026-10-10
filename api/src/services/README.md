@@ -15,6 +15,7 @@ Services hold business logic for create and update workflows. Controllers should
 - Pass the minimum data needed rather than whole request objects
 - Keep authorization in policies and response formatting in serializers
 - Reuse model scopes and helpers instead of duplicating query logic in services
+- Prefer `findEach()` when query results are only iterated, and select only the attributes consumed. Keep `findAll()` when the workflow needs a reusable collection or returns the complete result.
 - When a small piece of service logic repeats, do not over-generalize it into a shared helper unless the ownership and reuse boundary are clear
 
 ## Implementation Patterns

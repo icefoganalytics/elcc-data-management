@@ -24,43 +24,45 @@ import Big from "big.js"
 
 import VueApexCharts from "vue3-apexcharts"
 
-import useFundingSubmissionLineJsons, {
-  type FundingSubmissionLineJsonQueryOptions,
-} from "@/use/use-funding-submission-line-jsons"
+import useChildCareSpaces, { type ChildCareSpaceQueryOptions } from "@/use/use-child-care-spaces"
+import { normalizeFiscalYearToShortForm } from "@/utils/fiscal-year"
 
 const props = defineProps<{
   centreId: number
-  fiscalYearLegacy: string
+  fiscalYear: string
 }>()
 
-const SECTION_NAME = "Child Care Spaces"
-
-const fundingSubmissionLineJsonsQuery = computed<FundingSubmissionLineJsonQueryOptions>(() => ({
+const childCareSpacesQuery = computed<ChildCareSpaceQueryOptions>(() => ({
   where: {
     centreId: props.centreId,
-    fiscalYear: props.fiscalYearLegacy,
   },
   filters: {
-    withChildOccupancyRate: SECTION_NAME,
+    byFiscalYear: normalizeFiscalYearToShortForm(props.fiscalYear),
   },
-  order: [["dateStart", "DESC"]],
-  perPage: 1,
+  order: [
+    ["fiscalPeriod", "dateStart", "DESC"],
+    ["categoryId", "ASC"],
+  ],
+  perPage: -1,
 }))
-const { fundingSubmissionLineJsons, isLoading, refresh } = useFundingSubmissionLineJsons(
-  fundingSubmissionLineJsonsQuery
+const { childCareSpaces, isLoading, refresh } = useChildCareSpaces(childCareSpacesQuery)
+
+const latestFiscalPeriodId = computed(
+  () =>
+    childCareSpaces.value.find((childCareSpace) =>
+      Big(childCareSpace.actualChildOccupancyRate).gt(0)
+    )?.fiscalPeriodId
 )
+const latestChildCareSpaces = computed(() => {
+  if (isNil(latestFiscalPeriodId.value)) return []
 
-const latestFundingLineValuesForSection = computed(() => {
-  const latestFundingSubmissionLineJson = fundingSubmissionLineJsons.value[0]
-  if (isNil(latestFundingSubmissionLineJson)) return []
-
-  const { lines } = latestFundingSubmissionLineJson
-
-  return lines.filter((line) => line.sectionName === SECTION_NAME)
+  return childCareSpaces.value.filter(
+    ({ fiscalPeriodId }) => fiscalPeriodId === latestFiscalPeriodId.value
+  )
 })
 
 const lineNames = computed(() =>
-  latestFundingLineValuesForSection.value.map((line) => line.lineName)
+  latestChildCareSpaces.value.map((childCareSpace) => childCareSpace.lineName)
 )
 const options = computed(() => ({
   stroke: {
@@ -75,8 +77,8 @@ const options = computed(() => ({
 }))
 
 const actualChildOccupancyRates = computed(() => {
-  return latestFundingLineValuesForSection.value.map((line) =>
-    Number(line.actualChildOccupancyRate)
+  return latestChildCareSpaces.value.map((childCareSpace) =>
+    Number(childCareSpace.actualChildOccupancyRate)
   )
 })
 

@@ -16,7 +16,9 @@ describe("api/src/services/funding-submission-line-jsons/replicate-estimates-ser
       test("when provided with a fundingSubmissionLineJson, it replicates the estimates to future submissions", async () => {
         // Arrange
         const centre1 = await centreFactory.create()
-        const submissionLine1 = await fundingSubmissionLineFactory.create()
+        const submissionLine1 = await fundingSubmissionLineFactory.create({
+          sectionName: "Administration (10% of Spaces)",
+        })
         const fundingLineValue1 = fundingLineValueFactory.build({
           submissionLineId: submissionLine1.id,
           ...pick(submissionLine1.dataValues, "sectionName", "lineName", "monthlyAmount"),
@@ -70,7 +72,9 @@ describe("api/src/services/funding-submission-line-jsons/replicate-estimates-ser
       test("when provided with a fundingSubmissionLineJson, it does not replicate the estimates to past submissions", async () => {
         // Arrange
         const centre1 = await centreFactory.create()
-        const submissionLine1 = await fundingSubmissionLineFactory.create()
+        const submissionLine1 = await fundingSubmissionLineFactory.create({
+          sectionName: "Administration (10% of Spaces)",
+        })
         const fundingLineValue1 = fundingLineValueFactory.build({
           submissionLineId: submissionLine1.id,
           ...pick(submissionLine1.dataValues, "sectionName", "lineName", "monthlyAmount"),
@@ -125,7 +129,9 @@ describe("api/src/services/funding-submission-line-jsons/replicate-estimates-ser
         // Arrange
         const centre1 = await centreFactory.create()
         const centre2 = await centreFactory.create()
-        const submissionLine1 = await fundingSubmissionLineFactory.create()
+        const submissionLine1 = await fundingSubmissionLineFactory.create({
+          sectionName: "Administration (10% of Spaces)",
+        })
         const fundingLineValue1 = fundingLineValueFactory.build({
           submissionLineId: submissionLine1.id,
           ...pick(submissionLine1.dataValues, "sectionName", "lineName", "monthlyAmount"),
@@ -179,7 +185,9 @@ describe("api/src/services/funding-submission-line-jsons/replicate-estimates-ser
       test("when provided with a fundingSubmissionLineJson, it does not replicate the estimates to different fiscal years", async () => {
         // Arrange
         const centre1 = await centreFactory.create()
-        const submissionLine1 = await fundingSubmissionLineFactory.create()
+        const submissionLine1 = await fundingSubmissionLineFactory.create({
+          sectionName: "Administration (10% of Spaces)",
+        })
         const fundingLineValue1 = fundingLineValueFactory.build({
           submissionLineId: submissionLine1.id,
           ...pick(submissionLine1.dataValues, "sectionName", "lineName", "monthlyAmount"),

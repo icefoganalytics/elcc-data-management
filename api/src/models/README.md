@@ -68,6 +68,7 @@ export class BuildingExpense extends BaseModel {
 
 - Prefer scope names that describe the business rule being applied, not the parameter type
 - When excluding rows that already have a related record, prefer correlated `NOT EXISTS` predicates over client-built exclusion lists and over `NOT IN` lists
+- Scopes used for bulk updates or deletes must express eligibility in `where`, such as a foreign-key subquery. Included association predicates are not applied to Sequelize bulk deletion; verify isolation through the actual mutation path, not only `findAll`.
 
 **Preferred anti-match scope pattern:**
 

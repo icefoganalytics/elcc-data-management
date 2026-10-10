@@ -63,9 +63,10 @@ export class BulkCreateService extends BaseService {
           sectionName,
           lineName,
           monthlyAmount: originalMonthlyAmount,
+          childCareSpaceCategoryId,
         } = fundingSubmissionLine
 
-        const line = {
+        const line: FundingLineValue = {
           submissionLineId,
           sectionName,
           lineName,
@@ -74,6 +75,7 @@ export class BulkCreateService extends BaseService {
           actualChildOccupancyRate: "0",
           estimatedComputedTotal: "0",
           actualComputedTotal: "0",
+          ...(childCareSpaceCategoryId === null ? {} : { childCareSpaceCategoryId }),
         }
 
         if (

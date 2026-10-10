@@ -85,10 +85,10 @@
           <v-divider></v-divider>
           <v-card-text class="pt-3">
             <FundingLineValuesEnrollmentChart
-              v-if="!isNil(fiscalYearLegacy) && !isEmpty(fiscalYearLegacy)"
+              v-if="!isNil(fiscalYearLong) && !isEmpty(fiscalYearLong)"
               ref="fundingLineValuesEnrollmentChartRef"
               :centre-id="centreIdAsNumber"
-              :fiscal-year-legacy="fiscalYearLegacy"
+              :fiscal-year="fiscalYearLong"
             />
           </v-card-text>
         </v-card>

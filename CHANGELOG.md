@@ -10,6 +10,9 @@ Changes since v2025.11.24.1 that will be included in the next release.
 
 ### Added
 
+- Child Care Spaces now saves per centre and month, preserving historic rates while keeping worksheets, enrollment charts, and reconciliations in sync.
+- Child Care Space categories now have dedicated administration pages and funding-period configuration. Existing names, age ranges, and rates move out of shared submission lines without changing historical monthly records.
+
 - Funding reconciliation feature to calculate and display monthly funding reconciliation amounts based on adjustment records for each funding period.
   Why? To provide a clear, authoritative view of how funding amounts are reconciled over time.
 - Improved administration pages for funding lines, funding periods, and funding submission lines, with dedicated read pages and a shared fiscal year selector.
@@ -20,6 +23,8 @@ Changes since v2025.11.24.1 that will be included in the next release.
 
 - Preserved four-decimal currency entry and exact financial calculations when reconciling money amounts.
 - Improved accuracy of funding reconciliation and payroll adjustment totals, especially for wage enhancements and employee benefits, by using more precise financial calculations.
+- Child Care Spaces occupancy inputs now reject precision beyond four decimal places rather than silently rounding saved rates and changing financial totals on later edits.
+- Child Care Spaces cutover now uses native Knex migrations and seeds, preserving historical values and rolling back a failed pending migration batch without partial data removal.
 - Development stacks now use the shared local gateway, so ELCC can run beside other projects
   and independently named worktrees.
 - Development setup guidance now covers dependency refreshes after lockfile changes and recovery

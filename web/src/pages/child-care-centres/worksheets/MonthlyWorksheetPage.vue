@@ -21,69 +21,68 @@
     </template>
   </v-empty-state>
   <div v-else>
-    <FundingSubmissionLineJsonEditSheet
-      :funding-submission-line-json-id="fundingSubmissionLineJsonId"
-      class="ma-4"
-      @update:funding-submission-line-json="emit('update:fundingSubmissionLineJson', $event)"
-    />
-
     <v-skeleton-loader
       v-if="isNil(fiscalPeriodId)"
       type="table"
     />
-    <section
-      v-else
-      class="ma-4 mt-8"
-    >
-      <h3
-        class="d-flex justify-space-between align-center mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2"
-      >
-        Building Expenses
-
-        <v-icon
-          title="Show keyboard shortcuts"
-          class="included"
-          @click="showKeyboardShortcutsModal"
-        >
-          mdi-keyboard
-        </v-icon>
-      </h3>
-
-      <BuildingExpensesEditTable
-        ref="buildingExpensesEditTable"
-        :where="buildingExpenseWhere"
+    <template v-else>
+      <FundingSubmissionLineJsonEditSheet
+        :funding-submission-line-json-id="fundingSubmissionLineJsonId"
+        :centre-id="centreId"
+        :fiscal-period-id="fiscalPeriodId"
+        class="ma-4"
+        @update:funding-submission-line-json="emit('update:fundingSubmissionLineJson', $event)"
       />
 
-      <!-- TODO: maybe move this to a separate component? -->
-      <v-row
-        class="mt-4"
-      >
-        <v-col
-          v-if="!showBuildingExpenseCreateForm"
-          cols="12"
-          class="d-flex justify-end"
+      <section class="ma-4 mt-8">
+        <h3
+          class="d-flex justify-space-between align-center mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2"
         >
-          <v-btn
-            color="primary"
-            @click="showBuildingExpenseCreateForm = true"
+          Building Expenses
+
+          <v-icon
+            title="Show keyboard shortcuts"
+            class="included"
+            @click="showKeyboardShortcutsModal"
           >
-            Add Building Expense
-          </v-btn>
-        </v-col>
-        <v-col
-          v-else
-          cols="12"
-        >
-          <BuildingExpenseCreateFormCard
-            id="building-expense-create-form-card"
-            :centre-id="centreId"
-            :fiscal-period-id="fiscalPeriodId"
-            @created="closeCreateFormAndRefresh"
-            @cancel="showBuildingExpenseCreateForm = false"
-          />
-        </v-col>
-      </v-row>
-    </section>
+            mdi-keyboard
+          </v-icon>
+        </h3>
+
+        <BuildingExpensesEditTable
+          ref="buildingExpensesEditTable"
+          :where="buildingExpenseWhere"
+        />
+
+        <!-- TODO: maybe move this to a separate component? -->
+        <v-row class="mt-4">
+          <v-col
+            v-if="!showBuildingExpenseCreateForm"
+            cols="12"
+            class="d-flex justify-end"
+          >
+            <v-btn
+              color="primary"
+              @click="showBuildingExpenseCreateForm = true"
+            >
+              Add Building Expense
+            </v-btn>
+          </v-col>
+          <v-col
+            v-else
+            cols="12"
+          >
+            <BuildingExpenseCreateFormCard
+              id="building-expense-create-form-card"
+              :centre-id="centreId"
+              :fiscal-period-id="fiscalPeriodId"
+              @created="closeCreateFormAndRefresh"
+              @cancel="showBuildingExpenseCreateForm = false"
+            />
+          </v-col>
+        </v-row>
+      </section>
+    </template>
     <KeyboardShortcutsModal ref="keyboardShortcutsModal" />
   </div>
 </template>
