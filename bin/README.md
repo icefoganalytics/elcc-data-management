@@ -42,17 +42,16 @@ gateway hostname.
 
 ### Editor Bridge
 
-Run `bundle install` to install `open-in-editor-bridge` 0.2.0. Before upgrading, stop any
+Run `bundle install` to install `open-in-editor-bridge` 0.3.0. Before upgrading, stop any
 running 0.1.x or vendored bridge using its original CLI; the protocols cannot share a port.
 
-`dev up` registers this checkout with the shared editor bridge. The wrapper passes its
-session ID into the web container, and Vite adds `session=<checkout-id>` to editor requests.
-The session ID selects the checkout; it is not an authentication token.
-Compose commands do not require this ID; without it, Vite omits the session parameter.
+`dev up` and `dev down` delegate editor integration to the gem's Compose adapter. It
+mounts the bundled Vite plugin and a checkout identity manifest; the application does
+not export session IDs or rewrite editor requests.
 
-`dev up` releases its editor lease when Compose returns. Use foreground startup for
-editor links; detached startup does not retain a session. Releasing one checkout's
-lease does not release another checkout's session.
+The plugin loads only for the development server. Tests and production builds do not
+require editor mounts. The library owns foreground lease cleanup and detached
+registrations; `dev down` releases only this checkout, preserving other active sessions.
 
 The wrapper defaults `OPEN_IN_EDITOR_COMMAND` to `EDITOR`, or `devin-desktop` when unset.
 It defaults `OPEN_IN_EDITOR_BRIDGE_BIND_ADDRESS` to `0.0.0.0` for Docker access.
