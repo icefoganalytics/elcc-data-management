@@ -48,7 +48,6 @@ services:
     environment:
       <<: *default-environment
       VITE_API_BASE_URL: "http://api.${GATEWAY_HOSTNAME:-elcc-data-management.localhost}"
-      OPEN_IN_EDITOR_SESSION_ID:
     user: "${HOST_USER_ID:-0}:${HOST_GROUP_ID:-0}"
     volumes:
       - ./web:/usr/src/web
