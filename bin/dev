@@ -64,28 +64,25 @@ class DevHelper
 
   def up(*args, **kwargs)
     LocalDevelopmentGateway.with_running do
-      OpenInEditorBridge.with_running do
-        compose(
-          *%w[up --remove-orphans --force-recreate --renew-anon-volumes],
-          *args,
-          execution_mode: WAIT_FOR_PROCESS,
-          gateway: true,
-          **kwargs
-        )
-      end
+      OpenInEditorBridge.compose(
+        *%w[up --remove-orphans --force-recreate --renew-anon-volumes],
+        *args,
+        compose_options: compose_file_options(gateway: true, **kwargs),
+        env: ENV.to_h.merge(compose_environment),
+        project_root: project_root
+      )
     end
   end
 
   def down(*args, **kwargs)
     LocalDevelopmentGateway.with_running(ensure_running: false) do
-      OpenInEditorBridge.with_running(ensure_running: false) do
-        compose(
-          *%w[down --remove-orphans],
-          *args,
-          execution_mode: WAIT_FOR_PROCESS,
-          **kwargs
-        )
-      end
+      OpenInEditorBridge.compose(
+        *%w[down --remove-orphans],
+        *args,
+        compose_options: compose_file_options(**kwargs),
+        env: ENV.to_h.merge(compose_environment),
+        project_root: project_root
+      )
     end
   end
 
@@ -316,24 +313,21 @@ class DevHelper
     id_of_container
   end
 
+  def compose_file_options(environment: "development", gateway: false, **)
+    options = ["-f", "docker-compose.#{environment}.yaml"]
+
+    if gateway && environment == "development"
+      options.concat(%w[-f docker-compose.development.gateway.yml])
+    end
+
+    options
+  end
+
   def compose_command(*args, **kwargs)
-    environment = kwargs.delete(:environment) { "development" }
-    gateway = kwargs.delete(:gateway)
     pipe_input = kwargs.delete(:pipe_input)
 
     go_to_project_root = "cd #{project_root}"
-    compose_file_args = ["-f docker-compose.#{environment}.yaml"]
-
-    if RUBY_PLATFORM =~ /linux/
-      linux_override = "docker-compose.#{environment}.linux.yml"
-      linux_override_path = File.join(project_root, linux_override)
-      if File.exist?(linux_override_path)
-        compose_file_args << "-f #{linux_override}"
-      end
-    end
-    if gateway && environment == "development"
-      compose_file_args << "-f docker-compose.development.gateway.yml"
-    end
+    compose_file_args = compose_file_options(**kwargs)
     bootstrap_docker =
       "docker compose #{compose_file_args.join(" ")} #{args.join(" ")}"
 
@@ -357,17 +351,25 @@ class DevHelper
     @project_root ||= File.absolute_path("#{__dir__}/..")
   end
 
-  def dynamic_environment_variables
-    variables = []
+  def compose_environment
+    variables = {
+      "COMPOSE_PROJECT_NAME" => checkout_name,
+      "GATEWAY_HOSTNAME" => gateway_hostname
+    }
 
     if RUBY_PLATFORM =~ /linux/
-      variables << %(HOST_USER_ID="#{user_id}")
-      variables << %(HOST_GROUP_ID="#{group_id}")
+      variables["HOST_USER_ID"] = user_id
+      variables["HOST_GROUP_ID"] = group_id
     end
 
-    variables << %(COMPOSE_PROJECT_NAME="#{checkout_name}")
-    variables << %(GATEWAY_HOSTNAME="#{Shellwords.escape(gateway_hostname)}")
-    variables << %(OPEN_IN_EDITOR_SESSION_ID="#{OpenInEditorBridge.session_id}")
+    variables
+  end
+
+  def dynamic_environment_variables
+    variables =
+      compose_environment.map do |name, value|
+        %(#{name}="#{Shellwords.escape(value)}")
+      end
     variables.join(" ")
   end
 
