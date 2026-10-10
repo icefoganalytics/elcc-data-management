@@ -46,6 +46,8 @@ Changes since v2025.11.24.1 that will be included in the next release.
   connection-pool cleanup.
 - Frontend build cleanup now works with `dev run --no-deps web npm run clean`, matching the API's
   build-output-only cleanup.
+- Removed a duplicate production payment-to-fiscal-period foreign key while preserving payment
+  data and referential integrity. Fresh databases keep their existing single constraint.
 
 ### Removed
 

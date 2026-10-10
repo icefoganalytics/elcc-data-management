@@ -46,9 +46,8 @@ The initial `create-*` migrations use `knex.schema.hasTable` to leave existing t
 They are a fresh-install baseline, not an upgrade path for old application schemas.
 Their `down` methods use `dropTable`, deleting the table and its rows even when it predated cutover.
 Inspect a restored production backup before cutover; use a backup for production data recovery.
-A final migration drops obsolete migration history after all table migrations succeed.
-Its cleanup is irreversible: `down` warns and continues without restoring obsolete history
-or preventing the remaining migrations from rolling back.
+Cleanup migrations can be irreversible: their `down` methods warn and continue without restoring
+removed state or preventing the remaining migrations from rolling back.
 
 Knex uses its native filename-based history and migration lock. Do not rename ledger entries,
 retain obsolete transition-marker files, or add a second migration directory.
