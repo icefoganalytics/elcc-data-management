@@ -20,8 +20,8 @@ const gatewayUrlLogger = {
 }
 
 // https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [
+export default defineConfig(async ({ command, mode }) => {
+  const plugins = [
     vue(),
     // https://github.com/vuetifyjs/vuetify-loader/tree/next/packages/vite-plugin
     vuetify({
@@ -30,47 +30,51 @@ export default defineConfig({
       },
     }),
     gatewayUrlLogger,
-  ],
-  build: {
-    outDir: "./dist",
-  },
-  define: { "process.env": {} },
-  resolve: {
-    alias: {
-      "@/tests": fileURLToPath(new URL("./tests", import.meta.url)),
-      "@": fileURLToPath(new URL("./src", import.meta.url)),
+  ]
+
+  if (command === "serve" && mode === "development") {
+    const integrationPath = "/open-in-editor-bridge/vite.mjs"
+    const { default: openInEditorBridge } = await import(integrationPath)
+    plugins.push(openInEditorBridge())
+  }
+
+  return {
+    plugins,
+    build: {
+      outDir: "./dist",
     },
-    extensions: [".js", ".json", ".jsx", ".mjs", ".ts", ".tsx", ".vue"],
-  },
-  server: {
-    port: 8080,
-    proxy: {
-      // Forward editor-open requests to the configured host editor bridge.
-      "/__open-in-editor": {
-        target: "http://host.docker.internal:3333",
+    define: { "process.env": {} },
+    resolve: {
+      alias: {
+        "@/tests": fileURLToPath(new URL("./tests", import.meta.url)),
+        "@": fileURLToPath(new URL("./src", import.meta.url)),
       },
+      extensions: [".js", ".json", ".jsx", ".mjs", ".ts", ".tsx", ".vue"],
     },
-  },
-  test: {
-    environment: "jsdom",
-    globals: true, // https://vitest.dev/config/#globals
     server: {
-      deps: {
-        inline: ["vuetify"],
+      port: 8080,
+    },
+    test: {
+      environment: "jsdom",
+      globals: true, // https://vitest.dev/config/#globals
+      server: {
+        deps: {
+          inline: ["vuetify"],
+        },
+      },
+      setupFiles: ["./tests/setup.ts"],
+      // Mocking
+      clearMocks: true,
+      mockReset: true,
+      restoreMocks: true,
+      unstubEnvs: true,
+      unstubGlobals: true,
+      // Mock CSS imports
+      css: {
+        modules: {
+          classNameStrategy: "non-scoped",
+        },
       },
     },
-    setupFiles: ["./tests/setup.ts"],
-    // Mocking
-    clearMocks: true,
-    mockReset: true,
-    restoreMocks: true,
-    unstubEnvs: true,
-    unstubGlobals: true,
-    // Mock CSS imports
-    css: {
-      modules: {
-        classNameStrategy: "non-scoped",
-      },
-    },
-  },
+  }
 })

@@ -40,6 +40,31 @@ http://elcc-data-management.localhost; named worktrees receive their own
 Once Vite starts, the web service prints `Open ELCC: http://<hostname>/` with that checkout's
 gateway hostname.
 
+### Editor Bridge
+
+Run `bundle install` to install `open-in-editor-bridge` 0.3.0. Before upgrading, stop any
+running 0.1.x or vendored bridge using its original CLI; the protocols cannot share a port.
+
+`dev up` and `dev down` delegate editor integration to the gem's Compose adapter. It
+mounts the bundled Vite plugin and a checkout identity manifest; the application does
+not export session IDs or rewrite editor requests.
+
+The plugin loads only for the development server. Tests and production builds do not
+require editor mounts. The library owns foreground lease cleanup and detached
+registrations; `dev down` releases only this checkout, preserving other active sessions.
+
+The wrapper defaults `OPEN_IN_EDITOR_COMMAND` to `EDITOR`, or `devin-desktop` when unset.
+It defaults `OPEN_IN_EDITOR_BRIDGE_BIND_ADDRESS` to `0.0.0.0` for Docker access.
+Editor requests are unauthenticated: use only a trusted development network with host
+firewall restrictions, never public port forwarding. Set the bind address to a specific
+Docker-reachable host interface to narrow exposure. The development proxy uses port `3333`.
+All clients sharing the listener must agree on bind address and runtime directory.
+
+See the [released bridge documentation](https://github.com/klondikemarlen/open-in-editor-bridge)
+for direct CLI use and shared-runtime configuration.
+
+### Dependencies and SQL Scripts
+
 In each new checkout, initialize the ignored source-bound dependencies before the first `dev up`:
 
 ```bash
