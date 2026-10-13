@@ -32,7 +32,11 @@ export default defineConfig(async ({ command, mode }) => {
     gatewayUrlLogger,
   ]
 
-  if (command === "serve" && mode === "development") {
+  if (
+    command === "serve" &&
+    mode === "development" &&
+    process.env.OPEN_IN_EDITOR_BRIDGE_ENABLED === "true"
+  ) {
     const integrationPath = "/open-in-editor-bridge/vite.mjs"
     const { default: openInEditorBridge } = await import(integrationPath)
     plugins.push(openInEditorBridge())
