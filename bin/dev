@@ -330,8 +330,9 @@ class DevHelper
       ENV.fetch("COMPOSE_PATH_SEPARATOR", File::PATH_SEPARATOR)
     compose_file_paths =
       Shellwords.escape(compose_files.join(compose_path_separator))
+    editor_bridge_enabled = environment == "development" && args.first == "up"
     environment_variables =
-      "#{dynamic_environment_variables} COMPOSE_FILE=#{compose_file_paths}"
+      "#{dynamic_environment_variables} COMPOSE_FILE=#{compose_file_paths} OPEN_IN_EDITOR_BRIDGE_ENABLED=#{editor_bridge_enabled}"
     bootstrap_docker = "docker compose #{args.join(" ")}"
 
     if environment == "development" && %w[up down].include?(args.first)
