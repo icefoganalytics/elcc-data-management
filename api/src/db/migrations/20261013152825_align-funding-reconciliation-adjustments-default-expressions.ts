@@ -1,36 +1,28 @@
 import type { Knex } from "knex"
 
-import { replaceDefaultConstraint } from "@/db/utils/replace-default-constraint"
-
 export async function up(knex: Knex): Promise<void> {
-  await replaceDefaultConstraint(
-    knex,
-    "funding_reconciliation_adjustments",
-    "funding_received_period_amount",
-    "0",
-    "((0))"
-  )
-  await replaceDefaultConstraint(
-    knex,
-    "funding_reconciliation_adjustments",
-    "eligible_expenses_period_amount",
-    "0",
-    "((0))"
-  )
-  await replaceDefaultConstraint(
-    knex,
-    "funding_reconciliation_adjustments",
-    "payroll_adjustments_period_amount",
-    "0",
-    "((0))"
-  )
-  await replaceDefaultConstraint(
-    knex,
-    "funding_reconciliation_adjustments",
-    "cumulative_balance_amount",
-    "0",
-    "((0))"
-  )
+  await knex.schema.alterTable("funding_reconciliation_adjustments", (table) => {
+    table
+      .decimal("funding_received_period_amount", 15, 4)
+      .notNullable()
+      .defaultTo(knex.raw("0"))
+      .alter({ alterType: false, alterNullable: false })
+    table
+      .decimal("eligible_expenses_period_amount", 15, 4)
+      .notNullable()
+      .defaultTo(knex.raw("0"))
+      .alter({ alterType: false, alterNullable: false })
+    table
+      .decimal("payroll_adjustments_period_amount", 15, 4)
+      .notNullable()
+      .defaultTo(knex.raw("0"))
+      .alter({ alterType: false, alterNullable: false })
+    table
+      .decimal("cumulative_balance_amount", 15, 4)
+      .notNullable()
+      .defaultTo(knex.raw("0"))
+      .alter({ alterType: false, alterNullable: false })
+  })
 }
 
 export async function down(_knex: Knex): Promise<void> {

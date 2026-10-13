@@ -1,9 +1,13 @@
 import type { Knex } from "knex"
 
-import { replaceDefaultConstraint } from "@/db/utils/replace-default-constraint"
-
 export async function up(knex: Knex): Promise<void> {
-  await replaceDefaultConstraint(knex, "funding_regions", "hot_meal_increment_amount", "0", "((0))")
+  await knex.schema.alterTable("funding_regions", (table) => {
+    table
+      .decimal("hot_meal_increment_amount", 10, 4)
+      .notNullable()
+      .defaultTo(knex.raw("0"))
+      .alter({ alterType: false, alterNullable: false })
+  })
 }
 
 export async function down(_knex: Knex): Promise<void> {
