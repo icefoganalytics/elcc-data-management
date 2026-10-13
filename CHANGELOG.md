@@ -48,6 +48,8 @@ Changes since v2025.11.24.1 that will be included in the next release.
   build-output-only cleanup.
 - Removed a duplicate production payment-to-fiscal-period foreign key while preserving payment
   data and referential integrity. Fresh databases keep their existing single constraint.
+- Database defaults now use consistent numeric and Unicode SQL expressions across fresh and
+  upgraded installations, without changing stored records or effective default values.
 
 ### Removed
 
