@@ -233,7 +233,7 @@ Migration files live in [`api/src/db/migrations`](./api/src/db/migrations/README
 The initial table migrations create a fresh database or leave each existing table untouched.
 On an existing, current production schema, the cutover adds `knex_migrations` and
 `knex_migrations_lock`, then drops obsolete migration history after the table baseline succeeds.
-Application tables and data remain unchanged.
+Application data remain unchanged.
 
 Existing databases must already have the current application schema before this cutover.
 Historical migrations are no longer executed. Validate a restored production backup before
