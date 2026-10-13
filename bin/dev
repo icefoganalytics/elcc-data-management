@@ -45,25 +45,6 @@ class DevHelper
   end
 
   def compose(*args, **kwargs)
-    args.flatten!
-
-    if kwargs.fetch(:environment, "development") == "development" &&
-         %w[up down].include?(args.first)
-      environment_variables = dynamic_environment_variables
-      environment_variables["OPEN_IN_EDITOR_BRIDGE_ENABLED"] = (
-        args.first == "up"
-      ).to_s
-
-      return(
-        OpenInEditorBridge.compose(
-          *args,
-          compose_options: compose_file_options(**kwargs),
-          env: ENV.to_h.merge(environment_variables),
-          project_root: project_root
-        )
-      )
-    end
-
     command = compose_command(*args, **kwargs)
     puts "Running: #{command}"
 
@@ -83,24 +64,61 @@ class DevHelper
   end
 
   def up(*args, **kwargs)
+    compose_arguments = %w[
+      up
+      --remove-orphans
+      --force-recreate
+      --renew-anon-volumes
+    ]
+
     LocalDevelopmentGateway.with_running do
-      compose(
-        *%w[up --remove-orphans --force-recreate --renew-anon-volumes],
+      if kwargs.fetch(:environment, "development") != "development"
+        return(
+          compose(
+            *compose_arguments,
+            *args,
+            execution_mode: WAIT_FOR_PROCESS,
+            gateway: true,
+            **kwargs
+          )
+        )
+      end
+
+      OpenInEditorBridge.compose(
+        *compose_arguments,
         *args,
-        execution_mode: WAIT_FOR_PROCESS,
-        gateway: true,
-        **kwargs
+        compose_options: compose_file_options(gateway: true, **kwargs),
+        env:
+          ENV.to_h.merge(
+            dynamic_environment_variables,
+            "OPEN_IN_EDITOR_BRIDGE_ENABLED" => "true"
+          ),
+        project_root: project_root
       )
     end
   end
 
   def down(*args, **kwargs)
+    compose_arguments = %w[down --remove-orphans]
+
     LocalDevelopmentGateway.with_running(ensure_running: false) do
-      compose(
-        *%w[down --remove-orphans],
+      if kwargs.fetch(:environment, "development") != "development"
+        return(
+          compose(
+            *compose_arguments,
+            *args,
+            execution_mode: WAIT_FOR_PROCESS,
+            **kwargs
+          )
+        )
+      end
+
+      OpenInEditorBridge.compose(
+        *compose_arguments,
         *args,
-        execution_mode: WAIT_FOR_PROCESS,
-        **kwargs
+        compose_options: compose_file_options(**kwargs),
+        env: ENV.to_h.merge(dynamic_environment_variables),
+        project_root: project_root
       )
     end
   end
