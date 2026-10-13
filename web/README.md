@@ -32,8 +32,10 @@ If you use the repo-level `dev` wrapper, this is automatic:
 - `dev up` uses the gem's Compose adapter to start the bridge and mount its plugin and checkout identity.
 - `dev down` releases this checkout without stopping another active editor session.
 
-Start Docker development through `./bin/dev up`; ordinary Compose startup does not supply
-the library's required mounts. The plugin is development-only, so tests and production
-builds work without those mounts.
+Use `./bin/dev up web` when the frontend needs editor integration. Only adapter-backed
+development startup enables `OPEN_IN_EDITOR_BRIDGE_ENABLED` and supplies the required
+mounts. Ordinary Compose commands, including `dev web npm run start`, start Vite without
+editor integration. Explicitly enabled startup fails if its mounts are missing; tests
+and production configurations do not load the plugin.
 
 The bridge prefers `OPEN_IN_EDITOR_COMMAND`, then `EDITOR`, and falls back to `devin-desktop`.

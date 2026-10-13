@@ -55,9 +55,13 @@ the editor adapter inherits the environment and checkout root. Only development
 startup/shutdown enable it. Other commands and environments run plain Docker
 Compose, without a separate environment-hash or file-options adapter path.
 
-The plugin loads only for the development server. Tests and production builds do not
-require editor mounts. The library owns foreground lease cleanup and detached
-registrations; `dev down` releases only this checkout, preserving other active sessions.
+Only adapter-backed development startup sets `OPEN_IN_EDITOR_BRIDGE_ENABLED=true`.
+Ordinary commands explicitly disable it, so `dev web npm run start` does not require
+editor mounts. Test and production configurations do not load the plugin.
+
+The library owns foreground lease cleanup and detached registrations; `dev down`
+releases only this checkout, preserving other active sessions. Use `dev up -d --wait`
+to wait for readiness while retaining registration; the wrapper forwards flags unchanged.
 
 The wrapper defaults `OPEN_IN_EDITOR_COMMAND` to `EDITOR`, or `devin-desktop` when unset.
 It defaults `OPEN_IN_EDITOR_BRIDGE_BIND_ADDRESS` to `0.0.0.0` for Docker access.
