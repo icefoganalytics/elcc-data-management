@@ -39,9 +39,9 @@ use Unicode literals for `NVARCHAR`, and keep UTC timestamps on `GETUTCDATE()`.
 For example, use `defaultTo(knex.raw("0"))` and `defaultTo(knex.raw("N'user'"))`.
 Numeric precision and scale belong in the column declaration, not in quoted default values.
 
-For default-only changes, use `replaceDefaultConstraint` from `@/db/utils/replace-default-constraint`.
-It skips matching definitions and preserves existing constraint names. Do not use `.alter()` for
-these changes: the MSSQL compiler also emits `ALTER COLUMN`, which can be blocked by dependencies.
+Use native Knex `.alter({ alterType: false, alterNullable: false })` when changing defaults.
+Restate the existing column type, length or precision, and nullability; MSSQL still emits
+`ALTER COLUMN`. Drop and recreate an affected unique constraint or index only when required.
 
 Use scalar column names and dotted references for single-column foreign keys:
 
