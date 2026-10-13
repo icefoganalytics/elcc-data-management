@@ -2,6 +2,7 @@
 
 require "bundler/setup"
 require "local_development_gateway"
+require "open_in_editor_bridge"
 
 require "rdoc"
 require "shellwords"
@@ -9,7 +10,6 @@ require "shellwords"
 require_relative "./jira_api"
 require_relative "./pull_request_editor"
 
-ENV["OPEN_IN_EDITOR_PROJECT_ROOT"] = File.absolute_path("#{__dir__}/..")
 ENV["OPEN_IN_EDITOR_BRIDGE_BIND_ADDRESS"] ||= "0.0.0.0"
 ENV["OPEN_IN_EDITOR_COMMAND"] ||= ENV.fetch("EDITOR", "devin-desktop")
 
@@ -45,6 +45,25 @@ class DevHelper
   end
 
   def compose(*args, **kwargs)
+    args.flatten!
+
+    if kwargs.fetch(:environment, "development") == "development" &&
+         %w[up down].include?(args.first)
+      environment_variables = dynamic_environment_variables
+      environment_variables["OPEN_IN_EDITOR_BRIDGE_ENABLED"] = (
+        args.first == "up"
+      ).to_s
+
+      return(
+        OpenInEditorBridge.compose(
+          *args,
+          compose_options: compose_file_options(**kwargs),
+          env: ENV.to_h.merge(environment_variables),
+          project_root: project_root
+        )
+      )
+    end
+
     command = compose_command(*args, **kwargs)
     puts "Running: #{command}"
 
@@ -314,31 +333,16 @@ class DevHelper
   end
 
   def compose_command(*args, **kwargs)
-    args.flatten!
-
-    environment = kwargs.delete(:environment) { "development" }
-    gateway = kwargs.delete(:gateway)
     pipe_input = kwargs.delete(:pipe_input)
 
     go_to_project_root = "cd #{project_root}"
-    compose_files = ["docker-compose.#{environment}.yaml"]
-    if gateway && environment == "development"
-      compose_files << "docker-compose.development.gateway.yml"
-    end
-
-    compose_path_separator =
-      ENV.fetch("COMPOSE_PATH_SEPARATOR", File::PATH_SEPARATOR)
-    compose_file_paths =
-      Shellwords.escape(compose_files.join(compose_path_separator))
-    editor_bridge_enabled = environment == "development" && args.first == "up"
+    compose_file_arguments = compose_file_options(**kwargs)
+    bootstrap_docker =
+      "docker compose #{compose_file_arguments.shelljoin} #{args.join(" ")}"
     environment_variables =
-      "#{dynamic_environment_variables} COMPOSE_FILE=#{compose_file_paths} OPEN_IN_EDITOR_BRIDGE_ENABLED=#{editor_bridge_enabled}"
-    bootstrap_docker = "docker compose #{args.join(" ")}"
-
-    if environment == "development" && %w[up down].include?(args.first)
-      bootstrap_docker =
-        "bundle exec ruby -ropen_in_editor_bridge -e 'OpenInEditorBridge.compose(*ARGV)' -- #{args.join(" ")}"
-    end
+      dynamic_environment_variables
+        .map { |name, value| "#{name}=#{Shellwords.escape(value)}" }
+        .join(" ")
 
     if pipe_input
       shell_safe_pipe_input = Shellwords.escape(pipe_input)
@@ -356,20 +360,32 @@ class DevHelper
     end
   end
 
+  def compose_file_options(environment: "development", gateway: false, **)
+    options = ["-f", "docker-compose.#{environment}.yaml"]
+    if gateway && environment == "development"
+      options.concat(%w[-f docker-compose.development.gateway.yml])
+    end
+
+    options
+  end
+
   def project_root
     @project_root ||= File.absolute_path("#{__dir__}/..")
   end
 
   def dynamic_environment_variables
-    variables = []
+    variables = {
+      "COMPOSE_PROJECT_NAME" => checkout_name,
+      "GATEWAY_HOSTNAME" => gateway_hostname,
+      "OPEN_IN_EDITOR_BRIDGE_ENABLED" => "false"
+    }
+
     if RUBY_PLATFORM =~ /linux/
-      variables << %(HOST_USER_ID="#{user_id}")
-      variables << %(HOST_GROUP_ID="#{group_id}")
+      variables["HOST_USER_ID"] = user_id
+      variables["HOST_GROUP_ID"] = group_id
     end
 
-    variables << %(COMPOSE_PROJECT_NAME="#{checkout_name}")
-    variables << %(GATEWAY_HOSTNAME="#{Shellwords.escape(gateway_hostname)}")
-    variables.join(" ")
+    variables
   end
 
   def checkout_name
