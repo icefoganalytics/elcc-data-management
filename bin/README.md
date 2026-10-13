@@ -49,6 +49,12 @@ running 0.1.x or vendored bridge using its original CLI; the protocols cannot sh
 mounts the bundled Vite plugin and a checkout identity manifest; the application does
 not export session IDs or rewrite editor requests.
 
+Keep startup/shutdown on the shared `compose` / `compose_command` path used by the
+other wrapper commands. Select files with standard `COMPOSE_FILE` configuration;
+the editor adapter inherits the environment and checkout root. Only development
+startup/shutdown enable it. Other commands and environments run plain Docker
+Compose, without a separate environment-hash or file-options adapter path.
+
 The plugin loads only for the development server. Tests and production builds do not
 require editor mounts. The library owns foreground lease cleanup and detached
 registrations; `dev down` releases only this checkout, preserving other active sessions.
