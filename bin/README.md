@@ -49,11 +49,12 @@ running 0.1.x or vendored bridge using its original CLI; the protocols cannot sh
 mounts the bundled Vite plugin and a checkout identity manifest; the application does
 not export session IDs or rewrite editor requests.
 
-Keep startup/shutdown on the shared `compose` / `compose_command` path used by the
-other wrapper commands. Select files with standard `COMPOSE_FILE` configuration;
-the editor adapter inherits the environment and checkout root. Only development
-startup/shutdown enable it. Other commands and environments run plain Docker
-Compose, without a separate environment-hash or file-options adapter path.
+Keep startup/shutdown thin: the shared `compose` executor calls the gem directly.
+Use one `compose_file_options` selector and one native `dynamic_environment_variables`
+map for both paths; format values only when constructing ordinary shell commands.
+Do not add Ruby subprocess dispatch or a second Compose configuration protocol.
+Run `dev` from the repository root with normal Bundler setup. Development up/down
+use the adapter; other commands and environments run plain Docker Compose.
 
 Only adapter-backed development startup sets `OPEN_IN_EDITOR_BRIDGE_ENABLED=true`.
 Ordinary commands explicitly disable it, so `dev web npm run start` does not require
