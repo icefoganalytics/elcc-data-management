@@ -1,33 +1,47 @@
 import type { Knex } from "knex"
 
+import { replaceDefaultConstraint } from "@/db/utils/replace-default-constraint"
+
 export async function up(knex: Knex): Promise<void> {
-  await knex.schema.alterTable("funding_reconciliations", (table) => {
-    table.string("status", 20).notNullable().defaultTo(knex.raw("N'draft'")).alter()
-    table
-      .decimal("funding_received_total_amount", 15, 4)
-      .notNullable()
-      .defaultTo(knex.raw("0"))
-      .alter()
-    table
-      .decimal("eligible_expenses_total_amount", 15, 4)
-      .notNullable()
-      .defaultTo(knex.raw("0"))
-      .alter()
-    table
-      .decimal("payroll_adjustments_total_amount", 15, 4)
-      .notNullable()
-      .defaultTo(knex.raw("0"))
-      .alter()
-    table.decimal("final_balance_amount", 15, 4).notNullable().defaultTo(knex.raw("0")).alter()
-  })
+  await replaceDefaultConstraint(
+    knex,
+    "funding_reconciliations",
+    "status",
+    "N'draft'",
+    "(N'draft')"
+  )
+  await replaceDefaultConstraint(
+    knex,
+    "funding_reconciliations",
+    "funding_received_total_amount",
+    "0",
+    "((0))"
+  )
+  await replaceDefaultConstraint(
+    knex,
+    "funding_reconciliations",
+    "eligible_expenses_total_amount",
+    "0",
+    "((0))"
+  )
+  await replaceDefaultConstraint(
+    knex,
+    "funding_reconciliations",
+    "payroll_adjustments_total_amount",
+    "0",
+    "((0))"
+  )
+  await replaceDefaultConstraint(
+    knex,
+    "funding_reconciliations",
+    "final_balance_amount",
+    "0",
+    "((0))"
+  )
 }
 
-export async function down(knex: Knex): Promise<void> {
-  await knex.schema.alterTable("funding_reconciliations", (table) => {
-    table.string("status", 20).notNullable().defaultTo("draft").alter()
-    table.decimal("funding_received_total_amount", 15, 4).notNullable().defaultTo(0).alter()
-    table.decimal("eligible_expenses_total_amount", 15, 4).notNullable().defaultTo(0).alter()
-    table.decimal("payroll_adjustments_total_amount", 15, 4).notNullable().defaultTo(0).alter()
-    table.decimal("final_balance_amount", 15, 4).notNullable().defaultTo(0).alter()
-  })
+export async function down(_knex: Knex): Promise<void> {
+  console.warn(
+    "Funding reconciliation default normalization is irreversible; canonical defaults are retained."
+  )
 }
