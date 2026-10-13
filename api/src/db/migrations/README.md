@@ -33,6 +33,16 @@ Use SQL `DECIMAL` types for financial values and snake_case for database names.
 Use `GETUTCDATE()` for timestamp defaults. Name unique indexes explicitly. Unique indexes on paranoid
 models must exclude soft-deleted rows, using `predicate: knex.whereNull("deleted_at")`.
 
+Creation migrations and existing-database upgrades must converge on the same default policy:
+use unquoted SQL `0` for numeric zero defaults, retain the intended nonzero numeric literals,
+use Unicode literals for `NVARCHAR`, and keep UTC timestamps on `GETUTCDATE()`.
+For example, use `defaultTo(knex.raw("0"))` and `defaultTo(knex.raw("N'user'"))`.
+Numeric precision and scale belong in the column declaration, not in quoted default values.
+
+When changing defaults with `.alter()`, restate the existing column type, length,
+precision/scale, and nullability. Drop and recreate an affected unique constraint or index
+only when required.
+
 Use scalar column names and dotted references for single-column foreign keys:
 
 ```typescript

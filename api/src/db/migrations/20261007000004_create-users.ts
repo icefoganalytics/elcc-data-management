@@ -9,13 +9,13 @@ export async function up(knex: Knex): Promise<void> {
     table.string("first_name", 100).notNullable()
     table.string("last_name", 100).notNullable()
     table.string("status", 50).notNullable()
-    table.boolean("is_admin").notNullable().defaultTo(0)
+    table.boolean("is_admin").notNullable().defaultTo(knex.raw("0"))
     table.string("ynet_id", 50)
     table.string("directory_id", 50)
     table.increments("id").notNullable().primary()
     table.specificType("created_at", "DATETIME2").notNullable().defaultTo(knex.raw("GETUTCDATE()"))
     table.specificType("updated_at", "DATETIME2").notNullable().defaultTo(knex.raw("GETUTCDATE()"))
-    table.string("roles", 255).notNullable().defaultTo("user")
+    table.string("roles", 255).notNullable().defaultTo(knex.raw("N'user'"))
     table.specificType("deleted_at", "DATETIMEOFFSET")
 
     table.unique(["email"], {
