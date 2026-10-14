@@ -63,7 +63,7 @@ class DevHelper
 
   def up(*args, **kwargs)
     compose_options = compose_file_options(gateway: true, **kwargs)
-    environment_variables = ENV.to_h.merge(dynamic_environment_variables)
+    environment_variables = dynamic_environment_variables
     environment_variables["OPEN_IN_EDITOR_BRIDGE_ENABLED"] = "true"
 
     LocalDevelopmentGateway.with_running do
@@ -79,7 +79,7 @@ class DevHelper
 
   def down(*args, **kwargs)
     compose_options = compose_file_options(**kwargs)
-    environment_variables = ENV.to_h.merge(dynamic_environment_variables)
+    environment_variables = dynamic_environment_variables
 
     LocalDevelopmentGateway.with_running(ensure_running: false) do
       OpenInEditorBridge.compose(
@@ -369,9 +369,13 @@ class DevHelper
   def dynamic_environment_variables
     variables = {
       "COMPOSE_PROJECT_NAME" => checkout_name,
-      "GATEWAY_HOSTNAME" => gateway_hostname,
-      "OPEN_IN_EDITOR_BRIDGE_ENABLED" => "false"
+      "GATEWAY_HOSTNAME" => gateway_hostname
     }
+
+    ENV.each_pair do |name, value|
+      variables[name] = value if name.start_with?("OPEN_IN_EDITOR_")
+    end
+    variables["OPEN_IN_EDITOR_BRIDGE_ENABLED"] = "false"
 
     if RUBY_PLATFORM =~ /linux/
       variables["HOST_USER_ID"] = user_id
