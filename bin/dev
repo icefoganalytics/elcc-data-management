@@ -70,9 +70,9 @@ class DevHelper
       OpenInEditorBridge.compose(
         *%w[up --remove-orphans --force-recreate --renew-anon-volumes],
         *args,
-        compose_options: compose_options,
+        compose_options:,
         env: environment_variables,
-        project_root: project_root
+        project_root:
       )
     end
   end
@@ -85,9 +85,9 @@ class DevHelper
       OpenInEditorBridge.compose(
         *%w[down --remove-orphans],
         *args,
-        compose_options: compose_options,
+        compose_options:,
         env: environment_variables,
-        project_root: project_root
+        project_root:
       )
     end
   end
