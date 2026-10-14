@@ -49,13 +49,11 @@ running 0.1.x or vendored bridge using its original CLI; the protocols cannot sh
 mounts the bundled Vite plugin and a checkout identity manifest; the application does
 not export session IDs or rewrite editor requests.
 
-Keep startup/shutdown in the explicit `up` and `down` wrappers, alongside gateway
-lifecycle management. Development wrappers call the gem directly; `compose` remains
-a plain Docker Compose executor without command detection or editor lifecycle logic.
-Use the shared `compose_file_options` selector and `dynamic_environment_variables`
-map; format values only when constructing ordinary shell commands. Other commands
-and environments run plain Docker Compose. Run `dev` from the repository root with
-normal Bundler setup.
+Keep the development helper happy-path only, matching sibling projects: `up` and
+`down` call the gem directly inside the gateway wrappers; `compose` stays plain.
+Reuse the file selector and environment map. Do not add lifecycle flag parsing,
+alternate-environment fallback branches, or compatibility dispatch to these wrappers.
+Run `dev` from the repository root with normal Bundler setup.
 
 Only adapter-backed development startup sets `OPEN_IN_EDITOR_BRIDGE_ENABLED=true`.
 Ordinary commands explicitly disable it, so `dev web npm run start` does not require
