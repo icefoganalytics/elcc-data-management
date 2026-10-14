@@ -45,6 +45,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
 
 ### Fixed
 
+- Child Care Spaces reconciliation totals now retain all four decimal places even when aggregate amounts exceed JavaScript's decimal precision.
 - Prevented employee benefits from being double counted in employee adjustment amounts during funding reconciliation calculations.
 - Resolved occasional authentication issues caused by plugin load order.
 - Database startup now applies its grace period once and bounds readiness timeouts, including
