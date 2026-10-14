@@ -1,5 +1,7 @@
 import db, {
   BuildingExpense,
+  ChildCareSpace,
+  ChildCareSpaceCategory,
   EmployeeBenefit,
   EmployeeWageTier,
   FiscalPeriod,
@@ -32,6 +34,8 @@ export class DestroyService extends BaseService {
     await this.destroyDependentEmployeeWageTiers(fundingPeriodId)
     await this.destroyDependentEmployeeBenefits(fundingPeriodId)
     await this.destroyDependentBuildingExpenses(fundingPeriodId)
+    await this.destroyDependentChildCareSpaces(fundingPeriodId)
+    await this.destroyDependentChildCareSpaceCategories(fundingPeriodId)
     await this.destroyDependentPayments(fundingPeriodId)
     await this.destroyDependentFundingReconciliations(fundingPeriodId)
     await this.destroyDependentFundingSubmissionLines(fundingPeriodId)
@@ -61,6 +65,16 @@ export class DestroyService extends BaseService {
     await BuildingExpense.withScope({
       method: ["byFundingPeriod", fundingPeriodId],
     }).destroy({ where: {} })
+  }
+
+  private async destroyDependentChildCareSpaces(fundingPeriodId: number) {
+    await ChildCareSpace.withScope({
+      method: ["byFundingPeriod", fundingPeriodId],
+    }).destroy({ where: {} })
+  }
+
+  private async destroyDependentChildCareSpaceCategories(fundingPeriodId: number) {
+    await ChildCareSpaceCategory.destroy({ where: { fundingPeriodId } })
   }
 
   private async destroyDependentPayments(fundingPeriodId: number) {

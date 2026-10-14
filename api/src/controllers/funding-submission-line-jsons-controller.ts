@@ -79,6 +79,7 @@ export class FundingSubmissionLineJsonsController extends BaseController<Funding
       }
 
       await fundingSubmissionLineJson.update(this.request.body)
+      await fundingSubmissionLineJson.reload()
       const serializedfundingSubmissionLineJson =
         FundingSubmissionLineJsonSerializer.asDetailed(fundingSubmissionLineJson)
       return this.response.json({

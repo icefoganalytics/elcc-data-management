@@ -31,7 +31,7 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
         })
         const fundingSubmissionLine1 = await fundingSubmissionLineFactory.create({
           fiscalYear: "2024/25",
-          sectionName: "Child Care Spaces",
+          sectionName: "Quality Enhancement Program",
           lineName: "Infants",
           monthlyAmount: "100",
         })
@@ -56,7 +56,7 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
             values: JSON.stringify([
               {
                 submissionLineId: fundingSubmissionLine1.id,
-                sectionName: "Child Care Spaces",
+                sectionName: "Quality Enhancement Program",
                 lineName: "Infants",
                 monthlyAmount: "100",
                 estimatedChildOccupancyRate: "0",
@@ -85,7 +85,7 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
             values: JSON.stringify([
               {
                 submissionLineId: fundingSubmissionLine1.id,
-                sectionName: "Child Care Spaces",
+                sectionName: "Quality Enhancement Program",
                 lineName: "Infants",
                 monthlyAmount: "100",
                 estimatedChildOccupancyRate: "0",
@@ -118,7 +118,7 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
         })
         await fundingSubmissionLineFactory.create({
           fiscalYear: "2024/25",
-          sectionName: "Child Care Spaces",
+          sectionName: "Quality Enhancement Program",
           lineName: "Infants",
           monthlyAmount: "100",
         })
@@ -129,9 +129,11 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
           monthlyAmount: "200",
         })
 
-        // Act & Assert
-        expect.assertions(1)
-        await expect(BulkCreateService.perform(centre, fundingPeriod)).rejects.toThrow(
+        // Act
+        const bulkCreatePromise = BulkCreateService.perform(centre, fundingPeriod)
+
+        // Assert
+        await expect(bulkCreatePromise).rejects.toThrow(
           "No fiscal periods found for the given funding period"
         )
       })
@@ -155,9 +157,11 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
           dateStart: new Date("2024-05-01"),
         })
 
-        // Act & Assert
-        expect.assertions(1)
-        await expect(BulkCreateService.perform(centre, fundingPeriod)).rejects.toThrow(
+        // Act
+        const bulkCreatePromise = BulkCreateService.perform(centre, fundingPeriod)
+
+        // Assert
+        await expect(bulkCreatePromise).rejects.toThrow(
           "No funding submission lines found for the funding period."
         )
       })

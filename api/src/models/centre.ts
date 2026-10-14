@@ -19,6 +19,7 @@ import {
 
 import BaseModel from "@/models/base-model"
 import BuildingExpense from "@/models/building-expense"
+import ChildCareSpace from "@/models/child-care-space"
 import EmployeeBenefit from "@/models/employee-benefit"
 import FundingReconciliation from "@/models/funding-reconciliation"
 import FundingRegion from "@/models/funding-region"
@@ -153,6 +154,14 @@ export class Centre extends BaseModel<InferAttributes<Centre>, InferCreationAttr
     },
   })
   declare buildingExpenses?: NonAttribute<BuildingExpense[]>
+
+  @HasMany(() => ChildCareSpace, {
+    foreignKey: "centreId",
+    inverse: {
+      as: "centre",
+    },
+  })
+  declare childCareSpaces?: NonAttribute<ChildCareSpace[]>
 
   @HasMany(() => EmployeeBenefit, {
     foreignKey: "centreId",

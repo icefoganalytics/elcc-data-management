@@ -10,9 +10,10 @@ Use controllers to read request state, apply authorization, call services, and r
 
 ## Guidelines
 
-- Extend `BaseController` and implement instance methods
+- Extend `BaseController<Model>` for model-backed controllers and implement instance methods
 - Build `where`, scopes, ordering, and pagination in the controller when listing resources
 - Apply policy scope and authorization checks in the controller layer
+- Construct policies in a private `buildPolicy` helper and call it from actions instead of constructing policies inline
 - Use serializers to shape responses
 - Keep error handling consistent and log failures with enough context to debug them
 

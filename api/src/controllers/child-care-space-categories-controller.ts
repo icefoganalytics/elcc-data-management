@@ -1,0 +1,172 @@
+import { isNil } from "lodash"
+
+import logger from "@/utils/logger"
+import { ChildCareSpaceCategory } from "@/models"
+import { ChildCareSpaceCategoryPolicy } from "@/policies"
+import {
+  CreateService,
+  DestroyService,
+  UpdateService,
+} from "@/services/child-care-space-categories"
+import { IndexSerializer, ShowSerializer } from "@/serializers/child-care-space-categories"
+import BaseController from "@/controllers/base-controller"
+
+export class ChildCareSpaceCategoriesController extends BaseController<ChildCareSpaceCategory> {
+  async index() {
+    try {
+      const where = this.buildWhere()
+      const scopes = this.buildFilterScopes()
+      const order = this.buildOrder([["categoryName", "ASC"]])
+      const scopedChildCareSpaceCategories = ChildCareSpaceCategoryPolicy.applyScope(
+        scopes,
+        this.currentUser
+      )
+
+      const totalCount = await scopedChildCareSpaceCategories.count({ where })
+      const childCareSpaceCategories = await scopedChildCareSpaceCategories.findAll({
+        where,
+        order,
+        limit: this.pagination.limit,
+        offset: this.pagination.offset,
+      })
+      const serializedChildCareSpaceCategories = IndexSerializer.perform(
+        childCareSpaceCategories,
+        this.currentUser
+      )
+      return this.response.json({
+        childCareSpaceCategories: serializedChildCareSpaceCategories,
+        totalCount,
+      })
+    } catch (error) {
+      logger.error(`Error fetching Child Care Space categories: ${error}`, { error })
+      return this.response.status(400).json({
+        message: `Error fetching Child Care Space categories: ${error}`,
+      })
+    }
+  }
+
+  async show() {
+    try {
+      const childCareSpaceCategory = await this.loadChildCareSpaceCategory()
+      if (isNil(childCareSpaceCategory)) {
+        return this.response.status(404).json({
+          message: "Child Care Space category not found",
+        })
+      }
+
+      const policy = this.buildPolicy(childCareSpaceCategory)
+      if (!policy.show()) {
+        return this.response.status(403).json({
+          message: "You are not authorized to view this Child Care Space category",
+        })
+      }
+
+      const serializedChildCareSpaceCategory = ShowSerializer.perform(childCareSpaceCategory)
+      return this.response.json({
+        childCareSpaceCategory: serializedChildCareSpaceCategory,
+        policy,
+      })
+    } catch (error) {
+      logger.error(`Error fetching Child Care Space category: ${error}`, { error })
+      return this.response.status(400).json({
+        message: `Error fetching Child Care Space category: ${error}`,
+      })
+    }
+  }
+
+  async create() {
+    try {
+      const policy = this.buildPolicy()
+      if (!policy.create()) {
+        return this.response.status(403).json({
+          message: "You are not authorized to create Child Care Space categories",
+        })
+      }
+
+      const permittedAttributes = policy.permitAttributesForCreate(this.request.body)
+      const childCareSpaceCategory = await CreateService.perform(permittedAttributes)
+      const serializedChildCareSpaceCategory = ShowSerializer.perform(childCareSpaceCategory)
+      return this.response.status(201).json({
+        childCareSpaceCategory: serializedChildCareSpaceCategory,
+        policy,
+      })
+    } catch (error) {
+      logger.error(`Error creating Child Care Space category: ${error}`, { error })
+      return this.response.status(422).json({
+        message: `Error creating Child Care Space category: ${error}`,
+      })
+    }
+  }
+
+  async update() {
+    try {
+      const childCareSpaceCategory = await this.loadChildCareSpaceCategory()
+      if (isNil(childCareSpaceCategory)) {
+        return this.response.status(404).json({
+          message: "Child Care Space category not found",
+        })
+      }
+
+      const policy = this.buildPolicy(childCareSpaceCategory)
+      if (!policy.update()) {
+        return this.response.status(403).json({
+          message: "You are not authorized to update this Child Care Space category",
+        })
+      }
+
+      const permittedAttributes = policy.permitAttributes(this.request.body)
+      const updatedChildCareSpaceCategory = await UpdateService.perform(
+        childCareSpaceCategory,
+        permittedAttributes
+      )
+      const serializedChildCareSpaceCategory = ShowSerializer.perform(updatedChildCareSpaceCategory)
+      return this.response.json({
+        childCareSpaceCategory: serializedChildCareSpaceCategory,
+        policy,
+      })
+    } catch (error) {
+      logger.error(`Error updating Child Care Space category: ${error}`, { error })
+      return this.response.status(422).json({
+        message: `Error updating Child Care Space category: ${error}`,
+      })
+    }
+  }
+
+  async destroy() {
+    try {
+      const childCareSpaceCategory = await this.loadChildCareSpaceCategory()
+      if (isNil(childCareSpaceCategory)) {
+        return this.response.status(404).json({
+          message: "Child Care Space category not found",
+        })
+      }
+
+      const policy = this.buildPolicy(childCareSpaceCategory)
+      if (!policy.destroy()) {
+        return this.response.status(403).json({
+          message: "You are not authorized to delete this Child Care Space category",
+        })
+      }
+
+      await DestroyService.perform(childCareSpaceCategory)
+      return this.response.status(204).send()
+    } catch (error) {
+      logger.error(`Error deleting Child Care Space category: ${error}`, { error })
+      return this.response.status(422).json({
+        message: `Error deleting Child Care Space category: ${error}`,
+      })
+    }
+  }
+
+  private loadChildCareSpaceCategory() {
+    return ChildCareSpaceCategory.findByPk(this.params.childCareSpaceCategoryId)
+  }
+
+  private buildPolicy(
+    childCareSpaceCategory: ChildCareSpaceCategory = ChildCareSpaceCategory.build()
+  ) {
+    return new ChildCareSpaceCategoryPolicy(this.currentUser, childCareSpaceCategory)
+  }
+}
+
+export default ChildCareSpaceCategoriesController
