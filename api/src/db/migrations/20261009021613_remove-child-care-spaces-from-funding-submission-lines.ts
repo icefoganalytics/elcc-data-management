@@ -1,4 +1,5 @@
 import type { Knex } from "knex"
+import { isUndefined } from "lodash"
 
 export async function up(knex: Knex): Promise<void> {
   const [unmigratedConfiguration] = await knex.raw<{ id: number }[]>(
@@ -19,7 +20,7 @@ export async function up(knex: Knex): Promise<void> {
         )
     `
   )
-  if (unmigratedConfiguration !== undefined) {
+  if (!isUndefined(unmigratedConfiguration)) {
     throw new Error(
       `Child Care Spaces configuration ${unmigratedConfiguration.id} has not been migrated.`
     )
@@ -37,7 +38,7 @@ export async function up(knex: Knex): Promise<void> {
         AND JSON_VALUE(worksheet_lines.value, '$.sectionName') = 'Child Care Spaces'
     `
   )
-  if (unmigratedWorksheet !== undefined) {
+  if (!isUndefined(unmigratedWorksheet)) {
     throw new Error(`Child Care Spaces worksheet ${unmigratedWorksheet.id} has not been migrated.`)
   }
 

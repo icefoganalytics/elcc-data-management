@@ -1,4 +1,5 @@
 import type { Knex } from "knex"
+import { isUndefined } from "lodash"
 
 import { up as migrateChildCareSpaces } from "@/db/migrations/20261007174315_migrate-child-care-spaces-from-worksheet-json"
 import {
@@ -13,20 +14,6 @@ const FISCAL_YEAR_LEGACY = "2024/25"
 const APRIL_START = new Date("2024-04-01T00:00:00Z")
 const APRIL_END = new Date("2024-04-30T23:59:59Z")
 
-const migrationFailureCases = [
-  { description: "conflicting ledger values", kind: "conflict" },
-  { description: "an unresolved fiscal period", kind: "unresolved-fiscal-period" },
-  {
-    description: "an unresolved funding submission line",
-    kind: "unresolved-funding-submission-line",
-  },
-  { description: "duplicate source lines", kind: "duplicate-source-lines" },
-  { description: "a malformed source line", kind: "malformed-source-line" },
-  { description: "inconsistent historical totals", kind: "inconsistent-totals" },
-  { description: "lossy occupancy-rate precision", kind: "lossy-occupancy-precision" },
-  { description: "lossy monthly-amount precision", kind: "lossy-monthly-amount-precision" },
-] as const
-
 type IdRow = { id: number }
 type HistoricalWorksheetLine = Record<string, unknown>
 
@@ -36,7 +23,9 @@ async function insertRow(
   attributes: Record<string, unknown>
 ): Promise<number> {
   const [row] = await transaction(tableName).insert(attributes).returning<IdRow[]>("id")
-  if (row === undefined) throw new Error(`Unable to insert fixture row into ${tableName}.`)
+  if (isUndefined(row)) {
+    throw new Error(`Unable to insert fixture row into ${tableName}.`)
+  }
 
   return row.id
 }
@@ -113,8 +102,12 @@ async function findWorksheetLines(transaction: Knex.Transaction, worksheetId: nu
     .select("values")
     .where({ id: worksheetId })
     .first()
-  if (worksheet === undefined) throw new Error(`Worksheet ${worksheetId} was not found.`)
-  return JSON.parse(worksheet.values) as HistoricalWorksheetLine[]
+  if (isUndefined(worksheet)) {
+    throw new Error(`Worksheet ${worksheetId} was not found.`)
+  }
+
+  const worksheetLines: HistoricalWorksheetLine[] = JSON.parse(worksheet.values)
+  return worksheetLines
 }
 
 describe("api/src/db/migrations/20261007174315_migrate-child-care-spaces-from-worksheet-json.ts", () => {
@@ -230,139 +223,477 @@ describe("api/src/db/migrations/20261007174315_migrate-child-care-spaces-from-wo
       })
     })
 
-    test.each(migrationFailureCases)(
-      "when a later worksheet has $description, rolls back earlier worksheet migration",
-      async ({ kind }) => {
-        await withLegacyChildCareSpaceSchema(async (transaction) => {
-          // Arrange
-          const earlierCentreId = await createCentre(transaction)
-          const laterCentreId = await createCentre(transaction)
-          const fiscalPeriodId = await createAprilFiscalPeriod(transaction)
-          const earlierFundingSubmissionLineId = await createFundingSubmissionLine(transaction)
-          const earlierChildCareSpaceLine = {
-            submissionLineId: earlierFundingSubmissionLineId,
-            sectionName: "Child Care Spaces",
-            lineName: "Infants",
-            monthlyAmount: "100.0000",
-            estimatedChildOccupancyRate: "0.5000",
-            actualChildOccupancyRate: "0.2500",
-            estimatedComputedTotal: "50.0000",
-            actualComputedTotal: "25.0000",
-          }
-          const earlierWorksheetLines = [earlierChildCareSpaceLine]
-          const earlierWorksheetId = await createHistoricalWorksheet(
-            transaction,
-            earlierCentreId,
-            earlierWorksheetLines
-          )
+    test("when a later worksheet conflicts with an existing ledger value, rolls back earlier migration", async () => {
+      await withLegacyChildCareSpaceSchema(async (transaction) => {
+        // Arrange
+        const earlierCentreId = await createCentre(transaction)
+        const laterCentreId = await createCentre(transaction)
+        const fiscalPeriodId = await createAprilFiscalPeriod(transaction)
+        const earlierLineId = await createFundingSubmissionLine(transaction)
+        const laterLineId = await createFundingSubmissionLine(transaction, { lineName: "Toddlers" })
+        const earlierWorksheetLine = {
+          submissionLineId: earlierLineId,
+          sectionName: "Child Care Spaces",
+          lineName: "Infants",
+          monthlyAmount: "100.0000",
+          estimatedChildOccupancyRate: "0.5000",
+          actualChildOccupancyRate: "0.2500",
+          estimatedComputedTotal: "50.0000",
+          actualComputedTotal: "25.0000",
+        }
+        const laterWorksheetLine = {
+          submissionLineId: laterLineId,
+          sectionName: "Child Care Spaces",
+          lineName: "Toddlers",
+          monthlyAmount: "100.0000",
+          estimatedChildOccupancyRate: "0.5000",
+          actualChildOccupancyRate: "0.2500",
+          estimatedComputedTotal: "50.0000",
+          actualComputedTotal: "25.0000",
+        }
+        const earlierWorksheetId = await createHistoricalWorksheet(transaction, earlierCentreId, [
+          earlierWorksheetLine,
+        ])
+        const laterWorksheetId = await createHistoricalWorksheet(transaction, laterCentreId, [
+          laterWorksheetLine,
+        ])
+        await createLegacyChildCareSpace(transaction, {
+          centreId: laterCentreId,
+          fiscalPeriodId,
+          fundingSubmissionLineId: laterLineId,
+          lineName: "Toddlers",
+          monthlyAmount: "100.0000",
+          estimatedChildOccupancyRate: "0.7500",
+          actualChildOccupancyRate: "0.2500",
+        })
 
-          const laterFiscalYear =
-            kind === "unresolved-fiscal-period" ? "2023/24" : FISCAL_YEAR_LEGACY
-          let laterFundingSubmissionLineId = 999_999_999
-          if (kind !== "unresolved-funding-submission-line") {
-            laterFundingSubmissionLineId = await createFundingSubmissionLine(transaction, {
-              fiscalYear: laterFiscalYear,
-              lineName: "Toddlers",
-            })
-          }
+        // Act
+        await expect(
+          transaction.transaction((nestedTransaction) => migrateChildCareSpaces(nestedTransaction))
+        ).rejects.toThrow()
 
-          const laterChildCareSpaceLine = {
-            submissionLineId: laterFundingSubmissionLineId,
-            sectionName: "Child Care Spaces",
-            lineName: "Toddlers",
-            monthlyAmount: "100.0000",
-            estimatedChildOccupancyRate: "0.5000",
-            actualChildOccupancyRate: "0.2500",
-            estimatedComputedTotal: "50.0000",
-            actualComputedTotal: "25.0000",
-          }
-          let laterWorksheetLines: HistoricalWorksheetLine[] = [laterChildCareSpaceLine]
-
-          if (kind === "conflict") {
-            await createLegacyChildCareSpace(transaction, {
+        // Assert
+        const earlierWorksheetLines = await findWorksheetLines(transaction, earlierWorksheetId)
+        const laterWorksheetLines = await findWorksheetLines(transaction, laterWorksheetId)
+        const childCareSpaces = await findLegacyChildCareSpaces(transaction)
+        expect({
+          earlierWorksheetLines,
+          laterWorksheetLines,
+          childCareSpaces,
+        }).toEqual({
+          earlierWorksheetLines: [earlierWorksheetLine],
+          laterWorksheetLines: [laterWorksheetLine],
+          childCareSpaces: [
+            expect.objectContaining({
               centreId: laterCentreId,
               fiscalPeriodId,
-              fundingSubmissionLineId: laterFundingSubmissionLineId,
-              lineName: laterChildCareSpaceLine.lineName,
-              monthlyAmount: "100.0000",
-              estimatedChildOccupancyRate: "0.7500",
-              actualChildOccupancyRate: "0.2500",
-            })
-          } else if (kind === "duplicate-source-lines") {
-            laterWorksheetLines = [laterChildCareSpaceLine, laterChildCareSpaceLine]
-          } else if (kind === "malformed-source-line") {
-            const malformedChildCareSpaceLine: Record<string, unknown> = {
-              ...laterChildCareSpaceLine,
-            }
-            delete malformedChildCareSpaceLine.monthlyAmount
-            laterWorksheetLines = [malformedChildCareSpaceLine]
-          } else if (kind === "inconsistent-totals") {
-            laterWorksheetLines = [
-              { ...laterChildCareSpaceLine, estimatedComputedTotal: "49.0000" },
-            ]
-          } else if (kind === "lossy-occupancy-precision") {
-            laterWorksheetLines = [
-              {
-                ...laterChildCareSpaceLine,
-                estimatedChildOccupancyRate: "0.12345",
-                estimatedComputedTotal: "12.3450",
-              },
-            ]
-          } else if (kind === "lossy-monthly-amount-precision") {
-            laterWorksheetLines = [{ ...laterChildCareSpaceLine, monthlyAmount: "100.00001" }]
-          }
-
-          const laterWorksheetId = await createHistoricalWorksheet(
-            transaction,
-            laterCentreId,
-            laterWorksheetLines,
-            laterFiscalYear
-          )
-
-          // Act
-          // marlens-test-alignment: allow-multiple-expects -- failure and complete rollback are independent observable contracts.
-          await expect(
-            transaction.transaction((nestedTransaction) =>
-              migrateChildCareSpaces(nestedTransaction)
-            )
-          ).rejects.toThrow(`worksheet ${laterWorksheetId}`)
-
-          // Assert
-          const remainedEarlierWorksheetLines = await findWorksheetLines(
-            transaction,
-            earlierWorksheetId
-          )
-          const remainedLaterWorksheetLines = await findWorksheetLines(
-            transaction,
-            laterWorksheetId
-          )
-          const childCareSpaces = await findLegacyChildCareSpaces(transaction)
-          const expectedChildCareSpaces =
-            kind === "conflict"
-              ? [
-                  expect.objectContaining({
-                    centreId: laterCentreId,
-                    fiscalPeriodId,
-                    fundingSubmissionLineId: laterFundingSubmissionLineId,
-                    monthlyAmount: "100",
-                    estimatedChildOccupancyRate: "0.75",
-                    actualChildOccupancyRate: "0.25",
-                    estimatedComputedTotal: "75",
-                    actualComputedTotal: "25",
-                  }),
-                ]
-              : []
-          expect({
-            earlierWorksheetLines: remainedEarlierWorksheetLines,
-            laterWorksheetLines: remainedLaterWorksheetLines,
-            childCareSpaces,
-          }).toEqual({
-            earlierWorksheetLines: [earlierChildCareSpaceLine],
-            laterWorksheetLines,
-            childCareSpaces: expectedChildCareSpaces,
-          })
+              fundingSubmissionLineId: laterLineId,
+              monthlyAmount: "100",
+              estimatedChildOccupancyRate: "0.75",
+              actualChildOccupancyRate: "0.25",
+              estimatedComputedTotal: "75",
+              actualComputedTotal: "25",
+            }),
+          ],
         })
-      }
-    )
+      })
+    })
+
+    test("when a later worksheet has no matching fiscal period, rolls back earlier migration", async () => {
+      await withLegacyChildCareSpaceSchema(async (transaction) => {
+        // Arrange
+        const earlierCentreId = await createCentre(transaction)
+        const laterCentreId = await createCentre(transaction)
+        await createAprilFiscalPeriod(transaction)
+        const earlierLineId = await createFundingSubmissionLine(transaction)
+        const laterLineId = await createFundingSubmissionLine(transaction, {
+          fiscalYear: "2023/24",
+          lineName: "Toddlers",
+        })
+        const earlierWorksheetLine = {
+          submissionLineId: earlierLineId,
+          sectionName: "Child Care Spaces",
+          lineName: "Infants",
+          monthlyAmount: "100.0000",
+          estimatedChildOccupancyRate: "0.5000",
+          actualChildOccupancyRate: "0.2500",
+          estimatedComputedTotal: "50.0000",
+          actualComputedTotal: "25.0000",
+        }
+        const laterWorksheetLine = {
+          submissionLineId: laterLineId,
+          sectionName: "Child Care Spaces",
+          lineName: "Toddlers",
+          monthlyAmount: "100.0000",
+          estimatedChildOccupancyRate: "0.5000",
+          actualChildOccupancyRate: "0.2500",
+          estimatedComputedTotal: "50.0000",
+          actualComputedTotal: "25.0000",
+        }
+        const earlierWorksheetId = await createHistoricalWorksheet(transaction, earlierCentreId, [
+          earlierWorksheetLine,
+        ])
+        const laterWorksheetId = await createHistoricalWorksheet(
+          transaction,
+          laterCentreId,
+          [laterWorksheetLine],
+          "2023/24"
+        )
+
+        // Act
+        await expect(
+          transaction.transaction((nestedTransaction) => migrateChildCareSpaces(nestedTransaction))
+        ).rejects.toThrow()
+
+        // Assert
+        const earlierWorksheetLines = await findWorksheetLines(transaction, earlierWorksheetId)
+        const laterWorksheetLines = await findWorksheetLines(transaction, laterWorksheetId)
+        const childCareSpaces = await findLegacyChildCareSpaces(transaction)
+        expect({
+          earlierWorksheetLines,
+          laterWorksheetLines,
+          childCareSpaces,
+        }).toEqual({
+          earlierWorksheetLines: [earlierWorksheetLine],
+          laterWorksheetLines: [laterWorksheetLine],
+          childCareSpaces: [],
+        })
+      })
+    })
+
+    test("when a later worksheet references a missing submission line, rolls back earlier migration", async () => {
+      await withLegacyChildCareSpaceSchema(async (transaction) => {
+        // Arrange
+        const earlierCentreId = await createCentre(transaction)
+        const laterCentreId = await createCentre(transaction)
+        await createAprilFiscalPeriod(transaction)
+        const earlierLineId = await createFundingSubmissionLine(transaction)
+        const earlierWorksheetLine = {
+          submissionLineId: earlierLineId,
+          sectionName: "Child Care Spaces",
+          lineName: "Infants",
+          monthlyAmount: "100.0000",
+          estimatedChildOccupancyRate: "0.5000",
+          actualChildOccupancyRate: "0.2500",
+          estimatedComputedTotal: "50.0000",
+          actualComputedTotal: "25.0000",
+        }
+        const laterWorksheetLine = {
+          submissionLineId: 999_999_999,
+          sectionName: "Child Care Spaces",
+          lineName: "Toddlers",
+          monthlyAmount: "100.0000",
+          estimatedChildOccupancyRate: "0.5000",
+          actualChildOccupancyRate: "0.2500",
+          estimatedComputedTotal: "50.0000",
+          actualComputedTotal: "25.0000",
+        }
+        const earlierWorksheetId = await createHistoricalWorksheet(transaction, earlierCentreId, [
+          earlierWorksheetLine,
+        ])
+        const laterWorksheetId = await createHistoricalWorksheet(transaction, laterCentreId, [
+          laterWorksheetLine,
+        ])
+
+        // Act
+        await expect(
+          transaction.transaction((nestedTransaction) => migrateChildCareSpaces(nestedTransaction))
+        ).rejects.toThrow()
+
+        // Assert
+        const earlierWorksheetLines = await findWorksheetLines(transaction, earlierWorksheetId)
+        const laterWorksheetLines = await findWorksheetLines(transaction, laterWorksheetId)
+        const childCareSpaces = await findLegacyChildCareSpaces(transaction)
+        expect({
+          earlierWorksheetLines,
+          laterWorksheetLines,
+          childCareSpaces,
+        }).toEqual({
+          earlierWorksheetLines: [earlierWorksheetLine],
+          laterWorksheetLines: [laterWorksheetLine],
+          childCareSpaces: [],
+        })
+      })
+    })
+
+    test("when a later worksheet repeats a source line, rolls back earlier migration", async () => {
+      await withLegacyChildCareSpaceSchema(async (transaction) => {
+        // Arrange
+        const earlierCentreId = await createCentre(transaction)
+        const laterCentreId = await createCentre(transaction)
+        await createAprilFiscalPeriod(transaction)
+        const earlierLineId = await createFundingSubmissionLine(transaction)
+        const laterLineId = await createFundingSubmissionLine(transaction, { lineName: "Toddlers" })
+        const earlierWorksheetLine = {
+          submissionLineId: earlierLineId,
+          sectionName: "Child Care Spaces",
+          lineName: "Infants",
+          monthlyAmount: "100.0000",
+          estimatedChildOccupancyRate: "0.5000",
+          actualChildOccupancyRate: "0.2500",
+          estimatedComputedTotal: "50.0000",
+          actualComputedTotal: "25.0000",
+        }
+        const laterWorksheetLine = {
+          submissionLineId: laterLineId,
+          sectionName: "Child Care Spaces",
+          lineName: "Toddlers",
+          monthlyAmount: "100.0000",
+          estimatedChildOccupancyRate: "0.5000",
+          actualChildOccupancyRate: "0.2500",
+          estimatedComputedTotal: "50.0000",
+          actualComputedTotal: "25.0000",
+        }
+        const earlierWorksheetId = await createHistoricalWorksheet(transaction, earlierCentreId, [
+          earlierWorksheetLine,
+        ])
+        const laterWorksheetId = await createHistoricalWorksheet(transaction, laterCentreId, [
+          laterWorksheetLine,
+          laterWorksheetLine,
+        ])
+
+        // Act
+        await expect(
+          transaction.transaction((nestedTransaction) => migrateChildCareSpaces(nestedTransaction))
+        ).rejects.toThrow()
+
+        // Assert
+        const earlierWorksheetLines = await findWorksheetLines(transaction, earlierWorksheetId)
+        const laterWorksheetLines = await findWorksheetLines(transaction, laterWorksheetId)
+        const childCareSpaces = await findLegacyChildCareSpaces(transaction)
+        expect({
+          earlierWorksheetLines,
+          laterWorksheetLines,
+          childCareSpaces,
+        }).toEqual({
+          earlierWorksheetLines: [earlierWorksheetLine],
+          laterWorksheetLines: [laterWorksheetLine, laterWorksheetLine],
+          childCareSpaces: [],
+        })
+      })
+    })
+
+    test("when a later worksheet has a malformed source line, rolls back earlier migration", async () => {
+      await withLegacyChildCareSpaceSchema(async (transaction) => {
+        // Arrange
+        const earlierCentreId = await createCentre(transaction)
+        const laterCentreId = await createCentre(transaction)
+        await createAprilFiscalPeriod(transaction)
+        const earlierLineId = await createFundingSubmissionLine(transaction)
+        const laterLineId = await createFundingSubmissionLine(transaction, { lineName: "Toddlers" })
+        const earlierWorksheetLine = {
+          submissionLineId: earlierLineId,
+          sectionName: "Child Care Spaces",
+          lineName: "Infants",
+          monthlyAmount: "100.0000",
+          estimatedChildOccupancyRate: "0.5000",
+          actualChildOccupancyRate: "0.2500",
+          estimatedComputedTotal: "50.0000",
+          actualComputedTotal: "25.0000",
+        }
+        const malformedLaterWorksheetLine: Record<string, unknown> = {
+          submissionLineId: laterLineId,
+          sectionName: "Child Care Spaces",
+          lineName: "Toddlers",
+          estimatedChildOccupancyRate: "0.5000",
+          actualChildOccupancyRate: "0.2500",
+          estimatedComputedTotal: "50.0000",
+          actualComputedTotal: "25.0000",
+        }
+        const earlierWorksheetId = await createHistoricalWorksheet(transaction, earlierCentreId, [
+          earlierWorksheetLine,
+        ])
+        const laterWorksheetId = await createHistoricalWorksheet(transaction, laterCentreId, [
+          malformedLaterWorksheetLine,
+        ])
+
+        // Act
+        await expect(
+          transaction.transaction((nestedTransaction) => migrateChildCareSpaces(nestedTransaction))
+        ).rejects.toThrow()
+
+        // Assert
+        const earlierWorksheetLines = await findWorksheetLines(transaction, earlierWorksheetId)
+        const laterWorksheetLines = await findWorksheetLines(transaction, laterWorksheetId)
+        const childCareSpaces = await findLegacyChildCareSpaces(transaction)
+        expect({
+          earlierWorksheetLines,
+          laterWorksheetLines,
+          childCareSpaces,
+        }).toEqual({
+          earlierWorksheetLines: [earlierWorksheetLine],
+          laterWorksheetLines: [malformedLaterWorksheetLine],
+          childCareSpaces: [],
+        })
+      })
+    })
+
+    test("when a later worksheet has inconsistent historical totals, rolls back earlier migration", async () => {
+      await withLegacyChildCareSpaceSchema(async (transaction) => {
+        // Arrange
+        const earlierCentreId = await createCentre(transaction)
+        const laterCentreId = await createCentre(transaction)
+        await createAprilFiscalPeriod(transaction)
+        const earlierLineId = await createFundingSubmissionLine(transaction)
+        const laterLineId = await createFundingSubmissionLine(transaction, { lineName: "Toddlers" })
+        const earlierWorksheetLine = {
+          submissionLineId: earlierLineId,
+          sectionName: "Child Care Spaces",
+          lineName: "Infants",
+          monthlyAmount: "100.0000",
+          estimatedChildOccupancyRate: "0.5000",
+          actualChildOccupancyRate: "0.2500",
+          estimatedComputedTotal: "50.0000",
+          actualComputedTotal: "25.0000",
+        }
+        const laterWorksheetLine = {
+          submissionLineId: laterLineId,
+          sectionName: "Child Care Spaces",
+          lineName: "Toddlers",
+          monthlyAmount: "100.0000",
+          estimatedChildOccupancyRate: "0.5000",
+          actualChildOccupancyRate: "0.2500",
+          estimatedComputedTotal: "49.0000",
+          actualComputedTotal: "25.0000",
+        }
+        const earlierWorksheetId = await createHistoricalWorksheet(transaction, earlierCentreId, [
+          earlierWorksheetLine,
+        ])
+        const laterWorksheetId = await createHistoricalWorksheet(transaction, laterCentreId, [
+          laterWorksheetLine,
+        ])
+
+        // Act
+        await expect(
+          transaction.transaction((nestedTransaction) => migrateChildCareSpaces(nestedTransaction))
+        ).rejects.toThrow()
+
+        // Assert
+        const earlierWorksheetLines = await findWorksheetLines(transaction, earlierWorksheetId)
+        const laterWorksheetLines = await findWorksheetLines(transaction, laterWorksheetId)
+        const childCareSpaces = await findLegacyChildCareSpaces(transaction)
+        expect({
+          earlierWorksheetLines,
+          laterWorksheetLines,
+          childCareSpaces,
+        }).toEqual({
+          earlierWorksheetLines: [earlierWorksheetLine],
+          laterWorksheetLines: [laterWorksheetLine],
+          childCareSpaces: [],
+        })
+      })
+    })
+
+    test("when a later worksheet has lossy occupancy precision, rolls back earlier migration", async () => {
+      await withLegacyChildCareSpaceSchema(async (transaction) => {
+        // Arrange
+        const earlierCentreId = await createCentre(transaction)
+        const laterCentreId = await createCentre(transaction)
+        await createAprilFiscalPeriod(transaction)
+        const earlierLineId = await createFundingSubmissionLine(transaction)
+        const laterLineId = await createFundingSubmissionLine(transaction, { lineName: "Toddlers" })
+        const earlierWorksheetLine = {
+          submissionLineId: earlierLineId,
+          sectionName: "Child Care Spaces",
+          lineName: "Infants",
+          monthlyAmount: "100.0000",
+          estimatedChildOccupancyRate: "0.5000",
+          actualChildOccupancyRate: "0.2500",
+          estimatedComputedTotal: "50.0000",
+          actualComputedTotal: "25.0000",
+        }
+        const laterWorksheetLine = {
+          submissionLineId: laterLineId,
+          sectionName: "Child Care Spaces",
+          lineName: "Toddlers",
+          monthlyAmount: "100.0000",
+          estimatedChildOccupancyRate: "0.12345",
+          actualChildOccupancyRate: "0.2500",
+          estimatedComputedTotal: "12.3450",
+          actualComputedTotal: "25.0000",
+        }
+        const earlierWorksheetId = await createHistoricalWorksheet(transaction, earlierCentreId, [
+          earlierWorksheetLine,
+        ])
+        const laterWorksheetId = await createHistoricalWorksheet(transaction, laterCentreId, [
+          laterWorksheetLine,
+        ])
+
+        // Act
+        await expect(
+          transaction.transaction((nestedTransaction) => migrateChildCareSpaces(nestedTransaction))
+        ).rejects.toThrow()
+
+        // Assert
+        const earlierWorksheetLines = await findWorksheetLines(transaction, earlierWorksheetId)
+        const laterWorksheetLines = await findWorksheetLines(transaction, laterWorksheetId)
+        const childCareSpaces = await findLegacyChildCareSpaces(transaction)
+        expect({
+          earlierWorksheetLines,
+          laterWorksheetLines,
+          childCareSpaces,
+        }).toEqual({
+          earlierWorksheetLines: [earlierWorksheetLine],
+          laterWorksheetLines: [laterWorksheetLine],
+          childCareSpaces: [],
+        })
+      })
+    })
+
+    test("when a later worksheet has lossy monthly-amount precision, rolls back earlier migration", async () => {
+      await withLegacyChildCareSpaceSchema(async (transaction) => {
+        // Arrange
+        const earlierCentreId = await createCentre(transaction)
+        const laterCentreId = await createCentre(transaction)
+        await createAprilFiscalPeriod(transaction)
+        const earlierLineId = await createFundingSubmissionLine(transaction)
+        const laterLineId = await createFundingSubmissionLine(transaction, { lineName: "Toddlers" })
+        const earlierWorksheetLine = {
+          submissionLineId: earlierLineId,
+          sectionName: "Child Care Spaces",
+          lineName: "Infants",
+          monthlyAmount: "100.0000",
+          estimatedChildOccupancyRate: "0.5000",
+          actualChildOccupancyRate: "0.2500",
+          estimatedComputedTotal: "50.0000",
+          actualComputedTotal: "25.0000",
+        }
+        const laterWorksheetLine = {
+          submissionLineId: laterLineId,
+          sectionName: "Child Care Spaces",
+          lineName: "Toddlers",
+          monthlyAmount: "100.00001",
+          estimatedChildOccupancyRate: "0.5000",
+          actualChildOccupancyRate: "0.2500",
+          estimatedComputedTotal: "50.0000",
+          actualComputedTotal: "25.0000",
+        }
+        const earlierWorksheetId = await createHistoricalWorksheet(transaction, earlierCentreId, [
+          earlierWorksheetLine,
+        ])
+        const laterWorksheetId = await createHistoricalWorksheet(transaction, laterCentreId, [
+          laterWorksheetLine,
+        ])
+
+        // Act
+        await expect(
+          transaction.transaction((nestedTransaction) => migrateChildCareSpaces(nestedTransaction))
+        ).rejects.toThrow()
+
+        // Assert
+        const earlierWorksheetLines = await findWorksheetLines(transaction, earlierWorksheetId)
+        const laterWorksheetLines = await findWorksheetLines(transaction, laterWorksheetId)
+        const childCareSpaces = await findLegacyChildCareSpaces(transaction)
+        expect({
+          earlierWorksheetLines,
+          laterWorksheetLines,
+          childCareSpaces,
+        }).toEqual({
+          earlierWorksheetLines: [earlierWorksheetLine],
+          laterWorksheetLines: [laterWorksheetLine],
+          childCareSpaces: [],
+        })
+      })
+    })
   })
 })

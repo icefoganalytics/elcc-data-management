@@ -1,6 +1,6 @@
 import type { Knex } from "knex"
 import Big from "big.js"
-import { isNil } from "lodash"
+import { isNil, isUndefined } from "lodash"
 
 const CHILD_CARE_SPACES_SECTION_NAME = "Child Care Spaces"
 const BATCH_SIZE = 1000
@@ -59,17 +59,21 @@ export async function up(knex: Knex): Promise<void> {
       `,
       { offset, batchSize: BATCH_SIZE }
     )
-    if (fundingSubmissionLineJsons.length === 0) return
+    if (fundingSubmissionLineJsons.length === 0) {
+      return
+    }
 
     for (const fundingSubmissionLineJson of fundingSubmissionLineJsons) {
       const lines: FundingLineValue[] = JSON.parse(fundingSubmissionLineJson.values)
       const childCareSpaces = lines.filter(
         (line) => line.sectionName === CHILD_CARE_SPACES_SECTION_NAME
       )
-      if (childCareSpaces.length === 0) continue
+      if (childCareSpaces.length === 0) {
+        continue
+      }
 
       const fiscalPeriodId = await findFiscalPeriodId(knex, fundingSubmissionLineJson)
-      if (isNil(fiscalPeriodId)) {
+      if (isUndefined(fiscalPeriodId)) {
         throw new Error(
           `No fiscal period found for ${fundingSubmissionLineJson.fiscalYearLegacy} ${fundingSubmissionLineJson.monthNameCapitalized}; cannot migrate Child Care Spaces for worksheet ${fundingSubmissionLineJson.id}.`
         )
@@ -86,6 +90,7 @@ export async function up(knex: Knex): Promise<void> {
           `Unable to migrate all Child Care Spaces values for worksheet ${fundingSubmissionLineJson.id}; source values are unresolved or conflict with existing ledger data.`
         )
       }
+
       const remainingLines = lines.filter(
         (line) => line.sectionName !== CHILD_CARE_SPACES_SECTION_NAME
       )
@@ -130,7 +135,9 @@ async function migrateChildCareSpaces(
 
   for (const childCareSpace of childCareSpaces) {
     const childCareSpaceAttributes = attributesForChildCareSpace(childCareSpace)
-    if (isNil(childCareSpaceAttributes)) return false
+    if (isUndefined(childCareSpaceAttributes)) {
+      return false
+    }
 
     if (fundingSubmissionLineIds.has(childCareSpaceAttributes.fundingSubmissionLineId)) {
       console.warn(
@@ -146,7 +153,9 @@ async function migrateChildCareSpaces(
   for (const childCareSpaceAttributes of childCareSpacesAttributes) {
     const fundingSubmissionLineId = childCareSpaceAttributes.fundingSubmissionLineId
     const fundingSubmissionLine = await findFundingSubmissionLine(knex, fundingSubmissionLineId)
-    if (isNil(fundingSubmissionLine)) return false
+    if (isUndefined(fundingSubmissionLine)) {
+      return false
+    }
   }
 
   const childCareSpacesToInsert: ChildCareSpaceAttributes[] = []
@@ -244,7 +253,7 @@ async function findFundingSubmissionLine(
     `,
     { fundingSubmissionLineId }
   )
-  if (isNil(fundingSubmissionLine)) {
+  if (isUndefined(fundingSubmissionLine)) {
     console.warn(
       `No funding submission line found for ID ${fundingSubmissionLineId}; retaining source JSON values.`
     )

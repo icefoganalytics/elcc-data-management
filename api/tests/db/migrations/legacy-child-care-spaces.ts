@@ -1,5 +1,6 @@
 import Big from "big.js"
 import knex, { type Knex } from "knex"
+import { isUndefined } from "lodash"
 
 import { buildKnexConfig } from "@/db/db-migration-client"
 import { up as createLegacyChildCareSpaces } from "@/db/migrations/20261007174312_create-child-care-spaces-table"
@@ -39,7 +40,9 @@ export async function withLegacyChildCareSpaceSchema(
         await transaction.rollback(rollback)
       })
     } catch (error) {
-      if (error !== rollback) throw error
+      if (error !== rollback) {
+        throw error
+      }
     }
   } finally {
     await transactionClient.destroy()
@@ -69,7 +72,9 @@ export async function createLegacyChildCareSpace(
       actual_computed_total: actualComputedTotal,
     })
     .returning<{ id: number }[]>("id")
-  if (row === undefined) throw new Error("Historical ledger fixture was not inserted.")
+  if (isUndefined(row)) {
+    throw new Error("Historical ledger fixture was not inserted.")
+  }
 
   return { id: row.id }
 }

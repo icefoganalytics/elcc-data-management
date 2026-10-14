@@ -1,4 +1,5 @@
 import type { Knex } from "knex"
+import { isUndefined } from "lodash"
 
 const ADMINISTRATION_SECTION_NAME = "Administration (10% of Spaces)"
 const QUALITY_ENHANCEMENT_PROGRAM_SECTION_NAME = "Quality Enhancement Program"
@@ -61,13 +62,13 @@ export async function up(knex: Knex): Promise<void> {
   await backfillWorksheetMetadata(knex)
 }
 
-type HistoricalConfigCategoryMatch = {
+type HistoricalConfigurationCategoryMatch = {
   submissionLineId: number
   categoryId: number
 }
 
 async function backfillHistoricalConfigurationAssociations(knex: Knex) {
-  const matches = await knex.raw<HistoricalConfigCategoryMatch[]>(
+  const matches = await knex.raw<HistoricalConfigurationCategoryMatch[]>(
     `
       SELECT DISTINCT
         funding_submission_lines.id AS submissionLineId,
@@ -119,7 +120,7 @@ async function backfillHistoricalConfigurationAssociations(knex: Knex) {
   }
 
   const ambiguousLineId = [...categoryIdsByLineId].find(([, categoryIds]) => categoryIds.size > 1)
-  if (ambiguousLineId !== undefined) {
+  if (!isUndefined(ambiguousLineId)) {
     throw new Error(
       `Funding submission line ${ambiguousLineId[0]} matches multiple historical child care space categories.`
     )
@@ -127,7 +128,9 @@ async function backfillHistoricalConfigurationAssociations(knex: Knex) {
 
   for (const [submissionLineId, categoryIds] of categoryIdsByLineId) {
     const categoryId = Array.from(categoryIds)[0]
-    if (categoryId === undefined) continue
+    if (isUndefined(categoryId)) {
+      continue
+    }
 
     const [existingAssociation] = await knex.raw<{ categoryId: number | null }[]>(
       `
@@ -141,7 +144,7 @@ async function backfillHistoricalConfigurationAssociations(knex: Knex) {
       { submissionLineId }
     )
     if (
-      existingAssociation !== undefined &&
+      !isUndefined(existingAssociation) &&
       existingAssociation.categoryId !== null &&
       existingAssociation.categoryId !== categoryId
     ) {
@@ -192,7 +195,7 @@ async function assertUnambiguousConfigurationMatches(knex: Knex) {
       qualityEnhancementProgram: QUALITY_ENHANCEMENT_PROGRAM_SECTION_NAME,
     }
   )
-  if (ambiguousLine !== undefined) {
+  if (!isUndefined(ambiguousLine)) {
     throw new Error(
       `Funding submission line ${ambiguousLine.id} matches multiple child care space categories.`
     )
@@ -200,7 +203,7 @@ async function assertUnambiguousConfigurationMatches(knex: Knex) {
 }
 
 async function backfillWorksheetMetadata(knex: Knex) {
-  const configCategoryIds = await knex.raw<{ id: number; categoryId: number }[]>(
+  const configurationCategoryIds = await knex.raw<{ id: number; categoryId: number }[]>(
     `
       SELECT
         id,
@@ -212,7 +215,7 @@ async function backfillWorksheetMetadata(knex: Knex) {
     `
   )
   const categoryIdBySubmissionLineId = new Map(
-    configCategoryIds.map(({ id, categoryId }) => [id, categoryId])
+    configurationCategoryIds.map(({ id, categoryId }) => [id, categoryId])
   )
 
   for (let offset = 0; ; offset += BATCH_SIZE) {
@@ -237,7 +240,9 @@ async function backfillWorksheetMetadata(knex: Knex) {
       `,
       { offset, batchSize: BATCH_SIZE }
     )
-    if (worksheets.length === 0) return
+    if (worksheets.length === 0) {
+      return
+    }
 
     for (const worksheet of worksheets) {
       const categoriesInMonth = await categoryIdsUsedByCentreMonth(knex, worksheet)
@@ -246,7 +251,7 @@ async function backfillWorksheetMetadata(knex: Knex) {
 
       for (const line of values) {
         if (
-          line.submissionLineId === undefined ||
+          isUndefined(line.submissionLineId) ||
           (line.sectionName !== ADMINISTRATION_SECTION_NAME &&
             line.sectionName !== QUALITY_ENHANCEMENT_PROGRAM_SECTION_NAME)
         ) {
@@ -255,7 +260,7 @@ async function backfillWorksheetMetadata(knex: Knex) {
 
         const categoryId = categoryIdBySubmissionLineId.get(line.submissionLineId)
         if (
-          categoryId === undefined ||
+          isUndefined(categoryId) ||
           !categoriesInMonth.some((category) => category.categoryId === categoryId)
         ) {
           continue
@@ -265,7 +270,9 @@ async function backfillWorksheetMetadata(knex: Knex) {
         changed = true
       }
 
-      if (!changed) continue
+      if (!changed) {
+        continue
+      }
 
       await knex("funding_submission_line_jsons")
         .where({ id: worksheet.id })
