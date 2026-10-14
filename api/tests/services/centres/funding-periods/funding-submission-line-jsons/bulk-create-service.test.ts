@@ -1,0 +1,297 @@
+import {
+  centreFactory,
+  fiscalPeriodFactory,
+  fundingPeriodFactory,
+  fundingRegionFactory,
+  fundingSubmissionLineFactory,
+} from "@/factories"
+
+import BulkCreateService from "@/services/centres/funding-periods/funding-submission-line-jsons/bulk-create-service"
+
+describe("api/src/services/centres/funding-periods/funding-submission-line-jsons/bulk-create-service.ts", () => {
+  describe("BulkCreateService", () => {
+    describe("#perform", () => {
+      test("when provided with a centre, funding period, and submission lines, creates funding submission line jsons for all months", async () => {
+        // Arrange
+        const centre = await centreFactory.create()
+        const fundingPeriod = await fundingPeriodFactory.create({
+          fiscalYear: "2024-2025",
+          fromDate: new Date("2024-04-01"),
+          toDate: new Date("2024-05-30"),
+        })
+        await fiscalPeriodFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          fiscalYear: "2024-25",
+          dateStart: new Date("2024-04-01"),
+        })
+        await fiscalPeriodFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          fiscalYear: "2024-25",
+          dateStart: new Date("2024-05-01"),
+        })
+        const fundingSubmissionLine1 = await fundingSubmissionLineFactory.create({
+          fiscalYear: "2024/25",
+          sectionName: "Quality Enhancement Program",
+          lineName: "Infants",
+          monthlyAmount: "100",
+        })
+        const fundingSubmissionLine2 = await fundingSubmissionLineFactory.create({
+          fiscalYear: "2024/25",
+          sectionName: "Administration (10% of Spaces)",
+          lineName: "Toddlers",
+          monthlyAmount: "200",
+        })
+
+        // Act
+        const fundingSubmissionLineJsons = await BulkCreateService.perform(centre, fundingPeriod)
+
+        // Assert
+        expect(fundingSubmissionLineJsons).toEqual([
+          expect.objectContaining({
+            centreId: centre.id,
+            fiscalYear: "2024/25",
+            dateName: "April",
+            dateStart: new Date("2024-04-01T00:00:00.000Z"),
+            dateEnd: new Date("2024-04-30T23:59:59.000Z"),
+            values: JSON.stringify([
+              {
+                submissionLineId: fundingSubmissionLine1.id,
+                sectionName: "Quality Enhancement Program",
+                lineName: "Infants",
+                monthlyAmount: "100",
+                estimatedChildOccupancyRate: "0",
+                actualChildOccupancyRate: "0",
+                estimatedComputedTotal: "0",
+                actualComputedTotal: "0",
+              },
+              {
+                submissionLineId: fundingSubmissionLine2.id,
+                sectionName: "Administration (10% of Spaces)",
+                lineName: "Toddlers",
+                monthlyAmount: "200",
+                estimatedChildOccupancyRate: "0",
+                actualChildOccupancyRate: "0",
+                estimatedComputedTotal: "0",
+                actualComputedTotal: "0",
+              },
+            ]),
+          }),
+          expect.objectContaining({
+            centreId: centre.id,
+            fiscalYear: "2024/25",
+            dateName: "May",
+            dateStart: new Date("2024-05-01T00:00:00.000Z"),
+            dateEnd: new Date("2024-05-31T23:59:59.000Z"),
+            values: JSON.stringify([
+              {
+                submissionLineId: fundingSubmissionLine1.id,
+                sectionName: "Quality Enhancement Program",
+                lineName: "Infants",
+                monthlyAmount: "100",
+                estimatedChildOccupancyRate: "0",
+                actualChildOccupancyRate: "0",
+                estimatedComputedTotal: "0",
+                actualComputedTotal: "0",
+              },
+              {
+                submissionLineId: fundingSubmissionLine2.id,
+                sectionName: "Administration (10% of Spaces)",
+                lineName: "Toddlers",
+                monthlyAmount: "200",
+                estimatedChildOccupancyRate: "0",
+                actualChildOccupancyRate: "0",
+                estimatedComputedTotal: "0",
+                actualComputedTotal: "0",
+              },
+            ]),
+          }),
+        ])
+      })
+
+      test("when there are no fiscal periods for funding period, errors informatively", async () => {
+        // Arrange
+        const centre = await centreFactory.create()
+        const fundingPeriod = await fundingPeriodFactory.create({
+          fiscalYear: "2024-2025",
+          fromDate: new Date("2024-04-01"),
+          toDate: new Date("2024-05-30"),
+        })
+        await fundingSubmissionLineFactory.create({
+          fiscalYear: "2024/25",
+          sectionName: "Quality Enhancement Program",
+          lineName: "Infants",
+          monthlyAmount: "100",
+        })
+        await fundingSubmissionLineFactory.create({
+          fiscalYear: "2024/25",
+          sectionName: "Administration (10% of Spaces)",
+          lineName: "Toddlers",
+          monthlyAmount: "200",
+        })
+
+        // Act
+        const bulkCreatePromise = BulkCreateService.perform(centre, fundingPeriod)
+
+        // Assert
+        await expect(bulkCreatePromise).rejects.toThrow(
+          "No fiscal periods found for the given funding period"
+        )
+      })
+
+      test("when funding submission lines are missing, errors informatively", async () => {
+        // Arrange
+        const centre = await centreFactory.create()
+        const fundingPeriod = await fundingPeriodFactory.create({
+          fiscalYear: "2024-2025",
+          fromDate: new Date("2024-04-01"),
+          toDate: new Date("2024-05-30"),
+        })
+        await fiscalPeriodFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          fiscalYear: "2024-25",
+          dateStart: new Date("2024-04-01"),
+        })
+        await fiscalPeriodFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          fiscalYear: "2024-25",
+          dateStart: new Date("2024-05-01"),
+        })
+
+        // Act
+        const bulkCreatePromise = BulkCreateService.perform(centre, fundingPeriod)
+
+        // Assert
+        await expect(bulkCreatePromise).rejects.toThrow(
+          "No funding submission lines found for the funding period."
+        )
+      })
+
+      describe("hot meal enhancement", () => {
+        beforeEach(() => {
+          vi.useFakeTimers()
+        })
+
+        afterEach(() => {
+          vi.useRealTimers()
+        })
+
+        test("when provided with a centre with hot meal enabled and Quality Enhancement Program sections, applies enhancement", async () => {
+          // Arrange
+          vi.setSystemTime(new Date("2025-04-01"))
+
+          const fundingRegion = await fundingRegionFactory.create({
+            hotMealIncrementAmount: "32.06",
+          })
+          const centre = await centreFactory.create({
+            fundingRegionId: fundingRegion.id,
+            hotMeal: true,
+          })
+          const fundingPeriod = await fundingPeriodFactory.create({
+            fiscalYear: "2025-2026",
+            fromDate: new Date("2025-04-01"),
+            toDate: new Date("2025-05-30"),
+          })
+          await fiscalPeriodFactory.create({
+            fundingPeriodId: fundingPeriod.id,
+            fiscalYear: "2025-26",
+            dateStart: new Date("2025-04-01"),
+          })
+          const qualityLine = await fundingSubmissionLineFactory.create({
+            fiscalYear: "2025/26",
+            sectionName: "Quality Enhancement Program",
+            lineName: "Quality Enhancement",
+            monthlyAmount: "100.00",
+          })
+
+          // Act
+          const fundingSubmissionLineJsons = await BulkCreateService.perform(centre, fundingPeriod)
+
+          // Assert
+          expect(fundingSubmissionLineJsons).toEqual([
+            expect.objectContaining({
+              centreId: centre.id,
+              fiscalYear: "2025/26",
+              dateName: "April",
+              dateStart: new Date("2025-04-01T00:00:00.000Z"),
+              dateEnd: new Date("2025-04-30T23:59:59.000Z"),
+              values: JSON.stringify([
+                {
+                  submissionLineId: qualityLine.id,
+                  sectionName: "Quality Enhancement Program",
+                  lineName: "Quality Enhancement",
+                  monthlyAmount: "132.0600",
+                  estimatedChildOccupancyRate: "0",
+                  actualChildOccupancyRate: "0",
+                  estimatedComputedTotal: "0",
+                  actualComputedTotal: "0",
+                  programQualityEnhancements: {
+                    preEnhancementAmount: "100",
+                    hot_meal: {
+                      amount: "32.06",
+                      appliedAt: "2025-04-01T00:00:00.000Z",
+                    },
+                  },
+                },
+              ]),
+            }),
+          ])
+        })
+
+        test("when provided with a centre without hot meal enabled, even with Quality Enhancement Program sections, does not apply enhancement", async () => {
+          // Arrange
+          vi.setSystemTime(new Date("2025-04-01"))
+
+          const fundingRegion = await fundingRegionFactory.create({
+            hotMealIncrementAmount: "32.06",
+          })
+          const centre = await centreFactory.create({
+            fundingRegionId: fundingRegion.id,
+            hotMeal: false,
+          })
+          const fundingPeriod = await fundingPeriodFactory.create({
+            fiscalYear: "2025-2026",
+            fromDate: new Date("2025-04-01"),
+            toDate: new Date("2025-05-30"),
+          })
+          await fiscalPeriodFactory.create({
+            fundingPeriodId: fundingPeriod.id,
+            fiscalYear: "2025-26",
+            dateStart: new Date("2025-04-01"),
+          })
+          const qualityLine = await fundingSubmissionLineFactory.create({
+            fiscalYear: "2025/26",
+            sectionName: "Quality Enhancement Program",
+            lineName: "Quality Enhancement",
+            monthlyAmount: "100.00",
+          })
+
+          // Act
+          const fundingSubmissionLineJsons = await BulkCreateService.perform(centre, fundingPeriod)
+
+          // Assert
+          expect(fundingSubmissionLineJsons).toEqual([
+            expect.objectContaining({
+              centreId: centre.id,
+              fiscalYear: "2025/26",
+              dateName: "April",
+              dateStart: new Date("2025-04-01T00:00:00.000Z"),
+              dateEnd: new Date("2025-04-30T23:59:59.000Z"),
+              values: JSON.stringify([
+                {
+                  submissionLineId: qualityLine.id,
+                  sectionName: "Quality Enhancement Program",
+                  lineName: "Quality Enhancement",
+                  monthlyAmount: "100",
+                  estimatedChildOccupancyRate: "0",
+                  actualChildOccupancyRate: "0",
+                  estimatedComputedTotal: "0",
+                  actualComputedTotal: "0",
+                },
+              ]),
+            }),
+          ])
+        })
+      })
+    })
+  })
+})

@@ -33,7 +33,7 @@
     <v-row>
       <v-col
         cols="12"
-        md="6"
+        md="4"
       >
         <DescriptionElement
           label="Region"
@@ -43,7 +43,7 @@
       </v-col>
       <v-col
         cols="12"
-        md="6"
+        md="4"
       >
         <DescriptionElement
           label="Subsidy Rate"
@@ -54,7 +54,17 @@
       </v-col>
       <v-col
         cols="12"
-        md="6"
+        md="4"
+      >
+        <DescriptionElement
+          label="Hot Meal Increment Amount"
+          :model-value="formatMoney(fundingRegion.hotMealIncrementAmount)"
+          vertical
+        />
+      </v-col>
+      <v-col
+        cols="12"
+        md="4"
       >
         <DescriptionElement
           label="Created At"
@@ -64,7 +74,7 @@
       </v-col>
       <v-col
         cols="12"
-        md="6"
+        md="4"
       >
         <DescriptionElement
           label="Updated At"
@@ -83,7 +93,7 @@ import { isNil, startCase } from "lodash"
 import Big from "big.js"
 
 import blockedToTrueConfirm from "@/utils/blocked-to-true-confirm"
-import { formatDate } from "@/utils/formatters"
+import { formatDate, formatMoney } from "@/utils/formatters"
 
 import fundingRegionsApi from "@/api/funding-regions-api"
 

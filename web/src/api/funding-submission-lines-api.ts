@@ -6,6 +6,10 @@ import {
   type WhereOptions,
 } from "@/api/base-api"
 
+export enum FundingSubmissionLineImmutableSectionNames {
+  QUALITY_ENHANCEMENT_PROGRAM = "Quality Enhancement Program",
+}
+
 export type FundingSubmissionLine = {
   id: number
   fiscalYear: string

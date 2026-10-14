@@ -1,0 +1,344 @@
+import type { Knex } from "knex"
+
+export async function up(knex: Knex): Promise<void> {
+  // Keep category identity separate from editable names. SQL Server assigns the foreign-key name.
+  // Use a separate batch so subsequent SQL can reference the newly added column.
+  await knex.raw(`
+    ALTER TABLE funding_submission_lines
+    ADD child_care_space_category_id INT NULL
+      REFERENCES child_care_space_categories(id) ON DELETE SET NULL;
+  `)
+
+  await knex.raw(`
+    DECLARE @linked_sections TABLE (section_name NVARCHAR(200));
+    INSERT INTO @linked_sections VALUES
+      (N'Administration (10% of Spaces)'),
+      (N'Quality Enhancement Program');
+
+    -- Parse numeric JSON identifiers exactly; floating-point conversion can round fractions.
+    DECLARE @worksheet_submission_line_ids TABLE (
+      worksheet_id INT NOT NULL,
+      line_index INT NOT NULL,
+      submission_line_id INT NOT NULL,
+      PRIMARY KEY (worksheet_id, line_index, submission_line_id)
+    );
+
+    INSERT INTO @worksheet_submission_line_ids (worksheet_id, line_index, submission_line_id)
+    SELECT DISTINCT
+      funding_submission_line_jsons.id,
+      TRY_CONVERT(INT, worksheet_lines.[key]),
+      TRY_CONVERT(INT, parsed_identifier.canonical_id)
+    FROM funding_submission_line_jsons
+    CROSS APPLY OPENJSON(funding_submission_line_jsons.[values]) AS worksheet_lines
+    CROSS APPLY OPENJSON(
+      CASE WHEN worksheet_lines.type = 5 THEN worksheet_lines.value ELSE N'{}' END
+    ) AS line_properties
+    CROSS APPLY (
+      SELECT CHARINDEX(N'e', LOWER(line_properties.value)) AS exponent_position
+    ) AS exponent_marker
+    CROSS APPLY (
+      SELECT
+        CASE
+          WHEN exponent_marker.exponent_position > 0
+            THEN LEFT(line_properties.value, exponent_marker.exponent_position - 1)
+          ELSE line_properties.value
+        END AS mantissa,
+        CASE
+          WHEN exponent_marker.exponent_position > 0
+            THEN TRY_CONVERT(
+              INT,
+              SUBSTRING(
+                line_properties.value,
+                exponent_marker.exponent_position + 1,
+                LEN(line_properties.value)
+              )
+            )
+          ELSE 0
+        END AS exponent_value
+    ) AS numeric_token
+    CROSS APPLY (
+      SELECT CASE
+        WHEN LEFT(numeric_token.mantissa, 1) = N'-'
+          THEN SUBSTRING(numeric_token.mantissa, 2, LEN(numeric_token.mantissa))
+        ELSE numeric_token.mantissa
+      END AS unsigned_mantissa
+    ) AS unsigned_token
+    CROSS APPLY (
+      SELECT CHARINDEX(N'.', unsigned_token.unsigned_mantissa) AS decimal_position
+    ) AS decimal_point
+    CROSS APPLY (
+      SELECT
+        REPLACE(unsigned_token.unsigned_mantissa, N'.', N'') AS digits,
+        CASE
+          WHEN decimal_point.decimal_position > 0
+            THEN LEN(unsigned_token.unsigned_mantissa) - decimal_point.decimal_position
+          ELSE 0
+        END AS fractional_digit_count
+    ) AS significand
+    CROSS APPLY (
+      SELECT
+        PATINDEX(N'%[^0]%', significand.digits) AS first_nonzero_position,
+        CONVERT(BIGINT, numeric_token.exponent_value) - significand.fractional_digit_count
+          AS decimal_shift
+    ) AS normalized_token
+    CROSS APPLY (
+      SELECT CASE
+        WHEN normalized_token.first_nonzero_position > 0
+          THEN SUBSTRING(
+            significand.digits,
+            normalized_token.first_nonzero_position,
+            LEN(significand.digits)
+          )
+      END AS significant_digits
+    ) AS significant_token
+    CROSS APPLY (
+      SELECT CASE
+        WHEN normalized_token.first_nonzero_position = 0 THEN N'0'
+        WHEN normalized_token.decimal_shift >= 0
+          AND LEN(significant_token.significant_digits) + normalized_token.decimal_shift <= 10
+          THEN CONCAT(
+            significant_token.significant_digits,
+            REPLICATE(
+              N'0',
+              CASE
+                WHEN normalized_token.decimal_shift BETWEEN 0 AND 10
+                  THEN CONVERT(INT, normalized_token.decimal_shift)
+              END
+            )
+          )
+        WHEN normalized_token.decimal_shift < 0
+          AND -normalized_token.decimal_shift <= LEN(significant_token.significant_digits)
+          AND RIGHT(
+            significant_token.significant_digits,
+            CASE
+              WHEN -normalized_token.decimal_shift
+                BETWEEN 1 AND LEN(significant_token.significant_digits)
+                THEN CONVERT(INT, -normalized_token.decimal_shift)
+            END
+          ) NOT LIKE N'%[^0]%'
+          AND LEN(significant_token.significant_digits) + normalized_token.decimal_shift
+            BETWEEN 1 AND 10
+          THEN LEFT(
+            significant_token.significant_digits,
+            CASE
+              WHEN LEN(significant_token.significant_digits) + normalized_token.decimal_shift
+                BETWEEN 1 AND 10
+                THEN CONVERT(
+                  INT,
+                  LEN(significant_token.significant_digits) + normalized_token.decimal_shift
+                )
+            END
+          )
+      END AS canonical_id
+    ) AS parsed_identifier
+    WHERE line_properties.[key] COLLATE Latin1_General_100_BIN2 = N'submissionLineId'
+      AND DATALENGTH(line_properties.[key]) = DATALENGTH(N'submissionLineId')
+      AND line_properties.type = 2
+      AND numeric_token.exponent_value IS NOT NULL
+      AND LEFT(numeric_token.mantissa, 1) <> N'-'
+      AND TRY_CONVERT(INT, parsed_identifier.canonical_id) IS NOT NULL
+      AND TRY_CONVERT(INT, worksheet_lines.[key]) IS NOT NULL;
+
+    DECLARE @category_matches TABLE (
+      submission_line_id INT,
+      category_id INT
+    );
+
+    -- First use active category names within the configuration's fiscal year.
+    -- Recover renamed or retired categories from retained metadata or historical snapshots.
+    -- UNION removes duplicate evidence for the same configuration/category pair.
+    INSERT INTO @category_matches (submission_line_id, category_id)
+    SELECT funding_submission_lines.id, child_care_space_categories.id
+    FROM funding_submission_lines
+    INNER JOIN @linked_sections AS linked_sections
+      ON funding_submission_lines.section_name COLLATE Latin1_General_100_BIN2
+        = linked_sections.section_name COLLATE Latin1_General_100_BIN2
+        AND DATALENGTH(funding_submission_lines.section_name)
+          = DATALENGTH(linked_sections.section_name)
+    INNER JOIN funding_periods
+      ON funding_submission_lines.fiscal_year
+        = LEFT(funding_periods.fiscal_year, 4) + '/' + RIGHT(funding_periods.fiscal_year, 2)
+      AND funding_periods.deleted_at IS NULL
+    INNER JOIN child_care_space_categories
+      ON child_care_space_categories.funding_period_id = funding_periods.id
+      AND child_care_space_categories.category_name COLLATE Latin1_General_100_BIN2
+        = funding_submission_lines.line_name COLLATE Latin1_General_100_BIN2
+      AND DATALENGTH(child_care_space_categories.category_name)
+        = DATALENGTH(funding_submission_lines.line_name)
+    WHERE funding_submission_lines.deleted_at IS NULL
+      AND child_care_space_categories.deleted_at IS NULL
+
+    UNION
+
+    SELECT funding_submission_lines.id, child_care_spaces.category_id
+    FROM funding_submission_line_jsons
+    CROSS APPLY OPENJSON(funding_submission_line_jsons.[values]) AS worksheet_lines
+    INNER JOIN @worksheet_submission_line_ids AS worksheet_submission_line_ids
+      ON worksheet_submission_line_ids.worksheet_id = funding_submission_line_jsons.id
+      AND worksheet_submission_line_ids.line_index = TRY_CONVERT(INT, worksheet_lines.[key])
+    INNER JOIN funding_submission_lines
+      ON funding_submission_lines.id = worksheet_submission_line_ids.submission_line_id
+      AND funding_submission_lines.fiscal_year = funding_submission_line_jsons.fiscal_year
+      AND funding_submission_lines.section_name COLLATE Latin1_General_100_BIN2
+        = JSON_VALUE(worksheet_lines.value, '$.sectionName') COLLATE Latin1_General_100_BIN2
+      AND DATALENGTH(funding_submission_lines.section_name)
+        = DATALENGTH(JSON_VALUE(worksheet_lines.value, '$.sectionName'))
+    INNER JOIN @linked_sections AS linked_sections
+      ON funding_submission_lines.section_name COLLATE Latin1_General_100_BIN2
+        = linked_sections.section_name COLLATE Latin1_General_100_BIN2
+        AND DATALENGTH(funding_submission_lines.section_name)
+          = DATALENGTH(linked_sections.section_name)
+    INNER JOIN funding_periods
+      ON LEFT(funding_periods.fiscal_year, 4) + '/' + RIGHT(funding_periods.fiscal_year, 2)
+        = funding_submission_line_jsons.fiscal_year
+    INNER JOIN fiscal_periods
+      ON fiscal_periods.funding_period_id = funding_periods.id
+      AND LOWER(fiscal_periods.month) = LOWER(funding_submission_line_jsons.date_name)
+    INNER JOIN child_care_spaces
+      ON child_care_spaces.centre_id = funding_submission_line_jsons.centre_id
+      AND child_care_spaces.fiscal_period_id = fiscal_periods.id
+      AND (
+        EXISTS (
+          SELECT 1
+          FROM OPENJSON(
+            CASE WHEN worksheet_lines.type = 5 THEN worksheet_lines.value ELSE N'{}' END
+          ) AS category_properties
+          WHERE category_properties.[key] COLLATE Latin1_General_100_BIN2
+              = N'childCareSpaceCategoryId'
+            AND DATALENGTH(category_properties.[key]) = DATALENGTH(N'childCareSpaceCategoryId')
+            AND category_properties.type = 2
+            AND TRY_CONVERT(INT, category_properties.value) = child_care_spaces.category_id
+        )
+        OR (
+          child_care_spaces.line_name COLLATE Latin1_General_100_BIN2
+            = JSON_VALUE(worksheet_lines.value, '$.lineName') COLLATE Latin1_General_100_BIN2
+          AND DATALENGTH(child_care_spaces.line_name)
+            = DATALENGTH(JSON_VALUE(worksheet_lines.value, '$.lineName'))
+        )
+      )
+    INNER JOIN child_care_space_categories
+      ON child_care_space_categories.id = child_care_spaces.category_id
+      AND child_care_space_categories.funding_period_id = funding_periods.id
+    WHERE funding_submission_line_jsons.deleted_at IS NULL
+      AND child_care_spaces.deleted_at IS NULL
+      AND child_care_spaces.category_id IS NOT NULL;
+
+    -- Never choose an arbitrary category: conflicting current/historical matches abort
+    -- the migration, and Knex rolls back this migration's schema and data changes.
+    IF EXISTS (
+      SELECT submission_line_id
+      FROM @category_matches
+      GROUP BY submission_line_id
+      HAVING COUNT(DISTINCT category_id) > 1
+    )
+    BEGIN
+      THROW 50000, 'Funding submission lines have ambiguous or conflicting child care space category matches.', 1;
+    END;
+
+    UPDATE funding_submission_lines
+    SET child_care_space_category_id = category_matches.category_id
+    FROM funding_submission_lines
+    INNER JOIN @category_matches AS category_matches
+      ON category_matches.submission_line_id = funding_submission_lines.id;
+
+    -- A worksheet gets linkage metadata only when its own centre/month contains
+    -- the linked category. Do not invent links for unrelated months or centres.
+    DECLARE @worksheet_links TABLE (
+      worksheet_id INT,
+      line_index INT,
+      category_id INT,
+      PRIMARY KEY (worksheet_id, line_index)
+    );
+
+    -- Reuse the exact numeric identifiers for worksheet linkage metadata.
+    -- Binary comparison plus byte length also rejects differently cased/padded
+    -- section labels that JavaScript would not match.
+
+    INSERT INTO @worksheet_links (worksheet_id, line_index, category_id)
+    SELECT DISTINCT
+      funding_submission_line_jsons.id,
+      TRY_CONVERT(INT, worksheet_lines.[key]),
+      category_matches.category_id
+    FROM funding_submission_line_jsons
+    CROSS APPLY OPENJSON(funding_submission_line_jsons.[values]) AS worksheet_lines
+    INNER JOIN @worksheet_submission_line_ids AS worksheet_submission_line_ids
+      ON worksheet_submission_line_ids.worksheet_id = funding_submission_line_jsons.id
+      AND worksheet_submission_line_ids.line_index = TRY_CONVERT(INT, worksheet_lines.[key])
+    INNER JOIN @category_matches AS category_matches
+      ON category_matches.submission_line_id = worksheet_submission_line_ids.submission_line_id
+    INNER JOIN @linked_sections AS linked_sections
+      ON JSON_VALUE(
+        CASE WHEN worksheet_lines.type = 5 THEN worksheet_lines.value ELSE N'{}' END,
+        '$.sectionName'
+      ) COLLATE Latin1_General_100_BIN2 = linked_sections.section_name COLLATE Latin1_General_100_BIN2
+      AND DATALENGTH(JSON_VALUE(
+        CASE WHEN worksheet_lines.type = 5 THEN worksheet_lines.value ELSE N'{}' END,
+        '$.sectionName'
+      )) = DATALENGTH(linked_sections.section_name)
+    WHERE funding_submission_line_jsons.deleted_at IS NULL
+      AND EXISTS (
+        SELECT 1
+        FROM child_care_spaces
+        INNER JOIN fiscal_periods ON fiscal_periods.id = child_care_spaces.fiscal_period_id
+        INNER JOIN funding_periods ON funding_periods.id = fiscal_periods.funding_period_id
+        WHERE child_care_spaces.centre_id = funding_submission_line_jsons.centre_id
+          AND child_care_spaces.category_id = category_matches.category_id
+          AND LEFT(funding_periods.fiscal_year, 4) + '/' + RIGHT(funding_periods.fiscal_year, 2)
+            = funding_submission_line_jsons.fiscal_year
+          AND LOWER(fiscal_periods.month) = LOWER(funding_submission_line_jsons.date_name)
+          AND child_care_spaces.deleted_at IS NULL
+      );
+
+    -- JSON_MODIFY changes just the category ID, preserving array order and every
+    -- historical label, amount, occupancy, total and unknown property.
+    -- A joined UPDATE would pick one array element per worksheet; apply every path in order.
+    DECLARE @worksheet_id INT, @line_index INT, @category_id INT;
+    WHILE EXISTS (SELECT 1 FROM @worksheet_links)
+    BEGIN
+      SELECT TOP 1
+        @worksheet_id = worksheet_id,
+        @line_index = line_index,
+        @category_id = category_id
+      FROM @worksheet_links
+      ORDER BY worksheet_id, line_index;
+
+      UPDATE funding_submission_line_jsons
+      SET [values] = JSON_MODIFY(
+        [values],
+        '$[' + CONVERT(VARCHAR(20), @line_index) + '].childCareSpaceCategoryId',
+        @category_id
+      )
+      WHERE id = @worksheet_id;
+
+      DELETE FROM @worksheet_links
+      WHERE worksheet_id = @worksheet_id AND line_index = @line_index;
+    END;
+  `)
+}
+
+export async function down(knex: Knex): Promise<void> {
+  // Constraint names can differ between Knex-created and SQL-created installations.
+  // Remove this column's foreign key, then the column; leave historical JSON/ledger facts intact.
+  await knex.raw(`
+    DECLARE @foreign_key_name SYSNAME;
+    SELECT @foreign_key_name = foreign_keys.name
+    FROM sys.foreign_keys AS foreign_keys
+    INNER JOIN sys.foreign_key_columns AS foreign_key_columns
+      ON foreign_key_columns.constraint_object_id = foreign_keys.object_id
+    INNER JOIN sys.columns AS columns
+      ON columns.object_id = foreign_key_columns.parent_object_id
+      AND columns.column_id = foreign_key_columns.parent_column_id
+    WHERE foreign_keys.parent_object_id = OBJECT_ID(N'funding_submission_lines')
+      AND foreign_keys.referenced_object_id = OBJECT_ID(N'child_care_space_categories')
+      AND columns.name = N'child_care_space_category_id';
+
+    IF @foreign_key_name IS NOT NULL
+    BEGIN
+      DECLARE @drop_foreign_key NVARCHAR(MAX) =
+        N'ALTER TABLE funding_submission_lines DROP CONSTRAINT ' + QUOTENAME(@foreign_key_name);
+      EXEC sp_executesql @drop_foreign_key;
+    END;
+
+    ALTER TABLE funding_submission_lines DROP COLUMN child_care_space_category_id;
+  `)
+}

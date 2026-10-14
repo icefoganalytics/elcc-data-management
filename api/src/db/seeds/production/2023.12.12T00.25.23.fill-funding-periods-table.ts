@@ -1,9 +1,12 @@
-import { CreationAttributes } from "@sequelize/core"
+import type { Knex } from "knex"
+
+import { type CreationAttributes } from "@sequelize/core"
 import { isNil } from "lodash"
 
 import { FundingPeriod } from "@/models"
+import { FundingPeriods } from "@/services"
 
-export async function up() {
+export async function seed(_knex: Knex): Promise<void> {
   const fundingPeriodsAttributes: CreationAttributes<FundingPeriod>[] = [
     {
       fiscalYear: "2022-2023",
@@ -45,12 +48,7 @@ export async function up() {
     })
 
     if (isNil(fundingPeriod)) {
-      await FundingPeriod.create(fundingPeriodAttributes)
+      await FundingPeriods.CreateService.perform(fundingPeriodAttributes)
     }
   }
-}
-
-export async function down() {
-  // this method needs to exist, but does not need to be implemented.
-  // Seeds should be idempotent.
 }

@@ -6,6 +6,7 @@
   "scripts": {
     "start": "vite",
     "build": "vue-tsc && vite build",
+    "clean": "rm -rf ./dist",
     "preview": "vite preview",
     "test": "vitest",
     "check-types": "vue-tsc --noEmit -p tests/tsconfig.json"

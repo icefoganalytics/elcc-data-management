@@ -17,7 +17,19 @@ class JiraApi
 
     issue_key = extract_issue_key(jira_ticket_url)
     issue_data = fetch_issue_data(issue_key)
+
+    if issue_data.nil?
+      puts "Failed to fetch issue data for #{issue_key}"
+      return
+    end
+
     issue_title = extract_issue_title(issue_data)
+
+    if issue_title.nil?
+      puts "Failed to extract issue title from response"
+      return
+    end
+
     format_branch_name(issue_key, issue_title)
   end
 
@@ -29,7 +41,19 @@ class JiraApi
 
     issue_key = extract_issue_key(jira_ticket_url)
     issue_data = fetch_issue_data(issue_key)
+
+    if issue_data.nil?
+      puts "Failed to fetch issue data for #{issue_key}"
+      return
+    end
+
     issue_description = extract_issue_description(issue_data)
+
+    if issue_description.nil?
+      puts "Failed to extract issue description from response"
+      return
+    end
+
     prose_mirror_to_markdown(issue_description)
   end
 
@@ -48,14 +72,28 @@ class JiraApi
       http.request(request)
     end
 
+    unless response.is_a?(Net::HTTPSuccess)
+      puts "Jira API Error: #{response.code} - #{response.message}"
+      puts "Response body: #{response.body}"
+      return nil
+    end
+
     JSON.parse(response.body)
+  rescue JSON::ParserError => e
+    puts "JSON parsing error: #{e.message}"
+    puts "Response body: #{response.body}"
+    nil
   end
 
   def self.extract_issue_title(issue_data)
+    return nil if issue_data.nil?
+
     issue_data['fields']['summary']
   end
 
   def self.extract_issue_description(issue_data)
+    return nil if issue_data.nil?
+
     issue_data['fields']['description']
   end
 

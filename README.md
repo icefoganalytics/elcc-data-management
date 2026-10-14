@@ -1,5 +1,9 @@
 # Early Learning Childcare Centre - Data Management Application
 
+## Project Knowledge
+
+See the [project knowledge base](docs/README.md) for durable domain rules, architecture decisions, and regression references.
+
 ## Production - building locally
 
 1. Create an `api/.env.production` file from the `api/.env.sample` file and fill with the appropriate matching the local development config with some minor changes.
@@ -82,9 +86,18 @@ All commands are just strings joined together, so it's easy to add new commmands
    asdf reshim ruby
    ```
 
-   You will now be able to run the `./bin/dev` command.
+3. Install the Ruby dependencies:
 
-3. (optional) Install [direnv](https://direnv.net/) and create an `.envrc` with
+   ```bash
+   bundle install
+   ```
+
+   You can now run the `./bin/dev` command.
+
+   For Docker editor links, see [editor bridge setup](bin/README.md#editor-bridge), including
+   the 0.1.x shutdown prerequisite and listener network-exposure restrictions.
+
+4. (optional) Install [direnv](https://direnv.net/) and create an `.envrc` with
 
    ```bash
     #!/usr/bin/env bash
@@ -94,14 +107,14 @@ All commands are just strings joined together, so it's easy to add new commmands
 
    and then run `direnv allow`.
 
-   You will now be able to do `dev xxx` instead ov `./bin/dev xxx`.
+   You can now run `dev xxx` instead of `./bin/dev xxx`.
 
 ### Boot the Application
 
-1. Create a `./api/.env.development` file with the following content:
+1. Create a `api/.env.development` file with the following content:
 
    ```bash
-   VUE_APP_FRONTEND_URL=http://localhost:8080
+   VUE_APP_FRONTEND_URL=http://elcc-data-management.localhost
    VUE_APP_AUTH_DOMAIN=https://dev-0tc6bn14.eu.auth0.com
    VUE_APP_AUTH_CLIENTID=9LYlWVby1DLUu7SDUiCcvorVXqAlCMYs
    VUE_APP_AUTH_AUDIENCE=testing
@@ -112,19 +125,44 @@ All commands are just strings joined together, so it's easy to add new commmands
    APPLICATION_NAME=ELCC Data Management
    ```
 
-2. Boot the api, web, and database services, and run the migrations and seeds using
+2. In each new checkout, install the ignored source-bound dependencies before starting services:
+
+   ```bash
+   dev api npm clean-install
+   dev web npm clean-install
+   ```
+
+   Repeat the affected service's install command after pulling or switching branches when its
+   `package-lock.json` changes. Rebuilding an image does not refresh the host `node_modules`
+   directory covered by the source bind mount. For missing-package startup errors, see the
+   [dependency recovery command](bin/README.md).
+
+3. Boot the API, web, and database services, and run migrations and seeds:
 
    ```bash
    dev up --build
-
-   # or
-
-   docker compose -f docker-compose.development.yaml up --remove-orphans --build
    ```
 
-   > You only need the --build option if it's your first time building the app, or if you are modifying the the Docker files.
+   The command starts or reuses the shared loopback gateway. The base checkout is available at
+   http://elcc-data-management.localhost and its API at
+   http://api.elcc-data-management.localhost.
 
-3. The front-end is viewable at http://localhost:8080.
+   A separately named worktree has its own hostname. For example, a checkout named
+   `issue-112-concurrent-local-development` is available at
+   http://issue-112-concurrent-local-development.elcc-data-management.localhost.
+
+4. Connect a SQL Server client on port `1433` using the hostname for the current checkout:
+   - Base checkout: `db.elcc-data-management.localhost`
+   - `issue-112-concurrent-local-development` worktree:
+     `db.issue-112-concurrent-local-development.elcc-data-management.localhost`
+
+   Enable encryption and trust the server certificate.
+
+5. Run `dev down` to stop this checkout's services. The gateway stays running while other
+   projects use it.
+
+> The development Auth0 client must allow `http://*.elcc-data-management.localhost` as a
+> callback URL, logout URL, and web origin before sign-in can succeed.
 
 > NOTE: make sure you delete the .env file before runing a development setup again as it is auto-loaded by docker compose.
 
@@ -156,6 +194,22 @@ Your text editor or IDE might require you to manually install the dependencies t
 
 4. Go to `./web` and run `npm install`
 
+5. Install Ruby dependencies for prettification and language server support:
+
+   ```bash
+   bundle install
+   ```
+
+   This installs Ruby gems for:
+   - Ruby LSP (language server for IDE support)
+   - Syntax Tree (Ruby code formatting)
+   - Prettier Print (pretty printing Ruby objects)
+
+6. Configure your editor to use Ruby LSP as the default formatter for `.rb` files:
+   - VS Code: Right-click on a `.rb` file → "Format Document With..." → "Configure Default Formatter..." → "Ruby (LSP)"
+   - Or use Command Palette: `Ctrl+Shift+P` → "Format Document With..." → "Ruby (LSP)"
+   - Other editors: Configure Ruby formatter to use `bundle exec stree format`
+
 ### Linting and Pretification
 
 Linting and prettification support easier collaborator by standardizing code.
@@ -173,63 +227,51 @@ To enable linting and prettification:
 
 ## Migrations - Database Management
 
-This project is using [umzug](https://github.com/sequelize/umzug) instead of [sequelize-cli](https://github.com/sequelize/cli) because `sequelize-cli` doesn't have TypeScript support.
+This project uses [Knex](https://knexjs.org/) for migrations and seeds, and Sequelize for the
+application ORM. Database table and column names use snake_case.
 
-NOTE: while database table names use snake_case, sequelize models use camelCase to match the JS standard. This means that migrations need to either provide a "field" name for each column that is snake_case, or use snake_case for the column names.
+```bash
+./bin/dev migrate make add-field-to-table
+./bin/dev migrate latest
+./bin/dev migrate list
+```
 
-1. To create a new migration from the template [sample-migration](./api/src/db/template/sample-migration.ts) do:
+Migration files live in [`api/src/db/migrations`](./api/src/db/migrations/README.md).
+The initial table migrations create a fresh database or leave each existing table untouched.
+On an existing, current production schema, the cutover adds `knex_migrations` and
+`knex_migrations_lock`, then drops obsolete migration history after the table baseline succeeds.
+Application data remain unchanged.
 
-   ```bash
-   dev migrate create -- --name create-users-table.ts
+Existing databases must already have the current application schema before this cutover.
+Historical migrations are no longer executed. Validate a restored production backup before
+deployment. Initial table rollbacks drop their tables and data, including tables that existed
+before cutover. Obsolete history cleanup is irreversible: rollback warns and continues without
+restoring it. Use a database backup to recover production data, not baseline rollback.
 
-   # Or
+Production runs compiled JavaScript migrations through `node dist/initializers/index.js`.
+Development uses TypeScript migrations. Keep those environments on separate databases:
+Knex stores the actual filenames, and this project does not rename ledger entries between
+`.ts` and `.js` or support obsolete, unreleased PR migration names.
 
-   dev sh
-   npm run migrate create --name create-users-table.ts
-   ```
-
-   > If you are using Linux, all files created in docker will be created as `root` so you won't be able to edit them. Luckily, this is handle by the `dev migrate` command, when using Linux, after you provide your `sudo` password.
-
-2. To run the all new migrations do:
-
-   ```bash
-   dev migrate up
-   ```
-
-3. To rollback the last executed migration:
-
-   ```bash
-   dev migrate down
-   ```
-
-4. To rollback all migrations:
-
-   ```bash
-   dev migrate down -- --to 0
-   ```
+Initialization errors are logged and return a failing status, but `boot-app.sh` intentionally
+starts the API afterward so Azure deployments remain accessible for debugging.
+An API responding does not mean migrations succeeded; inspect initialization logs.
 
 ### Seeding
 
-Seeding is effectively the same as migrating, you just replace the `dev migrate` command with `dev seed`.
+```bash
+./bin/dev api npm run knex -- seed:make fill-users-table
+./bin/dev seed
+```
 
-e.g.
-
-- `dev seed create -- --name fill-users-table.ts`
-
-Seeds are separated by environment.
-i.e. api/src/db/seeds/development vs. api/src/db/seeds/production
-
-This allows for the convenient loading of required defaults in production, with more complex seeds in development, for easy QA.
-
-Seed code should be idempotent, so that it can be executed at any point in every environment.
-
-Seeds currently don't keep track of whether they have run or not. An alternative to this would be to store seeds in a `SequelizeData` table. via `new SequelizeStorage({ sequelize, tablename: "SequelizeData" })` in the umzug seeder config.
+Seeds are separated into `api/src/db/seeds/development` and `api/src/db/seeds/production`.
+Export `seed(knex)` and keep seeds idempotent: Knex reruns them without a seed-history table.
+Tests use factories rather than startup seeds.
 
 ### References
 
-- [umzug](https://github.com/sequelize/umzug)
-- [query-interface](https://sequelize.org/docs/v6/other-topics/query-interface/) migration examples.
-- [query interface api](https://sequelize.org/api/v6/class/src/dialects/abstract/query-interface.js~queryinterface) for full details.
+- [Knex migrations and seeds](https://knexjs.org/guide/migrations.html)
+- [Knex schema builder](https://knexjs.org/guide/schema-builder.html)
 
 ### Extras
 

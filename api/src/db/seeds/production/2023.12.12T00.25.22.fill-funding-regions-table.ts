@@ -1,28 +1,26 @@
-import { type CreationAttributes } from "@sequelize/core"
+import type { Knex } from "knex"
+
 import { isNil } from "lodash"
 
-import { FundingRegion } from "@/models"
+import { FundingRegion, User } from "@/models"
+import { FundingRegions } from "@/services"
 
-export async function up() {
-  const fundingRegionsAttributes: CreationAttributes<FundingRegion>[] = [
-    { region: "Whitehorse", subsidyRate: "0.3700" },
-    { region: "Communities", subsidyRate: "0.3700" },
-  ]
+export async function seed(_knex: Knex): Promise<void> {
+  const systemUser = await User.findOne({
+    where: {
+      email: "system.user@elcc.com",
+    },
+    rejectOnEmpty: true,
+  })
 
-  for (const fundingRegionAttributes of fundingRegionsAttributes) {
+  for (const fundingRegionAttributes of FundingRegion.DEFAULTS) {
     const fundingRegion = await FundingRegion.findOne({
       where: {
         region: fundingRegionAttributes.region,
       },
     })
-
     if (isNil(fundingRegion)) {
-      await FundingRegion.create(fundingRegionAttributes)
+      await FundingRegions.CreateService.perform(fundingRegionAttributes, systemUser)
     }
   }
-}
-
-export async function down() {
-  // this method needs to exist, but does not need to be implemented.
-  // Seeds should be idempotent.
 }

@@ -13,7 +13,6 @@ import {
   HasMany,
   NotNull,
   PrimaryKey,
-  Table,
   ValidateAttribute,
 } from "@sequelize/core/decorators-legacy"
 import { DateTime } from "luxon"
@@ -23,6 +22,7 @@ import { isValidFiscalYearLong } from "@/models/validators"
 import BaseModel from "@/models/base-model"
 import FiscalPeriod, { FiscalPeriodMonths } from "@/models/fiscal-period"
 import FundingReconciliation from "@/models/funding-reconciliation"
+import ChildCareSpaceCategory from "@/models/child-care-space-category"
 
 /**
  * Represents a fiscal year for funding reconciliation purposes.
@@ -34,9 +34,6 @@ import FundingReconciliation from "@/models/funding-reconciliation"
  *
  * @see FiscalPeriod - The monthly periods that break down this fiscal year
  */
-@Table({
-  paranoid: false,
-})
 export class FundingPeriod extends BaseModel<
   InferAttributes<FundingPeriod>,
   InferCreationAttributes<FundingPeriod>
@@ -67,13 +64,16 @@ export class FundingPeriod extends BaseModel<
 
   @Attribute(DataTypes.DATE)
   @NotNull
-  @Default(sql.fn("getdate"))
+  @Default(sql.fn("getutcdate"))
   declare createdAt: CreationOptional<Date>
 
   @Attribute(DataTypes.DATE)
   @NotNull
-  @Default(sql.fn("getdate"))
+  @Default(sql.fn("getutcdate"))
   declare updatedAt: CreationOptional<Date>
+
+  @Attribute(DataTypes.DATE)
+  declare deletedAt: Date | null
 
   @HasMany(() => FundingReconciliation, {
     foreignKey: "fundingPeriodId",
@@ -90,6 +90,12 @@ export class FundingPeriod extends BaseModel<
     },
   })
   declare fiscalPeriods?: NonAttribute<FiscalPeriod[]>
+
+  @HasMany(() => ChildCareSpaceCategory, {
+    foreignKey: "fundingPeriodId",
+    inverse: { as: "fundingPeriod" },
+  })
+  declare childCareSpaceCategories?: NonAttribute<ChildCareSpaceCategory[]>
 
   // Helpers
   forEachMonth(

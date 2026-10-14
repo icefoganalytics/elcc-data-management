@@ -1,6 +1,6 @@
+import { QueryTypes } from "@sequelize/core"
 import Big from "big.js"
 import { upperFirst } from "lodash"
-import { QueryTypes } from "@sequelize/core"
 
 import db, { FiscalPeriod } from "@/models"
 import BaseService from "@/services/base-service"
@@ -15,11 +15,15 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
 
   async perform(): Promise<string> {
     const fundingSubmissionExpensesAmount = await this.calculateFundingSubmissionExpenses()
+    const childCareSpacesTotalAmount = await this.calculateChildCareSpaces(
+      this.centreId,
+      this.fiscalPeriodId
+    )
     const buildingExpensesTotalAmount = await this.calculateBuildingExpenses()
 
-    const totalEligibleExpenses = Big(fundingSubmissionExpensesAmount).plus(
-      buildingExpensesTotalAmount
-    )
+    const totalEligibleExpenses = Big(fundingSubmissionExpensesAmount)
+      .plus(childCareSpacesTotalAmount)
+      .plus(buildingExpensesTotalAmount)
 
     return totalEligibleExpenses.toFixed(4)
   }
@@ -35,18 +39,21 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
     // TODO: find out, or ensure that there can only be one funding submission line json per month
     // TODO: link FundingSubmissionLineJson model to a fiscal period so this query can be simplified
     const [fundingSubmissionResult] = await db.query<{
-      fundingSubmissionExpensesAmount: number
+      fundingSubmissionExpensesAmount: string
     }>(
       /* sql */ `
         SELECT
-          COALESCE(
-            SUM(
-              CAST(
-                JSON_VALUE(json_array_element.value, '$.actualComputedTotal') AS DECIMAL(15, 4)
-              )
-            ),
-            0
-          ) as fundingSubmissionExpensesAmount
+          CONVERT(
+            VARCHAR(50),
+            COALESCE(
+              SUM(
+                CAST(
+                  JSON_VALUE(json_array_element.value, '$.actualComputedTotal') AS DECIMAL(15, 4)
+                )
+              ),
+              0
+            )
+          ) AS fundingSubmissionExpensesAmount
         FROM
           funding_submission_line_jsons
           CROSS APPLY OPENJSON (funding_submission_line_jsons.[values]) AS json_array_element
@@ -70,13 +77,47 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
     return Big(fundingSubmissionExpensesAmount).toFixed(4)
   }
 
-  private async calculateBuildingExpenses(): Promise<string> {
-    const [buildingExpensesResult] = await db.query<{
-      buildingExpensesTotalAmount: number
+  private async calculateChildCareSpaces(
+    centreId: number,
+    fiscalPeriodId: number
+  ): Promise<string> {
+    const [childCareSpacesResult] = await db.query<{
+      childCareSpacesTotalAmount: string
     }>(
       /* sql */ `
         SELECT
-          COALESCE(SUM(total_cost), 0) as buildingExpensesTotalAmount
+          CONVERT(
+            VARCHAR(50),
+            COALESCE(SUM(actual_computed_total), 0)
+          ) AS childCareSpacesTotalAmount
+        FROM
+          child_care_spaces
+        WHERE
+          centre_id = :centreId
+          AND fiscal_period_id = :fiscalPeriodId
+          AND deleted_at IS NULL
+      `,
+      {
+        type: QueryTypes.SELECT,
+        replacements: {
+          centreId,
+          fiscalPeriodId,
+        },
+      }
+    )
+
+    const { childCareSpacesTotalAmount } = childCareSpacesResult
+
+    return Big(childCareSpacesTotalAmount).toFixed(4)
+  }
+
+  private async calculateBuildingExpenses(): Promise<string> {
+    const [buildingExpensesResult] = await db.query<{
+      buildingExpensesTotalAmount: string
+    }>(
+      /* sql */ `
+        SELECT
+          CONVERT(VARCHAR(50), COALESCE(SUM(total_cost), 0)) AS buildingExpensesTotalAmount
         FROM
           building_expenses
         WHERE

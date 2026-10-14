@@ -1,0 +1,24 @@
+import type { Knex } from "knex"
+
+export async function up(knex: Knex): Promise<void> {
+  if (await knex.schema.hasTable("funding_submission_line_jsons")) return
+
+  await knex.schema.createTable("funding_submission_line_jsons", (table) => {
+    table.increments("id").notNullable().primary()
+    table.integer("centre_id").notNullable()
+    table.string("fiscal_year", 10).notNullable()
+    table.string("date_name", 100).notNullable()
+    table.specificType("date_start", "DATETIME2(0)").notNullable()
+    table.specificType("date_end", "DATETIME2(0)").notNullable()
+    table.text("values").notNullable()
+    table.specificType("created_at", "DATETIME2").notNullable().defaultTo(knex.raw("GETUTCDATE()"))
+    table.specificType("updated_at", "DATETIME2").notNullable().defaultTo(knex.raw("GETUTCDATE()"))
+    table.specificType("deleted_at", "DATETIMEOFFSET")
+
+    table.foreign("centre_id").references("centres.id")
+  })
+}
+
+export async function down(knex: Knex): Promise<void> {
+  await knex.schema.dropTable("funding_submission_line_jsons")
+}

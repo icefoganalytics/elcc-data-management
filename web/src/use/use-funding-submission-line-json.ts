@@ -31,7 +31,6 @@ export function useFundingSubmissionLineJsonAsDetailed(id: Ref<number | null | u
       state.fundingSubmissionLineJson = fundingSubmissionLineJson
       return fundingSubmissionLineJson
     } catch (error) {
-      console.error("Failed to fetch funding submission line json:", error)
       state.isErrored = true
       throw error
     } finally {
@@ -44,7 +43,9 @@ export function useFundingSubmissionLineJsonAsDetailed(id: Ref<number | null | u
     async (newId) => {
       if (isNil(newId)) return
 
-      await fetch()
+      await fetch().catch((error) => {
+        console.error("Failed to fetch funding submission line json:", error)
+      })
     },
     { immediate: true }
   )

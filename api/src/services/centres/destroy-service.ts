@@ -1,6 +1,7 @@
 import db, {
   BuildingExpense,
   Centre,
+  ChildCareSpace,
   EmployeeBenefit,
   FundingReconciliation,
   FundingSubmissionLineJson,
@@ -10,6 +11,7 @@ import db, {
   WageEnhancement,
 } from "@/models"
 import BaseService from "@/services/base-service"
+import { FundingReconciliations } from "@/services"
 import LogServices from "@/services/log-services"
 
 export class DestroyService extends BaseService {
@@ -21,8 +23,9 @@ export class DestroyService extends BaseService {
   }
 
   async perform(): Promise<void> {
+    const { id: centreId } = this.centre
     await db.transaction(async () => {
-      await this.destroyDependentEntities()
+      await this.destroyDependentEntities(centreId)
 
       await this.centre.destroy()
 
@@ -30,8 +33,9 @@ export class DestroyService extends BaseService {
     })
   }
 
-  private async destroyDependentEntities() {
+  private async destroyDependentEntities(centreId: number) {
     await this.destroyDependentBuildingExpenses()
+    await this.destroyDependentChildCareSpaces(centreId)
     await this.destroyDependentEmployeeBenefits()
     await this.destroyDependentFundingSubmissionLineJsons()
     await this.destroyDependentPayments()
@@ -44,8 +48,14 @@ export class DestroyService extends BaseService {
       where: {
         centreId: this.centre.id,
       },
-      // TODO: remove this once all dependent models support soft deletion.
-      force: true,
+    })
+  }
+
+  private async destroyDependentChildCareSpaces(centreId: number) {
+    await ChildCareSpace.destroy({
+      where: {
+        centreId,
+      },
     })
   }
 
@@ -82,13 +92,16 @@ export class DestroyService extends BaseService {
   }
 
   private async destroyDependentFundingReconciliations() {
-    await FundingReconciliation.destroy({
-      where: {
-        centreId: this.centre.id,
+    await FundingReconciliation.findEach(
+      {
+        where: {
+          centreId: this.centre.id,
+        },
       },
-      // TODO: remove this once all dependent models support soft deletion.
-      force: true,
-    })
+      async (fundingReconciliation) => {
+        await FundingReconciliations.DestroyService.perform(fundingReconciliation, this.currentUser)
+      }
+    )
   }
 
   private async logCentreDestruction(centre: Centre, currentUser: User) {

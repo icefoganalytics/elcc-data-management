@@ -23,10 +23,29 @@ import BaseModel from "@/models/base-model"
 import BuildingExpense from "@/models/building-expense"
 import FundingRegion from "@/models/funding-region"
 
+export const BUILDING_EXPENSE_CATEGORY_DEFAULTS = Object.freeze([
+  "Rent or Mortgage",
+  "Phone",
+  "Internet",
+  "Cell Phone",
+  "Security",
+  "Electric",
+  "Fuel",
+  "Garbage",
+  "Snow Removal",
+  "Water/Sewer/Taxes",
+  "Insurance",
+  "Janitorial",
+  "Cleaning Supplies",
+  "Minor Repairs",
+])
+
 export class BuildingExpenseCategory extends BaseModel<
   InferAttributes<BuildingExpenseCategory>,
   InferCreationAttributes<BuildingExpenseCategory>
 > {
+  static readonly DEFAULTS = BUILDING_EXPENSE_CATEGORY_DEFAULTS
+
   @Attribute(DataTypes.INTEGER)
   @PrimaryKey
   @AutoIncrement
@@ -70,7 +89,7 @@ export class BuildingExpenseCategory extends BaseModel<
   declare fundingRegion?: NonAttribute<FundingRegion>
 
   @HasMany(() => BuildingExpense, {
-    foreignKey: "buildingExpenseCategoryId",
+    foreignKey: "categoryId",
     inverse: {
       as: "category",
     },
@@ -89,6 +108,29 @@ export class BuildingExpenseCategory extends BaseModel<
         },
       }
     })
+
+    this.addScope(
+      "excludingUsedByCentreFiscalPeriod",
+      ({ centreId, fiscalPeriodId }: { centreId: number; fiscalPeriodId: number }) => {
+        return {
+          where: {
+            [Op.and]: sql`
+              NOT EXISTS (
+                SELECT
+                  1
+                FROM
+                  building_expenses
+                WHERE
+                  building_expenses.category_id = ${sql.attribute("id")}
+                  AND building_expenses.deleted_at IS NULL
+                  AND building_expenses.centre_id = ${centreId}
+                  AND building_expenses.fiscal_period_id = ${fiscalPeriodId}
+              )
+            `,
+          },
+        }
+      }
+    )
   }
 }
 

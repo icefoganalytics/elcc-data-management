@@ -17,6 +17,9 @@ import {
   BuildingExpensesController,
   Centres,
   CentresController,
+  ChildCareSpaceCategoriesController,
+  ChildCareSpaces,
+  ChildCareSpacesController,
   CurrentUserController,
   EmployeeBenefitsController,
   EmployeeWageTiersController,
@@ -45,13 +48,12 @@ router.route("/_status").get((_req: Request, res: Response) => {
   })
 })
 
+router.use("/api", checkJwt, autheticateAndLoadUser)
+
 // TODO: replace legacy routes with newer style
-router.use("/api/centre", checkJwt, autheticateAndLoadUser, centreRouter)
+router.use("/api/centre", centreRouter)
 router.use("/api/funding-period", fundingPeriodRouter)
 router.use("/api/submission-line", submissionLineRouter)
-
-// TODO: move all routing logic to this file, and move all route actions into controllers
-router.use("/api", checkJwt, autheticateAndLoadUser)
 
 router.route("/api/current-user").get(CurrentUserController.show)
 
@@ -63,8 +65,9 @@ router
   .delete(CentresController.destroy)
 
 router
-  .route("/api/centres/:centreId/funding-periods/:fundingPeriodId/ensure-dependencies")
-  .post(Centres.FundingPeriods.EnsureDependenciesController.create)
+  .route("/api/centres/:centreId/funding-periods/:fundingPeriodId/initialize")
+  .get(Centres.FundingPeriods.InitializeController.show)
+  .post(Centres.FundingPeriods.InitializeController.create)
 
 router
   .route("/api/employee-benefits")
@@ -77,9 +80,7 @@ router
   .delete(EmployeeBenefitsController.destroy)
 
 router.route("/api/employee-wage-tiers").get(EmployeeWageTiersController.index)
-router
-  .route("/api/employee-wage-tiers/:employeeWageTierId")
-  .get(EmployeeWageTiersController.show)
+router.route("/api/employee-wage-tiers/:employeeWageTierId").get(EmployeeWageTiersController.show)
 
 router.route("/api/fiscal-periods").get(FiscalPeriodsController.index)
 
@@ -102,6 +103,15 @@ router
   .get(BuildingExpenseCategoriesController.show)
   .patch(BuildingExpenseCategoriesController.update)
   .delete(BuildingExpenseCategoriesController.destroy)
+router
+  .route("/api/child-care-space-categories")
+  .get(ChildCareSpaceCategoriesController.index)
+  .post(ChildCareSpaceCategoriesController.create)
+router
+  .route("/api/child-care-space-categories/:childCareSpaceCategoryId")
+  .get(ChildCareSpaceCategoriesController.show)
+  .patch(ChildCareSpaceCategoriesController.update)
+  .delete(ChildCareSpaceCategoriesController.destroy)
 
 router
   .route("/api/building-expenses")
@@ -112,6 +122,15 @@ router
   .get(BuildingExpensesController.show)
   .patch(BuildingExpensesController.update)
   .delete(BuildingExpensesController.destroy)
+
+router.route("/api/child-care-spaces").get(ChildCareSpacesController.index)
+router
+  .route("/api/child-care-spaces/:childCareSpaceId")
+  .get(ChildCareSpacesController.show)
+  .patch(ChildCareSpacesController.update)
+router
+  .route("/api/child-care-spaces/:childCareSpaceId/replicate-estimates")
+  .post(ChildCareSpaces.ReplicateEstimatesController.create)
 
 router
   .route("/api/funding-reconciliations")

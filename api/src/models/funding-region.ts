@@ -22,10 +22,25 @@ import BaseModel from "@/models/base-model"
 import BuildingExpenseCategory from "@/models/building-expense-category"
 import Centre from "@/models/centre"
 
+export const FUNDING_REGION_DEFAULTS = Object.freeze([
+  {
+    region: "Whitehorse",
+    subsidyRate: "0.3700",
+    hotMealIncrementAmount: "32.0600",
+  },
+  {
+    region: "Communities",
+    subsidyRate: "0.3700",
+    hotMealIncrementAmount: "32.0600",
+  },
+])
+
 export class FundingRegion extends BaseModel<
   InferAttributes<FundingRegion>,
   InferCreationAttributes<FundingRegion>
 > {
+  static readonly DEFAULTS = FUNDING_REGION_DEFAULTS
+
   @Attribute(DataTypes.INTEGER)
   @PrimaryKey
   @AutoIncrement
@@ -39,6 +54,11 @@ export class FundingRegion extends BaseModel<
   @Attribute(DataTypes.DECIMAL(5, 4))
   @NotNull
   declare subsidyRate: string
+
+  @Attribute(DataTypes.DECIMAL(10, 4))
+  @NotNull
+  @Default("0.0000")
+  declare hotMealIncrementAmount: CreationOptional<string>
 
   @Attribute(DataTypes.DATE)
   @NotNull

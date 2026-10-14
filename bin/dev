@@ -1,10 +1,16 @@
 #!/usr/bin/env ruby
 
-require "shellwords"
+require "bundler/setup"
+require "local_development_gateway"
+require "open_in_editor_bridge"
+
 require "rdoc"
+require "shellwords"
 
 require_relative "./jira_api"
 require_relative "./pull_request_editor"
+
+ENV["OPEN_IN_EDITOR_COMMAND"] ||= ENV.fetch("EDITOR", "devin-desktop")
 
 class DevHelper
   # Support dashes in command names
@@ -14,7 +20,7 @@ class DevHelper
     "description-from" => :description_from,
     "check-types" => :check_types,
     "edit-pr" => :edit_pr,
-    "sqlcmd-query" => :sqlcmd_query,
+    "sqlcmd-query" => :sqlcmd_query
   }
   METHOD_TO_COMMAND = COMMAND_TO_METHOD.invert
 
@@ -55,11 +61,34 @@ class DevHelper
   end
 
   def up(*args, **kwargs)
-    compose(*%w[up --remove-orphans --force-recreate], *args, **kwargs)
+    compose_options = compose_file_options(gateway: true, **kwargs)
+    environment_variables = dynamic_environment_variables
+    environment_variables["OPEN_IN_EDITOR_BRIDGE_ENABLED"] = "true"
+
+    LocalDevelopmentGateway.with_running do
+      OpenInEditorBridge.compose(
+        *%w[up --remove-orphans --force-recreate --renew-anon-volumes],
+        *args,
+        compose_options:,
+        env: environment_variables,
+        project_root:
+      )
+    end
   end
 
   def down(*args, **kwargs)
-    compose(*%w[down --remove-orphans], *args, **kwargs)
+    compose_options = compose_file_options(**kwargs)
+    environment_variables = dynamic_environment_variables
+
+    LocalDevelopmentGateway.with_running(ensure_running: false) do
+      OpenInEditorBridge.compose(
+        *%w[down --remove-orphans],
+        *args,
+        compose_options:,
+        env: environment_variables,
+        project_root:
+      )
+    end
   end
 
   def logs(*args, **kwargs)
@@ -67,7 +96,9 @@ class DevHelper
   end
 
   def run(*args, **kwargs)
-    compose(*%w[run --rm], *args, **kwargs)
+    LocalDevelopmentGateway.with_running do
+      compose(*%w[run --rm], *args, gateway: true, **kwargs)
+    end
   end
 
   # Custom helpers
@@ -119,7 +150,9 @@ class DevHelper
 
   def test_api(*args, **kwargs)
     reformat_project_relative_path_filter_for_vitest!(args, "api/")
-    run(*%w[test_api npm run test], *args, **kwargs)
+    extra =
+      args.delete("--skip-setup") ? %w[-e VITEST_SKIP_GLOBAL_SETUP=true] : []
+    run(*extra, *%w[test_api npm run test], *args, **kwargs)
   end
 
   def test_web(*args, **kwargs)
@@ -127,19 +160,13 @@ class DevHelper
     run(*%w[test_web npm run test], *args, **kwargs)
   end
 
-  def migrate(*args, **kwargs)
-    action = args[0]
-    if action == "up"
-      migrate_api(*%w[up -- --step=1], *args.drop(1), **kwargs)
-    elsif action == "down"
-      migrate_api(*%w[down -- --step=1], *args.drop(1), **kwargs)
-    else
-      migrate_api(*args, **kwargs)
-    end
+  def knex(*args, **kwargs)
+    run(*%w[api npm run knex], *args, **kwargs)
   end
 
-  def migrate_api(*args, **kwargs)
-    run(*%w[api npm run migrate], *args, **kwargs)
+  def migrate(*args, **kwargs)
+    action = args[0]
+    knex("migrate:#{action}", *args.drop(1), **kwargs)
   end
 
   def seed(*args, **kwargs)
@@ -185,7 +212,9 @@ class DevHelper
 
   def ownit(*args, **kwargs)
     file_or_directory = args[0]
-    raise ScriptError, "Must provide a file or directory path." if file_or_directory.nil?
+    if file_or_directory.nil?
+      raise ScriptError, "Must provide a file or directory path."
+    end
 
     if RUBY_PLATFORM =~ /linux/
       puts "Take ownership of the file or directory? #{file_or_directory}"
@@ -224,7 +253,11 @@ class DevHelper
   # Example:
   #   dev edit-pr https://github.com/icefoganalytics/travel-authorization/pull/218
   def edit_pr(pull_request_url, *args, **kwargs)
-    PullRequestEditor.edit_pull_request_description(pull_request_url, *args, **kwargs)
+    PullRequestEditor.edit_pull_request_description(
+      pull_request_url,
+      *args,
+      **kwargs
+    )
     exit(0)
   end
 
@@ -286,11 +319,16 @@ class DevHelper
   end
 
   def compose_command(*args, **kwargs)
-    environment = kwargs.delete(:environment) { "development" }
     pipe_input = kwargs.delete(:pipe_input)
 
     go_to_project_root = "cd #{project_root}"
-    bootstrap_docker = "docker compose -f docker-compose.#{environment}.yaml #{args.join(' ')}"
+    compose_file_arguments = compose_file_options(**kwargs)
+    bootstrap_docker =
+      "docker compose #{compose_file_arguments.shelljoin} #{args.join(" ")}"
+    environment_variables =
+      dynamic_environment_variables
+        .map { |name, value| "#{name}=#{Shellwords.escape(value)}" }
+        .join(" ")
 
     if pipe_input
       shell_safe_pipe_input = Shellwords.escape(pipe_input)
@@ -298,14 +336,29 @@ class DevHelper
 
       <<~BASH
         #{go_to_project_root} && \
-        #{pipe_input_to_compose} #{dynamic_environment_variables} #{bootstrap_docker}
+        #{pipe_input_to_compose} #{environment_variables} #{bootstrap_docker}
       BASH
     else
       <<~BASH
         #{go_to_project_root} && \
-        #{dynamic_environment_variables} #{bootstrap_docker}
+        #{environment_variables} #{bootstrap_docker}
       BASH
     end
+  end
+
+  def compose_file_options(environment: "development", gateway: false, **)
+    options = ["-f", "docker-compose.#{environment}.yaml"]
+    if RUBY_PLATFORM =~ /linux/
+      linux_override = "docker-compose.#{environment}.linux.yml"
+      linux_override_path = File.join(project_root, linux_override)
+      options.concat(["-f", linux_override]) if File.exist?(linux_override_path)
+    end
+
+    if gateway && environment == "development"
+      options.concat(%w[-f docker-compose.development.gateway.yml])
+    end
+
+    options
   end
 
   def project_root
@@ -313,11 +366,35 @@ class DevHelper
   end
 
   def dynamic_environment_variables
-    if RUBY_PLATFORM =~ /linux/
-      %(HOST_USER_ID="#{user_id}" HOST_GROUP_ID="#{group_id}")
-    else
-      ""
+    variables = {
+      "COMPOSE_PROJECT_NAME" => checkout_name,
+      "GATEWAY_HOSTNAME" => gateway_hostname
+    }
+
+    ENV.each_pair do |name, value|
+      variables[name] = value if name.start_with?("OPEN_IN_EDITOR_")
     end
+    variables["OPEN_IN_EDITOR_BRIDGE_ENABLED"] = "false"
+
+    if RUBY_PLATFORM =~ /linux/
+      variables["HOST_USER_ID"] = user_id
+      variables["HOST_GROUP_ID"] = group_id
+    end
+
+    variables
+  end
+
+  def checkout_name
+    @checkout_name ||=
+      File.basename(project_root).downcase.gsub(/[^a-z0-9]+/, "-")
+  end
+
+  def gateway_hostname
+    if checkout_name == "elcc-data-management"
+      return "elcc-data-management.localhost"
+    end
+
+    "#{checkout_name}.elcc-data-management.localhost"
   end
 
   def user_id
@@ -337,18 +414,27 @@ class DevHelper
   end
 
   def reformat_project_relative_path_filter_for_vitest!(args, prefix)
-    if args.length.positive? && args[0].start_with?(prefix)
-      src_path_prefix = "#{prefix}src/"
-      test_path_regex = Regexp.escape(prefix)
-      src_path_regex = Regexp.escape(src_path_prefix)
+    src_path_prefix = "#{prefix}src/"
+    test_path_regex = Regexp.escape(prefix)
+    src_path_regex = Regexp.escape(src_path_prefix)
 
-      if args[0].start_with?(src_path_prefix)
-        args[0] = args[0].gsub(/^#{src_path_regex}/, "tests/").gsub(/\.ts$/, ".test.ts")
-        # TODO: handle other file types
+    reformatted = false
+    args.each_with_index do |arg, index|
+      next unless arg.start_with?(prefix)
+
+      if arg.start_with?(src_path_prefix)
+        args[index] = arg.gsub(/^#{src_path_regex}/, "tests/").gsub(
+          /\.ts$/,
+          ".test.ts"
+        )
       else
-        args[0] = args[0].gsub(/^#{test_path_regex}/, "")
+        args[index] = arg.gsub(/^#{test_path_regex}/, "")
       end
 
+      reformatted = true
+    end
+
+    if reformatted
       puts "Reformatted path filter from project relative to service relative for vitest."
     end
   end

@@ -1,0 +1,26 @@
+import type { Knex } from "knex"
+
+export async function up(knex: Knex): Promise<void> {
+  if (await knex.schema.hasTable("payments")) return
+
+  await knex.schema.createTable("payments", (table) => {
+    table.increments("id").notNullable().primary()
+    table.integer("centre_id").notNullable()
+    table.string("fiscal_year", 10).notNullable()
+    table.date("paid_on").notNullable()
+    table.string("name", 100).notNullable()
+    table.specificType("created_at", "DATETIME2").notNullable().defaultTo(knex.raw("GETUTCDATE()"))
+    table.specificType("updated_at", "DATETIME2").notNullable().defaultTo(knex.raw("GETUTCDATE()"))
+    table.integer("fiscal_period_id")
+    table.decimal("amount", 15, 4).notNullable()
+    table.specificType("deleted_at", "DATETIMEOFFSET")
+
+    table.foreign("centre_id").references("centres.id")
+
+    table.foreign("fiscal_period_id").references("fiscal_periods.id")
+  })
+}
+
+export async function down(knex: Knex): Promise<void> {
+  await knex.schema.dropTable("payments")
+}

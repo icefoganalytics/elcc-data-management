@@ -3,6 +3,7 @@ import { type FiltersOptions, type QueryOptions, type WhereOptions } from "@/api
 
 export type FundingLineValue = {
   submissionLineId: number
+  childCareSpaceCategoryId?: number
   sectionName: string
   lineName: string
   monthlyAmount: string
@@ -35,13 +36,9 @@ export type FundingSubmissionLineJsonWhereOptions = WhereOptions<
   "centreId" | "fiscalYear" | "dateName" | "dateStart" | "dateEnd"
 >
 
-export type FundingSubmissionLineJsonFiltersOptions = FiltersOptions<{
-  withChildOccupancyRate: string
-}>
-
 export type FundingSubmissionLineJsonQueryOptions = QueryOptions<
   FundingSubmissionLineJsonWhereOptions,
-  FundingSubmissionLineJsonFiltersOptions
+  FiltersOptions
 >
 
 export const fundingSubmissionLineJsonsApi = {

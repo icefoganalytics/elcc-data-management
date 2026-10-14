@@ -12,6 +12,7 @@
 </template>
 
 <script setup lang="ts">
+import Big from "big.js"
 import { ref, watch, computed } from "vue"
 import { useCurrencyInput, type CurrencyInputOptions, CurrencyDisplay } from "vue-currency-input"
 import { isNil, isString } from "lodash"
@@ -22,7 +23,7 @@ const DEFAULT_OPTIONS = {
   currency: "CAD",
   locale: "en-CA",
   currencyDisplay: CurrencyDisplay.symbol,
-  precision: 2,
+  precision: 4,
   // accountingSign: true,
   hideCurrencySymbolOnFocus: true,
 }
@@ -83,19 +84,24 @@ watch(
 )
 
 function onFocus() {
-  initialNumberValue.value = numberValue.value
+  initialNumberValue.value = props.modelValue
 }
 
 async function onBlur() {
   if (numberValue.value === null) {
     resetValue()
   } else {
-    emit("update:modelValue", numberValue.value)
+    emit("update:modelValue", new Big(numberValue.value).toFixed(4))
   }
 }
 
 function onEnter() {
-  emit("update:modelValue", numberValue.value)
+  if (numberValue.value === null) {
+    emit("update:modelValue", null)
+    return
+  }
+
+  emit("update:modelValue", new Big(numberValue.value).toFixed(4))
 }
 
 function resetValue() {

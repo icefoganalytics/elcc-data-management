@@ -1,9 +1,11 @@
+import type { Knex } from "knex"
+
 import { CreationAttributes } from "@sequelize/core"
 import { isNil } from "lodash"
 
 import { Centre, FundingRegion } from "@/models"
 
-export async function up() {
+export async function seed(_knex: Knex): Promise<void> {
   const fundingRegion = await FundingRegion.findOne({
     where: {
       region: "Whitehorse",
@@ -47,9 +49,4 @@ export async function up() {
       await Centre.create(centreAttributes)
     }
   }
-}
-
-export async function down() {
-  // this method needs to exist, but does not need to be implemented.
-  // Seeds should be idempotent.
 }

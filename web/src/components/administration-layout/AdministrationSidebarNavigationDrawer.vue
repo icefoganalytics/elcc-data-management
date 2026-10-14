@@ -42,6 +42,16 @@
       </v-list-item>
       <v-list-item
         :to="{
+          name: 'administration/ChildCareSpaceCategoriesPage',
+        }"
+        prepend-icon="mdi-human-child"
+        exact
+        :active="isActiveByRoutePathStartsWith('/administration/child-care-space-categories')"
+      >
+        Child Care Space Categories
+      </v-list-item>
+      <v-list-item
+        :to="{
           name: 'administration/CentresPage',
         }"
         prepend-icon="mdi-office-building-marker"

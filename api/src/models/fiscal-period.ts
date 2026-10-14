@@ -24,6 +24,7 @@ import { isValidFiscalYearShort } from "@/models/validators"
 
 import BaseModel from "@/models/base-model"
 import BuildingExpense from "@/models/building-expense"
+import ChildCareSpace from "@/models/child-care-space"
 import EmployeeBenefit from "@/models/employee-benefit"
 import EmployeeWageTier from "@/models/employee-wage-tier"
 import FundingPeriod from "@/models/funding-period"
@@ -59,7 +60,7 @@ export const FISCAL_PERIOD_MONTHS = Object.values<string>(FiscalPeriodMonths)
  * @see FundingPeriod - The parent fiscal year that contains these monthly periods
  */
 @Table({
-  paranoid: false,
+  tableName: "fiscal_periods",
 })
 export class FiscalPeriod extends BaseModel<
   InferAttributes<FiscalPeriod>,
@@ -106,13 +107,16 @@ export class FiscalPeriod extends BaseModel<
 
   @Attribute(DataTypes.DATE)
   @NotNull
-  @Default(sql.fn("getdate"))
+  @Default(sql.fn("getutcdate"))
   declare createdAt: CreationOptional<Date>
 
   @Attribute(DataTypes.DATE)
   @NotNull
-  @Default(sql.fn("getdate"))
+  @Default(sql.fn("getutcdate"))
   declare updatedAt: CreationOptional<Date>
+
+  @Attribute(DataTypes.DATE)
+  declare deletedAt: Date | null
 
   // Helper functions
   static toShortFiscalYearFormat(fiscalYear: string): string {
@@ -161,6 +165,14 @@ export class FiscalPeriod extends BaseModel<
     },
   })
   declare buildingExpenses?: NonAttribute<BuildingExpense[]>
+
+  @HasMany(() => ChildCareSpace, {
+    foreignKey: "fiscalPeriodId",
+    inverse: {
+      as: "fiscalPeriod",
+    },
+  })
+  declare childCareSpaces?: NonAttribute<ChildCareSpace[]>
 
   @HasMany(() => EmployeeBenefit, {
     foreignKey: "fiscalPeriodId",

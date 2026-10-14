@@ -6,6 +6,7 @@ export { UserSerializer } from "@/serializers/user-serializer"
 // Bundled exports
 export * as BuildingExpenseCategories from "./building-expense-categories"
 export * as BuildingExpenses from "./building-expenses"
+export * as ChildCareSpaces from "./child-care-spaces"
 export * as CurrentUser from "./current-user"
 export * as EmployeeBenefits from "./employee-benefits"
 export * as EmployeeWageTiers from "./employee-wage-tiers"

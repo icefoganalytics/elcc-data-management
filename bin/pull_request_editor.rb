@@ -7,7 +7,7 @@ require "fileutils"
 # Example:
 #   PullRequestEditor.edit_pull_request_description('https://github.com/icefoganalytics/wrap/pull/263')
 class PullRequestEditor
-  EDITOR = ENV.fetch("EDITOR", ENV.fetch("VISUAL", "windsurf"))
+  EDITOR = ENV.fetch("EDITOR", ENV.fetch("VISUAL", "devin-desktop"))
 
   def self.edit_pull_request_description(pull_request_url)
     repo, pull_request_number = extract_repo_and_pull_request_number(pull_request_url)

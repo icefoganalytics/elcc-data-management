@@ -31,6 +31,17 @@
     </v-row>
 
     <v-row>
+      <v-col cols="12">
+        <CurrencyInput
+          v-model="fundingRegion.hotMealIncrementAmount"
+          label="Hot Meal Increment Amount *"
+          :rules="[required]"
+          required
+        />
+      </v-col>
+    </v-row>
+
+    <v-row>
       <v-col class="d-flex justify-end">
         <v-btn
           color="primary"

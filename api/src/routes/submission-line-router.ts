@@ -2,17 +2,15 @@ import express, { type Request, type Response } from "express"
 import { param } from "express-validator"
 import { isNil } from "lodash"
 
-import { checkJwt, autheticateAndLoadUser } from "@/middleware/authz.middleware"
 import { ReturnValidationErrors } from "@/middleware"
+import { checkJwt, autheticateAndLoadUser } from "@/middleware/authz.middleware"
 import { FundingSubmissionLine } from "@/models"
 import { FundingSubmissionLineSerializer } from "@/serializers"
-import { FundingSubmissionLineServices } from "@/services"
+import { FundingSubmissionLineServices } from "@/services/funding-submission-line-services"
+import { CreateService, UpdateService } from "@/services/funding-submission-lines"
 
 /** @deprecated - prefer api/src/controllers/funding-submission-lines-controller.ts */
 export const submissionLineRouter = express.Router()
-
-submissionLineRouter.use(checkJwt)
-submissionLineRouter.use(autheticateAndLoadUser)
 
 submissionLineRouter.get("/", async (_req: Request, res: Response) => {
   const fundingSubmissionLines = await FundingSubmissionLine.findAll()
@@ -34,8 +32,7 @@ submissionLineRouter.put(
       return res.status(404).json({ message: "Funding Submission Line not found" })
     }
 
-    return fundingSubmissionLine
-      .update(req.body)
+    return UpdateService.perform(fundingSubmissionLine, req.body)
       .then((updatedFundingSubmissionLine) => {
         return res.status(200).json({ data: updatedFundingSubmissionLine })
       })
@@ -64,8 +61,7 @@ submissionLineRouter.post("/fiscal-year", async (req: Request, res: Response) =>
 })
 
 submissionLineRouter.post("/", async (req: Request, res: Response) => {
-  const newAttributes = req.body
-  return FundingSubmissionLine.create(newAttributes)
+  return CreateService.perform(req.body)
     .then((fundingSubmissionLine) => {
       res.json({ data: fundingSubmissionLine })
     })
