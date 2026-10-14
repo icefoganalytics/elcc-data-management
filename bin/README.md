@@ -51,8 +51,9 @@ not export session IDs or rewrite editor requests.
 
 Keep the development helper happy-path only, matching sibling projects: `up` and
 `down` call the gem directly inside the gateway wrappers; `compose` stays plain.
-Reuse the file selector and environment map. Do not add lifecycle flag parsing,
-alternate-environment fallback branches, or compatibility dispatch to these wrappers.
+Reuse the file selector and environment map. Prepare Compose options and merged
+environment values in named locals before calling the gem. Do not add lifecycle
+flag parsing, alternate-environment fallback branches, or compatibility dispatch.
 Run `dev` from the repository root with normal Bundler setup.
 
 Only adapter-backed development startup sets `OPEN_IN_EDITOR_BRIDGE_ENABLED=true`.
