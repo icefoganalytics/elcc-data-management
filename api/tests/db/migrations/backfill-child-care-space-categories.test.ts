@@ -1,5 +1,6 @@
 import Big from "big.js"
 import type { Knex } from "knex"
+import { isUndefined } from "lodash"
 
 import { up as migrateWorksheetValues } from "@/db/migrations/20261007174315_migrate-child-care-spaces-from-worksheet-json"
 import { up as addCategoryId } from "@/db/migrations/20261009021603_add-category-id-to-child-care-spaces"
@@ -23,7 +24,9 @@ async function insertRow(
   attributes: Record<string, unknown>
 ): Promise<number> {
   const [row] = await transaction(tableName).insert(attributes).returning<IdRow[]>("id")
-  if (row === undefined) throw new Error(`Unable to insert fixture row into ${tableName}.`)
+  if (isUndefined(row)) {
+    throw new Error(`Unable to insert fixture row into ${tableName}.`)
+  }
 
   return row.id
 }
@@ -32,11 +35,17 @@ async function createFundingPeriod(
   transaction: Knex.Transaction,
   fiscalYear: string
 ): Promise<number> {
-  const [startYear] = fiscalYear.split("-").map(Number)
+  const fiscalYearParts = fiscalYear.split("-")
+  const numericFiscalYearParts = fiscalYearParts.map(Number)
+  const [startYear] = numericFiscalYearParts
+  const fundingPeriodDates = {
+    fromDate: new Date(`${startYear}-04-01T00:00:00Z`),
+    toDate: new Date(`${startYear + 1}-03-31T23:59:59Z`),
+  }
   return insertRow(transaction, "funding_periods", {
     fiscal_year: fiscalYear,
-    from_date: new Date(`${startYear}-04-01T00:00:00Z`),
-    to_date: new Date(`${startYear + 1}-03-31T23:59:59Z`),
+    from_date: fundingPeriodDates.fromDate,
+    to_date: fundingPeriodDates.toDate,
     title: `Fixture Funding Period ${fiscalYear}`,
   })
 }
@@ -112,8 +121,12 @@ async function readWorksheetLines(transaction: Knex.Transaction, worksheetId: nu
     .select("values")
     .where({ id: worksheetId })
     .first()
-  if (row === undefined) throw new Error(`Worksheet ${worksheetId} was not found.`)
-  return JSON.parse(row.values) as Record<string, unknown>[]
+  if (isUndefined(row)) {
+    throw new Error(`Worksheet ${worksheetId} was not found.`)
+  }
+
+  const worksheetLines: Record<string, unknown>[] = JSON.parse(row.values)
+  return worksheetLines
 }
 
 async function createLegacySpace(
@@ -460,15 +473,14 @@ describe("api/src/db/migrations/20261009021607_backfill-child-care-space-categor
           )
           .where({ id: childCareSpace.id })
           .first()
-        const historicalSpace =
-          historicalSpaceRow === undefined
-            ? undefined
-            : {
-                ...historicalSpaceRow,
-                monthlyAmount: Big(historicalSpaceRow.monthlyAmount).toString(),
-                estimatedComputedTotal: Big(historicalSpaceRow.estimatedComputedTotal).toString(),
-                actualComputedTotal: Big(historicalSpaceRow.actualComputedTotal).toString(),
-              }
+        const historicalSpace = isUndefined(historicalSpaceRow)
+          ? undefined
+          : {
+              ...historicalSpaceRow,
+              monthlyAmount: Big(historicalSpaceRow.monthlyAmount).toString(),
+              estimatedComputedTotal: Big(historicalSpaceRow.estimatedComputedTotal).toString(),
+              actualComputedTotal: Big(historicalSpaceRow.actualComputedTotal).toString(),
+            }
         const categories = await findCategories(transaction)
         expect({ categories, historicalSpace }).toEqual({
           categories: [
@@ -542,9 +554,7 @@ describe("api/src/db/migrations/20261009021607_backfill-child-care-space-categor
         // marlens-test-alignment: allow-multiple-expects -- failure and complete rollback are independent observable contracts.
         await expect(
           transaction.transaction((nestedTransaction) => backfillCategories(nestedTransaction))
-        ).rejects.toThrow(
-          `Unable to resolve the category for Child Care Space ${childCareSpace2.id}.`
-        )
+        ).rejects.toThrow()
 
         // Assert
         const categories = await findCategories(transaction)

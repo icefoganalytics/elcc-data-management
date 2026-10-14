@@ -1,4 +1,5 @@
 import type { Knex } from "knex"
+import { isUndefined } from "lodash"
 
 const CHILD_CARE_SPACES_SECTION_NAME = "Child Care Spaces"
 
@@ -22,7 +23,7 @@ export async function up(knex: Knex): Promise<void> {
     `,
     { sectionName: CHILD_CARE_SPACES_SECTION_NAME }
   )
-  if (unresolvedConfiguration !== undefined) {
+  if (!isUndefined(unresolvedConfiguration)) {
     throw new Error(
       `No funding period found for Child Care Spaces configuration ${unresolvedConfiguration.id}.`
     )
@@ -122,7 +123,7 @@ export async function up(knex: Knex): Promise<void> {
     `
   )
 
-  if (unresolvedLedgerRow !== undefined) {
+  if (!isUndefined(unresolvedLedgerRow)) {
     throw new Error(
       `Unable to resolve the category for Child Care Space ${unresolvedLedgerRow.id}.`
     )
