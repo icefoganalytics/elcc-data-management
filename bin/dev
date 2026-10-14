@@ -10,7 +10,6 @@ require "shellwords"
 require_relative "./jira_api"
 require_relative "./pull_request_editor"
 
-ENV["OPEN_IN_EDITOR_BRIDGE_BIND_ADDRESS"] ||= "0.0.0.0"
 ENV["OPEN_IN_EDITOR_COMMAND"] ||= ENV.fetch("EDITOR", "devin-desktop")
 
 class DevHelper
