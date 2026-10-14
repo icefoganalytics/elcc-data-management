@@ -55,6 +55,8 @@ Reuse the file selector and environment map. Prepare Compose options and merged
 environment values in named locals before calling the gem. Do not add lifecycle
 flag parsing, alternate-environment fallback branches, or compatibility dispatch.
 Run `dev` from the repository root with normal Bundler setup.
+The shared file selector retains existing Linux overrides when present, before the
+gateway overlay.
 
 Only adapter-backed development startup sets `OPEN_IN_EDITOR_BRIDGE_ENABLED=true`.
 Ordinary commands explicitly disable it, so `dev web npm run start` does not require
