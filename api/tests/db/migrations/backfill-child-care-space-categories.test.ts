@@ -7,7 +7,10 @@ import { up as addCategoryId } from "@/db/migrations/20261009021603_add-category
 import { up as backfillCategories } from "@/db/migrations/20261009021607_backfill-child-care-space-categories"
 import { up as replaceLegacyReference } from "@/db/migrations/20261009021610_replace-child-care-spaces-funding-submission-line-id-with-category-id"
 import { up as removeLegacyConfiguration } from "@/db/migrations/20261009021613_remove-child-care-spaces-from-funding-submission-lines"
-import { up as linkCategories } from "@/db/migrations/20261009024301_link-funding-submission-lines-to-child-care-space-categories"
+import {
+  down as unlinkCategories,
+  up as linkCategories,
+} from "@/db/migrations/20261009024301_link-funding-submission-lines-to-child-care-space-categories"
 import {
   createLegacyChildCareSpace,
   findLegacyChildCareSpaces,
@@ -272,10 +275,7 @@ describe("api/src/db/migrations/20261009021607_backfill-child-care-space-categor
         const snapshotsAfter = await findLegacyChildCareSpaces(transaction)
         await replaceLegacyReference(transaction)
         await removeLegacyConfiguration(transaction)
-        await transaction.schema.alterTable("funding_submission_lines", (table) => {
-          table.dropForeign("child_care_space_category_id")
-          table.dropColumn("child_care_space_category_id")
-        })
+        await unlinkCategories(transaction)
         await linkCategories(transaction)
 
         // Assert
