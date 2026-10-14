@@ -42,7 +42,7 @@ gateway hostname.
 
 ### Editor Bridge
 
-Run `bundle install` to install `open-in-editor-bridge` 0.3.0. Before upgrading, stop any
+Run `bundle install` to install `open-in-editor-bridge` 0.5.0. Before upgrading, stop any
 running 0.1.x or vendored bridge using its original CLI; the protocols cannot share a port.
 
 `dev up` and `dev down` delegate editor integration to the gem's Compose adapter. It
@@ -68,7 +68,7 @@ releases only this checkout, preserving other active sessions. Use `dev up -d --
 to wait for readiness while retaining registration; the wrapper forwards flags unchanged.
 
 The wrapper defaults `OPEN_IN_EDITOR_COMMAND` to `EDITOR`, or `devin-desktop` when unset.
-It defaults `OPEN_IN_EDITOR_BRIDGE_BIND_ADDRESS` to `0.0.0.0` for Docker access.
+The gem's Docker adapter defaults its bind address to `0.0.0.0`; the wrapper does not set it.
 Editor requests are unauthenticated: use only a trusted development network with host
 firewall restrictions, never public port forwarding. Set the bind address to a specific
 Docker-reachable host interface to narrow exposure. The development proxy uses port `3333`.
