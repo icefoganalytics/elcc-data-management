@@ -40,6 +40,45 @@ http://elcc-data-management.localhost; named worktrees receive their own
 Once Vite starts, the web service prints `Open ELCC: http://<hostname>/` with that checkout's
 gateway hostname.
 
+### Editor Bridge
+
+Run `bundle install` to install `open-in-editor-bridge` 0.5.0. Before upgrading, stop any
+running 0.1.x or vendored bridge using its original CLI; the protocols cannot share a port.
+
+`dev up` and `dev down` delegate editor integration to the gem's Compose adapter. It
+mounts the bundled Vite plugin and a checkout identity manifest; the application does
+not export session IDs or rewrite editor requests.
+
+Keep the development helper happy-path only, matching sibling projects: `up` and
+`down` call the gem directly inside the gateway wrappers; `compose` stays plain.
+Reuse the file selector and environment map. The environment builder supplies checkout
+and bridge-specific values; callers do not merge the full host environment. Prepare
+options and environment values in named locals before calling the gem. Do not add
+lifecycle flag parsing, alternate-environment fallbacks, or compatibility dispatch.
+Run `dev` from the repository root with normal Bundler setup.
+The shared file selector retains existing Linux overrides when present, before the
+gateway overlay.
+
+Only adapter-backed development startup sets `OPEN_IN_EDITOR_BRIDGE_ENABLED=true`.
+Ordinary commands explicitly disable it, so `dev web npm run start` does not require
+editor mounts. Test and production configurations do not load the plugin.
+
+The library owns foreground lease cleanup and detached registrations; `dev down`
+releases only this checkout, preserving other active sessions. Use `dev up -d --wait`
+to wait for readiness while retaining registration; the wrapper forwards flags unchanged.
+
+The wrapper defaults `OPEN_IN_EDITOR_COMMAND` to `EDITOR`, or `devin-desktop` when unset.
+The gem's Docker adapter defaults its bind address to `0.0.0.0`; the wrapper does not set it.
+Editor requests are unauthenticated: use only a trusted development network with host
+firewall restrictions, never public port forwarding. Set the bind address to a specific
+Docker-reachable host interface to narrow exposure. The development proxy uses port `3333`.
+All clients sharing the listener must agree on bind address and runtime directory.
+
+See the [released bridge documentation](https://github.com/klondikemarlen/open-in-editor-bridge)
+for direct CLI use and shared-runtime configuration.
+
+### Dependencies and SQL Scripts
+
 In each new checkout, initialize the ignored source-bound dependencies before the first `dev up`:
 
 ```bash

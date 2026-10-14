@@ -2,13 +2,15 @@
 
 require "bundler/setup"
 require "local_development_gateway"
+require "open_in_editor_bridge"
 
 require "rdoc"
 require "shellwords"
 
 require_relative "./jira_api"
-require_relative "./open-in-editor-bridge"
 require_relative "./pull_request_editor"
+
+ENV["OPEN_IN_EDITOR_COMMAND"] ||= ENV.fetch("EDITOR", "devin-desktop")
 
 class DevHelper
   # Support dashes in command names
@@ -59,29 +61,33 @@ class DevHelper
   end
 
   def up(*args, **kwargs)
+    compose_options = compose_file_options(gateway: true, **kwargs)
+    environment_variables = dynamic_environment_variables
+    environment_variables["OPEN_IN_EDITOR_BRIDGE_ENABLED"] = "true"
+
     LocalDevelopmentGateway.with_running do
-      OpenInEditorBridge.with_running do
-        compose(
-          *%w[up --remove-orphans --force-recreate --renew-anon-volumes],
-          *args,
-          execution_mode: WAIT_FOR_PROCESS,
-          gateway: true,
-          **kwargs
-        )
-      end
+      OpenInEditorBridge.compose(
+        *%w[up --remove-orphans --force-recreate --renew-anon-volumes],
+        *args,
+        compose_options:,
+        env: environment_variables,
+        project_root:
+      )
     end
   end
 
   def down(*args, **kwargs)
+    compose_options = compose_file_options(**kwargs)
+    environment_variables = dynamic_environment_variables
+
     LocalDevelopmentGateway.with_running(ensure_running: false) do
-      OpenInEditorBridge.with_running(ensure_running: false) do
-        compose(
-          *%w[down --remove-orphans],
-          *args,
-          execution_mode: WAIT_FOR_PROCESS,
-          **kwargs
-        )
-      end
+      OpenInEditorBridge.compose(
+        *%w[down --remove-orphans],
+        *args,
+        compose_options:,
+        env: environment_variables,
+        project_root:
+      )
     end
   end
 
@@ -313,25 +319,16 @@ class DevHelper
   end
 
   def compose_command(*args, **kwargs)
-    environment = kwargs.delete(:environment) { "development" }
-    gateway = kwargs.delete(:gateway)
     pipe_input = kwargs.delete(:pipe_input)
 
     go_to_project_root = "cd #{project_root}"
-    compose_file_args = ["-f docker-compose.#{environment}.yaml"]
-
-    if RUBY_PLATFORM =~ /linux/
-      linux_override = "docker-compose.#{environment}.linux.yml"
-      linux_override_path = File.join(project_root, linux_override)
-      if File.exist?(linux_override_path)
-        compose_file_args << "-f #{linux_override}"
-      end
-    end
-    if gateway && environment == "development"
-      compose_file_args << "-f docker-compose.development.gateway.yml"
-    end
+    compose_file_arguments = compose_file_options(**kwargs)
     bootstrap_docker =
-      "docker compose #{compose_file_args.join(" ")} #{args.join(" ")}"
+      "docker compose #{compose_file_arguments.shelljoin} #{args.join(" ")}"
+    environment_variables =
+      dynamic_environment_variables
+        .map { |name, value| "#{name}=#{Shellwords.escape(value)}" }
+        .join(" ")
 
     if pipe_input
       shell_safe_pipe_input = Shellwords.escape(pipe_input)
@@ -339,14 +336,29 @@ class DevHelper
 
       <<~BASH
         #{go_to_project_root} && \
-        #{pipe_input_to_compose} #{dynamic_environment_variables} #{bootstrap_docker}
+        #{pipe_input_to_compose} #{environment_variables} #{bootstrap_docker}
       BASH
     else
       <<~BASH
         #{go_to_project_root} && \
-        #{dynamic_environment_variables} #{bootstrap_docker}
+        #{environment_variables} #{bootstrap_docker}
       BASH
     end
+  end
+
+  def compose_file_options(environment: "development", gateway: false, **)
+    options = ["-f", "docker-compose.#{environment}.yaml"]
+    if RUBY_PLATFORM =~ /linux/
+      linux_override = "docker-compose.#{environment}.linux.yml"
+      linux_override_path = File.join(project_root, linux_override)
+      options.concat(["-f", linux_override]) if File.exist?(linux_override_path)
+    end
+
+    if gateway && environment == "development"
+      options.concat(%w[-f docker-compose.development.gateway.yml])
+    end
+
+    options
   end
 
   def project_root
@@ -354,16 +366,22 @@ class DevHelper
   end
 
   def dynamic_environment_variables
-    variables = []
+    variables = {
+      "COMPOSE_PROJECT_NAME" => checkout_name,
+      "GATEWAY_HOSTNAME" => gateway_hostname
+    }
+
+    ENV.each_pair do |name, value|
+      variables[name] = value if name.start_with?("OPEN_IN_EDITOR_")
+    end
+    variables["OPEN_IN_EDITOR_BRIDGE_ENABLED"] = "false"
 
     if RUBY_PLATFORM =~ /linux/
-      variables << %(HOST_USER_ID="#{user_id}")
-      variables << %(HOST_GROUP_ID="#{group_id}")
+      variables["HOST_USER_ID"] = user_id
+      variables["HOST_GROUP_ID"] = group_id
     end
 
-    variables << %(COMPOSE_PROJECT_NAME="#{checkout_name}")
-    variables << %(GATEWAY_HOSTNAME="#{Shellwords.escape(gateway_hostname)}")
-    variables.join(" ")
+    variables
   end
 
   def checkout_name
