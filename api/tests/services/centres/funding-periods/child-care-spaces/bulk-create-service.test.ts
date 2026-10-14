@@ -15,12 +15,12 @@ describe("api/src/services/centres/funding-periods/child-care-spaces/bulk-create
       // Arrange
       const centre = await centreFactory.create()
       const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2024-2025" })
-      const april = await fiscalPeriodFactory.create({
+      const aprilFiscalPeriod = await fiscalPeriodFactory.create({
         fundingPeriodId: fundingPeriod.id,
         fiscalYear: "2024-25",
         dateStart: new Date("2024-04-01"),
       })
-      await fiscalPeriodFactory.create({
+      const mayFiscalPeriod = await fiscalPeriodFactory.create({
         fundingPeriodId: fundingPeriod.id,
         fiscalYear: "2024-25",
         dateStart: new Date("2024-05-01"),
@@ -35,56 +35,40 @@ describe("api/src/services/centres/funding-periods/child-care-spaces/bulk-create
         categoryName: "Toddlers",
         monthlyAmount: "200.0000",
       })
-      const historicalInfant = await childCareSpaceFactory
-        .associations({ centre, fiscalPeriod: april, category: infantCategory })
+      await childCareSpaceFactory
+        .associations({ centre, fiscalPeriod: aprilFiscalPeriod, category: infantCategory })
         .create({ lineName: "Historical Infant Cohort", monthlyAmount: "125.5000" })
 
       // Act
-      const created = await BulkCreateService.perform(centre, fundingPeriod)
-      const persistedHistoricalInfant = await historicalInfant.reload()
-      const allRows = await ChildCareSpace.withScope({
-        method: ["byFundingPeriod", fundingPeriod.id],
-      }).findAll({
-        where: { centreId: centre.id },
-        order: [
-          ["fiscalPeriodId", "ASC"],
-          ["categoryId", "ASC"],
-        ],
+      await BulkCreateService.perform(centre, fundingPeriod)
+      const childCareSpaces = await ChildCareSpace.findAll()
+      const snapshots = childCareSpaces.map((childCareSpace) => {
+        const identity = `${childCareSpace.centreId}:${childCareSpace.fiscalPeriodId}:${childCareSpace.categoryId}`
+        const { lineName, monthlyAmount } = childCareSpace
+        return [identity, { lineName, monthlyAmount }] as const
       })
+      const snapshotsByIdentity = new Map(snapshots)
 
       // Assert
-      // marlens-test-alignment: allow-multiple-expects -- newly provisioned pairs and preserved historical snapshots are independent persisted-state contracts.
-      expect(
-        created.map(({ fiscalPeriodId, categoryId, lineName, monthlyAmount }) => ({
-          fiscalPeriodId,
-          categoryId,
-          lineName,
-          monthlyAmount,
-        }))
-      ).toEqual([
-        expect.objectContaining({
-          fiscalPeriodId: april.id,
-          categoryId: toddlerCategory.id,
-          lineName: "Toddlers",
-          monthlyAmount: "200",
-        }),
-        expect.objectContaining({
-          categoryId: infantCategory.id,
-          lineName: "Infants",
-          monthlyAmount: "100",
-        }),
-        expect.objectContaining({
-          categoryId: toddlerCategory.id,
-          lineName: "Toddlers",
-          monthlyAmount: "200",
-        }),
-      ])
-      expect(allRows).toHaveLength(4)
-      expect(persistedHistoricalInfant).toEqual(
-        expect.objectContaining({
-          lineName: "Historical Infant Cohort",
-          monthlyAmount: "125.5",
-        })
+      expect(snapshotsByIdentity).toEqual(
+        new Map([
+          [
+            `${centre.id}:${aprilFiscalPeriod.id}:${infantCategory.id}`,
+            { lineName: "Historical Infant Cohort", monthlyAmount: "125.5" },
+          ],
+          [
+            `${centre.id}:${aprilFiscalPeriod.id}:${toddlerCategory.id}`,
+            { lineName: "Toddlers", monthlyAmount: "200" },
+          ],
+          [
+            `${centre.id}:${mayFiscalPeriod.id}:${infantCategory.id}`,
+            { lineName: "Infants", monthlyAmount: "100" },
+          ],
+          [
+            `${centre.id}:${mayFiscalPeriod.id}:${toddlerCategory.id}`,
+            { lineName: "Toddlers", monthlyAmount: "200" },
+          ],
+        ])
       )
     })
   })

@@ -4,8 +4,9 @@ import { FundingSubmissionLineJson } from "@/models"
 
 import {
   buildingExpenseFactory,
-  childCareSpaceFactory,
   centreFactory,
+  childCareSpaceCategoryFactory,
+  childCareSpaceFactory,
   fiscalPeriodFactory,
   fundingPeriodFactory,
   fundingSubmissionLineJsonFactory,
@@ -277,6 +278,53 @@ describe("api/src/services/funding-reconciliations/calculate-eligible-expenses-p
 
         // Assert
         expect(result).toBe("60.0000")
+      })
+
+      test("when ledger totals exceed JavaScript decimal precision, preserves every financial decimal place", async () => {
+        // Arrange
+        const numberOfLargeLedgerRows = 100
+        const centre = await centreFactory.create()
+        const fundingPeriod = await fundingPeriodFactory.create({
+          fiscalYear: "2025-2026",
+        })
+        const fiscalPeriod = await fiscalPeriodFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          fiscalYear: "2025-26",
+          month: FiscalPeriod.Months.APRIL,
+          dateStart: new Date("2025-04-01"),
+          dateEnd: new Date("2025-04-30"),
+        })
+
+        for (let index = 0; index < numberOfLargeLedgerRows; index++) {
+          const category = await childCareSpaceCategoryFactory.create({
+            fundingPeriodId: fundingPeriod.id,
+            categoryName: `Large category ${index}`,
+            monthlyAmount: "99999999999.9999",
+          })
+          await childCareSpaceFactory.associations({ centre, fiscalPeriod, category }).create({
+            monthlyAmount: "99999999999.9999",
+            actualChildOccupancyRate: "1.0000",
+          })
+        }
+
+        const category = await childCareSpaceCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Fractional category",
+          monthlyAmount: "0.0001",
+        })
+        await childCareSpaceFactory.associations({ centre, fiscalPeriod, category }).create({
+          monthlyAmount: "0.0001",
+          actualChildOccupancyRate: "1.0000",
+        })
+
+        // Act
+        const result = await CalculateEligibleExpensesPeriodAmountService.perform(
+          centre.id,
+          fiscalPeriod.id
+        )
+
+        // Assert
+        expect(result).toBe("9999999999999.9901")
       })
     })
   })

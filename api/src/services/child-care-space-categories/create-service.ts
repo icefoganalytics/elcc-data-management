@@ -15,9 +15,18 @@ export class CreateService extends BaseService {
 
   async perform(): Promise<ChildCareSpaceCategory> {
     const { fundingPeriodId, categoryName, fromAge, toAge, monthlyAmount } = this.attributes
-    if (isNil(fundingPeriodId)) throw new Error("Funding period ID is required")
-    if (isNil(categoryName)) throw new Error("Category name is required")
-    if (isNil(monthlyAmount)) throw new Error("Monthly amount is required")
+    if (isNil(fundingPeriodId)) {
+      throw new Error("Funding period ID is required")
+    }
+
+    if (isNil(categoryName)) {
+      throw new Error("Category name is required")
+    }
+
+    if (isNil(monthlyAmount)) {
+      throw new Error("Monthly amount is required")
+    }
+
     return ChildCareSpaceCategory.create({
       fundingPeriodId,
       categoryName,

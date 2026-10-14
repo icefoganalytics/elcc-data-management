@@ -47,6 +47,7 @@ export class BulkCreateService extends BaseService {
         monthlyAmount,
       }))
     }
+
     return ChildCareSpaceCategory.DEFAULTS
   }
 }

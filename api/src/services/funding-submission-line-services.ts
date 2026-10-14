@@ -1,5 +1,5 @@
 import { CreationAttributes, Op } from "@sequelize/core"
-import { merge, omit } from "lodash"
+import { isUndefined, merge, omit } from "lodash"
 
 import { ChildCareSpaceCategory, FundingPeriod, FundingSubmissionLine } from "@/models"
 
@@ -23,7 +23,7 @@ export class FundingSubmissionLineServices {
     })
 
     const targetFiscalYear = attributes.fiscalYear
-    if (targetFiscalYear === undefined) {
+    if (isUndefined(targetFiscalYear)) {
       return FundingSubmissionLine.bulkCreate(newLinesCreationAttributes)
     }
 
@@ -31,13 +31,16 @@ export class FundingSubmissionLineServices {
     const fundingPeriods = await FundingPeriod.findAll({
       where: { fiscalYear: `${startingYear}-${startingYear + 1}` },
     })
-    const targetCategories =
-      fundingPeriods.length === 0
-        ? []
-        : await ChildCareSpaceCategory.findAll({
-            where: { fundingPeriodId: { [Op.in]: fundingPeriods.map(({ id }) => id) } },
-            attributes: ["id", "categoryName"],
-          })
+    let targetCategories: ChildCareSpaceCategory[]
+    if (fundingPeriods.length === 0) {
+      targetCategories = []
+    } else {
+      targetCategories = await ChildCareSpaceCategory.findAll({
+        where: { fundingPeriodId: { [Op.in]: fundingPeriods.map(({ id }) => id) } },
+        attributes: ["id", "categoryName"],
+      })
+    }
+
     const categoryIdsByName = new Map<string, number[]>()
     for (const { id, categoryName } of targetCategories) {
       const categoryIds = categoryIdsByName.get(categoryName) ?? []
@@ -46,18 +49,23 @@ export class FundingSubmissionLineServices {
     }
     const sourceCategoryIds: number[] = []
     for (const { childCareSpaceCategoryId } of linesToCreateFrom) {
-      if (childCareSpaceCategoryId === null) continue
+      if (childCareSpaceCategoryId === null) {
+        continue
+      }
 
       sourceCategoryIds.push(childCareSpaceCategoryId)
     }
-    const sourceCategories =
-      sourceCategoryIds.length === 0
-        ? []
-        : await ChildCareSpaceCategory.findAll({
-            where: { id: { [Op.in]: sourceCategoryIds } },
-            attributes: ["id", "categoryName"],
-            paranoid: false,
-          })
+    let sourceCategories: ChildCareSpaceCategory[]
+    if (sourceCategoryIds.length === 0) {
+      sourceCategories = []
+    } else {
+      sourceCategories = await ChildCareSpaceCategory.findAll({
+        where: { id: { [Op.in]: sourceCategoryIds } },
+        attributes: ["id", "categoryName"],
+        paranoid: false,
+      })
+    }
+
     const sourceCategoryNamesById = new Map(
       sourceCategories.map(({ id, categoryName }) => [id, categoryName])
     )
@@ -69,7 +77,7 @@ export class FundingSubmissionLineServices {
         sourceLine.childCareSpaceCategoryId === null
           ? (attributes.lineName ?? sourceLine.lineName)
           : sourceCategoryNamesById.get(sourceLine.childCareSpaceCategoryId)
-      if (!LINKED_SECTIONS.includes(sectionName) || categoryName === undefined) {
+      if (!LINKED_SECTIONS.includes(sectionName) || isUndefined(categoryName)) {
         return { ...attributes, childCareSpaceCategoryId: null }
       }
 

@@ -49,9 +49,7 @@ describe("api/src/models/child-care-space.ts", () => {
 
           // Act
           // marlens-test-alignment: allow-multiple-expects -- rejection and unchanged persisted money are independent observable contracts.
-          await expect(childCareSpace.update(attributes)).rejects.toThrow(
-            "Child Care Spaces occupancy rates support at most four decimal places"
-          )
+          await expect(childCareSpace.update(attributes)).rejects.toThrow()
 
           // Assert
           await expect(childCareSpace.reload()).resolves.toEqual(

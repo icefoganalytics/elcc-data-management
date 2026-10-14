@@ -54,7 +54,9 @@ const latestFiscalPeriodId = computed(
     )?.fiscalPeriodId
 )
 const latestChildCareSpaces = computed(() => {
-  if (isNil(latestFiscalPeriodId.value)) return []
+  if (isNil(latestFiscalPeriodId.value)) {
+    return []
+  }
 
   return childCareSpaces.value.filter(
     ({ fiscalPeriodId }) => fiscalPeriodId === latestFiscalPeriodId.value

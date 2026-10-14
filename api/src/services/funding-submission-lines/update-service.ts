@@ -1,4 +1,5 @@
 import { Attributes, Op } from "@sequelize/core"
+import { isUndefined } from "lodash"
 
 import { ChildCareSpaceCategory, FundingPeriod, FundingSubmissionLine } from "@/models"
 import BaseService from "@/services/base-service"
@@ -35,22 +36,33 @@ export class UpdateService extends BaseService {
     sectionName: string,
     lineName: string
   ) {
-    if (!this.isChildCareSpaceSection(sectionName)) return null
+    if (!this.isChildCareSpaceSection(sectionName)) {
+      return null
+    }
 
     const existingCategoryId = this.fundingSubmissionLine.childCareSpaceCategoryId
     const periodIsUnchanged = fiscalYear === this.fundingSubmissionLine.fiscalYear
-    if (existingCategoryId !== null && periodIsUnchanged) return existingCategoryId
+    if (existingCategoryId !== null && periodIsUnchanged) {
+      return existingCategoryId
+    }
 
-    const categoryName =
-      existingCategoryId === null ? lineName : await this.existingCategoryName(existingCategoryId)
-    if (categoryName === undefined) return null
+    let categoryName: string | undefined = lineName
+    if (existingCategoryId !== null) {
+      categoryName = await this.existingCategoryName(existingCategoryId)
+    }
+
+    if (isUndefined(categoryName)) {
+      return null
+    }
 
     const startingYear = Number(fiscalYear.slice(0, 4))
     const fundingPeriods = await FundingPeriod.findAll({
       attributes: ["id"],
       where: { fiscalYear: `${startingYear}-${startingYear + 1}` },
     })
-    if (fundingPeriods.length === 0) return null
+    if (fundingPeriods.length === 0) {
+      return null
+    }
 
     const categories = await ChildCareSpaceCategory.findAll({
       attributes: ["id", "categoryName"],
@@ -73,6 +85,7 @@ export class UpdateService extends BaseService {
     const category = await ChildCareSpaceCategory.findByPk(categoryId, { paranoid: false })
     return category?.categoryName
   }
+
   private isChildCareSpaceSection(sectionName: string) {
     return (
       sectionName === "Administration (10% of Spaces)" ||

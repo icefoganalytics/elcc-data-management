@@ -9,6 +9,7 @@ export type ChildCareSpaceAsIndex = Pick<
   ChildCareSpace,
   | "id"
   | "centreId"
+  | "fiscalPeriodId"
   | "categoryId"
   | "lineName"
   | "monthlyAmount"

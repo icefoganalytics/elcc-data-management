@@ -171,7 +171,9 @@ const isLoading = computed(
 )
 const isErrored = computed(() => isCategoryErrored.value)
 const fundingPeriodDescription = computed(() => {
-  if (fundingPeriod.value === null) return "Unavailable"
+  if (fundingPeriod.value === null) {
+    return "Unavailable"
+  }
 
   const { fiscalYear, title } = fundingPeriod.value
   return title ? `${fiscalYear} — ${title}` : fiscalYear

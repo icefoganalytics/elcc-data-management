@@ -50,7 +50,9 @@ export function useChildCareSpaces(
   watch(
     () => [skipWatchIf(), unref(queryOptions)],
     async ([skip]) => {
-      if (skip) return
+      if (skip) {
+        return
+      }
 
       await fetch()
     },

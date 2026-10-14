@@ -40,7 +40,9 @@ const props = withDefaults(
 )
 
 async function checkCategoryNameAvailability(name: string) {
-  if (isNil(props.fundingPeriodId)) return true
+  if (isNil(props.fundingPeriodId)) {
+    return true
+  }
 
   const { childCareSpaceCategories } = await childCareSpaceCategoriesApi.list({
     where: {

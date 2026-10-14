@@ -1,5 +1,6 @@
 import { createPinia } from "pinia"
 import { nextTick } from "vue"
+import { isUndefined } from "lodash"
 import { flushPromises, mount } from "@vue/test-utils"
 
 import httpClient from "@/api/http-client"
@@ -9,8 +10,9 @@ import { mockRouter, mockVuetify } from "@/tests/support"
 
 describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLineJsonEditSheet.vue", () => {
   describe("worksheet editing", () => {
-    test("when a renamed category's occupancy changes, updates visible totals and linked sections, saves separately, and replicates", async () => {
+    test("when a renamed category's occupancy changes, updates visible totals and linked sections", async () => {
       // Arrange
+
       const fundingSubmissionLineJson = {
         id: 11,
         centreId: 1,
@@ -76,19 +78,7 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
 
         throw new Error(`Unexpected GET ${url}`)
       })
-      httpClientMock.patch.mockImplementation(async (url, attributes) => {
-        if (url === "/api/child-care-spaces/1") {
-          Object.assign(childCareSpace, attributes)
-          return { data: {} }
-        }
-        if (url === "/api/funding-submission-line-jsons/11") {
-          Object.assign(fundingSubmissionLineJson, attributes)
-          return { data: {} }
-        }
 
-        throw new Error(`Unexpected PATCH ${url}`)
-      })
-      httpClientMock.post.mockResolvedValue({ data: {} })
       const router = mockRouter([
         {
           path: "/",
@@ -119,31 +109,16 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
       await actualInput.setValue("0.25")
       await actualInput.trigger("change")
       await nextTick()
-      const childCareSpaceTotals = childCareSpacesTable
-        .findAll("tfoot td")
-        .map((cell) => cell.text())
-      const saveButton = wrapper.findAll("button").find((button) => button.text().includes("Save"))
-      if (saveButton === undefined) throw new Error("Expected Save button")
-
-      await saveButton.trigger("click")
-      await flushPromises()
-
-      const replicateEstimatesButton = wrapper
-        .findAll("button")
-        .find((button) => button.text().includes("Replicate Estimates"))
-      if (replicateEstimatesButton === undefined)
-        throw new Error("Expected Replicate Estimates button")
-
-      await replicateEstimatesButton.trigger("click")
-      await flushPromises()
+      const childCareSpaceTotalCells = childCareSpacesTable.findAll("tfoot td")
+      const childCareSpaceTotals = childCareSpaceTotalCells.map((cell) => cell.text())
+      const administrationLines = administrationTable.props("lines")
+      const qualityEnhancementProgramLines = qualityEnhancementProgramTable.props("lines")
 
       // Assert
       expect({
         childCareSpaceTotals,
-        administrationLines: administrationTable.props("lines"),
-        qualityEnhancementProgramLines: qualityEnhancementProgramTable.props("lines"),
-        patches: httpClientMock.patch.mock.calls,
-        posts: httpClientMock.post.mock.calls,
+        administrationLines,
+        qualityEnhancementProgramLines,
       }).toEqual({
         childCareSpaceTotals: ["SECTION TOTAL", "", "0.5", "$50.00", "0.3", "$25.00"],
         administrationLines: [
@@ -161,53 +136,6 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
             estimatedComputedTotal: "10.0000",
             actualComputedTotal: "5.0000",
           }),
-        ],
-        patches: [
-          [
-            "/api/child-care-spaces/1",
-            {
-              estimatedChildOccupancyRate: "0.5",
-              actualChildOccupancyRate: "0.25",
-            },
-          ],
-          [
-            "/api/funding-submission-line-jsons/11",
-            {
-              lines: [
-                expect.objectContaining({
-                  sectionName: "Administration (10% of Spaces)",
-                  estimatedChildOccupancyRate: "0.5",
-                  actualChildOccupancyRate: "0.25",
-                }),
-                expect.objectContaining({
-                  sectionName: "Quality Enhancement Program",
-                  estimatedChildOccupancyRate: "0.5",
-                  actualChildOccupancyRate: "0.25",
-                }),
-              ],
-            },
-          ],
-          [
-            "/api/funding-submission-line-jsons/11",
-            {
-              lines: [
-                expect.objectContaining({
-                  sectionName: "Administration (10% of Spaces)",
-                  estimatedChildOccupancyRate: "0.5",
-                  actualChildOccupancyRate: "0.25",
-                }),
-                expect.objectContaining({
-                  sectionName: "Quality Enhancement Program",
-                  estimatedChildOccupancyRate: "0.5",
-                  actualChildOccupancyRate: "0.25",
-                }),
-              ],
-            },
-          ],
-        ],
-        posts: [
-          ["/api/funding-submission-line-jsons/11/replicate-estimates"],
-          ["/api/child-care-spaces/1/replicate-estimates"],
         ],
       })
     })

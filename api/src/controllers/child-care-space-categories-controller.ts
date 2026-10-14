@@ -16,117 +16,156 @@ export class ChildCareSpaceCategoriesController extends BaseController<ChildCare
     try {
       const where = this.buildWhere()
       const scopes = this.buildFilterScopes()
-      const scoped = ChildCareSpaceCategoryPolicy.applyScope(scopes, this.currentUser)
-      const totalCount = await scoped.count({ where })
-      const records = await scoped.findAll({
+      const order = this.buildOrder([["categoryName", "ASC"]])
+      const scopedChildCareSpaceCategories = ChildCareSpaceCategoryPolicy.applyScope(
+        scopes,
+        this.currentUser
+      )
+
+      const totalCount = await scopedChildCareSpaceCategories.count({ where })
+      const childCareSpaceCategories = await scopedChildCareSpaceCategories.findAll({
         where,
-        order: this.buildOrder([["categoryName", "ASC"]]),
+        order,
         limit: this.pagination.limit,
         offset: this.pagination.offset,
       })
+      const serializedChildCareSpaceCategories = IndexSerializer.perform(
+        childCareSpaceCategories,
+        this.currentUser
+      )
       return this.response.json({
-        childCareSpaceCategories: IndexSerializer.perform(records, this.currentUser),
+        childCareSpaceCategories: serializedChildCareSpaceCategories,
         totalCount,
       })
     } catch (error) {
       logger.error(`Error fetching Child Care Space categories: ${error}`, { error })
-      return this.response
-        .status(400)
-        .json({ message: `Error fetching Child Care Space categories: ${error}` })
+      return this.response.status(400).json({
+        message: `Error fetching Child Care Space categories: ${error}`,
+      })
     }
   }
 
   async show() {
     try {
-      const category = await this.loadCategory()
-      if (isNil(category))
-        return this.response.status(404).json({ message: "Child Care Space category not found" })
-      const policy = this.buildPolicy(category)
-      if (!policy.show())
-        return this.response
-          .status(403)
-          .json({ message: "You are not authorized to view this Child Care Space category" })
+      const childCareSpaceCategory = await this.loadChildCareSpaceCategory()
+      if (isNil(childCareSpaceCategory)) {
+        return this.response.status(404).json({
+          message: "Child Care Space category not found",
+        })
+      }
+
+      const policy = this.buildPolicy(childCareSpaceCategory)
+      if (!policy.show()) {
+        return this.response.status(403).json({
+          message: "You are not authorized to view this Child Care Space category",
+        })
+      }
+
+      const serializedChildCareSpaceCategory = ShowSerializer.perform(childCareSpaceCategory)
       return this.response.json({
-        childCareSpaceCategory: ShowSerializer.perform(category),
+        childCareSpaceCategory: serializedChildCareSpaceCategory,
         policy,
       })
     } catch (error) {
       logger.error(`Error fetching Child Care Space category: ${error}`, { error })
-      return this.response
-        .status(400)
-        .json({ message: `Error fetching Child Care Space category: ${error}` })
+      return this.response.status(400).json({
+        message: `Error fetching Child Care Space category: ${error}`,
+      })
     }
   }
 
   async create() {
     try {
       const policy = this.buildPolicy()
-      if (!policy.create())
-        return this.response
-          .status(403)
-          .json({ message: "You are not authorized to create Child Care Space categories" })
-      const attributes = policy.permitAttributesForCreate(this.request.body)
-      const category = await CreateService.perform(attributes)
-      return this.response
-        .status(201)
-        .json({ childCareSpaceCategory: ShowSerializer.perform(category), policy })
+      if (!policy.create()) {
+        return this.response.status(403).json({
+          message: "You are not authorized to create Child Care Space categories",
+        })
+      }
+
+      const permittedAttributes = policy.permitAttributesForCreate(this.request.body)
+      const childCareSpaceCategory = await CreateService.perform(permittedAttributes)
+      const serializedChildCareSpaceCategory = ShowSerializer.perform(childCareSpaceCategory)
+      return this.response.status(201).json({
+        childCareSpaceCategory: serializedChildCareSpaceCategory,
+        policy,
+      })
     } catch (error) {
       logger.error(`Error creating Child Care Space category: ${error}`, { error })
-      return this.response
-        .status(422)
-        .json({ message: `Error creating Child Care Space category: ${error}` })
+      return this.response.status(422).json({
+        message: `Error creating Child Care Space category: ${error}`,
+      })
     }
   }
 
   async update() {
     try {
-      const category = await this.loadCategory()
-      if (isNil(category))
-        return this.response.status(404).json({ message: "Child Care Space category not found" })
-      const policy = this.buildPolicy(category)
-      if (!policy.update())
-        return this.response
-          .status(403)
-          .json({ message: "You are not authorized to update this Child Care Space category" })
-      const updated = await UpdateService.perform(
-        category,
-        policy.permitAttributes(this.request.body)
+      const childCareSpaceCategory = await this.loadChildCareSpaceCategory()
+      if (isNil(childCareSpaceCategory)) {
+        return this.response.status(404).json({
+          message: "Child Care Space category not found",
+        })
+      }
+
+      const policy = this.buildPolicy(childCareSpaceCategory)
+      if (!policy.update()) {
+        return this.response.status(403).json({
+          message: "You are not authorized to update this Child Care Space category",
+        })
+      }
+
+      const permittedAttributes = policy.permitAttributes(this.request.body)
+      const updatedChildCareSpaceCategory = await UpdateService.perform(
+        childCareSpaceCategory,
+        permittedAttributes
       )
-      return this.response.json({ childCareSpaceCategory: ShowSerializer.perform(updated), policy })
+      const serializedChildCareSpaceCategory = ShowSerializer.perform(updatedChildCareSpaceCategory)
+      return this.response.json({
+        childCareSpaceCategory: serializedChildCareSpaceCategory,
+        policy,
+      })
     } catch (error) {
       logger.error(`Error updating Child Care Space category: ${error}`, { error })
-      return this.response
-        .status(422)
-        .json({ message: `Error updating Child Care Space category: ${error}` })
+      return this.response.status(422).json({
+        message: `Error updating Child Care Space category: ${error}`,
+      })
     }
   }
 
   async destroy() {
     try {
-      const category = await this.loadCategory()
-      if (isNil(category))
-        return this.response.status(404).json({ message: "Child Care Space category not found" })
-      const policy = this.buildPolicy(category)
-      if (!policy.destroy())
-        return this.response
-          .status(403)
-          .json({ message: "You are not authorized to delete this Child Care Space category" })
-      await DestroyService.perform(category)
+      const childCareSpaceCategory = await this.loadChildCareSpaceCategory()
+      if (isNil(childCareSpaceCategory)) {
+        return this.response.status(404).json({
+          message: "Child Care Space category not found",
+        })
+      }
+
+      const policy = this.buildPolicy(childCareSpaceCategory)
+      if (!policy.destroy()) {
+        return this.response.status(403).json({
+          message: "You are not authorized to delete this Child Care Space category",
+        })
+      }
+
+      await DestroyService.perform(childCareSpaceCategory)
       return this.response.status(204).send()
     } catch (error) {
       logger.error(`Error deleting Child Care Space category: ${error}`, { error })
-      return this.response
-        .status(422)
-        .json({ message: `Error deleting Child Care Space category: ${error}` })
+      return this.response.status(422).json({
+        message: `Error deleting Child Care Space category: ${error}`,
+      })
     }
   }
 
-  private loadCategory() {
+  private loadChildCareSpaceCategory() {
     return ChildCareSpaceCategory.findByPk(this.params.childCareSpaceCategoryId)
   }
 
-  private buildPolicy(category: ChildCareSpaceCategory = ChildCareSpaceCategory.build()) {
-    return new ChildCareSpaceCategoryPolicy(this.currentUser, category)
+  private buildPolicy(
+    childCareSpaceCategory: ChildCareSpaceCategory = ChildCareSpaceCategory.build()
+  ) {
+    return new ChildCareSpaceCategoryPolicy(this.currentUser, childCareSpaceCategory)
   }
 }
 

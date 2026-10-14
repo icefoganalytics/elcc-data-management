@@ -16,7 +16,9 @@ export class BulkEnsureService extends BaseService {
       where: { fundingPeriodId: this.fundingPeriod.id },
       paranoid: false,
     })
-    if (isNil(categoryHistory)) return BulkCreateService.perform(this.fundingPeriod)
+    if (isNil(categoryHistory)) {
+      return BulkCreateService.perform(this.fundingPeriod)
+    }
 
     return ChildCareSpaceCategory.findAll({
       where: { fundingPeriodId: this.fundingPeriod.id },

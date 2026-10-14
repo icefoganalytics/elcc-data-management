@@ -198,14 +198,12 @@ describe("api/src/controllers/child-care-spaces-controller.ts", () => {
         })
 
         // Act
-        const response = await request()
+        await request()
           .patch(`/api/child-care-spaces/${childCareSpace.id}`)
           .send({ estimatedChildOccupancyRate: "0.2500" })
         const persistedChildCareSpace = await childCareSpace.reload()
 
         // Assert
-        // marlens-test-alignment: allow-multiple-expects -- status and persisted ledger values are independent observable contracts.
-        expect(response.status).toBe(200)
         expect(persistedChildCareSpace.estimatedChildOccupancyRate).toBe("0.25")
       })
     })

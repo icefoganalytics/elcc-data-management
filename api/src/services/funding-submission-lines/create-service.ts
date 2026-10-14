@@ -17,13 +17,21 @@ export class CreateService extends BaseService {
     const { fiscalYear, sectionName, lineName, monthlyAmount, ...optionalAttributes } =
       this.attributes
 
-    if (isNil(fiscalYear)) throw new Error("Fiscal year is required")
+    if (isNil(fiscalYear)) {
+      throw new Error("Fiscal year is required")
+    }
 
-    if (isNil(sectionName)) throw new Error("Section name is required")
+    if (isNil(sectionName)) {
+      throw new Error("Section name is required")
+    }
 
-    if (isNil(lineName)) throw new Error("Line name is required")
+    if (isNil(lineName)) {
+      throw new Error("Line name is required")
+    }
 
-    if (isNil(monthlyAmount)) throw new Error("Monthly amount is required")
+    if (isNil(monthlyAmount)) {
+      throw new Error("Monthly amount is required")
+    }
 
     const childCareSpaceCategoryId = await this.findCategoryId(fiscalYear, sectionName, lineName)
 
@@ -38,14 +46,18 @@ export class CreateService extends BaseService {
   }
 
   private async findCategoryId(fiscalYear: string, sectionName: string, lineName: string) {
-    if (!this.isChildCareSpaceSection(sectionName)) return null
+    if (!this.isChildCareSpaceSection(sectionName)) {
+      return null
+    }
 
     const startingYear = Number(fiscalYear.slice(0, 4))
     const fundingPeriods = await FundingPeriod.findAll({
       attributes: ["id"],
       where: { fiscalYear: `${startingYear}-${startingYear + 1}` },
     })
-    if (fundingPeriods.length === 0) return null
+    if (fundingPeriods.length === 0) {
+      return null
+    }
 
     const categories = await ChildCareSpaceCategory.findAll({
       attributes: ["id", "categoryName"],
