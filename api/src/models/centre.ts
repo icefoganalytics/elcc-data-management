@@ -14,7 +14,6 @@ import {
   HasMany,
   NotNull,
   PrimaryKey,
-  Table,
   ValidateAttribute,
 } from "@sequelize/core/decorators-legacy"
 
@@ -35,9 +34,6 @@ export enum CentreStatuses {
 }
 
 // TODO: split this table into buildings, and companies
-@Table({
-  paranoid: false,
-})
 export class Centre extends BaseModel<InferAttributes<Centre>, InferCreationAttributes<Centre>> {
   static readonly Statuses = CentreStatuses
 
@@ -77,7 +73,9 @@ export class Centre extends BaseModel<InferAttributes<Centre>, InferCreationAttr
   declare license: string | null
 
   @Attribute(DataTypes.BOOLEAN)
-  declare hotMeal: boolean | null
+  @NotNull
+  @Default(false)
+  declare hotMeal: CreationOptional<boolean>
 
   @Attribute(DataTypes.INTEGER)
   declare licensedFor: number | null
@@ -127,13 +125,16 @@ export class Centre extends BaseModel<InferAttributes<Centre>, InferCreationAttr
 
   @Attribute(DataTypes.DATE)
   @NotNull
-  @Default(sql.fn("getdate"))
+  @Default(sql.fn("getutcdate"))
   declare createdAt: CreationOptional<Date>
 
   @Attribute(DataTypes.DATE)
   @NotNull
-  @Default(sql.fn("getdate"))
+  @Default(sql.fn("getutcdate"))
   declare updatedAt: CreationOptional<Date>
+
+  @Attribute(DataTypes.DATE)
+  declare deletedAt: Date | null
 
   // Associations
   @BelongsTo(() => FundingRegion, {

@@ -1,7 +1,6 @@
 <template>
   <v-app-bar
     app
-    color="#fff"
     flat
     height="70"
     style="left: 0; border-bottom: 3px #f3b228 solid; padding-bottom: 3px"
@@ -26,7 +25,7 @@
       style="line-height: 0"
     >
       <v-app-bar-title
-        class="pt-0 font-weight-bold"
+        class="pt-0 font-weight-bold text-black"
         style="margin-left: -20px"
         >{{ title }}</v-app-bar-title
       >

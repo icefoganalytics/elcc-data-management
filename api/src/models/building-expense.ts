@@ -43,11 +43,10 @@ export class BuildingExpense extends BaseModel<
   @BuildingExpensesCentreIdFiscalPeriodIdCategoryIdUniqueIndex
   declare fiscalPeriodId: number
 
-  // TODO: update this field to just be `categoryId`
   @Attribute(DataTypes.INTEGER)
   @NotNull
   @BuildingExpensesCentreIdFiscalPeriodIdCategoryIdUniqueIndex
-  declare buildingExpenseCategoryId: number
+  declare categoryId: number
 
   @Attribute(DataTypes.STRING(100))
   @NotNull
@@ -122,7 +121,7 @@ export class BuildingExpense extends BaseModel<
   declare fiscalPeriod?: NonAttribute<FiscalPeriod>
 
   @BelongsTo(() => BuildingExpenseCategory, {
-    foreignKey: "buildingExpenseCategoryId",
+    foreignKey: "categoryId",
     inverse: {
       as: "expenses",
       type: "hasMany",
@@ -131,7 +130,16 @@ export class BuildingExpense extends BaseModel<
   declare category?: NonAttribute<BuildingExpenseCategory>
 
   static establishScopes() {
-    // add as needed
+    this.addScope("byFundingPeriod", (fundingPeriodId: number) => ({
+      include: [
+        {
+          association: "fiscalPeriod",
+          where: {
+            fundingPeriodId,
+          },
+        },
+      ],
+    }))
   }
 }
 

@@ -1,4 +1,5 @@
 import Big from "big.js"
+import { sql } from "@sequelize/core"
 
 import { Payment } from "@/models"
 import BaseService from "@/services/base-service"
@@ -12,16 +13,22 @@ export class CalculateFundingReceivedPeriodAmountService extends BaseService {
   }
 
   async perform(): Promise<string> {
-    const paymentsTotalAmountOrNull = await Payment.sum("amount", {
+    const [paymentTotals] = await Payment.findAll<Payment, { paymentsTotalAmount: string }>({
+      attributes: [
+        [
+          sql.cast(sql.fn("COALESCE", sql.fn("SUM", sql.attribute("amount")), 0), "VARCHAR(50)"),
+          "paymentsTotalAmount",
+        ],
+      ],
       where: {
         centreId: this.centreId,
         fiscalPeriodId: this.fiscalPeriodId,
       },
+      raw: true,
     })
-    const paymentsTotalAmount = paymentsTotalAmountOrNull ?? 0
-    const paymentsTotalAmountInDollars = Big(paymentsTotalAmount)
+    const { paymentsTotalAmount } = paymentTotals
 
-    return paymentsTotalAmountInDollars.toFixed(4)
+    return Big(paymentsTotalAmount).toFixed(4)
   }
 }
 

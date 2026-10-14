@@ -10,6 +10,7 @@ export type FundingRegion = {
   id: number
   region: string
   subsidyRate: string
+  hotMealIncrementAmount: string
   createdAt: string
   updatedAt: string
 }

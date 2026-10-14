@@ -3,15 +3,71 @@
     <FiscalPeriodFiscalYearSelect
       :model-value="fiscalYearLegacy"
       label="Fiscal year"
-      class="float-right mt-n10"
-      style="width: 200px"
+      :class="mdAndUp ? 'float-right mt-n10' : ''"
+      :style="mdAndUp ? 'width: 200px' : ''"
       variant="outlined"
       density="compact"
       hide-details
       @update:model-value="updateFiscalYearAndRedirect"
     />
 
-    <v-row>
+    <PageLoader
+      v-if="isLoadingFundingPeriod || isLoadingInitialization"
+      message="Loading fiscal year data..."
+      style="height: calc(100dvh - 14em) !important"
+    />
+    <v-empty-state
+      v-else-if="isNil(fundingPeriodId) && isAdmin"
+      headline="Funding Period Not Found"
+      title="No funding period exists for this fiscal year."
+      text="Create a funding period for this fiscal year to initialize the centre."
+      icon="mdi-calendar-remove"
+    >
+      <template #actions>
+        <v-btn
+          color="primary"
+          :to="{
+            name: 'administration/funding-periods/FundingPeriodNewPage',
+          }"
+        >
+          Create Funding Period
+        </v-btn>
+      </template>
+    </v-empty-state>
+    <v-empty-state
+      v-else-if="isNil(fundingPeriodId) && !isAdmin"
+      headline="Funding Period Not Found"
+      title="No funding period exists for this fiscal year."
+      text="Contact your administrator to create a funding period for this fiscal year."
+      icon="mdi-calendar-remove"
+    >
+      <template #actions>
+        <v-btn
+          color="primary"
+          href="mailto:help+elcc@icefoganalytics.com"
+        >
+          Contact Administrator
+        </v-btn>
+      </template>
+    </v-empty-state>
+    <v-empty-state
+      v-else-if="!isInitialized"
+      headline="Fiscal Year Not Initialized"
+      title="This fiscal year has not been set up for this centre yet."
+      text="The required data records (employee benefits, building expenses, worksheets, and reconciliation) need to be created before you can view or edit data for this fiscal year."
+      icon="mdi-calendar-alert"
+    >
+      <template #actions>
+        <v-btn
+          color="primary"
+          :loading="isInitializing"
+          @click="initializeFiscalYear"
+        >
+          Initialize Fiscal Year
+        </v-btn>
+      </template>
+    </v-empty-state>
+    <v-row v-else>
       <v-col
         cols="12"
         md="4"
@@ -29,8 +85,10 @@
           <v-divider></v-divider>
           <v-card-text class="pt-3">
             <FundingLineValuesEnrollmentChart
+              v-if="!isNil(fiscalYearLegacy) && !isEmpty(fiscalYearLegacy)"
               ref="fundingLineValuesEnrollmentChartRef"
               :centre-id="centreIdAsNumber"
+              :fiscal-year-legacy="fiscalYearLegacy"
             />
           </v-card-text>
         </v-card>
@@ -82,7 +140,10 @@
 
             <v-divider></v-divider>
 
-            <router-view v-slot="{ Component }">
+            <router-view
+              :key="mainContentRefreshKey"
+              v-slot="{ Component }"
+            >
               <component
                 :is="Component"
                 @update:funding-submission-line-json="refreshFundingLineValuesEnrollmentChart"
@@ -96,14 +157,19 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty } from "lodash"
+import { isEmpty, isNil } from "lodash"
 import { useRoute, useRouter } from "vue-router"
-import { computed, onMounted, useTemplateRef } from "vue"
+import { computed, onMounted, ref, useTemplateRef } from "vue"
+import { useDisplay } from "vuetify"
 
-import { getCurrentFiscalYearSlug } from "@/utils/fiscal-year"
+import { getCurrentFiscalYearSlug, normalizeFiscalYearToLongForm } from "@/utils/fiscal-year"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useCentre from "@/use/use-centre"
+import useCurrentUser from "@/use/use-current-user"
+import useFundingPeriods from "@/use/use-funding-periods"
+import useCentreFundingPeriodInitialization from "@/use/use-centre-funding-period-initialization"
 
+import PageLoader from "@/components/common/PageLoader.vue"
 import FiscalPeriodFiscalYearSelect from "@/components/fiscal-periods/FiscalPeriodFiscalYearSelect.vue"
 import FundingLineValuesEnrollmentChart from "@/components/funding-line-values/FundingLineValuesEnrollmentChart.vue"
 import CentreDetailsCard from "@/modules/centre/components/CentreDetailsCard.vue"
@@ -119,9 +185,55 @@ const props = withDefaults(
 )
 
 const centreIdAsNumber = computed(() => parseInt(props.centreId))
-const { centre, refresh } = useCentre(centreIdAsNumber)
+const { centre, refresh: refreshCentre } = useCentre(centreIdAsNumber)
 
-const fiscalYearLegacy = computed(() => props.fiscalYearSlug?.replace("-", "/"))
+const mainContentRefreshKey = ref(0)
+
+async function refresh() {
+  await refreshCentre()
+  mainContentRefreshKey.value++
+}
+
+const { isAdmin } = useCurrentUser()
+
+const fiscalYearLegacy = computed<string | undefined>(() => props.fiscalYearSlug?.replace("-", "/"))
+const fiscalYearLong = computed<string | undefined>(() => {
+  if (isEmpty(props.fiscalYearSlug)) return undefined
+
+  return normalizeFiscalYearToLongForm(props.fiscalYearSlug)
+})
+
+const fundingPeriodsQuery = computed(() => ({
+  where: {
+    fiscalYear: fiscalYearLong.value,
+  },
+  perPage: 1,
+}))
+const { fundingPeriods, isLoading: isLoadingFundingPeriod } = useFundingPeriods(
+  fundingPeriodsQuery,
+  {
+    skipWatchIf: () => isNil(fiscalYearLong.value),
+  }
+)
+const fundingPeriodId = computed<number | null>(() => {
+  const fundingPeriod = fundingPeriods.value[0]
+  if (isNil(fundingPeriod)) return null
+
+  return fundingPeriod.id
+})
+
+const {
+  initializationStatus,
+  isLoading: isLoadingInitialization,
+  isInitializing,
+  initialize,
+} = useCentreFundingPeriodInitialization(centreIdAsNumber, fundingPeriodId)
+
+const isInitialized = computed(() => initializationStatus.value?.isInitialized ?? false)
+
+async function initializeFiscalYear() {
+  await initialize()
+}
 
 onMounted(async () => {
   if (isEmpty(props.fiscalYearSlug)) {
@@ -149,6 +261,8 @@ const fundingLineValuesEnrollmentChartRef = useTemplateRef("fundingLineValuesEnr
 function refreshFundingLineValuesEnrollmentChart() {
   fundingLineValuesEnrollmentChartRef.value?.refresh()
 }
+
+const { mdAndUp } = useDisplay()
 
 const title = computed(() => centre.value?.name || "loading ...")
 const breadcrumbs = computed(() => {

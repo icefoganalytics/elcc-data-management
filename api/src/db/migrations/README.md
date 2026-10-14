@@ -1,0 +1,63 @@
+# Knex Migration Patterns
+
+Use this directory for all migrations. Create one migration per application model or inseparable
+group of related models; separate schema changes from data backfills.
+
+## Commands
+
+```bash
+./bin/dev migrate make add-field-to-table
+./bin/dev migrate latest
+./bin/dev migrate list
+```
+
+## Migration Structure
+
+```typescript
+import type { Knex } from "knex"
+
+export async function up(knex: Knex): Promise<void> {
+  await knex.schema.alterTable("table_name", (table) => {
+    table.string("field_name", 100)
+  })
+}
+
+export async function down(knex: Knex): Promise<void> {
+  await knex.schema.alterTable("table_name", (table) => {
+    table.dropColumn("field_name")
+  })
+}
+```
+
+Use SQL `DECIMAL` types for financial values and snake_case for database names.
+Use `GETUTCDATE()` for timestamp defaults. Name unique indexes explicitly. Unique indexes on paranoid
+models must exclude soft-deleted rows, using `predicate: knex.whereNull("deleted_at")`.
+
+Creation migrations and existing-database upgrades must converge on the same default policy:
+use unquoted SQL `0` for numeric zero defaults, retain the intended nonzero numeric literals,
+use Unicode literals for `NVARCHAR`, and keep UTC timestamps on `GETUTCDATE()`.
+For example, use `defaultTo(knex.raw("0"))` and `defaultTo(knex.raw("N'user'"))`.
+Numeric precision and scale belong in the column declaration, not in quoted default values.
+
+When changing defaults with `.alter()`, restate the existing column type, length,
+precision/scale, and nullability. Drop and recreate an affected unique constraint or index
+only when required.
+
+Use scalar column names and dotted references for single-column foreign keys:
+
+```typescript
+table.foreign("centre_id").references("centres.id")
+```
+
+Let Knex generate foreign-key constraint names; do not supply them. Preserve cascade actions when
+refactoring and use arrays for composite keys.
+
+The initial `create-*` migrations use `knex.schema.hasTable` to leave existing tables untouched.
+They are a fresh-install baseline, not an upgrade path for old application schemas.
+Their `down` methods use `dropTable`, deleting the table and its rows even when it predated cutover.
+Inspect a restored production backup before cutover; use a backup for production data recovery.
+Cleanup migrations can be irreversible: their `down` methods warn and continue without restoring
+removed state or preventing the remaining migrations from rolling back.
+
+Knex uses its native filename-based history and migration lock. Do not rename ledger entries,
+retain obsolete transition-marker files, or add a second migration directory.

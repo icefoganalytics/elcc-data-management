@@ -4,10 +4,9 @@ WORKDIR /usr/src/api
 
 COPY package*.json ./
 
-RUN npm install
+RUN npm clean-install
 
-COPY . .
-
+COPY bin/boot-app.sh ./bin/
 RUN chmod +x ./bin/boot-app.sh
 
 CMD ["/usr/src/api/bin/boot-app.sh"]

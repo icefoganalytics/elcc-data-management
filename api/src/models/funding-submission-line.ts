@@ -1,5 +1,6 @@
 import {
   DataTypes,
+  Op,
   sql,
   type CreationOptional,
   type InferAttributes,
@@ -9,23 +10,29 @@ import {
   Attribute,
   AutoIncrement,
   Default,
+  ModelValidator,
   NotNull,
   PrimaryKey,
-  Table,
   ValidateAttribute,
 } from "@sequelize/core/decorators-legacy"
+import { isNil } from "lodash"
 
 import { isValidFiscalYearLegacy } from "@/models/validators"
 
 import BaseModel from "@/models/base-model"
+import FUNDING_SUBMISSION_LINE_DEFAULTS, {
+  FundingSubmissionLineEnhancementTypes,
+  FundingSubmissionLineImmutableSectionNames,
+} from "@/models/funding-submission-line-defaults"
 
-@Table({
-  paranoid: false,
-})
 export class FundingSubmissionLine extends BaseModel<
   InferAttributes<FundingSubmissionLine>,
   InferCreationAttributes<FundingSubmissionLine>
 > {
+  static readonly DEFAULTS = FUNDING_SUBMISSION_LINE_DEFAULTS
+  static readonly EnhancementTypes = FundingSubmissionLineEnhancementTypes
+  static readonly ImmutableSectionNames = FundingSubmissionLineImmutableSectionNames
+
   @Attribute(DataTypes.INTEGER)
   @PrimaryKey
   @AutoIncrement
@@ -59,16 +66,18 @@ export class FundingSubmissionLine extends BaseModel<
 
   @Attribute(DataTypes.DATE)
   @NotNull
-  @Default(sql.fn("getdate"))
+  @Default(sql.fn("getutcdate"))
   declare createdAt: CreationOptional<Date>
 
   @Attribute(DataTypes.DATE)
   @NotNull
-  @Default(sql.fn("getdate"))
+  @Default(sql.fn("getutcdate"))
   declare updatedAt: CreationOptional<Date>
 
-  // Helpers
+  @Attribute(DataTypes.DATE)
+  declare deletedAt: Date | null
 
+  // Helpers
   /**
    * Converts fiscal year from FundingPeriod format (YYYY-YYYY) to FundingSubmissionLine format (YYYY/YY)
    *
@@ -85,8 +94,59 @@ export class FundingSubmissionLine extends BaseModel<
     return shortFormat.replace("-", "/")
   }
 
+  // Validators
+  @ModelValidator
+  ensureImmutableSectionNamesRemainUnchanged() {
+    if (this.isNewRecord) return
+    if (!this.changed("sectionName")) return
+
+    const previousSectionName = this.previous("sectionName")
+    if (isNil(previousSectionName)) return
+
+    const isImmutableSectionName = Object.values<string>(
+      FundingSubmissionLineImmutableSectionNames
+    ).includes(previousSectionName)
+    if (isImmutableSectionName) {
+      throw new Error(`Section name "${previousSectionName}" is immutable and cannot be changed.`)
+    }
+  }
+
   static establishScopes() {
     this.addSearchScope(["fiscalYear", "sectionName", "lineName"])
+
+    this.addScope("byFundingPeriod", (fundingPeriodId: number) => {
+      const fundingSubmissionLinesByFundingPeriodIdQuery = sql`
+        (
+          SELECT
+            id
+          FROM
+            funding_submission_lines
+          WHERE
+            funding_submission_lines.deleted_at IS NULL
+            AND EXISTS (
+              SELECT
+                1
+              FROM
+                funding_periods
+              WHERE
+                funding_periods.id = ${fundingPeriodId}
+                AND funding_periods.deleted_at IS NULL
+                AND funding_submission_lines.fiscal_year = REPLACE(
+                  funding_periods.fiscal_year,
+                  '-' + RIGHT(funding_periods.fiscal_year, 4),
+                  '/' + RIGHT(funding_periods.fiscal_year, 2)
+                )
+            )
+        )
+      `
+      return {
+        where: {
+          id: {
+            [Op.in]: fundingSubmissionLinesByFundingPeriodIdQuery,
+          },
+        },
+      }
+    })
   }
 }
 

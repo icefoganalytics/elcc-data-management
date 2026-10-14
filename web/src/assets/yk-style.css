@@ -1,3 +1,10 @@
+/**
+ * @deprecated Legacy Yukon-specific overrides.
+ *
+ * Prefer moving component styling into Vuetify theme configuration and
+ * `createVuetify({ defaults: ... })` instead of adding new rules here.
+ */
+
 /* Typography - needs !important to override Vuetify defaults */
 html {
   font-size: 15px;
@@ -10,14 +17,6 @@ html {
   font-family: Montserrat, Helvetica, Arial, sans-serif !important;
 }
 
-body,
-h1,
-h2,
-h3,
-p,
-div {
-  color: #323232 !important;
-}
 
 h1 {
   display: block;

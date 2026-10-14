@@ -46,7 +46,7 @@ const FUNDING_SUBMISSION_LINE_JSON_MONTHS = Object.values(FundingSubmissionLineJ
 // TODO: consider renaming this to MonthlyWorksheet?
 // TODO: link this model to a fiscal period, and remove fiscalYear, dateName, dateStart, and dateEnd
 @Table({
-  paranoid: false,
+  tableName: "funding_submission_line_jsons",
 })
 export class FundingSubmissionLineJson extends BaseModel<
   InferAttributes<FundingSubmissionLineJson>,
@@ -106,13 +106,16 @@ export class FundingSubmissionLineJson extends BaseModel<
 
   @Attribute(DataTypes.DATE)
   @NotNull
-  @Default(sql.fn("getdate"))
+  @Default(sql.fn("getutcdate"))
   declare createdAt: CreationOptional<Date>
 
   @Attribute(DataTypes.DATE)
   @NotNull
-  @Default(sql.fn("getdate"))
+  @Default(sql.fn("getutcdate"))
   declare updatedAt: CreationOptional<Date>
+
+  @Attribute(DataTypes.DATE)
+  declare deletedAt: Date | null
 
   // Helpers
   static asFundingSubmissionLineJsonMonth(
@@ -150,6 +153,41 @@ export class FundingSubmissionLineJson extends BaseModel<
   declare centre?: NonAttribute<Centre>
 
   static establishScopes() {
+    this.addScope("byFundingPeriod", (fundingPeriodId: number) => {
+      const fundingSubmissionLineJsonsByFundingPeriodIdQuery = sql`
+        (
+          SELECT
+            id
+          FROM
+            funding_submission_line_jsons
+          WHERE
+            funding_submission_line_jsons.deleted_at IS NULL
+            AND
+            EXISTS (
+              SELECT
+                1
+              FROM
+                funding_periods
+              WHERE
+                funding_periods.id = ${fundingPeriodId}
+                AND funding_periods.deleted_at IS NULL
+                AND funding_submission_line_jsons.fiscal_year = REPLACE(
+                  funding_periods.fiscal_year,
+                  '-' + RIGHT(funding_periods.fiscal_year, 4),
+                  '/' + RIGHT(funding_periods.fiscal_year, 2)
+                )
+            )
+        )
+      `
+      return {
+        where: {
+          id: {
+            [Op.in]: fundingSubmissionLineJsonsByFundingPeriodIdQuery,
+          },
+        },
+      }
+    })
+
     this.addScope("withChildOccupancyRate", (sectionName: string) => {
       const withChildOccupancyRateQuery = sql`
         (
@@ -159,7 +197,8 @@ export class FundingSubmissionLineJson extends BaseModel<
             funding_submission_line_jsons
             CROSS APPLY OPENJSON (funding_submission_line_jsons.[values]) AS json_array_element
           WHERE
-            JSON_VALUE(json_array_element.value, '$.sectionName') = :sectionName
+            funding_submission_line_jsons.deleted_at IS NULL
+            AND JSON_VALUE(json_array_element.value, '$.sectionName') = :sectionName
           GROUP BY
             funding_submission_line_jsons.id,
             JSON_VALUE(json_array_element.value, '$.sectionName')
@@ -170,7 +209,7 @@ export class FundingSubmissionLineJson extends BaseModel<
                   JSON_VALUE(
                     json_array_element.value,
                     '$.actualChildOccupancyRate'
-                  ) AS decimal(10,2)
+                  ) AS decimal(10, 2)
                 ),
                 0
               )

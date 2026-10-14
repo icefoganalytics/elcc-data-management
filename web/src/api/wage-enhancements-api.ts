@@ -8,7 +8,7 @@ import {
 import { type EmployeeWageTierAsReference } from "@/api/employee-wage-tiers-api"
 
 // TODO: store this in the back-end, probably in the fiscal_periods table
-export const EI_CPP_WCB_RATE = 0.14
+export const EI_CPP_WCB_RATE = "0.14"
 
 // Keep in sync with api/src/models/wage-enhancement.ts
 export type WageEnhancement = {

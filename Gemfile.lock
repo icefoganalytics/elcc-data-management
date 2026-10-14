@@ -1,0 +1,66 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    haml (7.2.0)
+      temple (>= 0.8.2)
+      thor
+      tilt
+    language_server-protocol (3.17.0.5)
+    local-development-gateway (0.2.0)
+    logger (1.7.0)
+    prettier_print (1.2.1)
+    prism (1.9.0)
+    rbs (4.0.2)
+      logger
+      prism (>= 1.6.0)
+      tsort
+    ruby-lsp (0.26.6)
+      language_server-protocol (~> 3.17.0)
+      prism (>= 1.2, < 2.0)
+      rbs (>= 3, < 5)
+    syntax_tree (6.3.0)
+      prettier_print (>= 1.2.0)
+    syntax_tree-haml (4.0.3)
+      haml (>= 5.2)
+      prettier_print (>= 1.2.1)
+      syntax_tree (>= 6.0.0)
+    syntax_tree-rbs (1.0.0)
+      prettier_print
+      rbs
+      syntax_tree (>= 2.0.1)
+    temple (0.10.4)
+    thor (1.5.0)
+    tilt (2.7.0)
+    tsort (0.2.0)
+
+PLATFORMS
+  ruby
+  x86_64-linux
+
+DEPENDENCIES
+  local-development-gateway (~> 0.2)
+  prettier_print (= 1.2.1)
+  ruby-lsp (= 0.26.6)
+  syntax_tree (= 6.3.0)
+  syntax_tree-haml (= 4.0.3)
+  syntax_tree-rbs (= 1.0.0)
+
+CHECKSUMS
+  haml (7.2.0) sha256=87fd2b71f7feab1724337b090a7d767f5ab2d42f08c974f3ead673f18cfcd55a
+  language_server-protocol (3.17.0.5) sha256=fd1e39a51a28bf3eec959379985a72e296e9f9acfce46f6a79d31ca8760803cc
+  local-development-gateway (0.2.0) sha256=bbce62ef48c3e14ff848fdc9bdbecf6e9342ebbdda4adffdc27b9237c9719f70
+  logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
+  prettier_print (1.2.1) sha256=a72838b5f23facff21f90a5423cdcdda19e4271092b41f4ea7f50b83929e6ff9
+  prism (1.9.0) sha256=7b530c6a9f92c24300014919c9dcbc055bf4cdf51ec30aed099b06cd6674ef85
+  rbs (4.0.2) sha256=af75671e66cd03434cc546622741ebf83f6197ec4328375805306330bf78ef25
+  ruby-lsp (0.26.6) sha256=1f50b21cb300586d7742190fc8446c18387f488aa0e9d276cf2bc7f3684ccda2
+  syntax_tree (6.3.0) sha256=56e25a9692c798ec94c5442fe94c5e94af76bef91edc8bb02052cbdecf35f13d
+  syntax_tree-haml (4.0.3) sha256=dcf676677dc28b0f4b908dd414c0e75721fbd6261a2d0f07b378246059196359
+  syntax_tree-rbs (1.0.0) sha256=596728cb588a78a197f5b0c0d09e58a00bad1d9856dc3dfaa065199f521436bd
+  temple (0.10.4) sha256=b7a1e94b6f09038ab0b6e4fe0126996055da2c38bec53a8a336f075748fff72c
+  thor (1.5.0) sha256=e3a9e55fe857e44859ce104a84675ab6e8cd59c650a49106a05f55f136425e73
+  tilt (2.7.0) sha256=0d5b9ba69f6a36490c64b0eee9f6e9aad517e20dcc848800a06eb116f08c6ab3
+  tsort (0.2.0) sha256=9650a793f6859a43b6641671278f79cfead60ac714148aabe4e3f0060480089f
+
+BUNDLED WITH
+  4.0.3

@@ -4,8 +4,6 @@ WORKDIR /usr/src/web
 
 COPY package*.json ./
 
-RUN npm install
-
-COPY . .
+RUN npm clean-install
 
 CMD ["npm", "run", "start", "--", "--host", "0.0.0.0"]

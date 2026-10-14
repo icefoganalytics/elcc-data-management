@@ -1,6 +1,5 @@
 import {
   DataTypes,
-  Model,
   sql,
   type CreationOptional,
   type InferAttributes,
@@ -14,20 +13,17 @@ import {
   Default,
   NotNull,
   PrimaryKey,
-  Table,
 } from "@sequelize/core/decorators-legacy"
 
+import BaseModel from "@/models/base-model"
 import Centre from "@/models/centre"
 import EmployeeWageTier from "@/models/employee-wage-tier"
 
 // TODO: store this in the database, probably in the fiscal_periods table?
 // I think having it changeable on a monthly basis would be sufficient?
-export const EI_CPP_WCB_RATE = 0.14
+export const EI_CPP_WCB_RATE = "0.14"
 
-@Table({
-  paranoid: false,
-})
-export class WageEnhancement extends Model<
+export class WageEnhancement extends BaseModel<
   InferAttributes<WageEnhancement>,
   InferCreationAttributes<WageEnhancement>
 > {
@@ -63,13 +59,16 @@ export class WageEnhancement extends Model<
 
   @Attribute(DataTypes.DATE)
   @NotNull
-  @Default(sql.fn("getdate"))
+  @Default(sql.fn("getutcdate"))
   declare createdAt: CreationOptional<Date>
 
   @Attribute(DataTypes.DATE)
   @NotNull
-  @Default(sql.fn("getdate"))
+  @Default(sql.fn("getutcdate"))
   declare updatedAt: CreationOptional<Date>
+
+  @Attribute(DataTypes.DATE)
+  declare deletedAt: Date | null
 
   // Associations
   @BelongsTo(() => Centre, {
@@ -91,13 +90,19 @@ export class WageEnhancement extends Model<
   declare employeeWageTier?: NonAttribute<EmployeeWageTier>
 
   static establishScopes() {
-    this.addScope("byFiscalPeriodId", (fiscalPeriodId: number) => ({
+    this.addScope("byFundingPeriod", (fundingPeriodId: number) => ({
       include: [
         {
           association: "employeeWageTier",
-          where: {
-            fiscalPeriodId,
-          },
+          include: [
+            {
+              association: "fiscalPeriod",
+              where: {
+                fundingPeriodId,
+              },
+            },
+          ],
+          required: true,
         },
       ],
     }))
