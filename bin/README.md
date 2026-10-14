@@ -51,9 +51,10 @@ not export session IDs or rewrite editor requests.
 
 Keep the development helper happy-path only, matching sibling projects: `up` and
 `down` call the gem directly inside the gateway wrappers; `compose` stays plain.
-Reuse the file selector and environment map. Prepare Compose options and merged
-environment values in named locals before calling the gem. Do not add lifecycle
-flag parsing, alternate-environment fallback branches, or compatibility dispatch.
+Reuse the file selector and environment map. The environment builder supplies checkout
+and bridge-specific values; callers do not merge the full host environment. Prepare
+options and environment values in named locals before calling the gem. Do not add
+lifecycle flag parsing, alternate-environment fallbacks, or compatibility dispatch.
 Run `dev` from the repository root with normal Bundler setup.
 The shared file selector retains existing Linux overrides when present, before the
 gateway overlay.
