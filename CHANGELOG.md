@@ -40,6 +40,8 @@ Changes since v2025.11.24.1 that will be included in the next release.
 
 ### Fixed
 
+- Employee benefits and wage enhancement edits now save when committed, with visible failures
+  and retry controls, so users do not need to save each Employees-tab section separately.
 - Prevented employee benefits from being double counted in employee adjustment amounts during funding reconciliation calculations.
 - Resolved occasional authentication issues caused by plugin load order.
 - Database startup now applies its grace period once and bounds readiness timeouts, including
