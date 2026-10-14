@@ -349,6 +349,12 @@ class DevHelper
 
   def compose_file_options(environment: "development", gateway: false, **)
     options = ["-f", "docker-compose.#{environment}.yaml"]
+    if RUBY_PLATFORM =~ /linux/
+      linux_override = "docker-compose.#{environment}.linux.yml"
+      linux_override_path = File.join(project_root, linux_override)
+      options.concat(["-f", linux_override]) if File.exist?(linux_override_path)
+    end
+
     if gateway && environment == "development"
       options.concat(%w[-f docker-compose.development.gateway.yml])
     end
