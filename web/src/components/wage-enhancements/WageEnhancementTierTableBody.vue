@@ -4,7 +4,6 @@
     type="table-row"
   />
   <tbody v-else>
-    <!-- TODO: set this up with auto-save -->
     <tr class="bg-grey-lighten-2">
       <td>{{ employeeWageTier.tierLabel }}</td>
       <td colspan="5"></td>
@@ -30,6 +29,8 @@
           density="compact"
           variant="underlined"
           hide-details
+          @blur="saveField(wageEnhancement.id, 'employeeName')"
+          @keydown.enter.prevent="saveField(wageEnhancement.id, 'employeeName')"
         />
       </td>
       <td>
@@ -51,6 +52,8 @@
           density="compact"
           variant="underlined"
           hide-details
+          @blur="saveField(wageEnhancement.id, 'hoursEstimated')"
+          @keydown.enter.prevent="saveField(wageEnhancement.id, 'hoursEstimated')"
         />
       </td>
       <td>
@@ -72,6 +75,8 @@
           density="compact"
           variant="underlined"
           hide-details
+          @blur="saveField(wageEnhancement.id, 'hoursActual')"
+          @keydown.enter.prevent="saveField(wageEnhancement.id, 'hoursActual')"
         />
       </td>
       <td>
@@ -93,9 +98,8 @@
           density="comfortable"
           variant="text"
           :loading="isLoadingByWageEnhancementId.get(wageEnhancement.id)"
-          @click="updateWageEnhancement(wageEnhancement.id, wageEnhancement)"
-        >
-        </v-btn>
+          @click="saveChangedFields(wageEnhancement.id)"
+        />
         <v-btn
           icon="mdi-close"
           title="Delete"
@@ -105,15 +109,28 @@
           variant="text"
           :loading="isLoadingByWageEnhancementId.get(wageEnhancement.id)"
           @click="deleteWageEnhancement(wageEnhancement.id)"
+        />
+      </td>
+    </tr>
+    <tr
+      v-for="wageEnhancement in wageEnhancements.filter(({ id }) => saveErrors.has(id))"
+      :key="`save-error-${wageEnhancement.id}`"
+    >
+      <td colspan="7">
+        <v-alert
+          density="compact"
+          type="error"
+          variant="tonal"
         >
-        </v-btn>
+          {{ saveErrors.get(wageEnhancement.id) }}
+        </v-alert>
       </td>
     </tr>
   </tbody>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, reactive, ref, toRefs } from "vue"
+import { computed, reactive, ref, toRefs, watch } from "vue"
 import { isNil } from "lodash"
 import Big from "big.js"
 
@@ -144,7 +161,10 @@ const wageEnhancementsQuery = computed(() => ({
   },
   perPage: MAX_PER_PAGE, // TODO: switch to paginated table.
 }))
-const { wageEnhancements, refresh } = useWageEnhancements(wageEnhancementsQuery)
+const { wageEnhancements } = useWageEnhancements(wageEnhancementsQuery)
+
+type EditableField = "employeeName" | "hoursEstimated" | "hoursActual"
+type EditableAttributes = Pick<WageEnhancement, EditableField>
 
 function calculateTotal(
   wageEnhancement: WageEnhancement,
@@ -164,20 +184,45 @@ function calculateTotal(
 const snack = useSnack()
 const isCreating = ref(false)
 const isLoadingByWageEnhancementId = reactive(new Map<number, boolean>())
+const savedAttributesById = new Map<number, EditableAttributes>()
+const saveQueuesById = new Map<number, Promise<void>>()
+const saveErrors = reactive(new Map<number, string>())
+
+watch(
+  wageEnhancements,
+  (rows) => {
+    for (const row of rows) {
+      if (savedAttributesById.has(row.id)) {
+        continue
+      }
+
+      savedAttributesById.set(row.id, {
+        employeeName: row.employeeName,
+        hoursEstimated: row.hoursEstimated,
+        hoursActual: row.hoursActual,
+      })
+    }
+  },
+  { immediate: true }
+)
 
 async function createWageEnhancement() {
   isCreating.value = true
   try {
-    await wageEnhancementsApi.create({
+    const { wageEnhancement } = await wageEnhancementsApi.create({
       employeeWageTierId: props.employeeWageTierId,
       centreId: props.centreId,
       employeeName: "",
       hoursEstimated: "0",
       hoursActual: "0",
     })
+    wageEnhancements.value.push(wageEnhancement)
+    savedAttributesById.set(wageEnhancement.id, {
+      employeeName: wageEnhancement.employeeName,
+      hoursEstimated: wageEnhancement.hoursEstimated,
+      hoursActual: wageEnhancement.hoursActual,
+    })
     snack.success("Wage enhancement created")
-
-    await refresh()
   } catch (error) {
     console.error(`Failed to create wage enhancement: ${error}`, { error })
     snack.error(`Failed to create wage enhancement: ${error}`)
@@ -186,20 +231,94 @@ async function createWageEnhancement() {
   }
 }
 
-async function updateWageEnhancement(
-  wageEnhancementId: number,
-  attributes: Partial<WageEnhancement>
-) {
+function saveField(wageEnhancementId: number, field: EditableField) {
+  const row = wageEnhancements.value.find(({ id }) => id === wageEnhancementId)
+  const savedAttributes = savedAttributesById.get(wageEnhancementId)
+  if (isNil(row) || isNil(savedAttributes)) {
+    return
+  }
+
+  if (row[field] === savedAttributes[field] && !saveQueuesById.has(wageEnhancementId)) {
+    if (!hasUnsavedChanges(wageEnhancementId)) {
+      saveErrors.delete(wageEnhancementId)
+    }
+
+    return
+  }
+
+  return queueSave(wageEnhancementId, { [field]: row[field] })
+}
+
+function saveChangedFields(wageEnhancementId: number) {
+  const row = wageEnhancements.value.find(({ id }) => id === wageEnhancementId)
+  const savedAttributes = savedAttributesById.get(wageEnhancementId)
+  if (isNil(row) || isNil(savedAttributes)) {
+    return
+  }
+
+  const changedAttributes: Partial<EditableAttributes> = {}
+  for (const field of ["employeeName", "hoursEstimated", "hoursActual"] as const) {
+    if (row[field] !== savedAttributes[field]) {
+      changedAttributes[field] = row[field]
+    }
+  }
+
+  if (Object.keys(changedAttributes).length === 0) {
+    saveErrors.delete(wageEnhancementId)
+  }
+
+  return queueSave(wageEnhancementId, changedAttributes)
+}
+
+function hasUnsavedChanges(wageEnhancementId: number) {
+  const row = wageEnhancements.value.find(({ id }) => id === wageEnhancementId)
+  const savedAttributes = savedAttributesById.get(wageEnhancementId)
+  if (isNil(row) || isNil(savedAttributes)) {
+    return false
+  }
+
+  return (
+    row.employeeName !== savedAttributes.employeeName ||
+    row.hoursEstimated !== savedAttributes.hoursEstimated ||
+    row.hoursActual !== savedAttributes.hoursActual
+  )
+}
+
+function queueSave(wageEnhancementId: number, attributes: Partial<EditableAttributes>) {
+  if (Object.keys(attributes).length === 0) {
+    return Promise.resolve()
+  }
+
+  const previousSave = saveQueuesById.get(wageEnhancementId) ?? Promise.resolve()
+  const queuedSave = previousSave.then(() => persistChanges(wageEnhancementId, attributes))
+  saveQueuesById.set(wageEnhancementId, queuedSave)
+
+  return queuedSave.finally(() => {
+    if (saveQueuesById.get(wageEnhancementId) === queuedSave) {
+      saveQueuesById.delete(wageEnhancementId)
+    }
+  })
+}
+
+async function persistChanges(wageEnhancementId: number, attributes: Partial<EditableAttributes>) {
   isLoadingByWageEnhancementId.set(wageEnhancementId, true)
   try {
     await wageEnhancementsApi.update(wageEnhancementId, attributes)
+
+    const savedAttributes = savedAttributesById.get(wageEnhancementId)
+    if (!isNil(savedAttributes)) {
+      Object.assign(savedAttributes, attributes)
+    }
+
+    if (!hasUnsavedChanges(wageEnhancementId)) {
+      saveErrors.delete(wageEnhancementId)
+    }
+
     snack.success("Wage enhancement saved!")
     emit("updated", wageEnhancementId)
-
-    await nextTick()
-    await refresh()
   } catch (error) {
     console.error(`Failed to update wage enhancement: ${error}`, { error })
+    saveErrors.set(wageEnhancementId, `Failed to save wage enhancement: ${error}`)
     snack.error(`Failed to update wage enhancement: ${error}`)
   } finally {
     isLoadingByWageEnhancementId.set(wageEnhancementId, false)
@@ -210,11 +329,11 @@ async function deleteWageEnhancement(wageEnhancementId: number) {
   isLoadingByWageEnhancementId.set(wageEnhancementId, true)
   try {
     await wageEnhancementsApi.delete(wageEnhancementId)
+    wageEnhancements.value = wageEnhancements.value.filter(({ id }) => id !== wageEnhancementId)
+    savedAttributesById.delete(wageEnhancementId)
+    saveErrors.delete(wageEnhancementId)
     snack.success("Wage enhancement deleted.")
     emit("updated", wageEnhancementId)
-
-    await nextTick()
-    await refresh()
   } catch (error) {
     console.error(`Failed to delete wage enhancement: ${error}`, { error })
     snack.error(`Failed to delete wage enhancement: ${error}`)
@@ -224,11 +343,7 @@ async function deleteWageEnhancement(wageEnhancementId: number) {
 }
 
 async function updateAll() {
-  const wageEnhancementsPromises = wageEnhancements.value.map(({ id, ...attributes }) =>
-    updateWageEnhancement(id, attributes)
-  )
-
-  await Promise.all(wageEnhancementsPromises)
+  await Promise.all(wageEnhancements.value.map(({ id }) => saveChangedFields(id)))
 }
 
 defineExpose({
