@@ -50,9 +50,7 @@ class DevHelper
 
     case kwargs[:execution_mode]
     when WAIT_FOR_PROCESS
-      return true if system(command)
-
-      raise "Command failed: #{command}"
+      system(command)
     else
       exec(command)
     end
@@ -64,28 +62,9 @@ class DevHelper
   end
 
   def up(*args, **kwargs)
-    compose_arguments = %w[
-      up
-      --remove-orphans
-      --force-recreate
-      --renew-anon-volumes
-    ]
-
     LocalDevelopmentGateway.with_running do
-      if kwargs.fetch(:environment, "development") != "development"
-        return(
-          compose(
-            *compose_arguments,
-            *args,
-            execution_mode: WAIT_FOR_PROCESS,
-            gateway: true,
-            **kwargs
-          )
-        )
-      end
-
       OpenInEditorBridge.compose(
-        *compose_arguments,
+        *%w[up --remove-orphans --force-recreate --renew-anon-volumes],
         *args,
         compose_options: compose_file_options(gateway: true, **kwargs),
         env:
@@ -99,22 +78,9 @@ class DevHelper
   end
 
   def down(*args, **kwargs)
-    compose_arguments = %w[down --remove-orphans]
-
     LocalDevelopmentGateway.with_running(ensure_running: false) do
-      if kwargs.fetch(:environment, "development") != "development"
-        return(
-          compose(
-            *compose_arguments,
-            *args,
-            execution_mode: WAIT_FOR_PROCESS,
-            **kwargs
-          )
-        )
-      end
-
       OpenInEditorBridge.compose(
-        *compose_arguments,
+        *%w[down --remove-orphans],
         *args,
         compose_options: compose_file_options(**kwargs),
         env: ENV.to_h.merge(dynamic_environment_variables),
