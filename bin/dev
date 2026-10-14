@@ -62,28 +62,31 @@ class DevHelper
   end
 
   def up(*args, **kwargs)
+    compose_options = compose_file_options(gateway: true, **kwargs)
+    environment_variables = ENV.to_h.merge(dynamic_environment_variables)
+    environment_variables["OPEN_IN_EDITOR_BRIDGE_ENABLED"] = "true"
+
     LocalDevelopmentGateway.with_running do
       OpenInEditorBridge.compose(
         *%w[up --remove-orphans --force-recreate --renew-anon-volumes],
         *args,
-        compose_options: compose_file_options(gateway: true, **kwargs),
-        env:
-          ENV.to_h.merge(
-            dynamic_environment_variables,
-            "OPEN_IN_EDITOR_BRIDGE_ENABLED" => "true"
-          ),
+        compose_options: compose_options,
+        env: environment_variables,
         project_root: project_root
       )
     end
   end
 
   def down(*args, **kwargs)
+    compose_options = compose_file_options(**kwargs)
+    environment_variables = ENV.to_h.merge(dynamic_environment_variables)
+
     LocalDevelopmentGateway.with_running(ensure_running: false) do
       OpenInEditorBridge.compose(
         *%w[down --remove-orphans],
         *args,
-        compose_options: compose_file_options(**kwargs),
-        env: ENV.to_h.merge(dynamic_environment_variables),
+        compose_options: compose_options,
+        env: environment_variables,
         project_root: project_root
       )
     end
