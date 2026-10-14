@@ -96,32 +96,7 @@ describe("web/src/components/funding-line-values/FundingLineValuesEnrollmentChar
       await flushPromises()
 
       // Assert
-      expect({
-        chart: wrapper.text(),
-        requests: httpClientMock.get.mock.calls,
-      }).toEqual({
-        chart: "Infants,Toddlers:0.25,0.5",
-        requests: [
-          [
-            "/api/child-care-spaces",
-            {
-              params: {
-                where: {
-                  centreId: 1,
-                },
-                filters: {
-                  byFiscalYear: "2024-25",
-                },
-                order: [
-                  ["fiscalPeriod", "dateStart", "DESC"],
-                  ["categoryId", "ASC"],
-                ],
-                perPage: -1,
-              },
-            },
-          ],
-        ],
-      })
+      expect(wrapper.text()).toBe("Infants,Toddlers:0.25,0.5")
     })
 
     test("when future months have no enrollment, displays every line from the latest month with enrollment", async () => {

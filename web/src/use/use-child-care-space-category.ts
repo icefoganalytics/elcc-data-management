@@ -80,7 +80,9 @@ export function useChildCareSpaceCategory(
   watch(
     () => unref(childCareSpaceCategoryId),
     async (newChildCareSpaceCategoryId) => {
-      if (isNil(newChildCareSpaceCategoryId)) return
+      if (isNil(newChildCareSpaceCategoryId)) {
+        return
+      }
 
       await fetch()
     },

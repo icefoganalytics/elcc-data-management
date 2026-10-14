@@ -40,7 +40,9 @@ export class BulkCreateService extends BaseService {
       where: { fundingPeriodId: this.fundingPeriod.id },
       order: [["id", "ASC"]],
     })
-    if (isEmpty(categories)) return []
+    if (isEmpty(categories)) {
+      return []
+    }
 
     const existingPairKeys = new Set<string>()
     await ChildCareSpace.withScope({
@@ -62,7 +64,9 @@ export class BulkCreateService extends BaseService {
     for (const fiscalPeriodId of fiscalPeriodIds) {
       for (const category of categories) {
         const pairKey = `${fiscalPeriodId}:${category.id}`
-        if (existingPairKeys.has(pairKey)) continue
+        if (existingPairKeys.has(pairKey)) {
+          continue
+        }
 
         childCareSpacesAttributes.push({
           centreId: this.centre.id,

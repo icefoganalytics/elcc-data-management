@@ -154,7 +154,9 @@ const {
   isErrored: isFundingPeriodErrored,
 } = useFundingPeriod(fundingPeriodId)
 const fundingPeriodDescription = computed(() => {
-  if (fundingPeriod.value === null) return "Unavailable"
+  if (fundingPeriod.value === null) {
+    return "Unavailable"
+  }
 
   const { fiscalYear, title } = fundingPeriod.value
   return title ? `${fiscalYear} — ${title}` : fiscalYear
@@ -168,8 +170,14 @@ const toAgeRules = computed(() => [
 ])
 
 function wholeNumberOrEmpty(value: unknown): boolean | string {
-  if (isNil(value) || value === "") return true
-  if (typeof value === "number" && Number.isInteger(value)) return true
+  if (isNil(value) || value === "") {
+    return true
+  }
+
+  if (typeof value === "number" && Number.isInteger(value)) {
+    return true
+  }
+
   if (typeof value === "string" && value.trim() !== "" && Number.isInteger(Number(value))) {
     return true
   }
@@ -179,14 +187,18 @@ function wholeNumberOrEmpty(value: unknown): boolean | string {
 
 function updateAge(field: "fromAge" | "toAge", value: string | number | null) {
   const category = childCareSpaceCategory.value
-  if (isNil(category)) return
+  if (isNil(category)) {
+    return
+  }
 
   category[field] = isNil(value) || value === "" ? null : Number(value)
 }
 
 function updateMonthlyAmount(value: string | number | null) {
   const category = childCareSpaceCategory.value
-  if (isNil(category)) return
+  if (isNil(category)) {
+    return
+  }
 
   category.monthlyAmount = isNil(value) ? "" : String(value)
 }
@@ -195,13 +207,21 @@ const isSaving = ref(false)
 const snack = useSnack()
 
 async function validateSaveAndNotify() {
-  if (isNil(childCareSpaceCategory.value)) return
-  if (isNil(form.value)) return
+  if (isNil(childCareSpaceCategory.value)) {
+    return
+  }
+
+  if (isNil(form.value)) {
+    return
+  }
 
   const { valid } = await form.value.validate()
-  if (!valid) return
+  if (!valid) {
+    return
+  }
 
   isSaving.value = true
+
   try {
     await save()
     emit("saved", props.childCareSpaceCategoryId)

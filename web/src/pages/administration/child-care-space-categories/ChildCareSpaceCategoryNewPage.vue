@@ -161,8 +161,14 @@ const toAgeRules = computed(() => [
 ])
 
 function wholeNumberOrEmpty(value: unknown): boolean | string {
-  if (isNil(value) || value === "") return true
-  if (typeof value === "number" && Number.isInteger(value)) return true
+  if (isNil(value) || value === "") {
+    return true
+  }
+
+  if (typeof value === "number" && Number.isInteger(value)) {
+    return true
+  }
+
   if (typeof value === "string" && value.trim() !== "" && Number.isInteger(Number(value))) {
     return true
   }
@@ -180,10 +186,12 @@ const {
   isErrored: isFundingPeriodsErrored,
 } = useFundingPeriods(fundingPeriodsQuery)
 const fundingPeriodItems = computed(() =>
-  fundingPeriods.value.map(({ id, fiscalYear, title }) => ({
-    title: title ? `${fiscalYear} — ${title}` : fiscalYear,
-    value: id,
-  }))
+  fundingPeriods.value.map(({ id, fiscalYear, title: periodTitle }) => {
+    const title = periodTitle ? `${fiscalYear} — ${periodTitle}` : fiscalYear
+    const value = id
+
+    return { title, value }
+  })
 )
 
 const headerActionsFormCard = ref<InstanceType<typeof HeaderActionsFormCard> | null>(null)
@@ -192,13 +200,19 @@ const snack = useSnack()
 const router = useRouter()
 
 async function createChildCareSpaceCategory() {
-  if (isNil(headerActionsFormCard.value)) return
+  if (isNil(headerActionsFormCard.value)) {
+    return
+  }
 
   const { valid } = await headerActionsFormCard.value.validate()
-  if (!valid) return
+  if (!valid) {
+    return
+  }
 
   const { fundingPeriodId, categoryName, fromAge, toAge, monthlyAmount } = categoryAttributes.value
-  if (isNil(fundingPeriodId) || isNil(monthlyAmount)) return
+  if (isNil(fundingPeriodId) || isNil(monthlyAmount)) {
+    return
+  }
 
   const attributes: ChildCareSpaceCategoryCreationAttributes = {
     fundingPeriodId,

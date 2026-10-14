@@ -79,7 +79,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue"
-import { debounce } from "lodash"
+import { debounce, isNil } from "lodash"
 
 import { MAX_PER_PAGE } from "@/api/base-api"
 
@@ -109,11 +109,12 @@ const {
 watch(
   fundingPeriods,
   (periods) => {
-    if (selectedFundingPeriodId.value !== undefined && selectedFundingPeriodId.value !== null) {
+    if (!isNil(selectedFundingPeriodId.value)) {
       return
     }
 
     const latestFundingPeriod = periods[0]
+
     if (latestFundingPeriod) {
       selectedFundingPeriodId.value = latestFundingPeriod.id
     }
@@ -122,10 +123,12 @@ watch(
 )
 
 const fundingPeriodItems = computed(() =>
-  fundingPeriods.value.map(({ id, fiscalYear, title }) => ({
-    title: title ? `${fiscalYear} — ${title}` : fiscalYear,
-    value: id,
-  }))
+  fundingPeriods.value.map(({ id, fiscalYear, title: periodTitle }) => {
+    const title = periodTitle ? `${fiscalYear} — ${periodTitle}` : fiscalYear
+    const value = id
+
+    return { title, value }
+  })
 )
 
 function updateSearch(value: string | null) {
@@ -135,14 +138,16 @@ function updateSearch(value: string | null) {
 const debounceUpdateSearch = debounce(updateSearch, 500)
 
 const childCareSpaceCategoriesWhere = computed<ChildCareSpaceCategoryWhereOptions>(() => {
-  if (selectedFundingPeriodId.value === undefined || selectedFundingPeriodId.value === null) {
+  if (isNil(selectedFundingPeriodId.value)) {
     return {}
   }
 
   return { fundingPeriodId: selectedFundingPeriodId.value }
 })
 const childCareSpaceCategoriesFilters = computed<ChildCareSpaceCategoryFiltersOptions>(() => {
-  if (search.value === "") return {}
+  if (search.value === "") {
+    return {}
+  }
 
   return { search: search.value }
 })

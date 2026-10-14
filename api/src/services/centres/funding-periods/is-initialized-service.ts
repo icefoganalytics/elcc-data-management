@@ -95,8 +95,14 @@ export class IsInitializedService extends BaseService {
       attributes: ["id"],
       where: { fundingPeriodId },
     })
-    if (isEmpty(fiscalPeriods)) return false
-    if (isEmpty(categories)) return true
+    if (isEmpty(fiscalPeriods)) {
+      return false
+    }
+
+    if (isEmpty(categories)) {
+      return true
+    }
+
     const childCareSpacePairKeys = new Set<string>()
     await ChildCareSpace.withScope({
       method: ["byFundingPeriod", fundingPeriodId],
@@ -113,7 +119,9 @@ export class IsInitializedService extends BaseService {
     for (const fiscalPeriod of fiscalPeriods) {
       for (const category of categories) {
         const expectedPairKey = `${fiscalPeriod.id}:${category.id}`
-        if (!childCareSpacePairKeys.has(expectedPairKey)) return false
+        if (!childCareSpacePairKeys.has(expectedPairKey)) {
+          return false
+        }
       }
     }
 

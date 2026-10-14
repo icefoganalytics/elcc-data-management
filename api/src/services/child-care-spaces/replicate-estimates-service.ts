@@ -15,35 +15,37 @@ export class ReplicateEstimatesService extends BaseService {
       throw new Error(`Fiscal period with ID ${this.childCareSpace.fiscalPeriodId} not found`)
     }
 
-    const futureFiscalPeriods = await FiscalPeriod.findAll({
-      where: {
-        fundingPeriodId: sourceFiscalPeriod.fundingPeriodId,
-        dateStart: {
-          [Op.gt]: sourceFiscalPeriod.dateEnd,
-        },
-      },
-    })
-
     await db.transaction(async () => {
-      for (const futureFiscalPeriod of futureFiscalPeriods) {
-        const futureChildCareSpace = await ChildCareSpace.findOne({
+      await FiscalPeriod.findEach(
+        {
+          attributes: ["id"],
           where: {
-            centreId: this.childCareSpace.centreId,
-            fiscalPeriodId: futureFiscalPeriod.id,
-            categoryId: this.childCareSpace.categoryId,
+            fundingPeriodId: sourceFiscalPeriod.fundingPeriodId,
+            dateStart: {
+              [Op.gt]: sourceFiscalPeriod.dateEnd,
+            },
           },
-        })
-        if (isNil(futureChildCareSpace)) {
-          throw new Error(
-            `Expected Child Care Space for fiscal period ${futureFiscalPeriod.id} and category ${this.childCareSpace.categoryId}`
-          )
-        }
+        },
+        async (futureFiscalPeriod) => {
+          const futureChildCareSpace = await ChildCareSpace.findOne({
+            where: {
+              centreId: this.childCareSpace.centreId,
+              fiscalPeriodId: futureFiscalPeriod.id,
+              categoryId: this.childCareSpace.categoryId,
+            },
+          })
+          if (isNil(futureChildCareSpace)) {
+            throw new Error(
+              `Expected Child Care Space for fiscal period ${futureFiscalPeriod.id} and category ${this.childCareSpace.categoryId}`
+            )
+          }
 
-        await futureChildCareSpace.update({
-          estimatedChildOccupancyRate: this.childCareSpace.estimatedChildOccupancyRate,
-          actualChildOccupancyRate: "0.0000",
-        })
-      }
+          await futureChildCareSpace.update({
+            estimatedChildOccupancyRate: this.childCareSpace.estimatedChildOccupancyRate,
+            actualChildOccupancyRate: "0.0000",
+          })
+        }
+      )
     })
   }
 }

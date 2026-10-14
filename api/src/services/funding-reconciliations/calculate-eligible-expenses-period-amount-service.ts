@@ -76,11 +76,14 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
 
   private async calculateChildCareSpaces(): Promise<string> {
     const [childCareSpacesResult] = await db.query<{
-      childCareSpacesTotalAmount: number
+      childCareSpacesTotalAmount: string
     }>(
       /* sql */ `
         SELECT
-          COALESCE(SUM(actual_computed_total), 0) as childCareSpacesTotalAmount
+          CONVERT(
+            VARCHAR(50),
+            COALESCE(SUM(actual_computed_total), 0)
+          ) AS childCareSpacesTotalAmount
         FROM
           child_care_spaces
         WHERE

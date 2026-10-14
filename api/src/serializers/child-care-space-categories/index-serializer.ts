@@ -29,6 +29,8 @@ export class IndexSerializer extends BaseSerializer<ChildCareSpaceCategory> {
   }
 
   perform(): ChildCareSpaceCategoryIndexView {
+    const serializedPolicy = this.serializePolicy(this.record, this.currentUser)
+
     return {
       ...pick(this.record, [
         "id",
@@ -41,7 +43,11 @@ export class IndexSerializer extends BaseSerializer<ChildCareSpaceCategory> {
         "updatedAt",
         "deletedAt",
       ]),
-      policy: new ChildCareSpaceCategoryPolicy(this.currentUser, this.record).toJSON(),
+      policy: serializedPolicy,
     }
+  }
+
+  private serializePolicy(record: ChildCareSpaceCategory, currentUser: User): PolicyAsReference {
+    return new ChildCareSpaceCategoryPolicy(currentUser, record).toJSON()
   }
 }

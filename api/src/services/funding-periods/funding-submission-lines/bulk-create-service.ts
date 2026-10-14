@@ -1,5 +1,5 @@
 import { Op, sql } from "@sequelize/core"
-import { isEmpty, isNil } from "lodash"
+import { isEmpty, isNil, isUndefined } from "lodash"
 
 import { ChildCareSpaceCategory, FundingPeriod, FundingSubmissionLine } from "@/models"
 
@@ -36,8 +36,9 @@ export class BulkCreateService extends BaseService {
         )
           ? this.categoryNameForDefault(fundingSubmissionLineDefault, sourceCategoryNames)
           : undefined
-        const childCareSpaceCategoryId =
-          categoryName === undefined ? null : (categoryIdsByName.get(categoryName) ?? null)
+        const childCareSpaceCategoryId = isUndefined(categoryName)
+          ? null
+          : (categoryIdsByName.get(categoryName) ?? null)
 
         return {
           ...fundingSubmissionLineDefault,
@@ -54,7 +55,10 @@ export class BulkCreateService extends BaseService {
     line: FundingSubmissionLineDefaultWithCategory,
     sourceCategoryNames: Map<number, string>
   ) {
-    if (line.childCareSpaceCategoryId === null) return line.lineName
+    if (line.childCareSpaceCategoryId === null) {
+      return line.lineName
+    }
+
     return sourceCategoryNames.get(line.childCareSpaceCategoryId)
   }
 
@@ -74,10 +78,15 @@ export class BulkCreateService extends BaseService {
   }
 
   private async sourceCategoryNames(lines: FundingSubmissionLineDefaultWithCategory[]) {
-    const categoryIds = lines
-      .map(({ childCareSpaceCategoryId }) => childCareSpaceCategoryId)
-      .filter((categoryId): categoryId is number => !isNil(categoryId))
-    if (categoryIds.length === 0) return new Map<number, string>()
+    const categoryIdsIncludingNull = lines.map(
+      ({ childCareSpaceCategoryId }) => childCareSpaceCategoryId
+    )
+    const categoryIds = categoryIdsIncludingNull.filter(
+      (categoryId): categoryId is number => !isNil(categoryId)
+    )
+    if (categoryIds.length === 0) {
+      return new Map<number, string>()
+    }
 
     const categories = await ChildCareSpaceCategory.findAll({
       where: { id: { [Op.in]: categoryIds } },

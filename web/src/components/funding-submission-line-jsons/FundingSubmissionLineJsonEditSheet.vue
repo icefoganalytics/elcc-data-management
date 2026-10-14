@@ -146,8 +146,10 @@ const calendarYear = computed(() => {
 
 const childCareSpacesAsFundingLineValues = computed<FundingLineValue[]>(() => {
   return childCareSpaces.value.map((childCareSpace) => {
+    const submissionLineId = childCareSpace.categoryId
+
     return reactive({
-      submissionLineId: childCareSpace.categoryId,
+      submissionLineId,
       sectionName: CHILD_CARE_SPACES_SECTION_NAME,
       lineName: childCareSpace.lineName,
       monthlyAmount: childCareSpace.monthlyAmount,
@@ -189,7 +191,9 @@ async function reloadWorksheet() {
 }
 
 async function saveFundingSubmissionLineJson(): Promise<boolean> {
-  if (isLoading.value || isErrored.value) return false
+  if (isLoading.value || isErrored.value) {
+    return false
+  }
 
   isSaving.value = true
   try {
@@ -215,7 +219,9 @@ async function saveFundingSubmissionLineJson(): Promise<boolean> {
         childCareSpace.estimatedChildOccupancyRate ===
           childCareSpaceLine.estimatedChildOccupancyRate &&
         childCareSpace.actualChildOccupancyRate === childCareSpaceLine.actualChildOccupancyRate
-      if (isUnchanged) continue
+      if (isUnchanged) {
+        continue
+      }
 
       childCareSpaceUpdates.push(
         childCareSpacesApi.update(childCareSpace.id, {
@@ -224,9 +230,10 @@ async function saveFundingSubmissionLineJson(): Promise<boolean> {
         })
       )
     }
-    const fundingSubmissionLineJsonLines = sections.value
-      .filter(({ sectionName }) => sectionName !== CHILD_CARE_SPACES_SECTION_NAME)
-      .flatMap(({ lines }) => lines)
+    const linesInOtherSections = sections.value.filter(
+      ({ sectionName }) => sectionName !== CHILD_CARE_SPACES_SECTION_NAME
+    )
+    const fundingSubmissionLineJsonLines = linesInOtherSections.flatMap(({ lines }) => lines)
 
     await Promise.all(childCareSpaceUpdates)
     await fundingSubmissionLineJsonsApi.update(fundingSubmissionLineJsonId.value, {
@@ -252,7 +259,9 @@ async function replicateEstimatesForward() {
   isReplicatingEstimates.value = true
   try {
     const wasSaved = await saveFundingSubmissionLineJson()
-    if (!wasSaved) return
+    if (!wasSaved) {
+      return
+    }
 
     await Promise.all([
       fundingSubmissionLineJsonsApi.replicateEstimates(fundingSubmissionLineJsonId.value),
@@ -274,20 +283,26 @@ async function replicateEstimatesForward() {
 }
 
 function propagateUpdatesAsNeeded({ line }: { line: FundingLineValue }) {
-  if (line.sectionName !== CHILD_CARE_SPACES_SECTION_NAME) return
+  if (line.sectionName !== CHILD_CARE_SPACES_SECTION_NAME) {
+    return
+  }
 
   try {
     for (const linkedSectionName of LINKED_SECTION_NAMES) {
       const linkedSectionIndex = sections.value.findIndex(
         ({ sectionName }) => sectionName === linkedSectionName
       )
-      if (linkedSectionIndex === -1) continue
+      if (linkedSectionIndex === -1) {
+        continue
+      }
 
       const linkedSection = sections.value[linkedSectionIndex]
       const matchingLines = linkedSection.lines.filter(
         ({ childCareSpaceCategoryId }) => childCareSpaceCategoryId === line.submissionLineId
       )
-      if (matchingLines.length === 0) continue
+      if (matchingLines.length === 0) {
+        continue
+      }
 
       const linkedSectionTable = fundingSubmissionLineJsonSectionTables.value[linkedSectionIndex]
       if (isNil(linkedSectionTable)) {
@@ -313,7 +328,9 @@ function goToNextSection(sectionIndex: number, columnName: ColumnNames) {
   if (sectionIndex < sections.value.length - 1) {
     const nextIndex = sectionIndex + 1
     const nextSection = fundingSubmissionLineJsonSectionTables.value[nextIndex]
-    if (isNil(nextSection)) return
+    if (isNil(nextSection)) {
+      return
+    }
 
     nextSection.focusOnFirstInColumn(columnName)
   }
@@ -323,7 +340,9 @@ function goToPreviousSection(sectionIndex: number, columnName: ColumnNames) {
   if (sectionIndex > 0) {
     const previousIndex = sectionIndex - 1
     const previousSection = fundingSubmissionLineJsonSectionTables.value[previousIndex]
-    if (isNil(previousSection)) return
+    if (isNil(previousSection)) {
+      return
+    }
 
     previousSection.focusOnLastInColumn(columnName)
   }
@@ -338,7 +357,9 @@ function activateKeyboardShortcutsModalIfCorrectEvent(event: KeyboardEvent) {
 }
 
 function showKeyboardShortcutsModal() {
-  if (isNil(keyboardShortcutsModal.value)) return
+  if (isNil(keyboardShortcutsModal.value)) {
+    return
+  }
 
   keyboardShortcutsModal.value.open()
 }
