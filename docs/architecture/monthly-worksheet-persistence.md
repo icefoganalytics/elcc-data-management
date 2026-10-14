@@ -31,6 +31,8 @@ The incremental migrations after the JSON cutover create categories, backfill ca
 
 Administration and Quality Enhancement Program configuration and JSON lines carry `childCareSpaceCategoryId` as linkage metadata, not a second Child Care Spaces value owner. The linkage migration resolves exact annual configuration matches and supported historical worksheet/ledger matches, rejecting conflicting or ambiguous category IDs. It adds metadata without changing historical labels, rates, occupancy, or totals. New dependent configuration is linked by category name within its year; same-year label edits retain identity, and annual cloning remaps to the target period's category. The editor propagates occupancy by this stable ID even when category names and worksheet labels differ.
 
+The linkage migration keeps its SQL Server operations directly in `up` and `down`, with comments explaining candidate matching, ambiguity rejection, and worksheet eligibility. `JSON_MODIFY` changes only category metadata, preserving array order, historical fields, unknown properties, and existing numeric tokens without JavaScript parsing. Reversal discovers the column's foreign-key name so both SQL-created and Knex-created constraints can be removed without changing worksheet or ledger facts.
+
 Missing funding-period mappings or conflicting category references abort the backfill. Source removal checks that categories exist and active worksheet JSON no longer contains Child Care Spaces. The reference/configuration removal migrations reject automatic reversal because the original source data is required for restoration.
 
 ## Historical JSON cutover
