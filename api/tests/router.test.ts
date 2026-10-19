@@ -12,7 +12,7 @@ describe("api/src/router.ts", () => {
       const response = await request.get("/_status")
 
       // Assert
-      expect(response.status).toBe(200)
+      expect(response.status).toEqual(200)
     })
 
     test("when no token is provided, rejects legacy centre requests", async () => {
@@ -23,9 +23,9 @@ describe("api/src/router.ts", () => {
       const response = await request.get("/api/centre")
 
       // Assert
-      expect(response).toMatchObject({
-        status: 401,
-        body: { message: "No authorization token was found" },
+      expect(response.status).toEqual(401)
+      expect(response.body).toEqual({
+        message: "No authorization token was found",
       })
     })
 
@@ -37,9 +37,9 @@ describe("api/src/router.ts", () => {
       const response = await request.get("/api/funding-period")
 
       // Assert
-      expect(response).toMatchObject({
-        status: 401,
-        body: { message: "No authorization token was found" },
+      expect(response.status).toEqual(401)
+      expect(response.body).toEqual({
+        message: "No authorization token was found",
       })
     })
 
@@ -51,9 +51,9 @@ describe("api/src/router.ts", () => {
       const response = await request.get("/api/submission-line")
 
       // Assert
-      expect(response).toMatchObject({
-        status: 401,
-        body: { message: "No authorization token was found" },
+      expect(response.status).toEqual(401)
+      expect(response.body).toEqual({
+        message: "No authorization token was found",
       })
     })
 
@@ -65,9 +65,9 @@ describe("api/src/router.ts", () => {
       const response = await request.get("/api/current-user")
 
       // Assert
-      expect(response).toMatchObject({
-        status: 401,
-        body: { message: "No authorization token was found" },
+      expect(response.status).toEqual(401)
+      expect(response.body).toEqual({
+        message: "No authorization token was found",
       })
     })
 
@@ -79,9 +79,9 @@ describe("api/src/router.ts", () => {
       const response = await request.post("/api/unknown-authentication-test").send({})
 
       // Assert
-      expect(response).toMatchObject({
-        status: 401,
-        body: { message: "No authorization token was found" },
+      expect(response.status).toEqual(401)
+      expect(response.body).toEqual({
+        message: "No authorization token was found",
       })
     })
 
@@ -93,9 +93,9 @@ describe("api/src/router.ts", () => {
       const response = await request.get("/api/centre").set("Authorization", "Bearer invalid-token")
 
       // Assert
-      expect(response).toMatchObject({
-        status: 401,
-        body: { message: "jwt malformed" },
+      expect(response.status).toEqual(401)
+      expect(response.body).toEqual({
+        message: "jwt malformed",
       })
     })
   })
