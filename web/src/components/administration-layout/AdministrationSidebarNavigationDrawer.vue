@@ -44,7 +44,7 @@
         :to="{
           name: 'administration/ChildCareSpaceCategoriesPage',
         }"
-        prepend-icon="mdi-child"
+        prepend-icon="mdi-human-child"
         exact
         :active="isActiveByRoutePathStartsWith('/administration/child-care-space-categories')"
       >
