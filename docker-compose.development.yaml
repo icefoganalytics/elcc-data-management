@@ -1,7 +1,7 @@
 x-default-environment: &default-environment
   NODE_ENV: development
   TZ: "UTC"
-  DB_HOST: db
+  DB_HOST: "${COMPOSE_PROJECT_NAME}-db"
   DB_USER: sa
   DB_NAME: elcc_development
   DB_PASS: &default-db-password DevPwd99!
@@ -101,6 +101,10 @@ services:
       DB_HOST: "localhost"
       MSSQL_SA_PASSWORD: *default-db-password
       ACCEPT_EULA: "Y"
+    networks:
+      default:
+        aliases:
+          - "${COMPOSE_PROJECT_NAME}-db"
     volumes:
       - db_data:/var/opt/mssql/data
 
