@@ -6,7 +6,7 @@ GEM
       thor
       tilt
     language_server-protocol (3.17.0.5)
-    local-development-gateway (0.2.0)
+    local-development-gateway (0.2.2)
     logger (1.7.0)
     open-in-editor-bridge (0.5.0)
     prettier_print (1.2.1)
@@ -39,7 +39,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
-  local-development-gateway (~> 0.2)
+  local-development-gateway (= 0.2.2)
   open-in-editor-bridge (= 0.5.0)
   prettier_print (= 1.2.1)
   ruby-lsp (= 0.26.6)
@@ -50,7 +50,7 @@ DEPENDENCIES
 CHECKSUMS
   haml (7.2.0) sha256=87fd2b71f7feab1724337b090a7d767f5ab2d42f08c974f3ead673f18cfcd55a
   language_server-protocol (3.17.0.5) sha256=fd1e39a51a28bf3eec959379985a72e296e9f9acfce46f6a79d31ca8760803cc
-  local-development-gateway (0.2.0) sha256=bbce62ef48c3e14ff848fdc9bdbecf6e9342ebbdda4adffdc27b9237c9719f70
+  local-development-gateway (0.2.2) sha256=2a6e6f8f6583bd0a5ac2eecf3fbcd35ff4dd2a0ec33e01dda06b231ff8d527ff
   logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
   open-in-editor-bridge (0.5.0) sha256=a5437bdc42242024fe0d51f75d4d20435109e13c4e259c8399924704abf256f5
   prettier_print (1.2.1) sha256=a72838b5f23facff21f90a5423cdcdda19e4271092b41f4ea7f50b83929e6ff9

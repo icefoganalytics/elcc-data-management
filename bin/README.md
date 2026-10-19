@@ -40,6 +40,55 @@ http://elcc-data-management.localhost; named worktrees receive their own
 Once Vite starts, the web service prints `Open ELCC: http://<hostname>/` with that checkout's
 gateway hostname.
 
+### Database Connection Isolation
+
+ELCC pins Local Development Gateway **0.2.2** and follows its
+[private-alias contract](https://github.com/icefoganalytics/local-development-gateway/blob/v0.2.2/README.md#canonical-development-and-test-compose-pattern).
+Run `bundle install` after pulling this change.
+
+| Connection context                          | Host                          | Path                                                                     |
+| ------------------------------------------- | ----------------------------- | ------------------------------------------------------------------------ |
+| API, migrations, seeds, and test containers | `${COMPOSE_PROJECT_NAME}-db`  | SQL Server on the checkout's private `default` network                   |
+| Desktop SQL client                          | `db.<checkout-hostname>:1433` | Encrypted shared gateway route; trust the development server certificate |
+| Explicitly selected database-local console  | `localhost`                   | Inside that checkout's `db` container                                    |
+
+The base checkout's desktop endpoint remains `db.elcc-data-management.localhost:1433`.
+Internal connections must not use bare `db`: API containers also join the shared gateway
+network, where another checkout can advertise the same service name. The qualified alias
+belongs only to `default`. Keep database networks in mapping form in both Compose files so
+the gateway overlay preserves `default.aliases`. Do not publish a database host port.
+Tests retain `elcc_test`; development retains `elcc_development`.
+
+Inspect both configurations through the wrapper without printing credentials:
+
+```bash
+./bin/dev config --format json | jq '{api_host: .services.api.environment.DB_HOST, test_host: .services.test_api.environment.DB_HOST, test_database: .services.test_api.environment.DB_NAME, database_networks: .services.db.networks, database_ports: (.services.db.ports // [])}'
+./bin/dev --file docker-compose.development.gateway.yml config --format json | jq '{api_host: .services.api.environment.DB_HOST, test_host: .services.test_api.environment.DB_HOST, database_networks: .services.db.networks, database_ports: (.services.db.ports // [])}'
+```
+
+After adoption, recreate services with `./bin/dev up -d --wait`. Wait for the API's database
+initializers to finish; Compose's running state alone does not prove SQL Server readiness.
+If a base-only command recreates `db`, run `./bin/dev up -d --wait` again to restore gateway
+attachments. Keep existing database volumes; no reset or database replacement is needed.
+
+Verify actual connection identity, not only DNS resolution:
+
+- From both `api` and `test_api`, use the application's database clients to query
+  `SELECT SERVERPROPERTY('ServerName') AS server_name, DB_NAME() AS database_name`.
+  Both contexts must reach their own server, with tests selecting `elcc_test`.
+- Repeat with a second isolated stack running. Stop only the owned database with
+  `./bin/dev stop db`: its configured API/test connections must fail, not reach the other
+  server. Restore it with `./bin/dev start db` and verify connections again.
+- Run the same identity query from an encrypted desktop connection and from the explicitly
+  selected local console, for example
+  `./bin/dev sqlcmd-query "SELECT SERVERPROPERTY('ServerName'), DB_NAME();" -S localhost`.
+  Console-only success does not verify API/test or desktop routing.
+
+The installed bundle and active shared router can differ: inspect the router's mounted
+source/version separately with `docker inspect local-gateway-database-router-1`.
+Coordinate any required shared-router restart with other participating projects; do not
+restart it merely because this checkout's bundle changed.
+
 ### Editor Bridge
 
 Run `bundle install` to install `open-in-editor-bridge` 0.5.0. Before upgrading, stop any

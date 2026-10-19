@@ -1,5 +1,5 @@
 source "https://rubygems.org"
-gem "local-development-gateway", "~> 0.2" # For shared loopback development routing
+gem "local-development-gateway", "0.2.2" # For shared loopback development routing
 gem "open-in-editor-bridge", "0.5.0" # For checkout-scoped Docker editor links
 
 gem "prettier_print", "1.2.1" # For pretty printing Ruby objects

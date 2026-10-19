@@ -24,8 +24,8 @@ services:
 
   db:
     networks:
-      - default
-      - local-gateway
+      default: {}
+      local-gateway: {}
     labels:
       - "local-gateway.tcp.driver=sql_server"
       - "local-gateway.tcp.hostname=db.${GATEWAY_HOSTNAME:-elcc-data-management.localhost}"
