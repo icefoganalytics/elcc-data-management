@@ -45,13 +45,12 @@ router.route("/_status").get((_req: Request, res: Response) => {
   })
 })
 
+router.use("/api", checkJwt, autheticateAndLoadUser)
+
 // TODO: replace legacy routes with newer style
-router.use("/api/centre", checkJwt, autheticateAndLoadUser, centreRouter)
+router.use("/api/centre", centreRouter)
 router.use("/api/funding-period", fundingPeriodRouter)
 router.use("/api/submission-line", submissionLineRouter)
-
-// TODO: move all routing logic to this file, and move all route actions into controllers
-router.use("/api", checkJwt, autheticateAndLoadUser)
 
 router.route("/api/current-user").get(CurrentUserController.show)
 

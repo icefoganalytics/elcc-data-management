@@ -2,15 +2,11 @@ import express, { type Request, type Response } from "express"
 import { param } from "express-validator"
 import { isNil } from "lodash"
 
-import { checkJwt, autheticateAndLoadUser } from "@/middleware/authz.middleware"
 import { ReturnValidationErrors } from "@/middleware"
 import { FundingPeriod } from "@/models"
 
 /** @deprecated - prefer api/src/controllers/funding-periods-controller.ts */
 export const fundingPeriodRouter = express.Router()
-
-fundingPeriodRouter.use(checkJwt)
-fundingPeriodRouter.use(autheticateAndLoadUser)
 
 fundingPeriodRouter.get("/", async (_req: Request, res: Response) => {
   const fundingPeriods = await FundingPeriod.findAll()

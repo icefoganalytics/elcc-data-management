@@ -1,7 +1,6 @@
 import express, { type Request, type Response } from "express"
 import { isNil } from "lodash"
 
-import { checkJwt, autheticateAndLoadUser } from "@/middleware/authz.middleware"
 import { RequireAdmin } from "@/middleware"
 import { Centre, FundingSubmissionLineJson, User } from "@/models"
 import { Centres } from "@/services"
@@ -10,8 +9,6 @@ import { FundingSubmissionLineJsonSerializer } from "@/serializers"
 
 /** @deprecated - prefer api/src/controllers/centres-controller.ts*/
 export const centreRouter = express.Router()
-centreRouter.use(checkJwt)
-centreRouter.use(autheticateAndLoadUser)
 
 centreRouter.get("/", async (_req: Request, res: Response) => {
   try {
