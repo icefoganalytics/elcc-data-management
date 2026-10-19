@@ -360,6 +360,87 @@ describe("api/src/db/migrations/20261009021607_backfill-child-care-space-categor
       })
     })
 
+    test("when worksheet cutover removes Child Care Spaces, preserves retained raw numeric tokens", async () => {
+      await withLegacyChildCareSpaceSchema(async (transaction) => {
+        // Arrange
+        const fundingPeriodId = await createFundingPeriod(transaction, "2024-2025")
+        await createFiscalPeriod(transaction, fundingPeriodId)
+        const centreId = await createCentre(transaction)
+        const childCareSpacesLineId = await createFundingSubmissionLine(transaction, {
+          lineName: "Infants",
+        })
+        const retainedLineId = await createFundingSubmissionLine(transaction, {
+          sectionName: "Administration (10% of Spaces)",
+          lineName: "Infants",
+        })
+        const worksheetId = await createWorksheet(transaction, centreId, [
+          {
+            submissionLineId: childCareSpacesLineId,
+            sectionName: "Child Care Spaces",
+            lineName: "Infants",
+            monthlyAmount: "100.0000",
+            estimatedChildOccupancyRate: "0.5000",
+            actualChildOccupancyRate: "0.2500",
+            estimatedComputedTotal: "50.0000",
+            actualComputedTotal: "25.0000",
+          },
+          {
+            submissionLineId: retainedLineId,
+            sectionName: "Administration (10% of Spaces)",
+            lineName: "Infants",
+            monthlyAmount: "10.0000",
+            unknownSnapshot: { preserved: true },
+          },
+        ])
+        const rawTinyFraction = `${retainedLineId}.0000000000000000000001`
+        const retainedLine = {
+          submissionLineId: "__raw_submission_line_id__",
+          sectionName: "Administration (10% of Spaces)",
+          lineName: "Infants",
+          monthlyAmount: "10.0000",
+          unknownSnapshot: { preserved: true },
+        }
+        const rawRetainedLine = JSON.stringify(retainedLine).replace(
+          JSON.stringify("__raw_submission_line_id__"),
+          rawTinyFraction
+        )
+        const rawOtherRetainedLine = JSON.stringify({
+          sectionName: "Other retained section",
+          unknownSnapshot: { order: "after" },
+        })
+        await transaction("funding_submission_line_jsons")
+          .where({ id: worksheetId })
+          .update({
+            values: `[${rawRetainedLine},${JSON.stringify({
+              submissionLineId: childCareSpacesLineId,
+              sectionName: "Child Care Spaces",
+              lineName: "Infants",
+              monthlyAmount: "100.0000",
+              estimatedChildOccupancyRate: "0.5000",
+              actualChildOccupancyRate: "0.2500",
+              estimatedComputedTotal: "50.0000",
+              actualComputedTotal: "25.0000",
+            })},${rawOtherRetainedLine}]`,
+          })
+
+        // Act
+        await migrateWorksheetValues(transaction)
+        await addCategoryId(transaction)
+        await backfillCategories(transaction)
+        await replaceLegacyReference(transaction)
+        await removeLegacyConfiguration(transaction)
+        await unlinkCategories(transaction)
+        await linkCategories(transaction)
+
+        // Assert
+        const worksheet = await transaction("funding_submission_line_jsons")
+          .select("values")
+          .where({ id: worksheetId })
+          .first()
+        expect(worksheet?.values).toBe(`[${rawRetainedLine},${rawOtherRetainedLine}]`)
+      })
+    })
+
     test("when historical ledger references active renamed configuration, cleanup removes only Child Care Spaces configuration", async () => {
       await withLegacyChildCareSpaceSchema(async (transaction) => {
         // Arrange

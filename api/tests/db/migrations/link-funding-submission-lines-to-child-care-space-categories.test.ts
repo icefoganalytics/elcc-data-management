@@ -583,6 +583,81 @@ describe("api/src/db/migrations/20261009024301_link-funding-submission-lines-to-
       })
     })
 
+    test("when a funding period is deleted and recreated for the same year, matches only the active category", async () => {
+      await withLegacyChildCareSpaceSchema(async (transaction) => {
+        // Arrange
+        await unlinkCategories(transaction)
+        await addCategoryId(transaction)
+        const deletedFundingPeriodId = await createFundingPeriod(transaction)
+        await createCategory(transaction, deletedFundingPeriodId, {
+          categoryName: "Infants",
+        })
+        await transaction("funding_periods")
+          .where({ id: deletedFundingPeriodId })
+          .update({ deleted_at: new Date("2025-01-01T00:00:00Z") })
+        const activeFundingPeriodId = await createFundingPeriod(transaction)
+        const activeCategoryId = await createCategory(transaction, activeFundingPeriodId, {
+          categoryName: "Infants",
+        })
+        const submissionLineId = await createSubmissionLine(transaction, {
+          lineName: "Infants",
+        })
+
+        // Act
+        await linkCategories(transaction)
+
+        // Assert
+        const configurationLinks = await findConfigurationLinks(transaction, [submissionLineId])
+        expect(configurationLinks).toEqual([{ id: submissionLineId, categoryId: activeCategoryId }])
+      })
+    })
+
+    test("when current category labels differ only by trailing spaces, leaves the funding line unlinked", async () => {
+      await withLegacyChildCareSpaceSchema(async (transaction) => {
+        // Arrange
+        await unlinkCategories(transaction)
+        await addCategoryId(transaction)
+        const fundingPeriodId = await createFundingPeriod(transaction)
+        const submissionLineId = await createSubmissionLine(transaction, {
+          lineName: "Infants",
+        })
+        await createCategory(transaction, fundingPeriodId, {
+          categoryName: "Infants ",
+        })
+
+        // Act
+        await linkCategories(transaction)
+
+        // Assert
+        const configurationLinks = await findConfigurationLinks(transaction, [submissionLineId])
+        expect(configurationLinks).toEqual([{ id: submissionLineId, categoryId: null }])
+      })
+    })
+
+    test("when historical worksheet labels differ only by trailing spaces, leaves linkage unchanged", async () => {
+      await withLegacyChildCareSpaceSchema(async (transaction) => {
+        // Arrange
+        await unlinkCategories(transaction)
+        await addCategoryId(transaction)
+        const fixture = await createHistoricalLinkageFixture(transaction, "padded historical")
+        const paddedWorksheetLine = {
+          ...fixture.worksheetLine,
+          lineName: `${fixture.worksheetLine.lineName} `,
+        }
+        const worksheetId = await createWorksheet(transaction, {
+          centreId: fixture.centreId,
+          lines: [paddedWorksheetLine],
+        })
+
+        // Act
+        await linkCategories(transaction)
+
+        // Assert
+        const worksheetLines = await readWorksheetLines(transaction, worksheetId)
+        expect(worksheetLines).toEqual([paddedWorksheetLine])
+      })
+    })
+
     test("when a current category name differs only by case, leaves the funding line unlinked", async () => {
       await withLegacyChildCareSpaceSchema(async (transaction) => {
         // Arrange

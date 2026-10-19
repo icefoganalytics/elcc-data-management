@@ -91,12 +91,38 @@ export async function up(knex: Knex): Promise<void> {
         )
       }
 
-      const remainingLines = lines.filter(
-        (line) => line.sectionName !== CHILD_CARE_SPACES_SECTION_NAME
+      await knex.raw(
+        `
+          UPDATE funding_submission_line_jsons
+          SET [values] = COALESCE(
+            (
+              SELECT
+                N'[' + STRING_AGG(
+                  CONVERT(
+                    NVARCHAR(MAX),
+                    CASE
+                      WHEN worksheet_lines.type = 0 THEN N'null'
+                      WHEN worksheet_lines.type = 1
+                        THEN N'"' + STRING_ESCAPE(worksheet_lines.value, 'json') + N'"'
+                      ELSE worksheet_lines.value
+                    END
+                  ),
+                  N','
+                ) WITHIN GROUP (ORDER BY TRY_CONVERT(INT, worksheet_lines.[key])) + N']'
+              FROM OPENJSON(funding_submission_line_jsons.[values]) AS worksheet_lines
+              WHERE worksheet_lines.type <> 5
+                OR JSON_VALUE(worksheet_lines.value, '$.sectionName') IS NULL
+                OR JSON_VALUE(worksheet_lines.value, '$.sectionName')
+                  COLLATE Latin1_General_100_BIN2 <> :sectionName COLLATE Latin1_General_100_BIN2
+                OR DATALENGTH(JSON_VALUE(worksheet_lines.value, '$.sectionName'))
+                  <> DATALENGTH(:sectionName)
+            ),
+            N'[]'
+          )
+          WHERE id = :id
+        `,
+        { id: fundingSubmissionLineJson.id, sectionName: CHILD_CARE_SPACES_SECTION_NAME }
       )
-      await knex("funding_submission_line_jsons")
-        .where({ id: fundingSubmissionLineJson.id })
-        .update({ values: JSON.stringify(remainingLines) })
     }
   }
 }

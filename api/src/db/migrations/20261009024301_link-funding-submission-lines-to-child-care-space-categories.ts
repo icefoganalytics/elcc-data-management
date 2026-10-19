@@ -153,13 +153,18 @@ export async function up(knex: Knex): Promise<void> {
     INNER JOIN @linked_sections AS linked_sections
       ON funding_submission_lines.section_name COLLATE Latin1_General_100_BIN2
         = linked_sections.section_name COLLATE Latin1_General_100_BIN2
+        AND DATALENGTH(funding_submission_lines.section_name)
+          = DATALENGTH(linked_sections.section_name)
     INNER JOIN funding_periods
       ON funding_submission_lines.fiscal_year
         = LEFT(funding_periods.fiscal_year, 4) + '/' + RIGHT(funding_periods.fiscal_year, 2)
+      AND funding_periods.deleted_at IS NULL
     INNER JOIN child_care_space_categories
       ON child_care_space_categories.funding_period_id = funding_periods.id
       AND child_care_space_categories.category_name COLLATE Latin1_General_100_BIN2
         = funding_submission_lines.line_name COLLATE Latin1_General_100_BIN2
+      AND DATALENGTH(child_care_space_categories.category_name)
+        = DATALENGTH(funding_submission_lines.line_name)
     WHERE funding_submission_lines.deleted_at IS NULL
       AND child_care_space_categories.deleted_at IS NULL
 
@@ -176,9 +181,13 @@ export async function up(knex: Knex): Promise<void> {
       AND funding_submission_lines.fiscal_year = funding_submission_line_jsons.fiscal_year
       AND funding_submission_lines.section_name COLLATE Latin1_General_100_BIN2
         = JSON_VALUE(worksheet_lines.value, '$.sectionName') COLLATE Latin1_General_100_BIN2
+      AND DATALENGTH(funding_submission_lines.section_name)
+        = DATALENGTH(JSON_VALUE(worksheet_lines.value, '$.sectionName'))
     INNER JOIN @linked_sections AS linked_sections
       ON funding_submission_lines.section_name COLLATE Latin1_General_100_BIN2
         = linked_sections.section_name COLLATE Latin1_General_100_BIN2
+        AND DATALENGTH(funding_submission_lines.section_name)
+          = DATALENGTH(linked_sections.section_name)
     INNER JOIN funding_periods
       ON LEFT(funding_periods.fiscal_year, 4) + '/' + RIGHT(funding_periods.fiscal_year, 2)
         = funding_submission_line_jsons.fiscal_year
@@ -190,6 +199,8 @@ export async function up(knex: Knex): Promise<void> {
       AND child_care_spaces.fiscal_period_id = fiscal_periods.id
       AND child_care_spaces.line_name COLLATE Latin1_General_100_BIN2
         = JSON_VALUE(worksheet_lines.value, '$.lineName') COLLATE Latin1_General_100_BIN2
+      AND DATALENGTH(child_care_spaces.line_name)
+        = DATALENGTH(JSON_VALUE(worksheet_lines.value, '$.lineName'))
     INNER JOIN child_care_space_categories
       ON child_care_space_categories.id = child_care_spaces.category_id
       AND child_care_space_categories.funding_period_id = funding_periods.id
