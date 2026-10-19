@@ -23,14 +23,21 @@ export type ChildCareSpaceCategoryPolicy = Policy
 export type ChildCareSpaceCategoryAsIndex = ChildCareSpaceCategory
 export type ChildCareSpaceCategoryAsShow = ChildCareSpaceCategory
 
+export type ChildCareSpaceCategoryPropagationOptions = {
+  applyToFutureMonths?: boolean
+  propagationStartFiscalPeriodId?: number | null
+}
+
 export type ChildCareSpaceCategoryCreationAttributes = Pick<
   ChildCareSpaceCategory,
   "fundingPeriodId" | "categoryName" | "fromAge" | "toAge" | "monthlyAmount"
->
+> &
+  ChildCareSpaceCategoryPropagationOptions
 
 export type ChildCareSpaceCategoryUpdateAttributes = Partial<
   Pick<ChildCareSpaceCategory, "categoryName" | "fromAge" | "toAge" | "monthlyAmount">
->
+> &
+  ChildCareSpaceCategoryPropagationOptions
 
 export type ChildCareSpaceCategoryWhereOptions = WhereOptions<
   ChildCareSpaceCategory,

@@ -82,6 +82,15 @@
         />
       </v-col>
     </v-row>
+    <v-row>
+      <v-col cols="12">
+        <ChildCareSpaceCategoryPropagationControls
+          v-model:apply-to-future-months="applyToFutureMonths"
+          v-model:propagation-start-fiscal-period-id="propagationStartFiscalPeriodId"
+          :funding-period-id="categoryAttributes.fundingPeriodId"
+        />
+      </v-col>
+    </v-row>
 
     <template #actions>
       <v-btn
@@ -117,6 +126,7 @@ import { greaterThan, greaterThanOrEqualTo, required } from "@/utils/validators"
 
 import childCareSpaceCategoriesApi, {
   type ChildCareSpaceCategoryCreationAttributes,
+  type ChildCareSpaceCategoryPropagationOptions,
 } from "@/api/child-care-space-categories-api"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useFundingPeriods, { type FundingPeriodQueryOptions } from "@/use/use-funding-periods"
@@ -125,6 +135,7 @@ import useSnack from "@/use/use-snack"
 import CurrencyInput from "@/components/CurrencyInput.vue"
 import HeaderActionsFormCard from "@/components/common/HeaderActionsFormCard.vue"
 import ChildCareSpaceCategoryNameUniqueTextField from "@/components/child-care-space-categories/ChildCareSpaceCategoryNameUniqueTextField.vue"
+import ChildCareSpaceCategoryPropagationControls from "@/components/child-care-space-categories/ChildCareSpaceCategoryPropagationControls.vue"
 
 const monthlyAmountOptions = { precision: 4 }
 
@@ -143,6 +154,8 @@ const categoryAttributes = ref<CategoryFormAttributes>({
   toAge: null,
   monthlyAmount: "",
 })
+const applyToFutureMonths = ref(false)
+const propagationStartFiscalPeriodId = ref<number | null>(null)
 
 function updateAge(field: "fromAge" | "toAge", value: string | number | null) {
   categoryAttributes.value[field] = isNil(value) || value === "" ? null : Number(value)
@@ -199,6 +212,22 @@ const isCreating = ref(false)
 const snack = useSnack()
 const router = useRouter()
 
+function getPropagationOptions(): ChildCareSpaceCategoryPropagationOptions | undefined | null {
+  if (!applyToFutureMonths.value) {
+    return undefined
+  }
+
+  const fiscalPeriodId = propagationStartFiscalPeriodId.value
+  if (isNil(fiscalPeriodId) || !Number.isSafeInteger(fiscalPeriodId) || fiscalPeriodId < 0) {
+    return null
+  }
+
+  return {
+    applyToFutureMonths: true,
+    propagationStartFiscalPeriodId: fiscalPeriodId,
+  }
+}
+
 async function createChildCareSpaceCategory() {
   if (isNil(headerActionsFormCard.value)) {
     return
@@ -214,17 +243,24 @@ async function createChildCareSpaceCategory() {
     return
   }
 
+  const propagationOptions = getPropagationOptions()
+  if (propagationOptions === null) {
+    return
+  }
+
   const attributes: ChildCareSpaceCategoryCreationAttributes = {
     fundingPeriodId,
     categoryName,
     fromAge,
     toAge,
     monthlyAmount,
+    ...(propagationOptions ?? {}),
   }
-
   isCreating.value = true
   try {
     const { childCareSpaceCategory } = await childCareSpaceCategoriesApi.create(attributes)
+    applyToFutureMonths.value = false
+    propagationStartFiscalPeriodId.value = null
     snack.success("Child Care Space category created successfully!")
     return router.push({
       name: "administration/child-care-space-categories/ChildCareSpaceCategoryPage",

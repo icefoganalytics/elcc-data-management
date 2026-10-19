@@ -89,6 +89,15 @@
       </v-col>
     </v-row>
     <v-row>
+      <v-col cols="12">
+        <ChildCareSpaceCategoryPropagationControls
+          v-model:apply-to-future-months="applyToFutureMonths"
+          v-model:propagation-start-fiscal-period-id="propagationStartFiscalPeriodId"
+          :funding-period-id="fundingPeriodId"
+        />
+      </v-col>
+    </v-row>
+    <v-row>
       <v-col class="d-flex justify-end">
         <v-btn
           color="primary"
@@ -120,6 +129,7 @@
 import { computed, ref, toRefs } from "vue"
 import { isNil } from "lodash"
 
+import { type ChildCareSpaceCategoryPropagationOptions } from "@/api/child-care-space-categories-api"
 import { greaterThan, greaterThanOrEqualTo, required } from "@/utils/validators"
 
 import useChildCareSpaceCategory from "@/use/use-child-care-space-category"
@@ -129,6 +139,7 @@ import useSnack from "@/use/use-snack"
 import CurrencyInput from "@/components/CurrencyInput.vue"
 import DescriptionElement from "@/components/common/DescriptionElement.vue"
 import ChildCareSpaceCategoryNameUniqueTextField from "@/components/child-care-space-categories/ChildCareSpaceCategoryNameUniqueTextField.vue"
+import ChildCareSpaceCategoryPropagationControls from "@/components/child-care-space-categories/ChildCareSpaceCategoryPropagationControls.vue"
 
 const monthlyAmountOptions = { precision: 4 }
 
@@ -147,6 +158,8 @@ const {
   isErrored: isCategoryErrored,
   save,
 } = useChildCareSpaceCategory(childCareSpaceCategoryId)
+const applyToFutureMonths = ref(false)
+const propagationStartFiscalPeriodId = ref<number | null>(null)
 const fundingPeriodId = computed(() => childCareSpaceCategory.value?.fundingPeriodId)
 const {
   fundingPeriod,
@@ -206,6 +219,22 @@ function updateMonthlyAmount(value: string | number | null) {
 const isSaving = ref(false)
 const snack = useSnack()
 
+function getPropagationOptions(): ChildCareSpaceCategoryPropagationOptions | undefined | null {
+  if (!applyToFutureMonths.value) {
+    return undefined
+  }
+
+  const fiscalPeriodId = propagationStartFiscalPeriodId.value
+  if (isNil(fiscalPeriodId) || !Number.isSafeInteger(fiscalPeriodId) || fiscalPeriodId < 0) {
+    return null
+  }
+
+  return {
+    applyToFutureMonths: true,
+    propagationStartFiscalPeriodId: fiscalPeriodId,
+  }
+}
+
 async function validateSaveAndNotify() {
   if (isNil(childCareSpaceCategory.value)) {
     return
@@ -223,7 +252,14 @@ async function validateSaveAndNotify() {
   isSaving.value = true
 
   try {
-    await save()
+    const propagationOptions = getPropagationOptions()
+    if (propagationOptions === null) {
+      return
+    }
+
+    await save(propagationOptions)
+    applyToFutureMonths.value = false
+    propagationStartFiscalPeriodId.value = null
     emit("saved", props.childCareSpaceCategoryId)
     snack.success("Child Care Space category saved!")
   } catch (error) {

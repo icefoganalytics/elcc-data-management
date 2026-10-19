@@ -22,7 +22,14 @@ export class ChildCareSpaceCategoryPolicy extends PolicyFactory(ChildCareSpaceCa
   }
 
   permittedAttributes(): Path[] {
-    return ["categoryName", "fromAge", "toAge", "monthlyAmount"]
+    return [
+      "categoryName",
+      "fromAge",
+      "toAge",
+      "monthlyAmount",
+      "applyToFutureMonths",
+      "propagationStartFiscalPeriodId",
+    ]
   }
 
   permittedAttributesForCreate(): Path[] {

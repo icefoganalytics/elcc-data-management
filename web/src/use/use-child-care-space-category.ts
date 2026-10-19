@@ -4,6 +4,7 @@ import { isNil } from "lodash"
 import childCareSpaceCategoriesApi, {
   type ChildCareSpaceCategoryAsShow,
   type ChildCareSpaceCategoryPolicy,
+  type ChildCareSpaceCategoryPropagationOptions,
 } from "@/api/child-care-space-categories-api"
 
 export { type ChildCareSpaceCategoryAsShow }
@@ -47,7 +48,9 @@ export function useChildCareSpaceCategory(
     }
   }
 
-  async function save(): Promise<ChildCareSpaceCategoryAsShow> {
+  async function save(
+    propagationOptions?: ChildCareSpaceCategoryPropagationOptions
+  ): Promise<ChildCareSpaceCategoryAsShow> {
     const staticChildCareSpaceCategoryId = unref(childCareSpaceCategoryId)
     if (isNil(staticChildCareSpaceCategoryId)) {
       throw new Error("childCareSpaceCategoryId is required")
@@ -60,9 +63,16 @@ export function useChildCareSpaceCategory(
     state.isLoading = true
     try {
       const { categoryName, fromAge, toAge, monthlyAmount } = state.childCareSpaceCategory
+      const attributes = {
+        categoryName,
+        fromAge,
+        toAge,
+        monthlyAmount: String(monthlyAmount),
+        ...propagationOptions,
+      }
       const { childCareSpaceCategory, policy } = await childCareSpaceCategoriesApi.update(
         staticChildCareSpaceCategoryId,
-        { categoryName, fromAge, toAge, monthlyAmount: String(monthlyAmount) }
+        attributes
       )
       state.isErrored = false
       state.childCareSpaceCategory = childCareSpaceCategory

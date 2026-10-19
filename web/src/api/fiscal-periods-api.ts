@@ -35,7 +35,7 @@ export type FiscalPeriodAsReference = Pick<
 
 export type FiscalPeriodWhereOptions = WhereOptions<
   FiscalPeriod,
-  "fiscalYear" | "month" | "dateStart" | "dateEnd"
+  "fundingPeriodId" | "fiscalYear" | "month" | "dateStart" | "dateEnd"
 >
 
 export type FiscalPeriodFiltersOptions = FiltersOptions
