@@ -46,6 +46,9 @@ Changes since v2025.11.24.1 that will be included in the next release.
   without application-owned session configuration. The released adapter supplies Docker
   listener defaults and handles readiness-based startup; ordinary frontend startup does
   not require editor setup.
+- Development API and test connections now use checkout-qualified private database hosts,
+  preventing ambiguous bare-name routing when multiple stacks share the local gateway.
+  Desktop SQL endpoints remain unchanged; the gateway dependency is pinned to 0.2.2.
 - Database startup now applies its grace period once and bounds readiness timeouts, including
   connection-pool cleanup.
 - Frontend build cleanup now works with `dev run --no-deps web npm run clean`, matching the API's
