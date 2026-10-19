@@ -1,6 +1,6 @@
-import { type Attributes } from "@sequelize/core"
+import { IsolationLevel, type Attributes } from "@sequelize/core"
 
-import { ChildCareSpace } from "@/models"
+import db, { ChildCareSpace } from "@/models"
 import BaseService from "@/services/base-service"
 
 export type ChildCareSpaceUpdateAttributes = Pick<
@@ -17,9 +17,15 @@ export class UpdateService extends BaseService {
   }
 
   async perform(): Promise<ChildCareSpace> {
-    await this.childCareSpace.update(this.attributes)
+    return db.transaction(
+      { isolationLevel: IsolationLevel.REPEATABLE_READ },
+      async (transaction) => {
+        await this.childCareSpace.reload({ transaction })
+        await this.childCareSpace.update(this.attributes, { transaction })
 
-    return this.childCareSpace.reload()
+        return this.childCareSpace.reload({ transaction })
+      }
+    )
   }
 }
 

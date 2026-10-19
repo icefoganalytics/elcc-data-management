@@ -147,6 +147,76 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         await flushPromises()
         wrapper.unmount()
       })
+      test("when one ledger update fails and another is pending, waits before unlocking", async () => {
+        // Arrange
+        const { fundingSubmissionLineJson, childCareSpace } = buildWorksheetRecords()
+        const secondChildCareSpace = {
+          ...childCareSpace,
+          id: 2,
+          categoryId: 10,
+          lineName: "Toddler Cohort",
+        }
+        const pendingLedgerUpdate = Promise.withResolvers<{
+          data: { childCareSpace: typeof childCareSpace }
+        }>()
+        const pendingLedgerUpdateStarted = Promise.withResolvers<void>()
+        const httpClientMock = vi.mocked(httpClient, true)
+        httpClientMock.get.mockImplementation(async (url) => {
+          if (url === "/api/child-care-spaces") {
+            return {
+              data: {
+                childCareSpaces: [childCareSpace, secondChildCareSpace],
+                totalCount: 2,
+              },
+            }
+          }
+
+          return { data: { fundingSubmissionLineJson } }
+        })
+        httpClientMock.patch.mockImplementation(async (url) => {
+          if (url === "/api/child-care-spaces/1") {
+            throw new Error("First ledger update failed")
+          }
+          if (url === "/api/child-care-spaces/2") {
+            pendingLedgerUpdateStarted.resolve()
+            return pendingLedgerUpdate.promise
+          }
+
+          return { data: { fundingSubmissionLineJson } }
+        })
+        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+        await router.push("/")
+        await router.isReady()
+        const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
+          props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
+          global: { plugins: [router, createPinia(), mockVuetify()] },
+        })
+        await flushPromises()
+        const occupancyInputs = wrapper.findAll<HTMLInputElement>("tbody input")
+        await occupancyInputs[0].setValue("0.5")
+        await occupancyInputs[2].setValue("0.5")
+        await occupancyInputs[0].trigger("change")
+        await occupancyInputs[2].trigger("change")
+
+        // Act
+        await wrapper
+          .findAll("button")
+          .find((button) => button.text() === "Save")
+          ?.trigger("click")
+        await pendingLedgerUpdateStarted.promise
+        await flushPromises()
+
+        // Assert
+        expect(wrapper.findAll("tbody input[readonly]")).toHaveLength(8)
+        expect(
+          httpClientMock.patch.mock.calls.some(
+            ([url]) => url === "/api/funding-submission-line-jsons/11"
+          )
+        ).toBe(false)
+        pendingLedgerUpdate.resolve({ data: { childCareSpace: secondChildCareSpace } })
+        await flushPromises()
+        wrapper.unmount()
+      })
 
       test("when estimate replication is pending, keeps every occupancy input read only", async () => {
         // Arrange
@@ -199,6 +269,55 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           "0.0000",
         ])
         replication.resolve({ data: undefined })
+        await flushPromises()
+        wrapper.unmount()
+      })
+      test("when estimate replication fails while a sibling is pending, keeps inputs read only", async () => {
+        // Arrange
+        const { fundingSubmissionLineJson, childCareSpace } = buildWorksheetRecords()
+        const childSpaceReplication = Promise.withResolvers<{ data: undefined }>()
+        const childSpaceReplicationStarted = Promise.withResolvers<void>()
+        const httpClientMock = vi.mocked(httpClient, true)
+        httpClientMock.get.mockImplementation(async (url) => {
+          if (url === "/api/child-care-spaces") {
+            return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
+          }
+
+          return { data: { fundingSubmissionLineJson } }
+        })
+        httpClientMock.patch.mockResolvedValue({ data: { fundingSubmissionLineJson } })
+        httpClientMock.post.mockImplementation(async (url) => {
+          if (url === "/api/funding-submission-line-jsons/11/replicate-estimates") {
+            throw new Error("Funding submission replication failed")
+          }
+          if (url === "/api/child-care-spaces/1/replicate-estimates") {
+            childSpaceReplicationStarted.resolve()
+            return childSpaceReplication.promise
+          }
+
+          throw new Error(`Unexpected POST ${url}`)
+        })
+        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+        await router.push("/")
+        await router.isReady()
+        const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
+          props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
+          global: { plugins: [router, createPinia(), mockVuetify()] },
+        })
+        await flushPromises()
+        const replicateButton = wrapper
+          .findAll("button")
+          .find((button) => button.text().includes("Replicate Estimates"))
+        if (!replicateButton) throw new Error("Replicate Estimates button is missing")
+
+        // Act
+        await replicateButton.trigger("click")
+        await childSpaceReplicationStarted.promise
+        await flushPromises()
+
+        // Assert
+        expect(wrapper.findAll("tbody input[readonly]")).toHaveLength(6)
+        childSpaceReplication.resolve({ data: undefined })
         await flushPromises()
         wrapper.unmount()
       })

@@ -228,19 +228,24 @@ async function saveFundingSubmissionLineJson(): Promise<boolean> {
         continue
       }
 
-      childCareSpaceUpdates.push(
-        childCareSpacesApi.update(childCareSpace.id, {
+      childCareSpaceUpdates.push({
+        id: childCareSpace.id,
+        update: {
           estimatedChildOccupancyRate: childCareSpaceLine.estimatedChildOccupancyRate,
           actualChildOccupancyRate: childCareSpaceLine.actualChildOccupancyRate,
-        })
-      )
+        },
+      })
     }
+
+    const childCareSpaceUpdateRequests = childCareSpaceUpdates.map(({ id, update }) =>
+      childCareSpacesApi.update(id, update)
+    )
+    await awaitMutationSettlements(childCareSpaceUpdateRequests)
     const linesInOtherSections = sections.value.filter(
       ({ sectionName }) => sectionName !== CHILD_CARE_SPACES_SECTION_NAME
     )
     const fundingSubmissionLineJsonLines = linesInOtherSections.flatMap(({ lines }) => lines)
 
-    await Promise.all(childCareSpaceUpdates)
     await fundingSubmissionLineJsonsApi.update(fundingSubmissionLineJsonId.value, {
       lines: fundingSubmissionLineJsonLines,
     })
@@ -260,6 +265,17 @@ async function saveFundingSubmissionLineJson(): Promise<boolean> {
   }
 }
 
+async function awaitMutationSettlements(mutations: Promise<unknown>[]) {
+  const results = await Promise.allSettled(mutations)
+  const failures = results.flatMap((result) =>
+    result.status === "rejected" ? [result.reason] : []
+  )
+
+  if (failures.length > 0) {
+    throw new AggregateError(failures, failures.map(String).join("; "))
+  }
+}
+
 async function replicateEstimatesForward() {
   isReplicatingEstimates.value = true
   try {
@@ -268,12 +284,13 @@ async function replicateEstimatesForward() {
       return
     }
 
-    await Promise.all([
+    const replicationRequests = [
       fundingSubmissionLineJsonsApi.replicateEstimates(fundingSubmissionLineJsonId.value),
       ...childCareSpaces.value.map((childCareSpace) =>
         childCareSpacesApi.replicateEstimates(childCareSpace.id)
       ),
-    ])
+    ]
+    await awaitMutationSettlements(replicationRequests)
     await Promise.all([refreshChildCareSpaces(), refreshFundingSubmissionLineJson()])
 
     emit("update:fundingSubmissionLineJson", fundingSubmissionLineJsonId.value)

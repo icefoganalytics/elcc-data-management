@@ -29,23 +29,31 @@ export function useChildCareSpaceCategories(
     isLoading: false,
     isErrored: false,
   })
+  let latestRequest = {}
 
   async function fetch(): Promise<ChildCareSpaceCategoryAsIndex[]> {
+    const request = {}
+    latestRequest = request
+    const query = unref(queryOptions)
     state.isLoading = true
     try {
-      const { childCareSpaceCategories, totalCount } = await childCareSpaceCategoriesApi.list(
-        unref(queryOptions)
-      )
-      state.isErrored = false
-      state.childCareSpaceCategories = childCareSpaceCategories
-      state.totalCount = totalCount
+      const { childCareSpaceCategories, totalCount } = await childCareSpaceCategoriesApi.list(query)
+      if (latestRequest === request) {
+        state.isErrored = false
+        state.childCareSpaceCategories = childCareSpaceCategories
+        state.totalCount = totalCount
+      }
       return childCareSpaceCategories
     } catch (error) {
       console.error(`Failed to fetch Child Care Space categories: ${error}`, { error })
-      state.isErrored = true
+      if (latestRequest === request) {
+        state.isErrored = true
+      }
       throw error
     } finally {
-      state.isLoading = false
+      if (latestRequest === request) {
+        state.isLoading = false
+      }
     }
   }
 
@@ -56,7 +64,11 @@ export function useChildCareSpaceCategories(
         return
       }
 
-      await fetch()
+      try {
+        await fetch()
+      } catch {
+        // fetch() preserves rejection for explicit callers; watcher requests are expected to fail.
+      }
     },
     { deep: true, immediate: true }
   )
