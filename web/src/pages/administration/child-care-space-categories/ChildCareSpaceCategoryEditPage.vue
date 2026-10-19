@@ -1,6 +1,7 @@
 <template>
   <HeaderActionsCard title="Edit Child Care Space Category">
     <ChildCareSpaceCategoryEditForm
+      :key="childCareSpaceCategoryIdAsNumber"
       :child-care-space-category-id="childCareSpaceCategoryIdAsNumber"
       @saved="redirectToChildCareSpaceCategoryPage"
     />

@@ -23,6 +23,7 @@ export function useChildCareSpaceCategory(
     isLoading: false,
     isErrored: false,
   })
+  let latestRequest = {}
 
   async function fetch(): Promise<ChildCareSpaceCategoryAsShow> {
     const staticChildCareSpaceCategoryId = unref(childCareSpaceCategoryId)
@@ -30,21 +31,32 @@ export function useChildCareSpaceCategory(
       throw new Error("childCareSpaceCategoryId is required")
     }
 
+    const request = {}
+    latestRequest = request
     state.isLoading = true
     try {
       const { childCareSpaceCategory, policy } = await childCareSpaceCategoriesApi.get(
         staticChildCareSpaceCategoryId
       )
-      state.isErrored = false
-      state.childCareSpaceCategory = childCareSpaceCategory
-      state.policy = policy
+      if (
+        latestRequest === request &&
+        unref(childCareSpaceCategoryId) === staticChildCareSpaceCategoryId
+      ) {
+        state.isErrored = false
+        state.childCareSpaceCategory = childCareSpaceCategory
+        state.policy = policy
+      }
       return childCareSpaceCategory
     } catch (error) {
       console.error(`Failed to fetch Child Care Space category: ${error}`, { error })
-      state.isErrored = true
+      if (latestRequest === request) {
+        state.isErrored = true
+      }
       throw error
     } finally {
-      state.isLoading = false
+      if (latestRequest === request) {
+        state.isLoading = false
+      }
     }
   }
 
@@ -56,10 +68,12 @@ export function useChildCareSpaceCategory(
       throw new Error("childCareSpaceCategoryId is required")
     }
 
-    if (isNil(state.childCareSpaceCategory)) {
-      throw new Error("childCareSpaceCategory is required")
+    if (state.childCareSpaceCategory?.id !== staticChildCareSpaceCategoryId) {
+      throw new Error("The requested Child Care Space category is not loaded")
     }
 
+    const request = {}
+    latestRequest = request
     state.isLoading = true
     try {
       const { categoryName, fromAge, toAge, monthlyAmount } = state.childCareSpaceCategory
@@ -74,27 +88,45 @@ export function useChildCareSpaceCategory(
         staticChildCareSpaceCategoryId,
         attributes
       )
-      state.isErrored = false
-      state.childCareSpaceCategory = childCareSpaceCategory
-      state.policy = policy
+      if (
+        latestRequest === request &&
+        unref(childCareSpaceCategoryId) === staticChildCareSpaceCategoryId
+      ) {
+        state.isErrored = false
+        state.childCareSpaceCategory = childCareSpaceCategory
+        state.policy = policy
+      }
       return childCareSpaceCategory
     } catch (error) {
       console.error(`Failed to save Child Care Space category: ${error}`, { error })
-      state.isErrored = true
+      if (latestRequest === request) {
+        state.isErrored = true
+      }
       throw error
     } finally {
-      state.isLoading = false
+      if (latestRequest === request) {
+        state.isLoading = false
+      }
     }
   }
 
   watch(
     () => unref(childCareSpaceCategoryId),
     async (newChildCareSpaceCategoryId) => {
+      latestRequest = {}
+      state.childCareSpaceCategory = null
+      state.policy = null
+      state.isErrored = false
+      state.isLoading = false
       if (isNil(newChildCareSpaceCategoryId)) {
         return
       }
 
-      await fetch()
+      try {
+        await fetch()
+      } catch {
+        // fetch() records failures; explicit refresh callers still receive the rejection.
+      }
     },
     { immediate: true }
   )
