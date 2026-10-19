@@ -6,13 +6,23 @@ Child Care Spaces records monthly occupancy and its funding amounts for a child 
 
 One active record represents one centre, one fiscal month, and one Child Care Space category. Soft-deleted records do not occupy that unique identity.
 
-The line name and monthly amount are snapshots, not live category lookups. Changing or soft-deleting a category does not rewrite an existing month's facts. Worksheet users can correct estimated and actual occupancy; identifiers, snapshots, and calculated totals are not editable through the worksheet API.
+The line name and monthly amount are snapshots, not live category lookups. Ordinary category edits and soft deletion preserve existing monthly facts. Explicit forward application can revise eligible snapshots under the rules below. Worksheet users can correct estimated and actual occupancy; identifiers, snapshots, and calculated totals are not editable through the worksheet API.
 
 ## Category configuration
 
 Each funding period owns its configurable category names, optional age ranges, and monthly amounts. **Administration → Child Care Space Categories** manages this configuration separately from the remaining funding submission lines. A category's funding period is selected when created and cannot be changed through an update.
 
-New funding periods copy active categories from the latest active fiscal year with categories, or use the seven original categories when none exist. Ensuring an already configured period retains its categories unchanged, including a deliberately empty configuration whose categories were all retired. Revised names and rates apply only when a new ledger row is provisioned; existing monthly snapshots and occupancy remain intact. Removing a category retires its configuration without deleting historical ledger rows.
+New funding periods copy active categories from the latest active fiscal year with categories, or use the seven original categories when none exist. Ensuring an already configured period retains its categories unchanged, including a deliberately empty configuration whose categories were all retired. Without explicit forward application, revised names and rates apply only to newly provisioned ledger rows. Removing a category retires its configuration without deleting historical ledger rows.
+
+## Forward application
+
+Create and Edit offer an unchecked **Apply to existing centre worksheets from a selected month onward** option. When enabled, **Apply From Month** is required and must belong to the category's funding period.
+
+- The selected month is included; earlier months and other funding periods are unchanged.
+- Missing category/month rows are created with zero occupancy for non-soft-deleted centres. Soft-deleted ledger pairs are not recreated.
+- On Edit, existing rows receive the revised name and monthly amount only if their snapshots still match the previous category name and rate and actual occupancy is zero. Manual snapshot overrides and rows with actual occupancy remain unchanged.
+- Estimated occupancy is retained and totals are recalculated using decimal arithmetic. Age ranges remain category configuration only.
+- Category changes and forward application commit together or roll back together. This is not estimate replication and does not create Administration or Quality Enhancement Program configuration.
 
 ## Financial consistency
 

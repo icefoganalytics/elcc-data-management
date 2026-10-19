@@ -25,6 +25,8 @@ Occupancy edits and estimate replication use the standard `update()` authorizati
 
 `child_care_space_categories` owns category names, age ranges, and rates for each funding period. The category CRUD API and administration pages edit this configuration; monthly ledger rows retain their own historical name/rate snapshots. Both the API policy and edit form keep the category's funding period immutable after creation.
 
+Explicit category forward application is a transactional exception to snapshot isolation: an inclusive starting fiscal month limits changes to the same funding period. It fills missing pairs without restoring retired rows; edits update only unchanged snapshots without actual occupancy. The [domain rules](../domain/child-care-spaces.md#forward-application) define preservation and recalculation.
+
 Funding-period creation and development/production ensures provision categories separately from the remaining `funding_submission_lines`. Fresh shared-line defaults retain the seven Administration rows. Shared-line writes and bulk cloning reject the retired Child Care Spaces section at their configuration boundary. Centre initialization discovers categories by funding-period ID and adds only missing category/month pairs. The worksheet JSON provisioning service therefore needs no Child Care Spaces section filter.
 
 Ensures distinguish never-configured periods from deliberately emptied periods using category history; they do not restore retired categories. Legacy cleanup removes only rows still belonging to Child Care Spaces, retaining unrelated active and archived configuration referenced by historical ledger records.
@@ -35,7 +37,7 @@ Administration and Quality Enhancement Program configuration and JSON lines carr
 
 The linkage migration keeps its SQL Server operations directly in `up` and `down`, with comments explaining candidate matching, ambiguity rejection, and worksheet eligibility. `JSON_MODIFY` changes only category metadata, preserving array order, historical fields, unknown properties, and existing numeric tokens without JavaScript parsing. Reversal discovers the column's foreign-key name so both SQL-created and Knex-created constraints can be removed without changing worksheet or ledger facts.
 
-Historical submission-line IDs are normalized directly from their JSON numeric tokens. Integral decimal and exponent forms resolve the same positive 32-bit ID; strings, fractions, and out-of-range values do not match. Normalization avoids floating-point rounding, including for fractions smaller than JavaScript number precision.
+Historical submission-line IDs are normalized directly from their JSON numeric tokens. Zero and integral decimal and exponent forms resolve the same non-negative 32-bit ID; strings, fractions, and out-of-range values do not match. Normalization avoids floating-point rounding, including for fractions smaller than JavaScript number precision.
 
 Missing funding-period mappings or conflicting category references abort the backfill. Source removal checks that categories exist and active worksheet JSON no longer contains Child Care Spaces. The reference/configuration removal migrations reject automatic reversal because the original source data is required for restoration.
 
