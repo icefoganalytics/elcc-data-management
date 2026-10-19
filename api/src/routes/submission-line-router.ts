@@ -6,7 +6,8 @@ import { ReturnValidationErrors } from "@/middleware"
 import { checkJwt, autheticateAndLoadUser } from "@/middleware/authz.middleware"
 import { FundingSubmissionLine } from "@/models"
 import { FundingSubmissionLineSerializer } from "@/serializers"
-import { FundingSubmissionLineServices, FundingSubmissionLines } from "@/services"
+import { FundingSubmissionLineServices } from "@/services/funding-submission-line-services"
+import { CreateService, UpdateService } from "@/services/funding-submission-lines"
 
 /** @deprecated - prefer api/src/controllers/funding-submission-lines-controller.ts */
 export const submissionLineRouter = express.Router()
@@ -34,7 +35,7 @@ submissionLineRouter.put(
       return res.status(404).json({ message: "Funding Submission Line not found" })
     }
 
-    return FundingSubmissionLines.UpdateService.perform(fundingSubmissionLine, req.body)
+    return UpdateService.perform(fundingSubmissionLine, req.body)
       .then((updatedFundingSubmissionLine) => {
         return res.status(200).json({ data: updatedFundingSubmissionLine })
       })
@@ -63,7 +64,7 @@ submissionLineRouter.post("/fiscal-year", async (req: Request, res: Response) =>
 })
 
 submissionLineRouter.post("/", async (req: Request, res: Response) => {
-  return FundingSubmissionLines.CreateService.perform(req.body)
+  return CreateService.perform(req.body)
     .then((fundingSubmissionLine) => {
       res.json({ data: fundingSubmissionLine })
     })

@@ -1,10 +1,10 @@
 import {
   centreFactory,
+  childCareSpaceCategoryFactory,
+  childCareSpaceFactory,
   fiscalPeriodFactory,
   fundingPeriodFactory,
-  childCareSpaceCategoryFactory,
 } from "@/factories"
-import { childCareSpaceFactory } from "@/factories/child-care-space-factory"
 
 import ReplicateEstimatesService from "@/services/child-care-spaces/replicate-estimates-service"
 
@@ -55,9 +55,10 @@ describe("api/src/services/child-care-spaces/replicate-estimates-service.ts", ()
 
         // Act
         await ReplicateEstimatesService.perform(sourceChildCareSpace)
+        await laterChildCareSpace.reload()
 
         // Assert
-        await expect(laterChildCareSpace.reload()).resolves.toEqual(
+        expect(laterChildCareSpace).toEqual(
           expect.objectContaining({
             estimatedChildOccupancyRate: "0.8",
             actualChildOccupancyRate: "0",

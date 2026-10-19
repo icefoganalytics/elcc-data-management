@@ -72,8 +72,11 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
         // Act
         await RemoveHotMealEnhancementService.perform(centre)
 
+        // Reload persisted worksheet state
+        await fundingSubmissionLineJson.reload()
+
         // Assert
-        await expect(fundingSubmissionLineJson.reload()).resolves.toEqual(
+        expect(fundingSubmissionLineJson).toEqual(
           expect.objectContaining({
             lines: [
               {
@@ -134,8 +137,11 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
         // Act
         await RemoveHotMealEnhancementService.perform(centre)
 
+        // Reload persisted worksheet state
+        await fundingSubmissionLineJson.reload()
+
         // Assert
-        await expect(fundingSubmissionLineJson.reload()).resolves.toEqual(
+        expect(fundingSubmissionLineJson).toEqual(
           expect.objectContaining({
             lines: [
               {
@@ -196,8 +202,11 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
         // Act
         await RemoveHotMealEnhancementService.perform(centre)
 
+        // Reload persisted worksheet state
+        await fundingSubmissionLineJson.reload()
+
         // Assert
-        await expect(fundingSubmissionLineJson.reload()).resolves.toEqual(
+        expect(fundingSubmissionLineJson).toEqual(
           expect.objectContaining({
             lines: [
               {
@@ -280,8 +289,11 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
         // Act
         await RemoveHotMealEnhancementService.perform(centre)
 
+        // Reload persisted worksheet state
+        await fundingSubmissionLineJson.reload()
+
         // Assert
-        await expect(fundingSubmissionLineJson.reload()).resolves.toEqual(
+        expect(fundingSubmissionLineJson).toEqual(
           expect.objectContaining({
             lines: [
               {

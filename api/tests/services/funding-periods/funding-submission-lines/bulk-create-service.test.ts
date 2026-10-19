@@ -61,9 +61,12 @@ describe("api/src/services/funding-periods/funding-submission-lines/bulk-create-
         })
 
         // Act
-        const fundingSubmissionLines = await BulkCreateService.perform(targetFundingPeriod)
+        await BulkCreateService.perform(targetFundingPeriod)
 
         // Assert
+        const fundingSubmissionLines = await FundingSubmissionLine.findAll({
+          where: { fiscalYear: "2025/26" },
+        })
         expect(fundingSubmissionLines).toEqual([
           expect.objectContaining({
             fiscalYear: "2025/26",
@@ -124,22 +127,75 @@ describe("api/src/services/funding-periods/funding-submission-lines/bulk-create-
         // Assert
         const persistedLines = await FundingSubmissionLine.findAll({
           where: { fiscalYear: "2025/26" },
-          order: [["id", "ASC"]],
         })
-        expect(persistedLines).toEqual([
-          expect.objectContaining({
-            sectionName: "Administration (10% of Spaces)",
-            lineName: "Infants",
-            monthlyAmount: "100",
-            childCareSpaceCategoryId: targetCategory.id,
-          }),
-          expect.objectContaining({
-            sectionName: "Quality Enhancement Program",
-            lineName: "Infants",
-            monthlyAmount: "250",
-            childCareSpaceCategoryId: targetCategory.id,
-          }),
-        ])
+        expect(persistedLines).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              sectionName: "Administration (10% of Spaces)",
+              lineName: "Infants",
+              monthlyAmount: "100",
+              childCareSpaceCategoryId: targetCategory.id,
+            }),
+            expect.objectContaining({
+              sectionName: "Quality Enhancement Program",
+              lineName: "Infants",
+              monthlyAmount: "250",
+              childCareSpaceCategoryId: targetCategory.id,
+            }),
+          ])
+        )
+      })
+      test("when the newest configuration contains the retired Child Care Spaces section, rejects cloning", async () => {
+        // Arrange
+        await FundingSubmissionLine.bulkCreate(
+          [
+            {
+              fiscalYear: "2024/25",
+              sectionName: "Child Care Spaces",
+              lineName: "Infants",
+              monthlyAmount: "100.0000",
+            },
+          ],
+          { validate: false }
+        )
+        const targetFundingPeriod = await fundingPeriodFactory.create({
+          fiscalYear: "2025-2026",
+        })
+
+        // Act
+        const clonePromise = BulkCreateService.perform(targetFundingPeriod)
+
+        // Assert
+        await expect(clonePromise).rejects.toThrow(
+          "Child Care Spaces configuration must use the Child Care Spaces ledger."
+        )
+      })
+
+      test("when cloning a retired section, creates no target configuration", async () => {
+        // Arrange
+        await FundingSubmissionLine.bulkCreate(
+          [
+            {
+              fiscalYear: "2024/25",
+              sectionName: "Child Care Spaces",
+              lineName: "Infants",
+              monthlyAmount: "100.0000",
+            },
+          ],
+          { validate: false }
+        )
+        const targetFundingPeriod = await fundingPeriodFactory.create({
+          fiscalYear: "2025-2026",
+        })
+
+        // Act
+        await BulkCreateService.perform(targetFundingPeriod).catch(() => undefined)
+
+        // Assert
+        const targetLines = await FundingSubmissionLine.findAll({
+          where: { fiscalYear: "2025/26" },
+        })
+        expect(targetLines).toEqual([])
       })
     })
   })

@@ -2,10 +2,10 @@ import { ChildCareSpace } from "@/models"
 
 import {
   centreFactory,
+  childCareSpaceCategoryFactory,
   childCareSpaceFactory,
   fiscalPeriodFactory,
   fundingPeriodFactory,
-  childCareSpaceCategoryFactory,
 } from "@/factories"
 
 describe("api/src/models/child-care-space.ts", () => {
@@ -24,9 +24,10 @@ describe("api/src/models/child-care-space.ts", () => {
           estimatedChildOccupancyRate: "0.3333",
           actualChildOccupancyRate: "0.1250",
         })
+        await childCareSpace.reload()
 
         // Assert
-        await expect(childCareSpace.reload()).resolves.toEqual(
+        expect(childCareSpace).toEqual(
           expect.objectContaining({
             estimatedComputedTotal: "6.666",
             actualComputedTotal: "2.5",
@@ -38,7 +39,7 @@ describe("api/src/models/child-care-space.ts", () => {
         { estimatedChildOccupancyRate: "0.12345" },
         { actualChildOccupancyRate: "0.12345" },
       ])(
-        "when an occupancy input exceeds storage precision, rejects the update without changing persisted money: %o",
+        "when an occupancy input exceeds storage precision, rejects the update: %o",
         async (attributes) => {
           // Arrange
           const childCareSpace = await childCareSpaceFactory.create({
@@ -48,20 +49,33 @@ describe("api/src/models/child-care-space.ts", () => {
           })
 
           // Act
-          // marlens-test-alignment: allow-multiple-expects -- rejection and unchanged persisted money are independent observable contracts.
           await expect(childCareSpace.update(attributes)).rejects.toThrow()
-
-          // Assert
-          await expect(childCareSpace.reload()).resolves.toEqual(
-            expect.objectContaining({
-              estimatedChildOccupancyRate: "0.25",
-              actualChildOccupancyRate: "0.5",
-              estimatedComputedTotal: "25",
-              actualComputedTotal: "50",
-            })
-          )
         }
       )
+
+      test("when an occupancy input exceeds storage precision, preserves previously persisted money", async () => {
+        // Arrange
+        const childCareSpace = await childCareSpaceFactory.create({
+          monthlyAmount: "100.0000",
+          estimatedChildOccupancyRate: "0.2500",
+          actualChildOccupancyRate: "0.5000",
+        })
+
+        // Act
+        const invalidUpdate = childCareSpace.update({ estimatedChildOccupancyRate: "0.12345" })
+        await invalidUpdate.catch(() => undefined)
+        await childCareSpace.reload()
+
+        // Assert
+        expect(childCareSpace).toEqual(
+          expect.objectContaining({
+            estimatedChildOccupancyRate: "0.25",
+            actualChildOccupancyRate: "0.5",
+            estimatedComputedTotal: "25",
+            actualComputedTotal: "50",
+          })
+        )
+      })
     })
 
     describe(".withScopes", () => {

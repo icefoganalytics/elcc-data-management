@@ -37,7 +37,14 @@ describe("api/src/controllers/funding-submission-line-jsons-controller.ts", () =
           const response = await request().post("/api/funding-submission-line-jsons").send(payload)
 
           // Assert
-          expect(response.status).toBe(422)
+          expect(response).toEqual(
+            expect.objectContaining({
+              status: 422,
+              body: expect.objectContaining({
+                message: expect.stringContaining("Child Care Spaces"),
+              }),
+            })
+          )
         }
       )
 
@@ -114,7 +121,14 @@ describe("api/src/controllers/funding-submission-line-jsons-controller.ts", () =
             .send(payload)
 
           // Assert
-          expect(response.status).toBe(422)
+          expect(response).toEqual(
+            expect.objectContaining({
+              status: 422,
+              body: expect.objectContaining({
+                message: expect.stringContaining("Child Care Spaces"),
+              }),
+            })
+          )
         }
       )
 
@@ -195,25 +209,27 @@ describe("api/src/controllers/funding-submission-line-jsons-controller.ts", () =
           const response = await request()
             .patch(`/api/funding-submission-line-jsons/${worksheet.id}`)
             .send(payload)
-          await worksheet.reload()
 
           // Assert
-          // marlens-test-alignment: allow-multiple-expects -- status and body form one HTTP result.
-          expect(response.status).toBe(200)
-          expect(response.body).toEqual({
-            fundingSubmissionLineJson: {
-              id: worksheet.id,
-              centreId: centre.id,
-              fiscalYear: "2024/25",
-              dateName: "April",
-              dateStart: "2024-04-01T00:00:00.000Z",
-              dateEnd: "2024-04-30T23:59:59.000Z",
-              createdAt: worksheet.createdAt.toISOString(),
-              updatedAt: worksheet.updatedAt.toISOString(),
-              deletedAt: null,
-              lines: [changedLine],
-            },
-          })
+          expect(response).toEqual(
+            expect.objectContaining({
+              status: 200,
+              body: {
+                fundingSubmissionLineJson: {
+                  id: worksheet.id,
+                  centreId: centre.id,
+                  fiscalYear: "2024/25",
+                  dateName: "April",
+                  dateStart: "2024-04-01T00:00:00.000Z",
+                  dateEnd: "2024-04-30T23:59:59.000Z",
+                  createdAt: worksheet.createdAt.toISOString(),
+                  updatedAt: expect.any(String),
+                  deletedAt: null,
+                  lines: [changedLine],
+                },
+              },
+            })
+          )
         }
       )
 

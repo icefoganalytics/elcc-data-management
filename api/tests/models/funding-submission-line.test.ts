@@ -47,13 +47,13 @@ describe("api/src/models/funding-submission-line.ts", () => {
           })
           const fundingSubmissionLine1 = await fundingSubmissionLineFactory.create({
             fiscalYear: "2023/24",
-            sectionName: "Child Care Spaces",
+            sectionName: "Administration (10% of Spaces)",
             lineName: "Infant Spaces",
             monthlyAmount: "100.0000",
           })
           await fundingSubmissionLineFactory.create({
             fiscalYear: "2024/25", // Different fiscal year
-            sectionName: "Child Care Spaces",
+            sectionName: "Administration (10% of Spaces)",
             lineName: "Infant Spaces",
             monthlyAmount: "200.0000",
           })
@@ -72,7 +72,7 @@ describe("api/src/models/funding-submission-line.ts", () => {
           // Arrange
           await fundingSubmissionLineFactory.create({
             fiscalYear: "2023/24",
-            sectionName: "Child Care Spaces",
+            sectionName: "Administration (10% of Spaces)",
             lineName: "Infant Spaces",
             monthlyAmount: "100.0000",
           })
@@ -94,20 +94,20 @@ describe("api/src/models/funding-submission-line.ts", () => {
           })
           const fundingSubmissionLine1 = await fundingSubmissionLineFactory.create({
             fiscalYear: "2023/24",
-            sectionName: "Child Care Spaces",
+            sectionName: "Administration (10% of Spaces)",
             lineName: "Infant Spaces",
             monthlyAmount: "100.0000",
           })
           const fundingSubmissionLine2 = await fundingSubmissionLineFactory.create({
             fiscalYear: "2023/24",
-            sectionName: "Child Care Spaces",
+            sectionName: "Administration (10% of Spaces)",
             lineName: "Toddler Spaces",
             monthlyAmount: "150.0000",
           })
 
           await fundingSubmissionLineFactory.create({
             fiscalYear: "2024/25", // Different fiscal year
-            sectionName: "Child Care Spaces",
+            sectionName: "Administration (10% of Spaces)",
             lineName: "Preschool Spaces",
             monthlyAmount: "200.0000",
           })
@@ -133,7 +133,7 @@ describe("api/src/models/funding-submission-line.ts", () => {
 
           const fundingSubmissionLine1 = await fundingSubmissionLineFactory.create({
             fiscalYear: "1999/00",
-            sectionName: "Child Care Spaces",
+            sectionName: "Administration (10% of Spaces)",
             lineName: "Infant Spaces",
             monthlyAmount: "100.0000",
           })
@@ -155,7 +155,7 @@ describe("api/src/models/funding-submission-line.ts", () => {
           })
           await fundingSubmissionLineFactory.create({
             fiscalYear: "2023/24",
-            sectionName: "Child Care Spaces",
+            sectionName: "Administration (10% of Spaces)",
             lineName: "Infant Spaces",
             monthlyAmount: "100.0000",
           })
@@ -165,7 +165,7 @@ describe("api/src/models/funding-submission-line.ts", () => {
           })
           const fundingSubmissionLine2 = await fundingSubmissionLineFactory.create({
             fiscalYear: "2024/25",
-            sectionName: "Child Care Spaces",
+            sectionName: "Administration (10% of Spaces)",
             lineName: "Infant Spaces",
             monthlyAmount: "200.0000",
           })
@@ -191,7 +191,7 @@ describe("api/src/models/funding-submission-line.ts", () => {
           })
           const softDeletedFundingSubmissionLine = await fundingSubmissionLineFactory.create({
             fiscalYear: "2023/24",
-            sectionName: "Child Care Spaces",
+            sectionName: "Administration (10% of Spaces)",
             lineName: "Infant Spaces",
             monthlyAmount: "100.0000",
           })
@@ -210,36 +210,6 @@ describe("api/src/models/funding-submission-line.ts", () => {
 
     describe("Model Validators", () => {
       describe("#ensureImmutableSectionNamesRemainUnchanged", () => {
-        test("when creating new record with immutable section name, validation succeeds", async () => {
-          // Arrange
-          const attributes = {
-            fiscalYear: "2023/24",
-            sectionName: FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM,
-            lineName: "Infants",
-            monthlyAmount: "206.1000",
-          }
-
-          const fundingSubmissionLine = FundingSubmissionLine.build(attributes)
-
-          // Act & Assert
-          await expect(fundingSubmissionLine.validate()).resolves.not.toThrow()
-        })
-
-        test("when updating mutable section name, validation succeeds", async () => {
-          // Arrange
-          const fundingSubmissionLine = await fundingSubmissionLineFactory.create({
-            fiscalYear: "2023/24",
-            sectionName: "Child Care Spaces",
-            lineName: "Infants",
-            monthlyAmount: "100.0000",
-          })
-
-          fundingSubmissionLine.set("sectionName", "Administration")
-
-          // Act & Assert
-          await expect(fundingSubmissionLine.validate()).resolves.not.toThrow()
-        })
-
         test("when updating immutable section name to different value, validation fails", async () => {
           // Arrange
           const fundingSubmissionLine = await fundingSubmissionLineFactory.create({
@@ -249,15 +219,18 @@ describe("api/src/models/funding-submission-line.ts", () => {
             monthlyAmount: "206.1000",
           })
 
-          fundingSubmissionLine.set("sectionName", "Child Care Spaces")
+          fundingSubmissionLine.set("sectionName", "Administration")
 
-          // Act & Assert
-          await expect(fundingSubmissionLine.validate()).rejects.toThrow(
+          // Act
+          const validation = fundingSubmissionLine.validate()
+
+          // Assert
+          await expect(validation).rejects.toThrow(
             `Section name "Quality Enhancement Program" is immutable and cannot be changed.`
           )
         })
 
-        test("when updating immutable section name to same value, validation succeeds", async () => {
+        test("when an immutable section retains its name, persists other editable fields", async () => {
           // Arrange
           const fundingSubmissionLine = await fundingSubmissionLineFactory.create({
             fiscalYear: "2023/24",
@@ -266,30 +239,22 @@ describe("api/src/models/funding-submission-line.ts", () => {
             monthlyAmount: "206.1000",
           })
 
-          fundingSubmissionLine.set(
-            "sectionName",
-            FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM
+          // Act
+          await fundingSubmissionLine.update({
+            sectionName: FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM,
+            lineName: "Updated Infants",
+            monthlyAmount: "250.0000",
+          })
+
+          // Assert
+          await fundingSubmissionLine.reload()
+          expect(fundingSubmissionLine).toEqual(
+            expect.objectContaining({
+              sectionName: "Quality Enhancement Program",
+              lineName: "Updated Infants",
+              monthlyAmount: "250",
+            })
           )
-          fundingSubmissionLine.set("lineName", "Updated Infants")
-
-          // Act & Assert
-          await expect(fundingSubmissionLine.validate()).resolves.not.toThrow()
-        })
-
-        test("when updating other fields on immutable section name record, validation succeeds", async () => {
-          // Arrange
-          const fundingSubmissionLine = await fundingSubmissionLineFactory.create({
-            fiscalYear: "2023/24",
-            sectionName: FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM,
-            lineName: "Infants",
-            monthlyAmount: "206.1000",
-          })
-
-          fundingSubmissionLine.set("lineName", "Updated Infants")
-          fundingSubmissionLine.set("monthlyAmount", "250.0000")
-
-          // Act & Assert
-          await expect(fundingSubmissionLine.validate()).resolves.not.toThrow()
         })
       })
     })

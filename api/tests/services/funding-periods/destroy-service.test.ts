@@ -2,10 +2,10 @@ import { ChildCareSpace } from "@/models"
 
 import {
   centreFactory,
+  childCareSpaceCategoryFactory,
   childCareSpaceFactory,
   fiscalPeriodFactory,
   fundingPeriodFactory,
-  childCareSpaceCategoryFactory,
 } from "@/factories"
 
 import { DestroyService } from "@/services/funding-periods/destroy-service"
@@ -38,7 +38,7 @@ describe("api/src/services/funding-periods/destroy-service.ts", () => {
           fundingPeriodId: unrelatedFundingPeriod.id,
           categoryName: "Unrelated",
         })
-        const selectedChildCareSpace = await childCareSpaceFactory
+        await childCareSpaceFactory
           .associations({
             centre,
             fiscalPeriod: selectedFiscalPeriod,
@@ -56,16 +56,16 @@ describe("api/src/services/funding-periods/destroy-service.ts", () => {
         // Act
         await DestroyService.perform(selectedFundingPeriod)
 
+        // Act
+        const remainingChildCareSpaces = await ChildCareSpace.findAll()
+
         // Assert
-        const selectedRow = await ChildCareSpace.findByPk(selectedChildCareSpace.id)
-        const unrelatedRow = await ChildCareSpace.findByPk(unrelatedChildCareSpace.id)
-        expect({ selectedRow, unrelatedRow }).toEqual({
-          selectedRow: null,
-          unrelatedRow: expect.objectContaining({
+        expect(remainingChildCareSpaces).toEqual([
+          expect.objectContaining({
             id: unrelatedChildCareSpace.id,
             deletedAt: null,
           }),
-        })
+        ])
       })
     })
   })

@@ -2,6 +2,7 @@ import { Op, sql } from "@sequelize/core"
 import { isEmpty, isNil, isUndefined } from "lodash"
 
 import { ChildCareSpaceCategory, FundingPeriod, FundingSubmissionLine } from "@/models"
+import doesNotUseChildCareSpacesSection from "@/models/validators/does-not-use-child-care-spaces-section"
 
 import BaseService from "@/services/base-service"
 
@@ -26,7 +27,7 @@ export class BulkCreateService extends BaseService {
       FundingSubmissionLine.toLegacyFiscalYearFormat(fundingPeriodFiscalYear)
 
     const fundingSubmissionLineDefaults = await this.buildFundingSubmissionLineDefaults()
-    const categoryIdsByName = await this.categoryIdsByName()
+    const categoryIdsByName = await this.categoryIdsByName(this.fundingPeriod.id)
     const sourceCategoryNames = await this.sourceCategoryNames(fundingSubmissionLineDefaults)
 
     const fundingSubmissionLinesAttributes = fundingSubmissionLineDefaults.map(
@@ -47,6 +48,9 @@ export class BulkCreateService extends BaseService {
         }
       }
     )
+    for (const { sectionName } of fundingSubmissionLinesAttributes) {
+      doesNotUseChildCareSpacesSection(sectionName)
+    }
 
     return FundingSubmissionLine.bulkCreate(fundingSubmissionLinesAttributes)
   }
@@ -69,9 +73,9 @@ export class BulkCreateService extends BaseService {
     )
   }
 
-  private async categoryIdsByName() {
+  private async categoryIdsByName(fundingPeriodId: number) {
     const categories = await ChildCareSpaceCategory.findAll({
-      where: { fundingPeriodId: this.fundingPeriod.id },
+      where: { fundingPeriodId },
       attributes: ["id", "categoryName"],
     })
     return new Map(categories.map(({ id, categoryName }) => [categoryName, id]))
@@ -118,6 +122,14 @@ export class BulkCreateService extends BaseService {
           [Op.in]: newestFiscalYearWithFundingSubmissionLines,
         },
       },
+      attributes: [
+        "sectionName",
+        "lineName",
+        "fromAge",
+        "toAge",
+        "monthlyAmount",
+        "childCareSpaceCategoryId",
+      ],
     })
     if (isEmpty(newestFundingSubmissionLines)) {
       return FundingSubmissionLine.DEFAULTS.map((line) => ({

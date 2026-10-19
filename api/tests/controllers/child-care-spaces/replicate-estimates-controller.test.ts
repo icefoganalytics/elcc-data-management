@@ -68,7 +68,14 @@ describe("api/src/controllers/child-care-spaces/replicate-estimates-controller.t
         )
 
         // Assert
-        expect(response.status).toBe(201)
+        expect(response).toEqual(
+          expect.objectContaining({
+            status: 201,
+            body: {
+              message: "Replicated Child Care Spaces estimates to later fiscal periods.",
+            },
+          })
+        )
       })
 
       test("when later ledger rows match the source, persists the estimates and resets actuals", async () => {
@@ -124,20 +131,17 @@ describe("api/src/controllers/child-care-spaces/replicate-estimates-controller.t
         await request().post(
           `/api/child-care-spaces/${sourceChildCareSpace.id}/replicate-estimates`
         )
-        const persistedLaterChildCareSpace = await laterChildCareSpace.reload()
 
         // Assert
-        expect({
-          estimatedChildOccupancyRate: persistedLaterChildCareSpace.estimatedChildOccupancyRate,
-          actualChildOccupancyRate: persistedLaterChildCareSpace.actualChildOccupancyRate,
-          estimatedComputedTotal: persistedLaterChildCareSpace.estimatedComputedTotal,
-          actualComputedTotal: persistedLaterChildCareSpace.actualComputedTotal,
-        }).toEqual({
-          estimatedChildOccupancyRate: "0.8",
-          actualChildOccupancyRate: "0",
-          estimatedComputedTotal: "80",
-          actualComputedTotal: "0",
-        })
+        const persistedLaterChildCareSpace = await laterChildCareSpace.reload()
+        expect(persistedLaterChildCareSpace).toEqual(
+          expect.objectContaining({
+            estimatedChildOccupancyRate: "0.8",
+            actualChildOccupancyRate: "0",
+            estimatedComputedTotal: "80",
+            actualComputedTotal: "0",
+          })
+        )
       })
     })
   })

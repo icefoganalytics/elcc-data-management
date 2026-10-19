@@ -20,6 +20,7 @@ import {
 import { isNil } from "lodash"
 
 import { isValidFiscalYearLegacy } from "@/models/validators"
+import doesNotUseChildCareSpacesSection from "@/models/validators/does-not-use-child-care-spaces-section"
 
 import BaseModel from "@/models/base-model"
 import ChildCareSpaceCategory from "@/models/child-care-space-category"
@@ -51,6 +52,9 @@ export class FundingSubmissionLine extends BaseModel<
 
   @Attribute(DataTypes.STRING(200))
   @NotNull
+  @ValidateAttribute({
+    doesNotUseChildCareSpacesSection,
+  })
   declare sectionName: string
 
   @Attribute(DataTypes.STRING(200))
@@ -101,6 +105,7 @@ export class FundingSubmissionLine extends BaseModel<
   }
 
   // Validators
+
   @ModelValidator
   ensureImmutableSectionNamesRemainUnchanged() {
     if (this.isNewRecord) return

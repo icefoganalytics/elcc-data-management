@@ -25,15 +25,18 @@
       color="primary"
       class="float-right"
       :loading="isSaving"
+      :disabled="isReplicatingEstimates"
       @click="saveFundingSubmissionLineJson"
-      >Save</v-btn
     >
+      Save
+    </v-btn>
 
     <h2 class="mb-3">{{ dateName }} {{ calendarYear }}</h2>
     <div class="d-flex justify-end">
       <v-btn
         v-if="dateName == FIRST_FISCAL_MONTH_NAME"
         :loading="isReplicatingEstimates"
+        :disabled="isSaving"
         color="yg-sun"
         size="small"
         @click="replicateEstimatesForward"
@@ -62,6 +65,7 @@
       <FundingSubmissionLineJsonSectionTable
         ref="fundingSubmissionLineJsonSectionTables"
         :lines="lines"
+        :readonly="isWorkflowRunning"
         @focus-beyond-last-in-column="goToNextSection(sectionIndex, $event)"
         @focus-beyond-first-in-column="goToPreviousSection(sectionIndex, $event)"
         @line-changed="propagateUpdatesAsNeeded($event)"
@@ -134,6 +138,7 @@ const isErrored = computed(
 )
 const isSaving = ref(false)
 const isReplicatingEstimates = ref(false)
+const isWorkflowRunning = computed(() => isSaving.value || isReplicatingEstimates.value)
 const dateName = computed(() => fundingSubmissionLineJson.value?.dateName)
 const calendarYear = computed(() => {
   if (isNil(fundingSubmissionLineJson.value)) {

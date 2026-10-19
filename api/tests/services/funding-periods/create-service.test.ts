@@ -136,7 +136,7 @@ describe("api/src/services/funding-periods/create-service.ts", () => {
         expect(employeeWageTiersCount).toEqual(EmployeeWageTier.DEFAULTS.length * 12) // 12 fiscal periods (months)
       })
 
-      test("when creating a funding period, creates appropriate funding submission lines", async () => {
+      test("when creating a funding period, creates the default Administration submission lines", async () => {
         // Arrange
         const attributes = {
           fiscalYear: "2026-2027",
@@ -148,9 +148,54 @@ describe("api/src/services/funding-periods/create-service.ts", () => {
         // Act
         await CreateService.perform(attributes)
 
-        // Arrange
-        const fundingSubmissionLinesCount = await FundingSubmissionLine.count()
-        expect(fundingSubmissionLinesCount).toEqual(FundingSubmissionLine.DEFAULTS.length)
+        // Assert
+        const administrationLines = await FundingSubmissionLine.findAll({
+          where: { sectionName: "Administration (10% of Spaces)" },
+        })
+        expect(administrationLines).toEqual([
+          expect.objectContaining({
+            lineName: "Infants",
+            fromAge: 0,
+            toAge: 1,
+            monthlyAmount: "70",
+          }),
+          expect.objectContaining({
+            lineName: "Toddlers",
+            fromAge: 2,
+            toAge: 3,
+            monthlyAmount: "70",
+          }),
+          expect.objectContaining({
+            lineName: "Preschool",
+            fromAge: 4,
+            toAge: 5,
+            monthlyAmount: "70",
+          }),
+          expect.objectContaining({
+            lineName: "Kindergarten (PT)",
+            fromAge: 5,
+            toAge: 6,
+            monthlyAmount: "35",
+          }),
+          expect.objectContaining({
+            lineName: "Kindergarten (FT)",
+            fromAge: 5,
+            toAge: 6,
+            monthlyAmount: "70",
+          }),
+          expect.objectContaining({
+            lineName: "School Age (PT)",
+            fromAge: 5,
+            toAge: 6,
+            monthlyAmount: "30",
+          }),
+          expect.objectContaining({
+            lineName: "School Age (FT)",
+            fromAge: 5,
+            toAge: 6,
+            monthlyAmount: "50",
+          }),
+        ])
       })
     })
   })

@@ -46,6 +46,7 @@
           <v-text-field
             ref="estimatesFields"
             v-model="line.estimatedChildOccupancyRate"
+            :readonly="readonly"
             density="compact"
             hide-details
             @keydown="changeFocusInColumn($event, 'estimates', lineIndex)"
@@ -61,6 +62,7 @@
           <v-text-field
             ref="actualsFields"
             v-model="line.actualChildOccupancyRate"
+            :readonly="readonly"
             density="compact"
             hide-details
             @keydown="changeFocusInColumn($event, 'actuals', lineIndex)"
@@ -117,6 +119,7 @@ export type ColumnNames = "estimates" | "actuals"
 
 const props = defineProps<{
   lines: FundingLineValue[]
+  readonly?: boolean
 }>()
 
 const emit = defineEmits<{

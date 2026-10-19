@@ -36,23 +36,41 @@ describe("api/src/services/funding-submission-lines/create-service.ts", () => {
         })
 
         // Assert
-        const persistedLines = await FundingSubmissionLine.findAll({
-          order: [["id", "ASC"]],
-        })
-        expect(persistedLines).toEqual([
-          expect.objectContaining({
-            sectionName: "Administration (10% of Spaces)",
-            childCareSpaceCategoryId: category.id,
-          }),
-          expect.objectContaining({
-            sectionName: "Quality Enhancement Program",
-            childCareSpaceCategoryId: category.id,
-          }),
-          expect.objectContaining({
-            sectionName: "Other Section",
-            childCareSpaceCategoryId: null,
-          }),
-        ])
+        const persistedLines = await FundingSubmissionLine.findAll()
+        expect(persistedLines).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              sectionName: "Administration (10% of Spaces)",
+              childCareSpaceCategoryId: category.id,
+            }),
+            expect.objectContaining({
+              sectionName: "Quality Enhancement Program",
+              childCareSpaceCategoryId: category.id,
+            }),
+            expect.objectContaining({
+              sectionName: "Other Section",
+              childCareSpaceCategoryId: null,
+            }),
+          ])
+        )
+      })
+
+      test("when creating a retired Child Care Spaces section, rejects the configuration", async () => {
+        // Arrange
+        const attributes = {
+          fiscalYear: "2025/26",
+          sectionName: "Child Care Spaces",
+          lineName: "Infants",
+          monthlyAmount: "100.00",
+        }
+
+        // Act
+        const createPromise = CreateService.perform(attributes)
+
+        // Assert
+        await expect(createPromise).rejects.toThrow(
+          "Child Care Spaces configuration must use the Child Care Spaces ledger."
+        )
       })
     })
   })

@@ -32,9 +32,9 @@ describe("api/src/services/funding-submission-lines/update-service.ts", () => {
           lineName: "Young Children",
           childCareSpaceCategoryId: replacementCategory.id,
         })
-        await line.reload()
 
         // Assert
+        await line.reload()
         expect(line.childCareSpaceCategoryId).toBe(category.id)
       })
 
@@ -60,9 +60,9 @@ describe("api/src/services/funding-submission-lines/update-service.ts", () => {
 
         // Act
         await UpdateService.perform(line, { fiscalYear: "2025/26" })
-        await line.reload()
 
         // Assert
+        await line.reload()
         expect(line.childCareSpaceCategoryId).toBe(category2.id)
       })
 
@@ -83,10 +83,30 @@ describe("api/src/services/funding-submission-lines/update-service.ts", () => {
 
         // Act
         await UpdateService.perform(line, { sectionName: "Other Section" })
-        await line.reload()
 
         // Assert
+        await line.reload()
         expect(line.childCareSpaceCategoryId).toBeNull()
+      })
+
+      test("when an ordinary line changes to the retired Child Care Spaces section, rejects the update", async () => {
+        // Arrange
+        const line = await fundingSubmissionLineFactory.create({
+          fiscalYear: "2024/25",
+          sectionName: "Other Section",
+          lineName: "Infants",
+          monthlyAmount: "100.00",
+        })
+
+        // Act
+        const updatePromise = UpdateService.perform(line, {
+          sectionName: "Child Care Spaces",
+        })
+
+        // Assert
+        await expect(updatePromise).rejects.toThrow(
+          "Child Care Spaces configuration must use the Child Care Spaces ledger."
+        )
       })
     })
   })

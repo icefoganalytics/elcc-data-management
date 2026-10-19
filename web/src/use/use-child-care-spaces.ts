@@ -39,7 +39,6 @@ export function useChildCareSpaces(
       state.totalCount = totalCount
       return childCareSpaces
     } catch (error) {
-      console.error(`Failed to fetch Child Care Spaces: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {
@@ -54,7 +53,9 @@ export function useChildCareSpaces(
         return
       }
 
-      await fetch()
+      await fetch().catch((error) => {
+        console.error(`Failed to fetch Child Care Spaces: ${error}`, { error })
+      })
     },
     { deep: true, immediate: true }
   )

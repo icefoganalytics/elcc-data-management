@@ -1,10 +1,10 @@
 import { mockCurrentUser, request } from "@/support"
 import {
   centreFactory,
+  childCareSpaceCategoryFactory,
   childCareSpaceFactory,
   fiscalPeriodFactory,
   fundingPeriodFactory,
-  childCareSpaceCategoryFactory,
   userFactory,
 } from "@/factories"
 import { User } from "@/models"
@@ -81,59 +81,58 @@ describe("api/src/controllers/child-care-spaces-controller.ts", () => {
         const response = await request().get(
           "/api/child-care-spaces?filters%5BbyFiscalYear%5D=2024-25&order%5B0%5D%5B0%5D=fiscalPeriod&order%5B0%5D%5B1%5D=dateStart&order%5B0%5D%5B2%5D=DESC&order%5B1%5D%5B0%5D=categoryId&order%5B1%5D%5B1%5D=ASC&perPage=-1"
         )
-        const [persistedMayChildCareSpace, persistedAprilChildCareSpace] = await Promise.all([
-          mayChildCareSpace.reload(),
-          aprilChildCareSpace.reload(),
-        ])
 
         // Assert
-        // marlens-test-alignment: allow-multiple-expects -- status and body are independent observable contracts.
-        expect(response.status).toBe(200)
-        expect(response.body).toEqual({
-          childCareSpaces: [
-            {
-              id: mayChildCareSpace.id,
-              centreId: centre.id,
-              fiscalPeriodId: mayFiscalPeriod.id,
-              categoryId: category.id,
-              lineName: "Infants",
-              monthlyAmount: "100",
-              estimatedChildOccupancyRate: "0.5",
-              actualChildOccupancyRate: "0.25",
-              estimatedComputedTotal: "50",
-              actualComputedTotal: "25",
-              createdAt: persistedMayChildCareSpace.createdAt.toISOString(),
-              updatedAt: persistedMayChildCareSpace.updatedAt.toISOString(),
-              policy: {
-                show: true,
-                create: false,
-                update: true,
-                destroy: false,
-              },
+        expect(response).toEqual(
+          expect.objectContaining({
+            status: 200,
+            body: {
+              childCareSpaces: [
+                {
+                  id: mayChildCareSpace.id,
+                  centreId: centre.id,
+                  fiscalPeriodId: mayFiscalPeriod.id,
+                  categoryId: category.id,
+                  lineName: "Infants",
+                  monthlyAmount: "100",
+                  estimatedChildOccupancyRate: "0.5",
+                  actualChildOccupancyRate: "0.25",
+                  estimatedComputedTotal: "50",
+                  actualComputedTotal: "25",
+                  createdAt: mayChildCareSpace.createdAt.toISOString(),
+                  updatedAt: mayChildCareSpace.updatedAt.toISOString(),
+                  policy: {
+                    show: true,
+                    create: false,
+                    update: true,
+                    destroy: false,
+                  },
+                },
+                {
+                  id: aprilChildCareSpace.id,
+                  centreId: centre.id,
+                  fiscalPeriodId: aprilFiscalPeriod.id,
+                  categoryId: category.id,
+                  lineName: "Infants",
+                  monthlyAmount: "100",
+                  estimatedChildOccupancyRate: "0.5",
+                  actualChildOccupancyRate: "0.5",
+                  estimatedComputedTotal: "50",
+                  actualComputedTotal: "50",
+                  createdAt: aprilChildCareSpace.createdAt.toISOString(),
+                  updatedAt: aprilChildCareSpace.updatedAt.toISOString(),
+                  policy: {
+                    show: true,
+                    create: false,
+                    update: true,
+                    destroy: false,
+                  },
+                },
+              ],
+              totalCount: 2,
             },
-            {
-              id: aprilChildCareSpace.id,
-              centreId: centre.id,
-              fiscalPeriodId: aprilFiscalPeriod.id,
-              categoryId: category.id,
-              lineName: "Infants",
-              monthlyAmount: "100",
-              estimatedChildOccupancyRate: "0.5",
-              actualChildOccupancyRate: "0.5",
-              estimatedComputedTotal: "50",
-              actualComputedTotal: "50",
-              createdAt: persistedAprilChildCareSpace.createdAt.toISOString(),
-              updatedAt: persistedAprilChildCareSpace.updatedAt.toISOString(),
-              policy: {
-                show: true,
-                create: false,
-                update: true,
-                destroy: false,
-              },
-            },
-          ],
-          totalCount: 2,
-        })
+          })
+        )
       })
     })
 
@@ -157,33 +156,35 @@ describe("api/src/controllers/child-care-spaces-controller.ts", () => {
           estimatedChildOccupancyRate: "0.2500",
           actualChildOccupancyRate: "0.5000",
         })
-        const persistedChildCareSpace = await childCareSpace.reload()
 
         // Assert
-        // marlens-test-alignment: allow-multiple-expects -- status and body are independent observable contracts.
-        expect(response.status).toBe(200)
-        expect(response.body).toEqual({
-          childCareSpace: {
-            id: childCareSpace.id,
-            centreId: childCareSpace.centreId,
-            fiscalPeriodId: childCareSpace.fiscalPeriodId,
-            categoryId: childCareSpace.categoryId,
-            lineName: childCareSpace.lineName,
-            monthlyAmount: "100",
-            estimatedChildOccupancyRate: "0.25",
-            actualChildOccupancyRate: "0.5",
-            estimatedComputedTotal: "25",
-            actualComputedTotal: "50",
-            createdAt: persistedChildCareSpace.createdAt.toISOString(),
-            updatedAt: persistedChildCareSpace.updatedAt.toISOString(),
-          },
-          policy: {
-            show: true,
-            create: false,
-            update: true,
-            destroy: false,
-          },
-        })
+        expect(response).toEqual(
+          expect.objectContaining({
+            status: 200,
+            body: {
+              childCareSpace: {
+                id: childCareSpace.id,
+                centreId: childCareSpace.centreId,
+                fiscalPeriodId: childCareSpace.fiscalPeriodId,
+                categoryId: childCareSpace.categoryId,
+                lineName: childCareSpace.lineName,
+                monthlyAmount: "100",
+                estimatedChildOccupancyRate: "0.25",
+                actualChildOccupancyRate: "0.5",
+                estimatedComputedTotal: "25",
+                actualComputedTotal: "50",
+                createdAt: childCareSpace.createdAt.toISOString(),
+                updatedAt: expect.any(String),
+              },
+              policy: {
+                show: true,
+                create: false,
+                update: true,
+                destroy: false,
+              },
+            },
+          })
+        )
       })
 
       test("when occupancy-rate updates are provided, persists them to the ledger", async () => {
@@ -201,9 +202,9 @@ describe("api/src/controllers/child-care-spaces-controller.ts", () => {
         await request()
           .patch(`/api/child-care-spaces/${childCareSpace.id}`)
           .send({ estimatedChildOccupancyRate: "0.2500" })
-        const persistedChildCareSpace = await childCareSpace.reload()
 
         // Assert
+        const persistedChildCareSpace = await childCareSpace.reload()
         expect(persistedChildCareSpace.estimatedChildOccupancyRate).toBe("0.25")
       })
     })

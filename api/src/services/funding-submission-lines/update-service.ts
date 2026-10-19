@@ -21,7 +21,9 @@ export class UpdateService extends BaseService {
     const childCareSpaceCategoryId = await this.categoryIdForUpdatedLine(
       fiscalYear,
       sectionName,
-      lineName
+      lineName,
+      this.fundingSubmissionLine.childCareSpaceCategoryId,
+      this.fundingSubmissionLine.fiscalYear
     )
 
     await this.fundingSubmissionLine.update({
@@ -34,21 +36,22 @@ export class UpdateService extends BaseService {
   private async categoryIdForUpdatedLine(
     fiscalYear: string,
     sectionName: string,
-    lineName: string
+    lineName: string,
+    originalCategoryId: number | null,
+    originalFiscalYear: string
   ) {
     if (!this.isChildCareSpaceSection(sectionName)) {
       return null
     }
 
-    const existingCategoryId = this.fundingSubmissionLine.childCareSpaceCategoryId
-    const periodIsUnchanged = fiscalYear === this.fundingSubmissionLine.fiscalYear
-    if (existingCategoryId !== null && periodIsUnchanged) {
-      return existingCategoryId
+    const periodIsUnchanged = fiscalYear === originalFiscalYear
+    if (originalCategoryId !== null && periodIsUnchanged) {
+      return originalCategoryId
     }
 
     let categoryName: string | undefined = lineName
-    if (existingCategoryId !== null) {
-      categoryName = await this.existingCategoryName(existingCategoryId)
+    if (originalCategoryId !== null) {
+      categoryName = await this.existingCategoryName(originalCategoryId)
     }
 
     if (isUndefined(categoryName)) {

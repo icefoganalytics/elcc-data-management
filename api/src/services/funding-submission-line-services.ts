@@ -2,6 +2,7 @@ import { CreationAttributes, Op } from "@sequelize/core"
 import { isUndefined, merge, omit } from "lodash"
 
 import { ChildCareSpaceCategory, FundingPeriod, FundingSubmissionLine } from "@/models"
+import doesNotUseChildCareSpacesSection from "@/models/validators/does-not-use-child-care-spaces-section"
 
 const LINKED_SECTIONS = [
   "Administration (10% of Spaces)",
@@ -19,7 +20,9 @@ export class FundingSubmissionLineServices {
     const newLinesCreationAttributes = linesToCreateFrom.map((line) => {
       const originalAttributes = line.get()
       const creationAttributes = omit(originalAttributes, ["id"])
-      return merge(creationAttributes, attributes)
+      const lineAttributes = merge(creationAttributes, attributes)
+      doesNotUseChildCareSpacesSection(lineAttributes.sectionName ?? line.sectionName)
+      return lineAttributes
     })
 
     const targetFiscalYear = attributes.fiscalYear

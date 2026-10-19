@@ -55,8 +55,10 @@ describe("api/src/services/funding-submission-line-jsons/replicate-estimates-ser
         // Act
         await ReplicateEstimatesService.perform(fundingSubmissionLineJson1)
 
-        // Assert
+        // Reload persisted worksheet state
         await fundingSubmissionLineJson2.reload()
+
+        // Assert
         expect(fundingSubmissionLineJson2.lines).toEqual(
           expect.arrayContaining([
             expect.objectContaining({

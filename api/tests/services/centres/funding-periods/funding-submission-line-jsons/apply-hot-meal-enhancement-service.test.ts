@@ -67,7 +67,8 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
         await ApplyHotMealEnhancementService.perform(centre)
 
         // Assert
-        await expect(fundingSubmissionLineJson.reload()).resolves.toEqual(
+        const persistedFundingSubmissionLineJson = await fundingSubmissionLineJson.reload()
+        expect(persistedFundingSubmissionLineJson).toEqual(
           expect.objectContaining({
             lines: [
               expect.objectContaining({
@@ -129,8 +130,11 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
         // Act
         await ApplyHotMealEnhancementService.perform(centre)
 
+        // Reload persisted worksheet state
+        await fundingSubmissionLineJson.reload()
+
         // Assert
-        await expect(fundingSubmissionLineJson.reload()).resolves.toEqual(
+        expect(fundingSubmissionLineJson).toEqual(
           expect.objectContaining({
             lines: [
               expect.objectContaining({
@@ -192,8 +196,11 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
         // Act
         await ApplyHotMealEnhancementService.perform(centre)
 
+        // Reload persisted worksheet state
+        await fundingSubmissionLineJson.reload()
+
         // Assert
-        await expect(fundingSubmissionLineJson.reload()).resolves.toEqual(
+        expect(fundingSubmissionLineJson).toEqual(
           expect.objectContaining({
             lines: [
               expect.objectContaining({
@@ -270,8 +277,11 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
         // Act
         await ApplyHotMealEnhancementService.perform(centre)
 
+        // Reload persisted worksheet state
+        await fundingSubmissionLineJson.reload()
+
         // Assert
-        await expect(fundingSubmissionLineJson.reload()).resolves.toEqual(
+        expect(fundingSubmissionLineJson).toEqual(
           expect.objectContaining({
             lines: [
               expect.objectContaining({
