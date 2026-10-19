@@ -93,6 +93,7 @@ export async function up(knex: Knex): Promise<void> {
     ) AS significant_token
     CROSS APPLY (
       SELECT CASE
+        WHEN normalized_token.first_nonzero_position = 0 THEN N'0'
         WHEN normalized_token.decimal_shift >= 0
           AND LEN(significant_token.significant_digits) + normalized_token.decimal_shift <= 10
           THEN CONCAT(
