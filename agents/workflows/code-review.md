@@ -36,6 +36,7 @@ Use this workflow to review TypeScript code for the ELCC project. Apply every ru
 5. **Ensure One Expect Per Test**
    - Consolidate assertions into a single `expect` using `expect.objectContaining`
    - Exceptions: tests that assert something did NOT happen (e.g., `not.toHaveBeenCalled()`, `not.toBe()`) may be standalone single-line expects
+   - HTTP response exception: assert `response.status` first and `response.body` second with `toEqual(...)`; do not match the complete response object.
    - When asserting "not any of N values", split into N separate tests rather than looping
 
 6. **Check Test Naming**
