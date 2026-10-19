@@ -59,6 +59,8 @@ All cutover files export native `up(knex)` and `down(knex)` functions and use ti
 
 Knex rollback commits successful reversals individually. A later irreversible-data guard can stop rollback after the reversible category-link migration has already removed its column. Reapplying `./bin/dev migrate latest` restores that linkage; restoring pre-cutover configuration or worksheet JSON still requires the original data and a backup. Do not treat rollback as a production data-recovery strategy.
 
+Linkage reapplication can recover preserved worksheet category IDs after a category rename has propagated to ledger snapshots. The category must still belong to the worksheet's funding period and have a ledger row for its centre and month; name-based inference and conflicting-match rejection remain in place.
+
 Development and production seeds export `seed(knex)`. They continue to use the application ensures for category provisioning and remain idempotent; no Umzug resolver or compatibility history is retained.
 
 ## Maintenance boundaries

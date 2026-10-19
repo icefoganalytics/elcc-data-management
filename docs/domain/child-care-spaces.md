@@ -12,6 +12,8 @@ The line name and monthly amount are snapshots, not live category lookups. Ordin
 
 Each funding period owns its configurable category names, optional age ranges, and monthly amounts. **Administration → Child Care Space Categories** manages this configuration separately from the remaining funding submission lines. A category's funding period is selected when created and cannot be changed through an update.
 
+Category editors clear the previous record when navigating to another category. Late load or save responses cannot replace the currently requested record, and saving requires that record's identity to match the route.
+
 New funding periods copy active categories from the latest active fiscal year with categories, or use the seven original categories when none exist. Ensuring an already configured period retains its categories unchanged, including a deliberately empty configuration whose categories were all retired. Without explicit forward application, revised names and rates apply only to newly provisioned ledger rows. Removing a category retires its configuration without deleting historical ledger rows.
 
 ## Forward application

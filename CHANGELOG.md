@@ -53,6 +53,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
 - Fresh annual setup retains Administration defaults, and shared funding lines cannot recreate the retired Child Care Spaces section.
 - Historical category linkage now recognizes zero-valued, integral decimal, and exponent-form numeric IDs without confusing strings or fractional values with record IDs.
 - Historical worksheet cutover preserves retained numeric tokens, and category linkage distinguishes trailing spaces and ignores deleted funding periods when matching current configuration.
+- Category editors clear previous records during navigation and ignore late load/save responses. Linkage recovery retains stable category IDs after names have propagated to monthly records.
 - Prevented employee benefits from being double counted in employee adjustment amounts during funding reconciliation calculations.
 - Resolved occasional authentication issues caused by plugin load order.
 - Editor links now reach the correct Docker worktree through library-managed checkout routing,
