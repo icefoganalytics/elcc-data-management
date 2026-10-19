@@ -46,6 +46,9 @@ Changes since v2025.11.24.1 that will be included in the next release.
 ### Fixed
 
 - Child Care Spaces reconciliation totals now retain all four decimal places even when aggregate amounts exceed JavaScript's decimal precision.
+- Worksheet navigation now waits for the matching month, and occupancy inputs stay read only during saving and estimate replication.
+- Fresh annual setup retains Administration defaults, and shared funding lines cannot recreate the retired Child Care Spaces section.
+- Historical category linkage now recognizes integral decimal and exponent-form numeric IDs without confusing strings or fractional values with record IDs.
 - Prevented employee benefits from being double counted in employee adjustment amounts during funding reconciliation calculations.
 - Resolved occasional authentication issues caused by plugin load order.
 - Editor links now reach the correct Docker worktree through library-managed checkout routing,

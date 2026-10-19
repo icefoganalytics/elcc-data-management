@@ -33,6 +33,8 @@ Initialization requires all active category/month pairs, not equality between cu
 - **Latest Enrollment** uses the latest month with positive actual occupancy in the selected centre and fiscal year, including every category from that month. Empty future months must not hide earlier enrollment. Without positive actual occupancy, there is no enrollment chart.
 - Eligible expenses combine remaining worksheet JSON actual totals, Child Care Spaces ledger actual totals, and Building Expenses for the requested centre and fiscal period. Child Care Spaces must not also be stored in worksheet JSON.
 - Removing a funding period removes its Child Care Spaces records without removing another period's records.
+- The worksheet mounts only after its centre, fiscal year, month, worksheet, and fiscal period agree. Delayed responses from earlier navigation cannot restore another month's editor.
+- Occupancy inputs remain read only throughout **Save** and **Replicate Estimates**, so ledger and dependent-section requests use the same entered values.
 - The worksheet withholds editing when either its ledger or JSON source fails to load. **Reload Worksheet** reloads both sources before restoring editing.
 
 ## Sources
