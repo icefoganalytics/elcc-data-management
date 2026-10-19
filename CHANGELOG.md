@@ -45,6 +45,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
 
 ### Fixed
 
+- Restored the missing icon beside Child Care Space Categories in the administration navigation.
 - Child Care Spaces reconciliation totals now retain all four decimal places even when aggregate amounts exceed JavaScript's decimal precision.
 - Worksheet navigation now waits for the matching month, and occupancy inputs stay read only during saving and estimate replication.
 - Fresh annual setup retains Administration defaults, and shared funding lines cannot recreate the retired Child Care Spaces section.
