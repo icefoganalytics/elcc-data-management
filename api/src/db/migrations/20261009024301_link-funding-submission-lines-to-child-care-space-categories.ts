@@ -15,6 +15,129 @@ export async function up(knex: Knex): Promise<void> {
       (N'Administration (10% of Spaces)'),
       (N'Quality Enhancement Program');
 
+    -- Parse numeric JSON identifiers exactly; floating-point conversion can round fractions.
+    DECLARE @worksheet_submission_line_ids TABLE (
+      worksheet_id INT NOT NULL,
+      line_index INT NOT NULL,
+      submission_line_id INT NOT NULL,
+      PRIMARY KEY (worksheet_id, line_index, submission_line_id)
+    );
+
+    INSERT INTO @worksheet_submission_line_ids (worksheet_id, line_index, submission_line_id)
+    SELECT DISTINCT
+      funding_submission_line_jsons.id,
+      TRY_CONVERT(INT, worksheet_lines.[key]),
+      TRY_CONVERT(INT, parsed_identifier.canonical_id)
+    FROM funding_submission_line_jsons
+    CROSS APPLY OPENJSON(funding_submission_line_jsons.[values]) AS worksheet_lines
+    CROSS APPLY OPENJSON(
+      CASE WHEN worksheet_lines.type = 5 THEN worksheet_lines.value ELSE N'{}' END
+    ) AS line_properties
+    CROSS APPLY (
+      SELECT CHARINDEX(N'e', LOWER(line_properties.value)) AS exponent_position
+    ) AS exponent_marker
+    CROSS APPLY (
+      SELECT
+        CASE
+          WHEN exponent_marker.exponent_position > 0
+            THEN LEFT(line_properties.value, exponent_marker.exponent_position - 1)
+          ELSE line_properties.value
+        END AS mantissa,
+        CASE
+          WHEN exponent_marker.exponent_position > 0
+            THEN TRY_CONVERT(
+              INT,
+              SUBSTRING(
+                line_properties.value,
+                exponent_marker.exponent_position + 1,
+                LEN(line_properties.value)
+              )
+            )
+          ELSE 0
+        END AS exponent_value
+    ) AS numeric_token
+    CROSS APPLY (
+      SELECT CASE
+        WHEN LEFT(numeric_token.mantissa, 1) = N'-'
+          THEN SUBSTRING(numeric_token.mantissa, 2, LEN(numeric_token.mantissa))
+        ELSE numeric_token.mantissa
+      END AS unsigned_mantissa
+    ) AS unsigned_token
+    CROSS APPLY (
+      SELECT CHARINDEX(N'.', unsigned_token.unsigned_mantissa) AS decimal_position
+    ) AS decimal_point
+    CROSS APPLY (
+      SELECT
+        REPLACE(unsigned_token.unsigned_mantissa, N'.', N'') AS digits,
+        CASE
+          WHEN decimal_point.decimal_position > 0
+            THEN LEN(unsigned_token.unsigned_mantissa) - decimal_point.decimal_position
+          ELSE 0
+        END AS fractional_digit_count
+    ) AS significand
+    CROSS APPLY (
+      SELECT
+        PATINDEX(N'%[^0]%', significand.digits) AS first_nonzero_position,
+        CONVERT(BIGINT, numeric_token.exponent_value) - significand.fractional_digit_count
+          AS decimal_shift
+    ) AS normalized_token
+    CROSS APPLY (
+      SELECT CASE
+        WHEN normalized_token.first_nonzero_position > 0
+          THEN SUBSTRING(
+            significand.digits,
+            normalized_token.first_nonzero_position,
+            LEN(significand.digits)
+          )
+      END AS significant_digits
+    ) AS significant_token
+    CROSS APPLY (
+      SELECT CASE
+        WHEN normalized_token.decimal_shift >= 0
+          AND LEN(significant_token.significant_digits) + normalized_token.decimal_shift <= 10
+          THEN CONCAT(
+            significant_token.significant_digits,
+            REPLICATE(
+              N'0',
+              CASE
+                WHEN normalized_token.decimal_shift BETWEEN 0 AND 10
+                  THEN CONVERT(INT, normalized_token.decimal_shift)
+              END
+            )
+          )
+        WHEN normalized_token.decimal_shift < 0
+          AND -normalized_token.decimal_shift <= LEN(significant_token.significant_digits)
+          AND RIGHT(
+            significant_token.significant_digits,
+            CASE
+              WHEN -normalized_token.decimal_shift
+                BETWEEN 1 AND LEN(significant_token.significant_digits)
+                THEN CONVERT(INT, -normalized_token.decimal_shift)
+            END
+          ) NOT LIKE N'%[^0]%'
+          AND LEN(significant_token.significant_digits) + normalized_token.decimal_shift
+            BETWEEN 1 AND 10
+          THEN LEFT(
+            significant_token.significant_digits,
+            CASE
+              WHEN LEN(significant_token.significant_digits) + normalized_token.decimal_shift
+                BETWEEN 1 AND 10
+                THEN CONVERT(
+                  INT,
+                  LEN(significant_token.significant_digits) + normalized_token.decimal_shift
+                )
+            END
+          )
+      END AS canonical_id
+    ) AS parsed_identifier
+    WHERE line_properties.[key] COLLATE Latin1_General_100_BIN2 = N'submissionLineId'
+      AND DATALENGTH(line_properties.[key]) = DATALENGTH(N'submissionLineId')
+      AND line_properties.type = 2
+      AND numeric_token.exponent_value IS NOT NULL
+      AND LEFT(numeric_token.mantissa, 1) <> N'-'
+      AND TRY_CONVERT(INT, parsed_identifier.canonical_id) IS NOT NULL
+      AND TRY_CONVERT(INT, worksheet_lines.[key]) IS NOT NULL;
+
     DECLARE @category_matches TABLE (
       submission_line_id INT,
       category_id INT
@@ -44,9 +167,11 @@ export async function up(knex: Knex): Promise<void> {
     SELECT funding_submission_lines.id, child_care_spaces.category_id
     FROM funding_submission_line_jsons
     CROSS APPLY OPENJSON(funding_submission_line_jsons.[values]) AS worksheet_lines
+    INNER JOIN @worksheet_submission_line_ids AS worksheet_submission_line_ids
+      ON worksheet_submission_line_ids.worksheet_id = funding_submission_line_jsons.id
+      AND worksheet_submission_line_ids.line_index = TRY_CONVERT(INT, worksheet_lines.[key])
     INNER JOIN funding_submission_lines
-      ON funding_submission_lines.id
-        = TRY_CONVERT(INT, JSON_VALUE(worksheet_lines.value, '$.submissionLineId'))
+      ON funding_submission_lines.id = worksheet_submission_line_ids.submission_line_id
       AND funding_submission_lines.fiscal_year = funding_submission_line_jsons.fiscal_year
       AND funding_submission_lines.section_name COLLATE Latin1_General_100_BIN2
         = JSON_VALUE(worksheet_lines.value, '$.sectionName') COLLATE Latin1_General_100_BIN2
@@ -98,10 +223,9 @@ export async function up(knex: Knex): Promise<void> {
       PRIMARY KEY (worksheet_id, line_index)
     );
 
-    -- JSON IDs must be numbers, not strings or nulls. FLOAT accepts decimal/exponent
-    -- number forms while keeping integer configuration IDs exact.
+    -- Reuse the exact numeric identifiers for worksheet linkage metadata.
     -- Binary comparison plus byte length also rejects differently cased/padded
-    -- property names and section labels that JavaScript would not match.
+    -- section labels that JavaScript would not match.
 
     INSERT INTO @worksheet_links (worksheet_id, line_index, category_id)
     SELECT DISTINCT
@@ -110,11 +234,11 @@ export async function up(knex: Knex): Promise<void> {
       category_matches.category_id
     FROM funding_submission_line_jsons
     CROSS APPLY OPENJSON(funding_submission_line_jsons.[values]) AS worksheet_lines
-    CROSS APPLY OPENJSON(
-      CASE WHEN worksheet_lines.type = 5 THEN worksheet_lines.value ELSE N'{}' END
-    ) AS line_properties
+    INNER JOIN @worksheet_submission_line_ids AS worksheet_submission_line_ids
+      ON worksheet_submission_line_ids.worksheet_id = funding_submission_line_jsons.id
+      AND worksheet_submission_line_ids.line_index = TRY_CONVERT(INT, worksheet_lines.[key])
     INNER JOIN @category_matches AS category_matches
-      ON category_matches.submission_line_id = TRY_CONVERT(FLOAT, line_properties.value)
+      ON category_matches.submission_line_id = worksheet_submission_line_ids.submission_line_id
     INNER JOIN @linked_sections AS linked_sections
       ON JSON_VALUE(
         CASE WHEN worksheet_lines.type = 5 THEN worksheet_lines.value ELSE N'{}' END,
@@ -125,10 +249,6 @@ export async function up(knex: Knex): Promise<void> {
         '$.sectionName'
       )) = DATALENGTH(linked_sections.section_name)
     WHERE funding_submission_line_jsons.deleted_at IS NULL
-      AND line_properties.[key] COLLATE Latin1_General_100_BIN2 = N'submissionLineId'
-      AND DATALENGTH(line_properties.[key]) = DATALENGTH(N'submissionLineId')
-      AND line_properties.type = 2
-      AND TRY_CONVERT(INT, worksheet_lines.[key]) IS NOT NULL
       AND EXISTS (
         SELECT 1
         FROM child_care_spaces
