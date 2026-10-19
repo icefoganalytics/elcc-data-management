@@ -254,6 +254,56 @@ async function findConfigurationLinks(transaction: Knex.Transaction, lineIds: nu
 
 describe("api/src/db/migrations/20261009024301_link-funding-submission-lines-to-child-care-space-categories.ts", () => {
   describe("#up", () => {
+    test("when a category rename has propagated, restores configuration linkage after rollback and reapplication", async () => {
+      await withLegacyChildCareSpaceSchema(async (transaction) => {
+        // Arrange
+        await unlinkCategories(transaction)
+        await addCategoryId(transaction)
+        const fundingPeriodId = await createFundingPeriod(transaction)
+        const fiscalPeriodId = await createFiscalPeriod(transaction, fundingPeriodId)
+        const centreId = await createCentre(transaction, "renamed category recovery")
+        const submissionLineId = await createSubmissionLine(transaction, { lineName: "Infants" })
+        const categoryId = await createCategory(transaction, fundingPeriodId, {
+          categoryName: "Infants",
+        })
+        const ledgerId = await createLedgerSpace(transaction, {
+          centreId,
+          fiscalPeriodId,
+          fundingSubmissionLineId: submissionLineId,
+          categoryId,
+          lineName: "Infants",
+          monthlyAmount: "100.0000",
+          estimatedRate: "0.4000",
+          actualRate: "0.0000",
+        })
+        await createWorksheet(transaction, {
+          centreId,
+          lines: [
+            {
+              submissionLineId,
+              sectionName: "Administration (10% of Spaces)",
+              lineName: "Infants",
+            },
+          ],
+        })
+        await linkCategories(transaction)
+        await transaction("child_care_space_categories")
+          .where({ id: categoryId })
+          .update({ category_name: "Young Infants" })
+        await transaction("child_care_spaces")
+          .where({ id: ledgerId })
+          .update({ line_name: "Young Infants" })
+
+        // Act
+        await unlinkCategories(transaction)
+        await linkCategories(transaction)
+
+        // Assert
+        const configurationLinks = await findConfigurationLinks(transaction, [submissionLineId])
+        expect(configurationLinks).toEqual([{ id: submissionLineId, categoryId }])
+      })
+    })
+
     test("when a historical submission line ID uses integral decimal syntax, links its category", async () => {
       await withLegacyChildCareSpaceSchema(async (transaction) => {
         // Arrange

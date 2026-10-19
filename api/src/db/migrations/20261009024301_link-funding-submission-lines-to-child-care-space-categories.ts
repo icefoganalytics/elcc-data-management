@@ -145,7 +145,7 @@ export async function up(knex: Knex): Promise<void> {
     );
 
     -- First use active category names within the configuration's fiscal year.
-    -- Also recover renamed or retired categories from historical worksheet/ledger snapshots.
+    -- Recover renamed or retired categories from retained metadata or historical snapshots.
     -- UNION removes duplicate evidence for the same configuration/category pair.
     INSERT INTO @category_matches (submission_line_id, category_id)
     SELECT funding_submission_lines.id, child_care_space_categories.id
@@ -197,10 +197,25 @@ export async function up(knex: Knex): Promise<void> {
     INNER JOIN child_care_spaces
       ON child_care_spaces.centre_id = funding_submission_line_jsons.centre_id
       AND child_care_spaces.fiscal_period_id = fiscal_periods.id
-      AND child_care_spaces.line_name COLLATE Latin1_General_100_BIN2
-        = JSON_VALUE(worksheet_lines.value, '$.lineName') COLLATE Latin1_General_100_BIN2
-      AND DATALENGTH(child_care_spaces.line_name)
-        = DATALENGTH(JSON_VALUE(worksheet_lines.value, '$.lineName'))
+      AND (
+        EXISTS (
+          SELECT 1
+          FROM OPENJSON(
+            CASE WHEN worksheet_lines.type = 5 THEN worksheet_lines.value ELSE N'{}' END
+          ) AS category_properties
+          WHERE category_properties.[key] COLLATE Latin1_General_100_BIN2
+              = N'childCareSpaceCategoryId'
+            AND DATALENGTH(category_properties.[key]) = DATALENGTH(N'childCareSpaceCategoryId')
+            AND category_properties.type = 2
+            AND TRY_CONVERT(INT, category_properties.value) = child_care_spaces.category_id
+        )
+        OR (
+          child_care_spaces.line_name COLLATE Latin1_General_100_BIN2
+            = JSON_VALUE(worksheet_lines.value, '$.lineName') COLLATE Latin1_General_100_BIN2
+          AND DATALENGTH(child_care_spaces.line_name)
+            = DATALENGTH(JSON_VALUE(worksheet_lines.value, '$.lineName'))
+        )
+      )
     INNER JOIN child_care_space_categories
       ON child_care_space_categories.id = child_care_spaces.category_id
       AND child_care_space_categories.funding_period_id = funding_periods.id
