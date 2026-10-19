@@ -30,11 +30,13 @@ Estimated and actual totals each equal the snapshotted monthly amount multiplied
 
 Occupancy inputs must be exactly representable at four decimal places. Excess precision is rejected, not silently rounded: at a monthly amount of `100.0000`, occupancy `0.1234` produces `12.3400`; `0.12345` is rejected. Changing only the estimate must not change the actual total.
 
+Occupancy saves and estimate replication reload ledger inputs within a database transaction before calculating totals. A stale editor cannot calculate a total from a rate that category propagation has already replaced.
+
 ## Provisioning and initialization
 
 Provisioning creates zeroed records for every active Child Care Space category in every fiscal month of its funding period, adding only missing pairs.
 
-Initialization requires all active category/month pairs, not equality between current category count and historical record count. Historical extras remain valid. An empty active category set needs no new records, but fiscal periods must still exist.
+Initial provisioning creates the configured monthly records. Afterward, worksheet access depends on the existing employee-benefit, building-expense, worksheet, and reconciliation setup, not the current category catalogue's completeness. Adding a category without propagation or starting in a later month does not block an initialized centre or force records into earlier months.
 
 ## Worksheet and reporting rules
 
@@ -44,7 +46,7 @@ Initialization requires all active category/month pairs, not equality between cu
 - Eligible expenses combine remaining worksheet JSON actual totals, Child Care Spaces ledger actual totals, and Building Expenses for the requested centre and fiscal period. Child Care Spaces must not also be stored in worksheet JSON.
 - Removing a funding period removes its Child Care Spaces records without removing another period's records.
 - The worksheet mounts only after its centre, fiscal year, month, worksheet, and fiscal period agree. Delayed responses from earlier navigation cannot restore another month's editor.
-- Occupancy inputs remain read only throughout **Save** and **Replicate Estimates**, so ledger and dependent-section requests use the same entered values.
+- Occupancy inputs remain read only throughout **Save** and **Replicate Estimates**, including until every dispatched write settles after a sibling fails. A failed ledger batch does not trigger the dependent worksheet JSON save.
 - The worksheet withholds editing when either its ledger or JSON source fails to load. **Reload Worksheet** reloads both sources before restoring editing.
 
 ## Sources

@@ -17,7 +17,7 @@ The editor recalculates dependent totals from each section's own snapshotted rat
 
 The monthly page loads the worksheet and fiscal period together before mounting a centre/year/month-specific editor. It discards responses from superseded requests instead of pairing a newly selected worksheet with the previous month's fiscal period.
 
-These are separate API requests, not one worksheet-wide transaction. A save or replication failure is surfaced, but completed requests are not rolled back across stores. Each [Child Care Spaces replication operation](../../api/src/services/child-care-spaces/replicate-estimates-service.ts) does transact its own later-month updates.
+These are separate API requests, not one worksheet-wide transaction. A save or replication failure is surfaced, but completed requests are not rolled back across stores. All dispatched mutations settle before the editor unlocks, including after a sibling request fails. Each [Child Care Spaces replication operation](../../api/src/services/child-care-spaces/replicate-estimates-service.ts) transacts its later-month updates; occupancy saves and replication reload persisted ledger inputs under repeatable-read isolation before calculating totals.
 
 Occupancy edits and estimate replication use the standard `update()` authorization action on the [Child Care Spaces policy](../../api/src/policies/child-care-space-policy.ts).
 
@@ -28,6 +28,8 @@ Occupancy edits and estimate replication use the standard `update()` authorizati
 Explicit category forward application is a transactional exception to snapshot isolation: an inclusive starting fiscal month limits changes to the same funding period. It fills missing pairs without restoring retired rows; edits update only unchanged snapshots without actual occupancy. The [domain rules](../domain/child-care-spaces.md#forward-application) define preservation and recalculation.
 
 Funding-period creation and development/production ensures provision categories separately from the remaining `funding_submission_lines`. Fresh shared-line defaults retain the seven Administration rows. Shared-line writes and bulk cloning reject the retired Child Care Spaces section at their configuration boundary. Centre initialization discovers categories by funding-period ID and adds only missing category/month pairs. The worksheet JSON provisioning service therefore needs no Child Care Spaces section filter.
+
+The centre's existing core setup determines worksheet access. Changes to the category catalogue do not make an already initialized year unavailable or require retroactive provisioning of intentionally absent earlier-month rows.
 
 Ensures distinguish never-configured periods from deliberately emptied periods using category history; they do not restore retired categories. Legacy cleanup removes only rows still belonging to Child Care Spaces, retaining unrelated active and archived configuration referenced by historical ledger records.
 
@@ -43,7 +45,7 @@ Missing funding-period mappings or conflicting category references abort the bac
 
 ## Historical JSON cutover
 
-The [native Knex data migration](../../api/src/db/migrations/20261007174315_migrate-child-care-spaces-from-worksheet-json.ts) processes active worksheets in batches. It resolves their fiscal month and preserves each source line's name, monthly amount, occupancy inputs, and matching supplied totals; absent totals are calculated. Source configuration is resolved by persisted ID, including changed or soft-deleted configuration.
+The [native Knex data migration](../../api/src/db/migrations/20261007174315_migrate-child-care-spaces-from-worksheet-json.ts) processes active worksheets in batches. It resolves their fiscal month and preserves each source line's name, monthly amount, occupancy inputs, and matching supplied totals; absent totals are calculated. Source configuration is resolved by persisted ID, including changed or soft-deleted configuration. SQL Server reconstructs the retained JSON array from raw elements in their original order, preserving high-precision numeric tokens and unknown properties without JavaScript reserialization.
 
 All source values must be represented before their JSON section is removed. Matching existing ledger rows make success idempotent. Conflicts, duplicate or malformed lines, unresolved references or periods, inconsistent totals, and lossy decimal conversion abort the migration.
 
