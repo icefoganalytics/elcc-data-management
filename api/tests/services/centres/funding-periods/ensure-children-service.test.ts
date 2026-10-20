@@ -1,5 +1,6 @@
 import {
   BuildingExpense,
+  ChildCareSpace,
   EmployeeBenefit,
   FundingReconciliation,
   FundingSubmissionLineJson,
@@ -9,6 +10,8 @@ import {
   buildingExpenseCategoryFactory,
   buildingExpenseFactory,
   centreFactory,
+  childCareSpaceCategoryFactory,
+  childCareSpaceFactory,
   employeeBenefitFactory,
   fiscalPeriodFactory,
   fundingPeriodFactory,
@@ -306,6 +309,185 @@ describe("api/src/services/centres/funding-periods/ensure-children-service.ts", 
             id: fundingReconciliation.id,
             centreId: centre.id,
             fundingPeriodId: fundingPeriod.id,
+          }),
+        ])
+      })
+
+      test("when a centre and funding period are initialized, provisions configured categories across all months", async () => {
+        // Arrange
+        const fundingRegion = await fundingRegionFactory.create()
+        const centre = await centreFactory.create({
+          fundingRegionId: fundingRegion.id,
+        })
+        const fundingPeriod = await fundingPeriodFactory.create({
+          fiscalYear: "2024-2025",
+        })
+        const aprilFiscalPeriod = await fiscalPeriodFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          fiscalYear: "2024-25",
+          dateStart: new Date("2024-04-01"),
+        })
+        const mayFiscalPeriod = await fiscalPeriodFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          fiscalYear: "2024-25",
+          dateStart: new Date("2024-05-01"),
+        })
+        const category = await childCareSpaceCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
+        await fundingSubmissionLineFactory.create({
+          fiscalYear: "2024/25",
+        })
+        await buildingExpenseCategoryFactory.create({
+          fundingRegionId: fundingRegion.id,
+        })
+
+        // Act
+        await EnsureChildrenService.perform(centre, fundingPeriod)
+
+        // Assert
+        const childCareSpaces = await ChildCareSpace.findAll()
+        expect(childCareSpaces).toEqual([
+          expect.objectContaining({
+            centreId: centre.id,
+            fiscalPeriodId: aprilFiscalPeriod.id,
+            categoryId: category.id,
+          }),
+          expect.objectContaining({
+            centreId: centre.id,
+            fiscalPeriodId: mayFiscalPeriod.id,
+            categoryId: category.id,
+          }),
+        ])
+      })
+
+      test("when a category is added after initialization without propagation, leaves its months absent", async () => {
+        // Arrange
+        const fundingRegion = await fundingRegionFactory.create()
+        const centre = await centreFactory.create({
+          fundingRegionId: fundingRegion.id,
+        })
+        const fundingPeriod = await fundingPeriodFactory.create({
+          fiscalYear: "2024-2025",
+        })
+        const fiscalPeriod = await fiscalPeriodFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          fiscalYear: "2024-25",
+        })
+        const originalCategory = await childCareSpaceCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
+        await fundingSubmissionLineFactory.create({
+          fiscalYear: "2024/25",
+        })
+        await buildingExpenseCategoryFactory.create({
+          fundingRegionId: fundingRegion.id,
+        })
+        await EnsureChildrenService.perform(centre, fundingPeriod)
+        await childCareSpaceCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Toddlers",
+        })
+
+        // Act
+        await EnsureChildrenService.perform(centre, fundingPeriod)
+
+        // Assert
+        const childCareSpaces = await ChildCareSpace.findAll()
+        expect(childCareSpaces).toEqual([
+          expect.objectContaining({
+            centreId: centre.id,
+            fiscalPeriodId: fiscalPeriod.id,
+            categoryId: originalCategory.id,
+          }),
+        ])
+      })
+
+      test("when a category is propagated from May, later shared ensures preserve the absent April pair", async () => {
+        // Arrange
+        const fundingRegion = await fundingRegionFactory.create()
+        const centre = await centreFactory.create({
+          fundingRegionId: fundingRegion.id,
+        })
+        const fundingPeriod = await fundingPeriodFactory.create({
+          fiscalYear: "2024-2025",
+        })
+        await fiscalPeriodFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          fiscalYear: "2024-25",
+          dateStart: new Date("2024-04-01"),
+        })
+
+        const mayFiscalPeriod = await fiscalPeriodFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          fiscalYear: "2024-25",
+          dateStart: new Date("2024-05-01"),
+        })
+        await fundingSubmissionLineFactory.create({
+          fiscalYear: "2024/25",
+        })
+        await buildingExpenseCategoryFactory.create({
+          fundingRegionId: fundingRegion.id,
+        })
+        await EnsureChildrenService.perform(centre, fundingPeriod)
+        const mayScopedCategory = await childCareSpaceCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Toddlers",
+        })
+        const mayChildCareSpace = await childCareSpaceFactory
+          .associations({ centre, fiscalPeriod: mayFiscalPeriod, category: mayScopedCategory })
+          .create()
+
+        // Act
+        await EnsureChildrenService.perform(centre, fundingPeriod)
+
+        // Assert
+        const childCareSpaces = await ChildCareSpace.findAll()
+        expect(childCareSpaces).toEqual([
+          expect.objectContaining({
+            id: mayChildCareSpace.id,
+            centreId: centre.id,
+            fiscalPeriodId: mayFiscalPeriod.id,
+            categoryId: mayScopedCategory.id,
+          }),
+        ])
+      })
+
+      test("when propagation precedes centre initialization, preserves the selected starting month", async () => {
+        // Arrange
+        const fundingRegion = await fundingRegionFactory.create()
+        const centre = await centreFactory.create({ fundingRegionId: fundingRegion.id })
+        const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2024-2025" })
+        await fiscalPeriodFactory.associations({ fundingPeriod }).create({
+          fiscalYear: "2024-25",
+          dateStart: new Date("2024-04-01"),
+        })
+        const mayFiscalPeriod = await fiscalPeriodFactory.associations({ fundingPeriod }).create({
+          fiscalYear: "2024-25",
+          dateStart: new Date("2024-05-01"),
+        })
+        const category = await childCareSpaceCategoryFactory
+          .associations({ fundingPeriod })
+          .create({ categoryName: "Infants" })
+        const mayChildCareSpace = await childCareSpaceFactory
+          .associations({ centre, fiscalPeriod: mayFiscalPeriod, category })
+          .create()
+        await fundingSubmissionLineFactory.create({ fiscalYear: "2024/25" })
+        await buildingExpenseCategoryFactory.create({ fundingRegionId: fundingRegion.id })
+
+        // Act
+        await EnsureChildrenService.perform(centre, fundingPeriod)
+
+        // Assert
+        const childCareSpaces = await ChildCareSpace.findAll()
+        expect(childCareSpaces).toEqual([
+          expect.objectContaining({
+            id: mayChildCareSpace.id,
+            centreId: centre.id,
+            fiscalPeriodId: mayFiscalPeriod.id,
+            categoryId: category.id,
           }),
         ])
       })
