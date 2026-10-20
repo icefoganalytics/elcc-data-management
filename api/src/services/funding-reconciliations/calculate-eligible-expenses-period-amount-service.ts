@@ -1,6 +1,6 @@
+import { QueryTypes } from "@sequelize/core"
 import Big from "big.js"
 import { upperFirst } from "lodash"
-import { QueryTypes } from "@sequelize/core"
 
 import db, { FiscalPeriod } from "@/models"
 import BaseService from "@/services/base-service"
@@ -15,11 +15,15 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
 
   async perform(): Promise<string> {
     const fundingSubmissionExpensesAmount = await this.calculateFundingSubmissionExpenses()
+    const childCareSpacesTotalAmount = await this.calculateChildCareSpaces(
+      this.centreId,
+      this.fiscalPeriodId
+    )
     const buildingExpensesTotalAmount = await this.calculateBuildingExpenses()
 
-    const totalEligibleExpenses = Big(fundingSubmissionExpensesAmount).plus(
-      buildingExpensesTotalAmount
-    )
+    const totalEligibleExpenses = Big(fundingSubmissionExpensesAmount)
+      .plus(childCareSpacesTotalAmount)
+      .plus(buildingExpensesTotalAmount)
 
     return totalEligibleExpenses.toFixed(4)
   }
@@ -71,6 +75,40 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
     const { fundingSubmissionExpensesAmount } = fundingSubmissionResult
 
     return Big(fundingSubmissionExpensesAmount).toFixed(4)
+  }
+
+  private async calculateChildCareSpaces(
+    centreId: number,
+    fiscalPeriodId: number
+  ): Promise<string> {
+    const [childCareSpacesResult] = await db.query<{
+      childCareSpacesTotalAmount: string
+    }>(
+      /* sql */ `
+        SELECT
+          CONVERT(
+            VARCHAR(50),
+            COALESCE(SUM(actual_computed_total), 0)
+          ) AS childCareSpacesTotalAmount
+        FROM
+          child_care_spaces
+        WHERE
+          centre_id = :centreId
+          AND fiscal_period_id = :fiscalPeriodId
+          AND deleted_at IS NULL
+      `,
+      {
+        type: QueryTypes.SELECT,
+        replacements: {
+          centreId,
+          fiscalPeriodId,
+        },
+      }
+    )
+
+    const { childCareSpacesTotalAmount } = childCareSpacesResult
+
+    return Big(childCareSpacesTotalAmount).toFixed(4)
   }
 
   private async calculateBuildingExpenses(): Promise<string> {

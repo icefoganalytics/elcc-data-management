@@ -1,6 +1,7 @@
 import db, {
   BuildingExpense,
   Centre,
+  ChildCareSpace,
   EmployeeBenefit,
   FundingReconciliation,
   FundingSubmissionLineJson,
@@ -22,8 +23,9 @@ export class DestroyService extends BaseService {
   }
 
   async perform(): Promise<void> {
+    const { id: centreId } = this.centre
     await db.transaction(async () => {
-      await this.destroyDependentEntities()
+      await this.destroyDependentEntities(centreId)
 
       await this.centre.destroy()
 
@@ -31,8 +33,9 @@ export class DestroyService extends BaseService {
     })
   }
 
-  private async destroyDependentEntities() {
+  private async destroyDependentEntities(centreId: number) {
     await this.destroyDependentBuildingExpenses()
+    await this.destroyDependentChildCareSpaces(centreId)
     await this.destroyDependentEmployeeBenefits()
     await this.destroyDependentFundingSubmissionLineJsons()
     await this.destroyDependentPayments()
@@ -44,6 +47,14 @@ export class DestroyService extends BaseService {
     await BuildingExpense.destroy({
       where: {
         centreId: this.centre.id,
+      },
+    })
+  }
+
+  private async destroyDependentChildCareSpaces(centreId: number) {
+    await ChildCareSpace.destroy({
+      where: {
+        centreId,
       },
     })
   }

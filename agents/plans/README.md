@@ -1,6 +1,6 @@
 # Plans
 
-This directory contains implementation planning documents for the ELCC Data Management system.
+This directory contains temporary implementation planning documents for the ELCC Data Management system, not a knowledge base of completed work.
 
 ## Available Plans
 
@@ -16,6 +16,12 @@ Create a plan for implementing hot meal feature and save it to agents/plans/
 ```
 
 See parent [agents/README.md](../README.md) for general AI workflow documentation.
+
+## After Implementation
+
+Enrich the [project knowledge base](../../docs/README.md) or the nearest source-adjacent README with durable facts, decisions, invariants, edge cases, and validated reference values. Remove the completed plan after preserving that knowledge; do not keep stale current-state analysis, implementation checklists, or file-change inventories.
+
+Do not merely rename the plan into a knowledge page. Rewrite retained information as current project knowledge, with links to its implementation and regression evidence.
 
 ---
 

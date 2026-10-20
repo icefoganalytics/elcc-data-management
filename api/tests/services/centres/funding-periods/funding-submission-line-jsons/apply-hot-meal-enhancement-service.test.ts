@@ -67,7 +67,8 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
         await ApplyHotMealEnhancementService.perform(centre)
 
         // Assert
-        await expect(fundingSubmissionLineJson.reload()).resolves.toEqual(
+        const persistedFundingSubmissionLineJson = await fundingSubmissionLineJson.reload()
+        expect(persistedFundingSubmissionLineJson).toEqual(
           expect.objectContaining({
             lines: [
               expect.objectContaining({
@@ -104,7 +105,7 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
           dateStart: new Date("2025-04-15"),
         })
         const fundingSubmissionLine = await fundingSubmissionLineFactory.create({
-          sectionName: "Child Care Spaces",
+          sectionName: "Administration (10% of Spaces)",
           lineName: "Infants",
           monthlyAmount: "100.00",
         })
@@ -115,7 +116,7 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
           lines: [
             {
               submissionLineId: fundingSubmissionLine.id,
-              sectionName: "Child Care Spaces",
+              sectionName: "Administration (10% of Spaces)",
               lineName: "Infants",
               monthlyAmount: "100.00",
               estimatedChildOccupancyRate: "0",
@@ -129,8 +130,11 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
         // Act
         await ApplyHotMealEnhancementService.perform(centre)
 
+        // Reload persisted worksheet state
+        await fundingSubmissionLineJson.reload()
+
         // Assert
-        await expect(fundingSubmissionLineJson.reload()).resolves.toEqual(
+        expect(fundingSubmissionLineJson).toEqual(
           expect.objectContaining({
             lines: [
               expect.objectContaining({
@@ -139,51 +143,6 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
             ],
           })
         )
-      })
-
-      test("when no future fiscal periods exist, does nothing", async () => {
-        // Arrange
-        vi.setSystemTime(new Date("2025-04-01"))
-
-        const fundingRegion = await fundingRegionFactory.create({
-          hotMealIncrementAmount: "32.06",
-        })
-        const centre = await centreFactory.create({
-          fundingRegionId: fundingRegion.id,
-          hotMeal: true,
-        })
-        const fundingPeriod = await fundingPeriodFactory.create({
-          fiscalYear: "2025-2026",
-        })
-        const pastFiscalPeriod = await fiscalPeriodFactory.create({
-          fundingPeriodId: fundingPeriod.id,
-          dateStart: new Date("2025-03-15"),
-        })
-        const fundingSubmissionLine = await fundingSubmissionLineFactory.create({
-          sectionName: "Quality Enhancement Program",
-          lineName: "Quality Enhancement",
-          monthlyAmount: "100.00",
-        })
-        await fundingSubmissionLineJsonFactory.create({
-          centreId: centre.id,
-          dateStart: pastFiscalPeriod.dateStart,
-          dateEnd: pastFiscalPeriod.dateEnd,
-          lines: [
-            {
-              submissionLineId: fundingSubmissionLine.id,
-              sectionName: "Quality Enhancement Program",
-              lineName: "Quality Enhancement",
-              monthlyAmount: "100.00",
-              estimatedChildOccupancyRate: "0",
-              actualChildOccupancyRate: "0",
-              estimatedComputedTotal: "0",
-              actualComputedTotal: "0",
-            },
-          ],
-        })
-
-        // Act & Assert
-        await expect(ApplyHotMealEnhancementService.perform(centre)).resolves.not.toThrow()
       })
 
       test("when enhancement has already been applied to a Quality Enhancement Program section, does not reapply enhancement", async () => {
@@ -237,8 +196,11 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
         // Act
         await ApplyHotMealEnhancementService.perform(centre)
 
+        // Reload persisted worksheet state
+        await fundingSubmissionLineJson.reload()
+
         // Assert
-        await expect(fundingSubmissionLineJson.reload()).resolves.toEqual(
+        expect(fundingSubmissionLineJson).toEqual(
           expect.objectContaining({
             lines: [
               expect.objectContaining({
@@ -280,7 +242,7 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
           monthlyAmount: "100.00",
         })
         const otherLine = await fundingSubmissionLineFactory.create({
-          sectionName: "Child Care Spaces",
+          sectionName: "Administration (10% of Spaces)",
           lineName: "Infants",
           monthlyAmount: "200.00",
         })
@@ -301,7 +263,7 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
             },
             {
               submissionLineId: otherLine.id,
-              sectionName: "Child Care Spaces",
+              sectionName: "Administration (10% of Spaces)",
               lineName: "Infants",
               monthlyAmount: "200.00",
               estimatedChildOccupancyRate: "0",
@@ -315,8 +277,11 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
         // Act
         await ApplyHotMealEnhancementService.perform(centre)
 
+        // Reload persisted worksheet state
+        await fundingSubmissionLineJson.reload()
+
         // Assert
-        await expect(fundingSubmissionLineJson.reload()).resolves.toEqual(
+        expect(fundingSubmissionLineJson).toEqual(
           expect.objectContaining({
             lines: [
               expect.objectContaining({

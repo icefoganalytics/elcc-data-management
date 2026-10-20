@@ -10,6 +10,9 @@ Changes since v2025.11.24.1 that will be included in the next release.
 
 ### Added
 
+- Child Care Spaces now saves per centre and month, preserving historic rates while keeping worksheets, enrollment charts, and reconciliations in sync.
+- Child Care Space categories now have dedicated administration pages and funding-period configuration. Existing names, age ranges, and rates move out of shared submission lines without changing historical monthly records.
+
 - Funding reconciliation feature to calculate and display monthly funding reconciliation amounts based on adjustment records for each funding period.
   Why? To provide a clear, authoritative view of how funding amounts are reconciled over time.
 - Improved administration pages for funding lines, funding periods, and funding submission lines, with dedicated read pages and a shared fiscal year selector.
@@ -22,6 +25,8 @@ Changes since v2025.11.24.1 that will be included in the next release.
 - Unified authentication for legacy and modern API endpoints behind one shared boundary,
   preserving public status access and existing role restrictions.
 - Improved accuracy of funding reconciliation and payroll adjustment totals, especially for wage enhancements and employee benefits, by using more precise financial calculations.
+- Child Care Spaces occupancy inputs now reject precision beyond four decimal places rather than silently rounding saved rates and changing financial totals on later edits.
+- Child Care Spaces cutover now uses native Knex migrations and seeds, preserving historical values and rolling back a failed pending migration batch without partial data removal.
 - Development stacks now use the shared local gateway, so ELCC can run beside other projects
   and independently named worktrees.
 - Development setup guidance now covers dependency refreshes after lockfile changes and recovery
@@ -42,6 +47,17 @@ Changes since v2025.11.24.1 that will be included in the next release.
 
 ### Fixed
 
+- Child Care Space categories can optionally apply new or revised names and rates from a selected month onward, preserving earlier months, actual occupancy, and manual snapshot overrides.
+- Adding Child Care Space categories no longer blocks initialized worksheets or forces records into earlier months. Concurrent occupancy edits use current stored rates, failed parallel writes remain locked until settled, and category filters ignore outdated responses.
+- Restored the missing icon beside Child Care Space Categories in the administration navigation.
+- Child Care Spaces reconciliation totals now retain all four decimal places even when aggregate amounts exceed JavaScript's decimal precision.
+- Worksheet navigation now waits for the matching month, and occupancy inputs stay read only during saving and estimate replication.
+- Fresh annual setup retains Administration defaults, and shared funding lines cannot recreate the retired Child Care Spaces section.
+- Historical category linkage now recognizes zero-valued, integral decimal, and exponent-form numeric IDs without confusing strings or fractional values with record IDs.
+- Historical worksheet cutover preserves retained numeric tokens, and category linkage distinguishes trailing spaces and ignores deleted funding periods when matching current configuration.
+- Category editors clear previous records during navigation and ignore late load/save responses. Linkage recovery retains stable category IDs after names have propagated to monthly records.
+- Child Care Space category writes now require a system administrator, while ordinary users retain occupancy editing. Category amounts reject excess decimal precision, and overlapping category updates use the current propagation baseline.
+- Later seeds preserve intentionally absent Child Care Space months, and historical cutover rejects malformed submission-line IDs before removing source JSON.
 - Prevented employee benefits from being double counted in employee adjustment amounts during funding reconciliation calculations.
 - Resolved occasional authentication issues caused by plugin load order.
 - Editor links now reach the correct Docker worktree through library-managed checkout routing,
