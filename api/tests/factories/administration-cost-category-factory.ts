@@ -4,7 +4,6 @@ import { Factory } from "fishery"
 import { AdministrationCostCategory } from "@/models"
 
 import { nestedSaveAndAssociateIfNew } from "@/factories/helpers"
-import childCareSpaceCategoryFactory from "@/factories/child-care-space-category-factory"
 import fundingPeriodFactory from "@/factories/funding-period-factory"
 
 export const administrationCostCategoryFactory = Factory.define<AdministrationCostCategory>(
