@@ -18,7 +18,7 @@ The editor recalculates dependent totals from each section's own snapshotted rat
 
 The monthly page loads the worksheet and fiscal period together before mounting a centre/year/month-specific editor. It discards responses from superseded requests instead of pairing a newly selected worksheet with the previous month's fiscal period.
 
-These are separate API requests, not one worksheet-wide transaction. A save or replication failure is surfaced, but completed requests are not rolled back across stores. All dispatched mutations settle before the editor unlocks, including after a sibling request fails. Each [Child Care Spaces replication operation](../../api/src/services/child-care-spaces/replicate-estimates-service.ts) transacts its later-month updates; occupancy saves and replication reload persisted ledger inputs under repeatable-read isolation before calculating totals.
+These are separate API requests, not one worksheet-wide transaction. A save or replication failure is surfaced, but completed requests are not rolled back across stores. All dispatched mutations settle before the editor unlocks, including after a sibling request fails. Categories replicate sequentially within each ledger to avoid overlapping SQL Server transactions; the independent persistence owners can still run concurrently. Each replication operation transacts its later-month updates; occupancy saves and replication reload persisted ledger inputs under repeatable-read isolation before calculating totals.
 
 Occupancy edits and estimate replication use the standard `update()` authorization action on the ledger policies. Ordinary authenticated users retain these actions; only system administrators may create, edit, or retire annual category configuration.
 
