@@ -29,15 +29,16 @@ Use this workflow to review TypeScript code for the ELCC project. Apply every ru
 
 4. **Verify Test Completeness**
    - Every test must include explicit Arrange / Act / Assert comments and be fully self-contained
-   - No shared state from `beforeEach` unless it is truly invariant setup (e.g., DB reset)
+   - Keep test-specific data, mount options, and API responses inside each test; do not hide them behind local mount/payload helpers or shared fixtures. Reuse existing factories and infrastructure helpers when appropriate.
+   - Use `beforeEach` for invariant environment or mock setup, not scenario data. Do not repeat mock resets already provided by the test runner.
    - Service test assertions should target database state, not service return values, unless the return value is specifically what is under test
    - Spy assertions — use `expect(spy).not.toHaveBeenCalled()` without arguments. Never use `not.toHaveBeenCalledWith(...)`
 
-5. **Ensure One Expect Per Test**
-   - Consolidate assertions into a single `expect` using `expect.objectContaining`
-   - Exceptions: tests that assert something did NOT happen (e.g., `not.toHaveBeenCalled()`, `not.toBe()`) may be standalone single-line expects
-   - HTTP response exception: assert `response.status` first and `response.body` second with `toEqual(...)`; do not match the complete response object.
-   - When asserting "not any of N values", split into N separate tests rather than looping
+5. **Verify One Observable Behavior Per Test**
+   - Assert directly on observable results; never construct synthetic summary objects just to force one `expect`.
+   - Related facts proving the same behavior may use separate direct expectations in one final Assert section. Split independent behaviors into separate tests.
+   - For HTTP responses, assert `response.status` first and `response.body` second with `toEqual(...)`; do not match the complete response object.
+   - When asserting "not any of N values", split into N separate tests rather than looping.
 
 6. **Check Test Naming**
    - Tests must follow `"when [condition], [expected behaviour]"` with full English words (no abbreviations)
