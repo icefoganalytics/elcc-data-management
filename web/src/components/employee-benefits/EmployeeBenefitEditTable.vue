@@ -253,7 +253,6 @@
           <v-btn
             color="success"
             :loading="isSaving"
-            :disabled="isSaving"
             @click="saveAndNotify"
           >
             Save
@@ -269,9 +268,10 @@ import { computed, ref, toRefs, watch } from "vue"
 import { isNil } from "lodash"
 import Big from "big.js"
 
-import employeeBenefitsApi from "@/api/employee-benefits-api"
 import { formatMoney } from "@/utils/formatters"
 import minDecimal from "@/utils/min-decimal"
+
+import employeeBenefitsApi from "@/api/employee-benefits-api"
 
 import useSnack from "@/use/use-snack"
 import useEmployeeBenefit from "@/use/use-employee-benefit"
