@@ -473,7 +473,7 @@ describe("api/src/db/migrations/20261007174315_migrate-child-care-spaces-from-wo
       })
     })
 
-    test("when a later worksheet has a malformed source line, rolls back earlier migration", async () => {
+    test("when a later worksheet has a numeric-string submission-line ID, rolls back earlier migration", async () => {
       await withLegacyChildCareSpaceSchema(async (transaction) => {
         // Arrange
         const earlierCentreId = await createCentre(transaction)
@@ -492,9 +492,10 @@ describe("api/src/db/migrations/20261007174315_migrate-child-care-spaces-from-wo
           actualComputedTotal: "25.0000",
         }
         const malformedLaterWorksheetLine: Record<string, unknown> = {
-          submissionLineId: laterLineId,
+          submissionLineId: String(laterLineId),
           sectionName: "Child Care Spaces",
           lineName: "Toddlers",
+          monthlyAmount: "100.0000",
           estimatedChildOccupancyRate: "0.5000",
           actualChildOccupancyRate: "0.2500",
           estimatedComputedTotal: "50.0000",
@@ -525,6 +526,38 @@ describe("api/src/db/migrations/20261007174315_migrate-child-care-spaces-from-wo
           laterWorksheetLines: [malformedLaterWorksheetLine],
           childCareSpaces: [],
         })
+      })
+    })
+
+    test("when a historical submission-line ID exceeds the safe integer range, retains its source JSON", async () => {
+      await withLegacyChildCareSpaceSchema(async (transaction) => {
+        // Arrange
+        const centreId = await createCentre(transaction)
+        await createAprilFiscalPeriod(transaction)
+        const malformedWorksheetLine = {
+          submissionLineId: Number.MAX_SAFE_INTEGER + 1,
+          sectionName: "Child Care Spaces",
+          lineName: "Infants",
+          monthlyAmount: "100.0000",
+          estimatedChildOccupancyRate: "0.5000",
+          actualChildOccupancyRate: "0.2500",
+          estimatedComputedTotal: "50.0000",
+          actualComputedTotal: "25.0000",
+        }
+        const worksheetId = await createHistoricalWorksheet(transaction, centreId, [
+          malformedWorksheetLine,
+        ])
+
+        // Act
+        const worksheetLinesAfterMigration = await transaction
+          .transaction((nestedTransaction) => migrateChildCareSpaces(nestedTransaction))
+          .then(
+            () => findWorksheetLines(transaction, worksheetId),
+            () => findWorksheetLines(transaction, worksheetId)
+          )
+
+        // Assert
+        expect(worksheetLinesAfterMigration).toEqual([malformedWorksheetLine])
       })
     })
 

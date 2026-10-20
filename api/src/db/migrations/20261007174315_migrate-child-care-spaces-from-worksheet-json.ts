@@ -298,7 +298,13 @@ function attributesForChildCareSpace(
     estimatedChildOccupancyRate = "0",
     actualChildOccupancyRate = "0",
   } = childCareSpace
-  if (isNil(fundingSubmissionLineId) || isNil(lineName) || isNil(monthlyAmount)) {
+  if (
+    isNil(fundingSubmissionLineId) ||
+    !Number.isSafeInteger(fundingSubmissionLineId) ||
+    fundingSubmissionLineId < 0 ||
+    isNil(lineName) ||
+    isNil(monthlyAmount)
+  ) {
     console.warn(
       `Skipping malformed Child Care Spaces line ${JSON.stringify(childCareSpace)}; retaining its source JSON values.`
     )
