@@ -84,6 +84,36 @@ describe("api/src/controllers/funding-submission-line-jsons-controller.ts", () =
           expect(worksheets).toEqual([])
         }
       )
+
+      test("when an administrator writes Administration through worksheet JSON, rejects the write", async () => {
+        // Arrange
+        const currentUser = await userFactory.create({
+          roles: [User.Roles.SYSTEM_ADMINISTRATOR],
+        })
+        mockCurrentUser(currentUser)
+        const centre = await centreFactory.create()
+        const administrationLine = {
+          submissionLineId: 2,
+          sectionName: "Administration (10% of Spaces)",
+          lineName: "Infants",
+        }
+
+        // Act
+        const response = await request()
+          .post("/api/funding-submission-line-jsons")
+          .send({
+            centreId: centre.id,
+            fiscalYear: "2024/25",
+            dateName: FundingSubmissionLineJson.Months.APRIL,
+            dateStart: "2024-04-01T00:00:00Z",
+            dateEnd: "2024-04-30T23:59:59Z",
+            values: JSON.stringify([administrationLine]),
+          })
+
+        // Assert
+        expect(response.status).toBe(422)
+        expect(response.body.message).toContain("Administration costs ledger")
+      })
     })
 
     describe("#update -> PATCH /api/funding-submission-line-jsons/:fundingSubmissionLineJsonId", () => {
@@ -106,7 +136,7 @@ describe("api/src/controllers/funding-submission-line-jsons-controller.ts", () =
             estimatedComputedTotal: "50",
             actualComputedTotal: "50",
           }
-          const remainingLine = { ...staleLine, sectionName: "Administration (10% of Spaces)" }
+          const remainingLine = { ...staleLine, sectionName: "Children with Diverse Needs" }
           const worksheet = await fundingSubmissionLineJsonFactory.create({
             centreId: centre.id,
             lines: [remainingLine],
@@ -151,7 +181,7 @@ describe("api/src/controllers/funding-submission-line-jsons-controller.ts", () =
             estimatedComputedTotal: "50",
             actualComputedTotal: "50",
           }
-          const remainingLine = { ...staleLine, sectionName: "Administration (10% of Spaces)" }
+          const remainingLine = { ...staleLine, sectionName: "Children with Diverse Needs" }
           const worksheet = await fundingSubmissionLineJsonFactory.create({
             centreId: centre.id,
             lines: [remainingLine],
@@ -180,7 +210,7 @@ describe("api/src/controllers/funding-submission-line-jsons-controller.ts", () =
           const centre = await centreFactory.create()
           const remainingLine = {
             submissionLineId: 2,
-            sectionName: "Administration (10% of Spaces)",
+            sectionName: "Children with Diverse Needs",
             lineName: "Infants",
             monthlyAmount: "10",
             estimatedChildOccupancyRate: "0.5",
@@ -244,7 +274,7 @@ describe("api/src/controllers/funding-submission-line-jsons-controller.ts", () =
           const centre = await centreFactory.create()
           const remainingLine = {
             submissionLineId: 2,
-            sectionName: "Administration (10% of Spaces)",
+            sectionName: "Children with Diverse Needs",
             lineName: "Infants",
             monthlyAmount: "10",
             estimatedChildOccupancyRate: "0.5",
@@ -273,6 +303,44 @@ describe("api/src/controllers/funding-submission-line-jsons-controller.ts", () =
           expect(worksheet.lines).toEqual([changedLine])
         }
       )
+
+      test("when an administrator writes Administration in a worksheet update, preserves the old values", async () => {
+        // Arrange
+        const currentUser = await userFactory.create({
+          roles: [User.Roles.SYSTEM_ADMINISTRATOR],
+        })
+        mockCurrentUser(currentUser)
+        const centre = await centreFactory.create()
+        const validLine = {
+          submissionLineId: 2,
+          sectionName: "Children with Diverse Needs",
+          lineName: "Infants",
+          monthlyAmount: "10.0000",
+          estimatedChildOccupancyRate: "0.5000",
+          actualChildOccupancyRate: "0.5000",
+          estimatedComputedTotal: "5.0000",
+          actualComputedTotal: "5.0000",
+        }
+        const worksheet = await fundingSubmissionLineJsonFactory.create({
+          centreId: centre.id,
+          lines: [validLine],
+        })
+        const administrationLine = {
+          ...validLine,
+          sectionName: "Administration (10% of Spaces)",
+        }
+
+        // Act
+        const response = await request()
+          .patch(`/api/funding-submission-line-jsons/${worksheet.id}`)
+          .send({ values: JSON.stringify([administrationLine]) })
+        await worksheet.reload()
+
+        // Assert
+        expect(response.status).toBe(422)
+        expect(response.body.message).toContain("Administration costs ledger")
+        expect(worksheet.lines).toEqual([validLine])
+      })
     })
   })
 })

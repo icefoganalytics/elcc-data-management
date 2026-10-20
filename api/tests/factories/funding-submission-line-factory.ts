@@ -5,7 +5,6 @@ import { FundingSubmissionLine } from "@/models"
 import { formatAsFiscalYear } from "@/factories/helpers"
 
 export const SECTION_NAMES_EXAMPLES = Object.freeze([
-  "Administration (10% of Spaces)",
   "Quality Program Enhancement",
   "Children with Diverse Needs",
 ])
