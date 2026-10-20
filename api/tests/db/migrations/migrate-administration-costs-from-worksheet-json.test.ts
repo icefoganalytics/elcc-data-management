@@ -151,7 +151,7 @@ describe("api/src/db/migrations/20261020180002_migrate-administration-costs-from
         // Arrange
         const centreId = await createCentre(transaction)
         const fundingPeriodId = await createFundingPeriod(transaction)
-        const fiscalPeriodId = await createAprilFiscalPeriod(transaction, fundingPeriodId)
+        await createAprilFiscalPeriod(transaction, fundingPeriodId)
         const infantSpaceCategoryId = await createChildCareSpaceCategory(
           transaction,
           fundingPeriodId,
@@ -189,7 +189,7 @@ describe("api/src/db/migrations/20261020180002_migrate-administration-costs-from
           childCareSpaceCategoryId: infantSpaceCategoryId,
           deletedAt: new Date("2147-03-01T00:00:00Z"),
         })
-        const worksheetId = await createWorksheet(
+        await createWorksheet(
           transaction,
           centreId,
           `[${JSON.stringify(
