@@ -84,7 +84,7 @@ Test initialization goes like this:
    })
    ```
 5. In isolated model or scope tests, avoid redundant `where` clauses that only restate the records created in the test. Only include extra filters when that filter is part of the behavior under test.
-6. Prefer one `expect(...)` per test. If you need to verify multiple outcomes, split them into separate tests with narrow assertions.
+6. Prefer one outcome per test. For HTTP responses, assert `response.status` first with `toEqual(...)`, then the complete `response.body` with `toEqual(...)`, rather than matching the response object. Keep independent persistence outcomes in separate tests.
 7. Prefer concrete record assertions over count-only assertions. When asserting persisted results, prefer `findAll()` on the full table and compare the returned records directly. Do not add restrictive `where` clauses or `order` clauses unless that filter or ordering is part of the behavior under test.
 8. Use full, descriptive variable names in tests. Avoid abbreviations like `persistedCategory` when `persistedBuildingExpenseCategory` is clearer.
 9. Order test imports by conceptual distance: third-party libraries first, then local project imports such as models, then factories, and finally the file under test.

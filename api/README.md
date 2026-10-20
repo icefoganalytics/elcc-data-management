@@ -4,6 +4,18 @@ Node.js + Express + TypeScript. Sequelize 7 ORM, Knex migrations and seeds, MSSQ
 
 ---
 
+## Authentication Boundary
+
+Register public API-independent endpoints, such as `/_status`, before the shared `/api`
+authentication middleware in `src/router.ts`. Mount every protected endpoint and child router
+after that middleware so JWT verification and user loading run before any API action.
+Child routers inherit authentication; do not register it again on individual routes or routers.
+Keep role and record-level authorization in the existing middleware and policies.
+
+Frontend static files and SPA routes remain outside `/api` and do not require an API token.
+
+---
+
 ## Code Style
 
 - TypeScript only — no `any`, `as` casts, `@ts-expect-error`, `@ts-ignore`, or `!` non-null assertions. Use `instanceof` narrowing with fallbacks instead.

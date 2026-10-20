@@ -19,6 +19,8 @@ Changes since v2025.11.24.1 that will be included in the next release.
 ### Changed
 
 - Preserved four-decimal currency entry and exact financial calculations when reconciling money amounts.
+- Unified authentication for legacy and modern API endpoints behind one shared boundary,
+  preserving public status access and existing role restrictions.
 - Improved accuracy of funding reconciliation and payroll adjustment totals, especially for wage enhancements and employee benefits, by using more precise financial calculations.
 - Development stacks now use the shared local gateway, so ELCC can run beside other projects
   and independently named worktrees.
