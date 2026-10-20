@@ -137,10 +137,10 @@ describe("api/src/controllers/child-care-spaces-controller.ts", () => {
     })
 
     describe("#update -> PATCH /api/child-care-spaces/:childCareSpaceId", () => {
-      test("when occupancy-rate and protected snapshot updates are provided, returns only the permitted update", async () => {
+      test("when an ordinary user edits occupancy and protected snapshots, returns only the permitted update", async () => {
         // Arrange
         const currentUser = await userFactory.create({
-          roles: [User.Roles.SYSTEM_ADMINISTRATOR],
+          roles: [User.Roles.USER],
         })
         mockCurrentUser(currentUser)
 
@@ -187,10 +187,10 @@ describe("api/src/controllers/child-care-spaces-controller.ts", () => {
         )
       })
 
-      test("when occupancy-rate updates are provided, persists them to the ledger", async () => {
+      test("when an ordinary user edits occupancy, persists the change to the ledger", async () => {
         // Arrange
         const currentUser = await userFactory.create({
-          roles: [User.Roles.SYSTEM_ADMINISTRATOR],
+          roles: [User.Roles.USER],
         })
         mockCurrentUser(currentUser)
 

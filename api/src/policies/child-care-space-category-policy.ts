@@ -10,15 +10,15 @@ export class ChildCareSpaceCategoryPolicy extends PolicyFactory(ChildCareSpaceCa
   }
 
   create(): boolean {
-    return true
+    return this.user.isSystemAdmin
   }
 
   update(): boolean {
-    return true
+    return this.user.isSystemAdmin
   }
 
   destroy(): boolean {
-    return true
+    return this.user.isSystemAdmin
   }
 
   permittedAttributes(): Path[] {
