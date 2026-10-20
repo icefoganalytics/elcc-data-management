@@ -47,7 +47,7 @@ Missing funding-period mappings or conflicting category references abort the bac
 
 The [native Knex data migration](../../api/src/db/migrations/20261007174315_migrate-child-care-spaces-from-worksheet-json.ts) processes active worksheets in batches. It resolves their fiscal month and preserves each source line's name, monthly amount, occupancy inputs, and matching supplied totals; absent totals are calculated. Source configuration is resolved by persisted ID, including changed or soft-deleted configuration. SQL Server reconstructs the retained JSON array from raw elements in their original order, preserving high-precision numeric tokens and unknown properties without JavaScript reserialization.
 
-All source values must be represented before their JSON section is removed. Matching existing ledger rows make success idempotent. Conflicts, duplicate or malformed lines, unresolved references or periods, inconsistent totals, and lossy decimal conversion abort the migration.
+All source values must be represented before their JSON section is removed. Submission-line IDs must be non-negative safe integers; numeric strings, fractions, negative values, and unsafe integers abort the cutover without deleting source values. Matching existing ledger rows make success idempotent. Conflicts, duplicate or malformed lines, unresolved references or periods, inconsistent totals, and lossy decimal conversion abort the migration.
 
 This fail-closed cutover is essential: retaining a writable JSON copy while reporting from the ledger creates competing owners. A successful migration has no automatic data rollback; its `down` operation only warns. Restoring pre-cutover JSON requires the original data and manual restoration.
 

@@ -10,7 +10,7 @@ The line name and monthly amount are snapshots, not live category lookups. Ordin
 
 ## Category configuration
 
-Each funding period owns its configurable category names, optional age ranges, and monthly amounts. **Administration → Child Care Space Categories** manages this configuration separately from the remaining funding submission lines. A category's funding period is selected when created and cannot be changed through an update.
+Each funding period owns its configurable category names, optional age ranges, and monthly amounts. **Administration → Child Care Space Categories** manages this configuration separately from the remaining funding submission lines. Only system administrators can create, update, retire, or forward-apply categories; authenticated worksheet users retain category reads and occupancy editing. A category's funding period is selected when created and cannot be changed through an update.
 
 Category editors clear the previous record when navigating to another category. Late load or save responses cannot replace the currently requested record, and saving requires that record's identity to match the route.
 
@@ -30,13 +30,13 @@ Create and Edit offer an unchecked **Apply to existing centre worksheets from a 
 
 Estimated and actual totals each equal the snapshotted monthly amount multiplied by the corresponding occupancy rate. Decimal arithmetic produces totals at four decimal places.
 
-Occupancy inputs must be exactly representable at four decimal places. Excess precision is rejected, not silently rounded: at a monthly amount of `100.0000`, occupancy `0.1234` produces `12.3400`; `0.12345` is rejected. Changing only the estimate must not change the actual total.
+Category monthly amounts and occupancy inputs must be exactly representable at four decimal places. Excess precision is rejected, not silently rounded: at a monthly amount of `100.0000`, occupancy `0.1234` produces `12.3400`; `0.12345` is rejected. Changing only the estimate must not change the actual total.
 
-Occupancy saves and estimate replication reload ledger inputs within a database transaction before calculating totals. A stale editor cannot calculate a total from a rate that category propagation has already replaced.
+Occupancy saves and estimate replication reload ledger inputs within a database transaction before calculating totals. A stale editor cannot calculate a total from a rate that category propagation has already replaced. Category updates also reload and lock their current configuration before capturing the propagation baseline, so an earlier request's propagated snapshots are not mistaken for manual overrides.
 
 ## Provisioning and initialization
 
-Provisioning creates zeroed records for every active Child Care Space category in every fiscal month of its funding period, adding only missing pairs.
+First-time centre/funding-period setup creates zeroed records for every active Child Care Space category in every fiscal month. Shared ensures provision these rows only when no other initialization records or ledger history exist for that centre and funding period. Later ensures and seeds do not fill intentionally absent category/month pairs or restore retired pairs.
 
 Initial provisioning creates the configured monthly records. Afterward, worksheet access depends on the existing employee-benefit, building-expense, worksheet, and reconciliation setup, not the current category catalogue's completeness. Adding a category without propagation or starting in a later month does not block an initialized centre or force records into earlier months.
 
