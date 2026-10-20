@@ -3,6 +3,7 @@ import { isEmpty, isNil, isUndefined } from "lodash"
 
 import { ChildCareSpaceCategory, FundingPeriod, FundingSubmissionLine } from "@/models"
 import doesNotUseChildCareSpacesSection from "@/models/validators/does-not-use-child-care-spaces-section"
+import doesNotUseAdministrationSection from "@/models/validators/does-not-use-administration-section"
 
 import BaseService from "@/services/base-service"
 
@@ -32,11 +33,11 @@ export class BulkCreateService extends BaseService {
 
     const fundingSubmissionLinesAttributes = fundingSubmissionLineDefaults.map(
       (fundingSubmissionLineDefault) => {
-        const categoryName = this.isCategoryLinkableSection(
-          fundingSubmissionLineDefault.sectionName
-        )
-          ? this.categoryNameForDefault(fundingSubmissionLineDefault, sourceCategoryNames)
-          : undefined
+        const categoryName =
+          fundingSubmissionLineDefault.sectionName ===
+          FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM
+            ? this.categoryNameForDefault(fundingSubmissionLineDefault, sourceCategoryNames)
+            : undefined
         const childCareSpaceCategoryId = isUndefined(categoryName)
           ? null
           : (categoryIdsByName.get(categoryName) ?? null)
@@ -50,6 +51,7 @@ export class BulkCreateService extends BaseService {
     )
     for (const { sectionName } of fundingSubmissionLinesAttributes) {
       doesNotUseChildCareSpacesSection(sectionName)
+      doesNotUseAdministrationSection(sectionName)
     }
 
     return FundingSubmissionLine.bulkCreate(fundingSubmissionLinesAttributes)
@@ -64,13 +66,6 @@ export class BulkCreateService extends BaseService {
     }
 
     return sourceCategoryNames.get(line.childCareSpaceCategoryId)
-  }
-
-  private isCategoryLinkableSection(sectionName: string) {
-    return (
-      sectionName === "Administration (10% of Spaces)" ||
-      sectionName === FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM
-    )
   }
 
   private async categoryIdsByName(fundingPeriodId: number) {

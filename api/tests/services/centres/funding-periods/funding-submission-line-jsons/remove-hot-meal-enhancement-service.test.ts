@@ -112,7 +112,7 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
           dateStart: new Date("2025-04-15"),
         })
         const fundingSubmissionLine = await fundingSubmissionLineFactory.create({
-          sectionName: "Administration (10% of Spaces)",
+          sectionName: "Children with Diverse Needs",
           lineName: "Infants",
           monthlyAmount: "100.00",
         })
@@ -123,7 +123,7 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
           lines: [
             {
               submissionLineId: fundingSubmissionLine.id,
-              sectionName: "Administration (10% of Spaces)",
+              sectionName: "Children with Diverse Needs",
               lineName: "Infants",
               monthlyAmount: "150.0000",
               estimatedChildOccupancyRate: "0",
@@ -146,7 +146,7 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
             lines: [
               {
                 submissionLineId: fundingSubmissionLine.id,
-                sectionName: "Administration (10% of Spaces)",
+                sectionName: "Children with Diverse Needs",
                 lineName: "Infants",
                 monthlyAmount: "150.0000",
                 estimatedChildOccupancyRate: "0",
@@ -247,7 +247,7 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
           monthlyAmount: "100.00",
         })
         const otherLine = await fundingSubmissionLineFactory.create({
-          sectionName: "Administration (10% of Spaces)",
+          sectionName: "Children with Diverse Needs",
           lineName: "Infants",
           monthlyAmount: "200.00",
         })
@@ -275,7 +275,7 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
             },
             {
               submissionLineId: otherLine.id,
-              sectionName: "Administration (10% of Spaces)",
+              sectionName: "Children with Diverse Needs",
               lineName: "Infants",
               monthlyAmount: "232.0600",
               estimatedChildOccupancyRate: "0",
@@ -308,7 +308,7 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
               },
               {
                 submissionLineId: otherLine.id,
-                sectionName: "Administration (10% of Spaces)",
+                sectionName: "Children with Diverse Needs",
                 lineName: "Infants",
                 monthlyAmount: "232.0600",
                 estimatedChildOccupancyRate: "0",

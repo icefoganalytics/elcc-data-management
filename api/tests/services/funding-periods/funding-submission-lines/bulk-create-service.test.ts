@@ -99,7 +99,7 @@ describe("api/src/services/funding-periods/funding-submission-lines/bulk-create-
         })
         await fundingSubmissionLineFactory.create({
           fiscalYear: "2024/25",
-          sectionName: "Administration (10% of Spaces)",
+          sectionName: "Children with Diverse Needs",
           lineName: "Infants",
           monthlyAmount: "100.0000",
           childCareSpaceCategoryId: renamedCategory.id,
@@ -131,10 +131,10 @@ describe("api/src/services/funding-periods/funding-submission-lines/bulk-create-
         expect(persistedLines).toEqual(
           expect.arrayContaining([
             expect.objectContaining({
-              sectionName: "Administration (10% of Spaces)",
+              sectionName: "Children with Diverse Needs",
               lineName: "Infants",
               monthlyAmount: "100",
-              childCareSpaceCategoryId: targetCategory.id,
+              childCareSpaceCategoryId: null,
             }),
             expect.objectContaining({
               sectionName: "Quality Enhancement Program",

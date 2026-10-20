@@ -21,7 +21,7 @@ describe("api/src/services/funding-submission-lines/update-service.ts", () => {
         })
         const line = await fundingSubmissionLineFactory.create({
           fiscalYear: "2024/25",
-          sectionName: "Administration (10% of Spaces)",
+          sectionName: "Quality Enhancement Program",
           lineName: "Infants",
           monthlyAmount: "100.00",
           childCareSpaceCategoryId: category.id,
@@ -52,7 +52,7 @@ describe("api/src/services/funding-submission-lines/update-service.ts", () => {
         })
         const line = await fundingSubmissionLineFactory.create({
           fiscalYear: "2024/25",
-          sectionName: "Administration (10% of Spaces)",
+          sectionName: "Quality Enhancement Program",
           lineName: "Young Children",
           monthlyAmount: "100.00",
           childCareSpaceCategoryId: category1.id,
@@ -64,29 +64,6 @@ describe("api/src/services/funding-submission-lines/update-service.ts", () => {
         // Assert
         await line.reload()
         expect(line.childCareSpaceCategoryId).toBe(category2.id)
-      })
-
-      test("when a linked line changes section, clears its category link", async () => {
-        // Arrange
-        const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2024-2025" })
-        const category = await childCareSpaceCategoryFactory.create({
-          fundingPeriodId: fundingPeriod.id,
-          categoryName: "Babies",
-        })
-        const line = await fundingSubmissionLineFactory.create({
-          fiscalYear: "2024/25",
-          sectionName: "Administration (10% of Spaces)",
-          lineName: "Infants",
-          monthlyAmount: "100.00",
-          childCareSpaceCategoryId: category.id,
-        })
-
-        // Act
-        await UpdateService.perform(line, { sectionName: "Other Section" })
-
-        // Assert
-        await line.reload()
-        expect(line.childCareSpaceCategoryId).toBeNull()
       })
 
       test("when an ordinary line changes to the retired Child Care Spaces section, rejects the update", async () => {

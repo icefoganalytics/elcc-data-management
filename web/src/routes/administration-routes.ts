@@ -107,6 +107,37 @@ const routes = [
         props: true,
       },
       {
+        path: "administration/administration-cost-categories",
+        name: "administration/AdministrationCostCategoriesPage",
+        component: () => import("@/pages/administration/AdministrationCostCategoriesPage.vue"),
+      },
+      {
+        path: "administration/administration-cost-categories/new",
+        name: "administration/administration-cost-categories/AdministrationCostCategoryNewPage",
+        component: () =>
+          import(
+            "@/pages/administration/administration-cost-categories/AdministrationCostCategoryNewPage.vue"
+          ),
+      },
+      {
+        path: "administration/administration-cost-categories/:administrationCostCategoryId",
+        name: "administration/administration-cost-categories/AdministrationCostCategoryPage",
+        component: () =>
+          import(
+            "@/pages/administration/administration-cost-categories/AdministrationCostCategoryPage.vue"
+          ),
+        props: true,
+      },
+      {
+        path: "administration/administration-cost-categories/:administrationCostCategoryId/edit",
+        name: "administration/administration-cost-categories/AdministrationCostCategoryEditPage",
+        component: () =>
+          import(
+            "@/pages/administration/administration-cost-categories/AdministrationCostCategoryEditPage.vue"
+          ),
+        props: true,
+      },
+      {
         path: "administration/child-care-space-categories",
         name: "administration/ChildCareSpaceCategoriesPage",
         component: () =>

@@ -3,6 +3,8 @@ import FiscalPeriod from "@/models/fiscal-period"
 import { FundingSubmissionLineJson } from "@/models"
 
 import {
+  administrationCostCategoryFactory,
+  administrationCostFactory,
   buildingExpenseFactory,
   centreFactory,
   childCareSpaceCategoryFactory,
@@ -54,6 +56,46 @@ describe("api/src/services/funding-reconciliations/calculate-eligible-expenses-p
 
         // Assert
         expect(result).toBe("50.0000")
+      })
+
+      test("when an administration ledger exists, includes its actual total alongside JSON expenses", async () => {
+        // Arrange
+        const centre = await centreFactory.create()
+        const fundingPeriod = await fundingPeriodFactory.create({
+          fiscalYear: "2025-2026",
+          fromDate: new Date("2025-04-01"),
+          toDate: new Date("2026-03-31"),
+        })
+        const fiscalPeriod = await fiscalPeriodFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          fiscalYear: "2025-26",
+          month: FiscalPeriod.Months.APRIL,
+          dateStart: new Date("2025-04-01"),
+          dateEnd: new Date("2025-04-30"),
+        })
+        const category = await administrationCostCategoryFactory
+          .associations({ fundingPeriod })
+          .create({ categoryName: "Infants", monthlyAmount: "80.0000" })
+        await administrationCostFactory
+          .associations({ centre, fiscalPeriod, category })
+          .create({ actualChildOccupancyRate: "0.2500" })
+        await fundingSubmissionLineJsonFactory.create({
+          centreId: centre.id,
+          fiscalYear: "2025/26",
+          dateName: FundingSubmissionLineJson.Months.APRIL,
+          dateStart: new Date("2025-04-01"),
+          dateEnd: new Date("2025-04-30"),
+          values: JSON.stringify([{ actualComputedTotal: "50.0000" }]),
+        })
+
+        // Act
+        const result = await CalculateEligibleExpensesPeriodAmountService.perform(
+          centre.id,
+          fiscalPeriod.id
+        )
+
+        // Assert
+        expect(result).toBe("70.0000")
       })
 
       test("when there are no eligible expenses, returns zero", async () => {

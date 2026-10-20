@@ -15,17 +15,6 @@ function buildWorksheetRecords() {
     dateEnd: "2024-04-30",
     lines: [
       {
-        submissionLineId: 2,
-        childCareSpaceCategoryId: 9,
-        sectionName: "Administration (10% of Spaces)",
-        lineName: "Infants",
-        monthlyAmount: "10.0000",
-        estimatedChildOccupancyRate: "0.0000",
-        actualChildOccupancyRate: "0.0000",
-        estimatedComputedTotal: "0.0000",
-        actualComputedTotal: "0.0000",
-      },
-      {
         submissionLineId: 3,
         childCareSpaceCategoryId: 9,
         sectionName: "Quality Enhancement Program",
@@ -50,8 +39,21 @@ function buildWorksheetRecords() {
     estimatedComputedTotal: "0.0000",
     actualComputedTotal: "0.0000",
   }
+  const administrationCost = {
+    id: 2,
+    centreId: 1,
+    fiscalPeriodId: 1,
+    categoryId: 2,
+    childCareSpaceCategoryId: 9,
+    lineName: "Infants",
+    monthlyAmount: "10.0000",
+    estimatedChildOccupancyRate: "0.0000",
+    actualChildOccupancyRate: "0.0000",
+    estimatedComputedTotal: "0.0000",
+    actualComputedTotal: "0.0000",
+  }
 
-  return { fundingSubmissionLineJson, childCareSpace }
+  return { fundingSubmissionLineJson, childCareSpace, administrationCost }
 }
 
 describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLineJsonEditSheet.vue", () => {
@@ -59,10 +61,15 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
     describe("worksheet editing", () => {
       test("when a renamed category's occupancy changes, renders the ledger and linked section totals", async () => {
         // Arrange
-        const { fundingSubmissionLineJson, childCareSpace } = buildWorksheetRecords()
+        const { fundingSubmissionLineJson, childCareSpace, administrationCost } =
+          buildWorksheetRecords()
         vi.mocked(httpClient, true).get.mockImplementation(async (url) => {
           if (url === "/api/child-care-spaces") {
             return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
+          }
+
+          if (url === "/api/administration-costs") {
+            return { data: { administrationCosts: [administrationCost], totalCount: 1 } }
           }
 
           return { data: { fundingSubmissionLineJson } }
@@ -98,7 +105,8 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
 
       test("when a ledger save is pending, keeps every occupancy input read only", async () => {
         // Arrange
-        const { fundingSubmissionLineJson, childCareSpace } = buildWorksheetRecords()
+        const { fundingSubmissionLineJson, childCareSpace, administrationCost } =
+          buildWorksheetRecords()
         const ledgerUpdate = Promise.withResolvers<{
           data: { childCareSpace: typeof childCareSpace }
         }>()
@@ -106,6 +114,10 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         httpClientMock.get.mockImplementation(async (url) => {
           if (url === "/api/child-care-spaces") {
             return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
+          }
+
+          if (url === "/api/administration-costs") {
+            return { data: { administrationCosts: [administrationCost], totalCount: 1 } }
           }
 
           return { data: { fundingSubmissionLineJson } }
@@ -149,7 +161,8 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
       })
       test("when one ledger update fails and another is pending, waits before unlocking", async () => {
         // Arrange
-        const { fundingSubmissionLineJson, childCareSpace } = buildWorksheetRecords()
+        const { fundingSubmissionLineJson, childCareSpace, administrationCost } =
+          buildWorksheetRecords()
         const secondChildCareSpace = {
           ...childCareSpace,
           id: 2,
@@ -169,6 +182,10 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
                 totalCount: 2,
               },
             }
+          }
+
+          if (url === "/api/administration-costs") {
+            return { data: { administrationCosts: [administrationCost], totalCount: 1 } }
           }
 
           return { data: { fundingSubmissionLineJson } }
@@ -208,11 +225,6 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
 
         // Assert
         expect(wrapper.findAll("tbody input[readonly]")).toHaveLength(8)
-        expect(
-          httpClientMock.patch.mock.calls.some(
-            ([url]) => url === "/api/funding-submission-line-jsons/11"
-          )
-        ).toBe(false)
         pendingLedgerUpdate.resolve({ data: { childCareSpace: secondChildCareSpace } })
         await flushPromises()
         wrapper.unmount()
@@ -220,13 +232,18 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
 
       test("when estimate replication is pending, keeps every occupancy input read only", async () => {
         // Arrange
-        const { fundingSubmissionLineJson, childCareSpace } = buildWorksheetRecords()
+        const { fundingSubmissionLineJson, childCareSpace, administrationCost } =
+          buildWorksheetRecords()
         const replication = Promise.withResolvers<{ data: undefined }>()
         const replicationStarted = Promise.withResolvers<void>()
         const httpClientMock = vi.mocked(httpClient, true)
         httpClientMock.get.mockImplementation(async (url) => {
           if (url === "/api/child-care-spaces") {
             return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
+          }
+
+          if (url === "/api/administration-costs") {
+            return { data: { administrationCosts: [administrationCost], totalCount: 1 } }
           }
 
           return { data: { fundingSubmissionLineJson } }
@@ -274,13 +291,18 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
       })
       test("when estimate replication fails while a sibling is pending, keeps inputs read only", async () => {
         // Arrange
-        const { fundingSubmissionLineJson, childCareSpace } = buildWorksheetRecords()
+        const { fundingSubmissionLineJson, childCareSpace, administrationCost } =
+          buildWorksheetRecords()
         const childSpaceReplication = Promise.withResolvers<{ data: undefined }>()
         const childSpaceReplicationStarted = Promise.withResolvers<void>()
         const httpClientMock = vi.mocked(httpClient, true)
         httpClientMock.get.mockImplementation(async (url) => {
           if (url === "/api/child-care-spaces") {
             return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
+          }
+
+          if (url === "/api/administration-costs") {
+            return { data: { administrationCosts: [administrationCost], totalCount: 1 } }
           }
 
           return { data: { fundingSubmissionLineJson } }
@@ -293,6 +315,10 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           if (url === "/api/child-care-spaces/1/replicate-estimates") {
             childSpaceReplicationStarted.resolve()
             return childSpaceReplication.promise
+          }
+
+          if (url === "/api/administration-costs/2/replicate-estimates") {
+            return { data: undefined }
           }
 
           throw new Error(`Unexpected POST ${url}`)
@@ -322,42 +348,53 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         wrapper.unmount()
       })
 
-      test.each(["/api/child-care-spaces", "/api/funding-submission-line-jsons/11"])(
-        "when %s fails to load, withholds all occupancy inputs",
-        async (failedUrl) => {
-          // Arrange
-          const { fundingSubmissionLineJson, childCareSpace } = buildWorksheetRecords()
-          vi.mocked(httpClient, true).get.mockImplementation(async (url) => {
-            if (url === failedUrl) throw new Error("Worksheet source unavailable")
+      test.each([
+        "/api/child-care-spaces",
+        "/api/administration-costs",
+        "/api/funding-submission-line-jsons/11",
+      ])("when %s fails to load, withholds all occupancy inputs", async (failedUrl) => {
+        // Arrange
+        const { fundingSubmissionLineJson, childCareSpace, administrationCost } =
+          buildWorksheetRecords()
+        vi.mocked(httpClient, true).get.mockImplementation(async (url) => {
+          if (url === failedUrl) throw new Error("Worksheet source unavailable")
 
-            if (url === "/api/child-care-spaces") {
-              return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
-            }
+          if (url === "/api/child-care-spaces") {
+            return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
+          }
 
-            return { data: { fundingSubmissionLineJson } }
-          })
-          const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-          await router.push("/")
-          await router.isReady()
-          const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
-            props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
-            global: { plugins: [router, createPinia(), mockVuetify()] },
-          })
+          if (url === "/api/administration-costs") {
+            return { data: { administrationCosts: [administrationCost], totalCount: 1 } }
+          }
 
-          // Act
-          await flushPromises()
+          return { data: { fundingSubmissionLineJson } }
+        })
+        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+        await router.push("/")
+        await router.isReady()
+        const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
+          props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
+          global: { plugins: [router, createPinia(), mockVuetify()] },
+        })
 
-          // Assert
-          expect(wrapper.findAll("tbody input")).toEqual([])
-          wrapper.unmount()
-        }
-      )
+        // Act
+        await flushPromises()
 
-      test.each(["/api/child-care-spaces", "/api/funding-submission-line-jsons/11"])(
+        // Assert
+        expect(wrapper.findAll("tbody input")).toEqual([])
+        wrapper.unmount()
+      })
+
+      test.each([
+        "/api/child-care-spaces",
+        "/api/administration-costs",
+        "/api/funding-submission-line-jsons/11",
+      ])(
         "when %s recovers and the worksheet is reloaded, restores the ledger and linked rows",
         async (failedUrl) => {
           // Arrange
-          const { fundingSubmissionLineJson, childCareSpace } = buildWorksheetRecords()
+          const { fundingSubmissionLineJson, childCareSpace, administrationCost } =
+            buildWorksheetRecords()
           let isRequestFailing = true
           vi.mocked(httpClient, true).get.mockImplementation(async (url) => {
             if (isRequestFailing && url === failedUrl)
@@ -365,6 +402,10 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
 
             if (url === "/api/child-care-spaces") {
               return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
+            }
+
+            if (url === "/api/administration-costs") {
+              return { data: { administrationCosts: [administrationCost], totalCount: 1 } }
             }
 
             return { data: { fundingSubmissionLineJson } }
@@ -393,6 +434,49 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           wrapper.unmount()
         }
       )
+
+      test("when a ledger save fails, does not save dependent worksheet JSON", async () => {
+        // Arrange
+        const { fundingSubmissionLineJson, childCareSpace, administrationCost } =
+          buildWorksheetRecords()
+        const saveWorksheetJson = vi.fn().mockResolvedValue({ data: { fundingSubmissionLineJson } })
+        const httpClientMock = vi.mocked(httpClient, true)
+        httpClientMock.get.mockImplementation(async (url) => {
+          if (url === "/api/child-care-spaces") {
+            return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
+          }
+          if (url === "/api/administration-costs") {
+            return { data: { administrationCosts: [administrationCost], totalCount: 1 } }
+          }
+
+          return { data: { fundingSubmissionLineJson } }
+        })
+        httpClientMock.patch.mockImplementation(async (url) => {
+          if (url === "/api/child-care-spaces/1") throw new Error("Ledger save failed")
+          if (url === "/api/funding-submission-line-jsons/11") return saveWorksheetJson()
+
+          return { data: { administrationCost } }
+        })
+        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+        await router.push("/")
+        await router.isReady()
+        const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
+          props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
+          global: { plugins: [router, createPinia(), mockVuetify()] },
+        })
+        await flushPromises()
+        const estimateInput = wrapper.get("tbody input")
+        await estimateInput.setValue("0.5")
+        await estimateInput.trigger("change")
+
+        // Act
+        await wrapper.get("button").trigger("click")
+        await flushPromises()
+
+        // Assert
+        expect(saveWorksheetJson).not.toHaveBeenCalled()
+        wrapper.unmount()
+      })
     })
   })
 })

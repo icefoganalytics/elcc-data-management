@@ -1,4 +1,6 @@
 import {
+  AdministrationCost,
+  AdministrationCostCategory,
   BuildingExpense,
   Centre,
   EmployeeBenefit,
@@ -11,6 +13,8 @@ import {
 } from "@/models"
 
 import {
+  administrationCostCategoryFactory,
+  administrationCostFactory,
   buildingExpenseFactory,
   centreFactory,
   employeeBenefitFactory,
@@ -251,6 +255,33 @@ describe("api/src/services/centres/destroy-service.ts", () => {
         // Assert
         const fundingReconciliationAdjustmentCount = await FundingReconciliationAdjustment.count()
         expect(fundingReconciliationAdjustmentCount).toEqual(0)
+      })
+
+      test("when centre is deleted, removes its administration ledger but keeps annual configuration", async () => {
+        // Arrange
+        const currentUser = await userFactory.create()
+        const centre = await centreFactory.create()
+        const fundingPeriod = await fundingPeriodFactory.create({
+          fiscalYear: "2024-2025",
+        })
+        const fiscalPeriod = await fiscalPeriodFactory.associations({ fundingPeriod }).create({
+          fiscalYear: "2024-25",
+        })
+        const category = await administrationCostCategoryFactory
+          .associations({ fundingPeriod })
+          .create()
+        await administrationCostFactory.associations({ centre, fiscalPeriod, category }).create()
+
+        // Act
+        await DestroyService.perform(centre, currentUser)
+
+        // Assert
+        const administrationCostCount = await AdministrationCost.count({
+          where: { centreId: centre.id },
+        })
+        const persistedCategory = await AdministrationCostCategory.findByPk(category.id)
+        expect(administrationCostCount).toBe(0)
+        expect(persistedCategory).toEqual(expect.objectContaining({ deletedAt: null }))
       })
     })
   })
