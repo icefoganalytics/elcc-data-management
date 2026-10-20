@@ -153,6 +153,23 @@ describe("api/src/services/child-care-space-categories/create-service.ts", () =>
         const persistedCategories = await ChildCareSpaceCategory.findAll()
         expect(persistedCategories).toEqual([])
       })
+
+      test("when a category amount exceeds storage precision, rejects category creation", async () => {
+        // Arrange
+        const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2024-2025" })
+
+        // Act
+        const createPromise = CreateService.perform({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+          monthlyAmount: "0.12345",
+        })
+
+        // Assert
+        await expect(createPromise).rejects.toThrow(
+          "Child Care Space category monthly amounts support at most four decimal places"
+        )
+      })
     })
   })
 })

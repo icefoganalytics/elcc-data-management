@@ -1,4 +1,4 @@
-import { IsolationLevel, type Attributes } from "@sequelize/core"
+import { IsolationLevel, TableHints, type Attributes } from "@sequelize/core"
 import { isUndefined } from "lodash"
 
 import db, { ChildCareSpaceCategory } from "@/models"
@@ -30,14 +30,16 @@ export class UpdateService extends BaseService {
       throw new Error("applyToFutureMonths must be a boolean")
     }
 
-    const previousCategorySnapshot = {
-      categoryName: this.category.categoryName,
-      monthlyAmount: this.category.monthlyAmount,
-    }
     // Keep occupancy data locked while snapshot updates recompute their totals.
     return db.transaction(
       { isolationLevel: IsolationLevel.REPEATABLE_READ },
       async (transaction) => {
+        await this.category.reload({ transaction, tableHints: [TableHints.UPDLOCK] })
+        const previousCategorySnapshot = {
+          categoryName: this.category.categoryName,
+          monthlyAmount: this.category.monthlyAmount,
+        }
+
         await this.category.update(attributes, { transaction })
 
         if (applyToFutureMonths === true) {

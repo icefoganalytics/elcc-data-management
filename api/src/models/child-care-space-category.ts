@@ -14,7 +14,9 @@ import {
   HasMany,
   NotNull,
   PrimaryKey,
+  ValidateAttribute,
 } from "@sequelize/core/decorators-legacy"
+import Big from "big.js"
 
 import { ChildCareSpaceCategoriesFundingPeriodIdCategoryNameUniqueIndex } from "@/models/indexes"
 
@@ -60,6 +62,16 @@ export class ChildCareSpaceCategory extends BaseModel<
 
   @Attribute(DataTypes.DECIMAL(15, 4))
   @NotNull
+  @ValidateAttribute({
+    supportsFourDecimalPlaces(value: string) {
+      const monthlyAmount = new Big(value)
+      if (!monthlyAmount.eq(monthlyAmount.toFixed(4))) {
+        throw new Error(
+          "Child Care Space category monthly amounts support at most four decimal places"
+        )
+      }
+    },
+  })
   declare monthlyAmount: string
 
   @Attribute(DataTypes.DATE)

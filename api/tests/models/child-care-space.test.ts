@@ -49,7 +49,10 @@ describe("api/src/models/child-care-space.ts", () => {
           })
 
           // Act
-          await expect(childCareSpace.update(attributes)).rejects.toThrow()
+          const updatePromise = childCareSpace.update(attributes)
+
+          // Assert
+          await expect(updatePromise).rejects.toThrow()
         }
       )
 

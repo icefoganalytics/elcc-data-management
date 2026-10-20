@@ -486,6 +486,92 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
           }),
         ])
       })
+
+      test("when another request propagates first, uses the current category as its baseline", async () => {
+        // Arrange
+        const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2024-2025" })
+        const fiscalPeriod = await fiscalPeriodFactory.associations({ fundingPeriod }).create({
+          fiscalYear: "2024-25",
+          month: FiscalPeriod.Months.MAY,
+          dateStart: new Date("2024-05-01"),
+        })
+        const category = await childCareSpaceCategoryFactory
+          .associations({ fundingPeriod })
+          .create({ categoryName: "Infants", monthlyAmount: "100.0000" })
+        const staleCategory = await ChildCareSpaceCategory.findByPk(category.id, {
+          rejectOnEmpty: true,
+        })
+        const centre = await centreFactory.create()
+        const childCareSpace = await childCareSpaceFactory
+          .associations({ centre, fiscalPeriod, category })
+          .create({
+            estimatedChildOccupancyRate: "0.5000",
+            actualChildOccupancyRate: "0.0000",
+          })
+        await UpdateService.perform(category, {
+          categoryName: "First rename",
+          monthlyAmount: "125.0000",
+          applyToFutureMonths: true,
+          propagationStartFiscalPeriodId: fiscalPeriod.id,
+        })
+
+        // Act
+        await UpdateService.perform(staleCategory, {
+          categoryName: "Second rename",
+          monthlyAmount: "150.0000",
+          applyToFutureMonths: true,
+          propagationStartFiscalPeriodId: fiscalPeriod.id,
+        })
+
+        // Assert
+        const persistedSpaces = await ChildCareSpace.findAll()
+        expect(persistedSpaces).toEqual([
+          expect.objectContaining({
+            id: childCareSpace.id,
+            lineName: "Second rename",
+            monthlyAmount: "150",
+            estimatedChildOccupancyRate: "0.5",
+            estimatedComputedTotal: "75",
+          }),
+        ])
+      })
+
+      test("when a propagated amount exceeds storage precision, preserves the persisted ledger", async () => {
+        // Arrange
+        const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2024-2025" })
+        const fiscalPeriod = await fiscalPeriodFactory.associations({ fundingPeriod }).create({
+          fiscalYear: "2024-25",
+          month: FiscalPeriod.Months.MAY,
+          dateStart: new Date("2024-05-01"),
+        })
+        const category = await childCareSpaceCategoryFactory
+          .associations({ fundingPeriod })
+          .create({ categoryName: "Infants", monthlyAmount: "100.0000" })
+        const centre = await centreFactory.create()
+        const childCareSpace = await childCareSpaceFactory
+          .associations({ centre, fiscalPeriod, category })
+          .create({
+            estimatedChildOccupancyRate: "0.5000",
+            actualChildOccupancyRate: "0.0000",
+          })
+
+        // Act
+        await UpdateService.perform(category, {
+          monthlyAmount: "0.12345",
+          applyToFutureMonths: true,
+          propagationStartFiscalPeriodId: fiscalPeriod.id,
+        }).catch(() => undefined)
+
+        // Assert
+        const persistedSpaces = await ChildCareSpace.findAll()
+        expect(persistedSpaces).toEqual([
+          expect.objectContaining({
+            id: childCareSpace.id,
+            monthlyAmount: "100",
+            estimatedComputedTotal: "50",
+          }),
+        ])
+      })
     })
   })
 })
