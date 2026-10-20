@@ -361,12 +361,8 @@ async function replicateEstimatesForward() {
 
     const replicationRequests = [
       fundingSubmissionLineJsonsApi.replicateEstimates(fundingSubmissionLineJsonId.value),
-      ...childCareSpaces.value.map((childCareSpace) =>
-        childCareSpacesApi.replicateEstimates(childCareSpace.id)
-      ),
-      ...administrationCosts.value.map((cost) =>
-        administrationCostsApi.replicateEstimates(cost.id)
-      ),
+      replicateChildCareSpaceEstimates(),
+      replicateAdministrationCostEstimates(),
     ]
     await awaitMutationSettlements(replicationRequests)
     await Promise.all([
@@ -383,6 +379,18 @@ async function replicateEstimatesForward() {
     })
   } finally {
     isReplicatingEstimates.value = false
+  }
+}
+
+async function replicateChildCareSpaceEstimates() {
+  for (const childCareSpace of childCareSpaces.value) {
+    await childCareSpacesApi.replicateEstimates(childCareSpace.id)
+  }
+}
+
+async function replicateAdministrationCostEstimates() {
+  for (const administrationCost of administrationCosts.value) {
+    await administrationCostsApi.replicateEstimates(administrationCost.id)
   }
 }
 

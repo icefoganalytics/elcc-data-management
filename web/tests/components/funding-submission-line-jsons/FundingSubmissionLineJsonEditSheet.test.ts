@@ -477,6 +477,94 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         expect(saveWorksheetJson).not.toHaveBeenCalled()
         wrapper.unmount()
       })
+
+      test("when each ledger's first category replication is pending, does not dispatch its next category", async () => {
+        // Arrange
+        const { fundingSubmissionLineJson, childCareSpace, administrationCost } =
+          buildWorksheetRecords()
+        const secondChildCareSpace = {
+          ...childCareSpace,
+          id: 2,
+          categoryId: 10,
+          lineName: "Toddlers",
+        }
+        const secondAdministrationCost = {
+          ...administrationCost,
+          id: 3,
+          categoryId: 3,
+          childCareSpaceCategoryId: 10,
+          lineName: "Toddlers",
+        }
+        const pendingReplication = Promise.withResolvers<{ data: undefined }>()
+        const firstSpaceReplicationStarted = Promise.withResolvers<void>()
+        const firstAdministrationReplicationStarted = Promise.withResolvers<void>()
+        const nextCategoryReplication = vi.fn().mockResolvedValue({ data: undefined })
+        const httpClientMock = vi.mocked(httpClient, true)
+        httpClientMock.get.mockImplementation(async (url) => {
+          if (url === "/api/child-care-spaces") {
+            return {
+              data: { childCareSpaces: [childCareSpace, secondChildCareSpace], totalCount: 2 },
+            }
+          }
+          if (url === "/api/administration-costs") {
+            return {
+              data: {
+                administrationCosts: [administrationCost, secondAdministrationCost],
+                totalCount: 2,
+              },
+            }
+          }
+
+          return { data: { fundingSubmissionLineJson } }
+        })
+        httpClientMock.patch.mockResolvedValue({ data: { fundingSubmissionLineJson } })
+        httpClientMock.post.mockImplementation(async (url) => {
+          if (url === "/api/child-care-spaces/1/replicate-estimates") {
+            firstSpaceReplicationStarted.resolve()
+            return pendingReplication.promise
+          }
+          if (url === "/api/administration-costs/2/replicate-estimates") {
+            firstAdministrationReplicationStarted.resolve()
+            return pendingReplication.promise
+          }
+          if (
+            url === "/api/child-care-spaces/2/replicate-estimates" ||
+            url === "/api/administration-costs/3/replicate-estimates"
+          ) {
+            return nextCategoryReplication()
+          }
+
+          return { data: undefined }
+        })
+        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+        await router.push("/")
+        await router.isReady()
+        const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
+          props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
+          global: { plugins: [router, createPinia(), mockVuetify()] },
+        })
+        await flushPromises()
+        const replicateEstimatesButton = wrapper
+          .findAll("button")
+          .find((button) => button.text().includes("Replicate Estimates"))
+        if (!replicateEstimatesButton) {
+          throw new Error("Replicate Estimates button is missing")
+        }
+
+        try {
+          // Act
+          await replicateEstimatesButton.trigger("click")
+          await Promise.all([
+            firstSpaceReplicationStarted.promise,
+            firstAdministrationReplicationStarted.promise,
+          ])
+
+          // Assert
+          expect(nextCategoryReplication).not.toHaveBeenCalled()
+        } finally {
+          wrapper.unmount()
+        }
+      })
     })
   })
 })
