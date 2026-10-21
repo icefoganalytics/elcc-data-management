@@ -69,15 +69,19 @@ export function useEmployeeBenefit(id: Ref<number | null | undefined>) {
       if (latestRequest === request) {
         state.employeeBenefit = employeeBenefit
         state.policy = policy
-        persistedAttributes = pick(employeeBenefit, [
-          "grossPayrollMonthlyActual",
-          "grossPayrollMonthlyEstimated",
-          "costCapPercentage",
-          "employeeCostActual",
-          "employeeCostEstimated",
-          "employerCostActual",
-          "employerCostEstimated",
-        ])
+        // A returning record can finish an earlier save while this load is pending.
+        persistedAttributes = {
+          ...pick(employeeBenefit, [
+            "grossPayrollMonthlyActual",
+            "grossPayrollMonthlyEstimated",
+            "costCapPercentage",
+            "employeeCostActual",
+            "employeeCostEstimated",
+            "employerCostActual",
+            "employerCostEstimated",
+          ]),
+          ...persistedAttributes,
+        }
       }
       return employeeBenefit
     } catch (error) {
@@ -124,8 +128,6 @@ export function useEmployeeBenefit(id: Ref<number | null | undefined>) {
       persistence = previousSave.promise.then(async () => {
         if (latestRequest !== request) return
 
-        // The previous visit may have written after this record was fetched.
-        delete persistedAttributes[attribute]
         await persistAttribute(attribute, employeeBenefitId, request)
       })
     }
@@ -156,9 +158,10 @@ export function useEmployeeBenefit(id: Ref<number | null | undefined>) {
         if (isUndefined(value)) return
 
         await employeeBenefitsApi.update(employeeBenefitId, { [attribute]: value })
-        if (latestRequest !== request) return
+        if (unref(id) !== employeeBenefitId) return
 
         persistedAttributes[attribute] = value
+        if (latestRequest !== request) return
       }
 
       delete pendingChanges[attribute]
