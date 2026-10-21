@@ -88,8 +88,6 @@ type AdministrationWorksheetLine = {
 type AdministrationCategory = {
   id: number
   fundingPeriodId: number
-  childCareSpaceCategoryId: number | null
-  categoryName: string
 }
 
 type AdministrationCost = {
@@ -419,6 +417,7 @@ async function migrateAdministrationCategories(
     {
       sourceLine: FundingSubmissionLine
       fundingPeriodId: number
+      childCareSpaceCategoryId: number | null
       monthlyAmount: string
       deletedAt: DateValue | Knex.Raw
     }
@@ -433,7 +432,13 @@ async function migrateAdministrationCategories(
       )
     }
 
-    const childCareSpaceCategoryId = sourceLine.childCareSpaceCategoryId
+    const sourceYearMatchesCategoryYear =
+      isAdministrationSectionName(sourceLine.sectionName) &&
+      normalizeFiscalYear(sourceLine.fiscalYear) === normalizeFiscalYear(fundingPeriod.fiscalYear)
+    const isCurrentConfiguration = sourceYearMatchesCategoryYear && isNil(sourceLine.deletedAt)
+    const childCareSpaceCategoryId = sourceYearMatchesCategoryYear
+      ? sourceLine.childCareSpaceCategoryId
+      : null
     if (!isNil(childCareSpaceCategoryId)) {
       const childCareSpaceCategory = childCareCategoryById.get(childCareSpaceCategoryId)
       if (isUndefined(childCareSpaceCategory)) {
@@ -452,10 +457,6 @@ async function migrateAdministrationCategories(
       sourceLine.monthlyAmount,
       `Administration configuration ${sourceLine.id} monthlyAmount`
     )
-    const sourceYearMatchesCategoryYear =
-      isAdministrationSectionName(sourceLine.sectionName) &&
-      normalizeFiscalYear(sourceLine.fiscalYear) === normalizeFiscalYear(fundingPeriod.fiscalYear)
-    const isCurrentConfiguration = sourceYearMatchesCategoryYear && isNil(sourceLine.deletedAt)
     let deletedAt: DateValue | Knex.Raw = sourceLine.deletedAt
     if (!isCurrentConfiguration && isNil(deletedAt)) {
       deletedAt = knex.raw("GETUTCDATE()")
@@ -474,6 +475,7 @@ async function migrateAdministrationCategories(
     categoryAttributesByKey.set(categoryKey(sourceLine.id, fundingPeriodId), {
       sourceLine,
       fundingPeriodId,
+      childCareSpaceCategoryId,
       monthlyAmount,
       deletedAt,
     })
@@ -518,7 +520,8 @@ async function migrateAdministrationCategories(
   )
 
   for (const [key, categoryAttributes] of categoryAttributesByKey) {
-    const { sourceLine, fundingPeriodId, monthlyAmount, deletedAt } = categoryAttributes
+    const { sourceLine, fundingPeriodId, childCareSpaceCategoryId, monthlyAmount, deletedAt } =
+      categoryAttributes
     const existingCategory = categoryByKey.get(key)
     if (!isUndefined(existingCategory)) {
       assertCategoryMatchesSource(existingCategory, categoryAttributes)
@@ -528,7 +531,7 @@ async function migrateAdministrationCategories(
     const [insertedCategory] = await knex("administration_cost_categories")
       .insert({
         funding_period_id: fundingPeriodId,
-        child_care_space_category_id: sourceLine.childCareSpaceCategoryId,
+        child_care_space_category_id: childCareSpaceCategoryId,
         [KNEX_SOURCE_LINE_COLUMN]: sourceLine.id,
         category_name: sourceLine.lineName,
         from_age: sourceLine.fromAge,
@@ -547,7 +550,7 @@ async function migrateAdministrationCategories(
     categoryByKey.set(key, {
       id: insertedCategory.id,
       fundingPeriodId,
-      childCareSpaceCategoryId: sourceLine.childCareSpaceCategoryId,
+      childCareSpaceCategoryId,
       sourceFundingSubmissionLineId: sourceLine.id,
       categoryName: sourceLine.lineName,
       fromAge: sourceLine.fromAge,
@@ -563,8 +566,6 @@ async function migrateAdministrationCategories(
       {
         id: category.id,
         fundingPeriodId: category.fundingPeriodId,
-        childCareSpaceCategoryId: category.childCareSpaceCategoryId,
-        categoryName: category.categoryName,
       },
     ])
   )
@@ -583,15 +584,17 @@ function assertCategoryMatchesSource(
   categoryAttributes: {
     sourceLine: FundingSubmissionLine
     fundingPeriodId: number
+    childCareSpaceCategoryId: number | null
     monthlyAmount: string
     deletedAt: DateValue | Knex.Raw
   }
 ): void {
-  const { sourceLine, fundingPeriodId, monthlyAmount, deletedAt } = categoryAttributes
+  const { sourceLine, fundingPeriodId, childCareSpaceCategoryId, monthlyAmount, deletedAt } =
+    categoryAttributes
   const shouldBeDeleted = !isNil(deletedAt)
   if (
     existingCategory.fundingPeriodId !== fundingPeriodId ||
-    existingCategory.childCareSpaceCategoryId !== sourceLine.childCareSpaceCategoryId ||
+    existingCategory.childCareSpaceCategoryId !== childCareSpaceCategoryId ||
     existingCategory.categoryName !== sourceLine.lineName ||
     existingCategory.fromAge !== sourceLine.fromAge ||
     existingCategory.toAge !== sourceLine.toAge ||
@@ -725,7 +728,6 @@ function createAdministrationCost(
 
   const childCareSpaceCategoryId = optionalChildCareSpaceCategoryId(
     worksheetLine,
-    category.childCareSpaceCategoryId,
     childCareCategoryIds
   )
 
@@ -748,12 +750,11 @@ function createAdministrationCost(
 
 function optionalChildCareSpaceCategoryId(
   worksheetLine: AdministrationWorksheetLine,
-  categoryChildCareSpaceCategoryId: number | null,
   childCareCategoryIds: Set<number>
 ): number | null {
   const property = optionalProperty(worksheetLine, "childCareSpaceCategoryId")
   if (isUndefined(property)) {
-    return categoryChildCareSpaceCategoryId
+    return null
   }
   if (property.type === 0) {
     return null

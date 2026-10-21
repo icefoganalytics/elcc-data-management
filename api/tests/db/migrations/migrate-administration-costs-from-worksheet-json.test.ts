@@ -282,11 +282,107 @@ describe("api/src/db/migrations/20261020180002_migrate-administration-costs-from
           }),
           expect.objectContaining({
             fundingPeriodId,
-            childCareSpaceCategoryId: infantSpaceCategoryId,
+            childCareSpaceCategoryId: null,
             categoryName: "Infants",
             monthlyAmount: "70.0000",
             deleted_at: expect.anything(),
           }),
+        ])
+      })
+    })
+
+    test("when a historical snapshot omits its link, preserves null instead of the current template link", async () => {
+      await withLegacyAdministrationSchema(async (transaction) => {
+        // Arrange
+        const centreId = await createCentre(transaction)
+        const fundingPeriodId = await createFundingPeriod(transaction)
+        await createAprilFiscalPeriod(transaction, fundingPeriodId)
+        const childCareSpaceCategoryId = await createChildCareSpaceCategory(
+          transaction,
+          fundingPeriodId,
+          "Infants"
+        )
+        const sourceLineId = await createFundingSubmissionLine(transaction, {
+          childCareSpaceCategoryId,
+        })
+        await createWorksheet(
+          transaction,
+          centreId,
+          JSON.stringify([administrationValue(sourceLineId)])
+        )
+
+        // Act
+        await migrateAdministrationCosts(transaction)
+        await migrateAdministrationCosts(transaction)
+
+        // Assert
+        const administrationCosts = await transaction("administration_costs").select(
+          "child_care_space_category_id"
+        )
+        expect(administrationCosts).toEqual([{ child_care_space_category_id: null }])
+      })
+    })
+
+    test("when a source moves to a later year, preserves its older linked snapshot idempotently", async () => {
+      await withLegacyAdministrationSchema(async (transaction) => {
+        // Arrange
+        const centreId = await createCentre(transaction)
+        const historicalFundingPeriodId = await createFundingPeriod(transaction)
+        await createAprilFiscalPeriod(transaction, historicalFundingPeriodId)
+        const currentFundingPeriodId = await insertRow(transaction, "funding_periods", {
+          fiscal_year: "2148-2149",
+          from_date: new Date("2148-04-01T00:00:00Z"),
+          to_date: new Date("2149-03-31T23:59:59Z"),
+          title: "Current Administration Fixture Funding Period",
+        })
+        const historicalSpaceCategoryId = await createChildCareSpaceCategory(
+          transaction,
+          historicalFundingPeriodId,
+          "Historical Infants"
+        )
+        const currentSpaceCategoryId = await createChildCareSpaceCategory(
+          transaction,
+          currentFundingPeriodId,
+          "Current Infants"
+        )
+        const sourceLineId = await createFundingSubmissionLine(transaction, {
+          fiscalYear: "2148/49",
+          childCareSpaceCategoryId: currentSpaceCategoryId,
+        })
+        await createWorksheet(
+          transaction,
+          centreId,
+          JSON.stringify([
+            administrationValue(sourceLineId, {
+              childCareSpaceCategoryId: historicalSpaceCategoryId,
+            }),
+          ])
+        )
+
+        // Act
+        await migrateAdministrationCosts(transaction)
+        await migrateAdministrationCosts(transaction)
+
+        // Assert
+        const administrationCosts = await transaction("administration_costs")
+          .join(
+            "administration_cost_categories",
+            "administration_cost_categories.id",
+            "administration_costs.category_id"
+          )
+          .select(
+            { fundingPeriodId: "administration_cost_categories.funding_period_id" },
+            { categoryLink: "administration_cost_categories.child_care_space_category_id" },
+            { snapshotLink: "administration_costs.child_care_space_category_id" },
+            { categoryDeletedAt: "administration_cost_categories.deleted_at" }
+          )
+        expect(administrationCosts).toEqual([
+          {
+            fundingPeriodId: historicalFundingPeriodId,
+            categoryLink: null,
+            snapshotLink: historicalSpaceCategoryId,
+            categoryDeletedAt: expect.anything(),
+          },
         ])
       })
     })
