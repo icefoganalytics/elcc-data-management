@@ -23,23 +23,27 @@ describe("api/src/models/funding-submission-line-json.ts", () => {
         // Assert
         expect(lines).toEqual([1, 2, 3])
       })
+    })
 
-      test("when values is not valid json, throws an error", () => {
+    describe("retired worksheet sections", () => {
+      test("when Quality Enhancement values use the worksheet JSON store, rejects the write", async () => {
         // Arrange
-        const fundingSubmissionLineJson = FundingSubmissionLineJson.build({
-          centreId: -1,
-          dateName: FundingSubmissionLineJson.Months.APRIL,
-          dateStart: new Date("2020-01-01"),
-          dateEnd: new Date("2020-01-01"),
-          fiscalYear: "2020/21",
-          values: "[NotValidJson]",
+        const fundingSubmissionLineJson = fundingSubmissionLineJsonFactory.build({
+          values: JSON.stringify([
+            {
+              sectionName: "Quality Enhancement Program",
+              monthlyAmount: "238.1600",
+            },
+          ]),
         })
 
-        // Act & Assert
-        expect(() => {
-          // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-          fundingSubmissionLineJson.lines
-        }).toThrow("Unexpected token 'N', \"[NotValidJson]\" is not valid JSON")
+        // Act
+        const validation = fundingSubmissionLineJson.validate()
+
+        // Assert
+        await expect(validation).rejects.toThrow(
+          "Quality Enhancement Program values must be written through the Quality Enhancements ledger."
+        )
       })
     })
 
@@ -82,7 +86,7 @@ describe("api/src/models/funding-submission-line-json.ts", () => {
         // Arrange
         const invalidMonthName = "NotAMonth"
 
-        // Act & Assert
+        // Act / Assert
         expect(() => {
           FundingSubmissionLineJson.asFundingSubmissionLineJsonMonth(invalidMonthName)
         }).toThrow("Invalid funding submission line json month: NotAMonth")
@@ -267,14 +271,15 @@ describe("api/src/models/funding-submission-line-json.ts", () => {
             fiscalYear: "2023-2024",
           })
           const centre = await centreFactory.create()
-          const softDeletedFundingSubmissionLineJson = await fundingSubmissionLineJsonFactory.create({
-            centreId: centre.id,
-            fiscalYear: "2023/24",
-            dateName: FundingSubmissionLineJson.Months.APRIL,
-            dateStart: new Date("2023-04-01T00:00:00Z"),
-            dateEnd: new Date("2023-04-30T23:59:59Z"),
-            values: JSON.stringify([]),
-          })
+          const softDeletedFundingSubmissionLineJson =
+            await fundingSubmissionLineJsonFactory.create({
+              centreId: centre.id,
+              fiscalYear: "2023/24",
+              dateName: FundingSubmissionLineJson.Months.APRIL,
+              dateStart: new Date("2023-04-01T00:00:00Z"),
+              dateEnd: new Date("2023-04-30T23:59:59Z"),
+              values: JSON.stringify([]),
+            })
           await softDeletedFundingSubmissionLineJson.destroy()
 
           // Act

@@ -22,6 +22,7 @@ import { upperFirst } from "lodash"
 
 import { isValidFiscalYearLegacy } from "@/models/validators"
 import { doesNotContainChildCareSpaces } from "@/models/validators/does-not-contain-child-care-spaces"
+import { doesNotContainQualityEnhancements } from "@/models/validators/does-not-contain-quality-enhancements"
 
 import BaseModel from "@/models/base-model"
 import Centre from "@/models/centre"
@@ -94,6 +95,7 @@ export class FundingSubmissionLineJson extends BaseModel<
   @NotNull
   @ValidateAttribute({
     doesNotContainChildCareSpaces,
+    doesNotContainQualityEnhancements,
   })
   declare values: string
 

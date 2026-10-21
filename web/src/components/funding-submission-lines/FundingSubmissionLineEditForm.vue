@@ -39,25 +39,6 @@
         md="6"
       >
         <v-text-field
-          v-if="isImmutableSectionName"
-          v-model="fundingSubmissionLine.sectionName"
-          label="Section"
-          variant="outlined"
-          density="comfortable"
-        >
-          <template #append-inner>
-            <v-icon
-              icon="mdi-lock-outline"
-              end
-            />
-          </template>
-          <v-tooltip
-            activator="parent"
-            text="This section name is immutable and cannot be changed."
-          />
-        </v-text-field>
-        <v-text-field
-          v-else
           v-model="fundingSubmissionLine.sectionName"
           label="Section"
           variant="outlined"
@@ -141,12 +122,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, toRefs } from "vue"
+import { ref, toRefs } from "vue"
 import { isNil } from "lodash"
 
-import useFundingSubmissionLine, {
-  FundingSubmissionLineImmutableSectionNames,
-} from "@/use/use-funding-submission-line"
+import useFundingSubmissionLine from "@/use/use-funding-submission-line"
 import useSnack from "@/use/use-snack"
 
 import DescriptionElement from "@/components/common/DescriptionElement.vue"
@@ -164,13 +143,6 @@ const snack = useSnack()
 
 const { fundingSubmissionLineId } = toRefs(props)
 const { fundingSubmissionLine, save } = useFundingSubmissionLine(fundingSubmissionLineId)
-
-const isImmutableSectionName = computed(() => {
-  if (isNil(fundingSubmissionLine.value)) return false
-
-  const { sectionName } = fundingSubmissionLine.value
-  return Object.values<string>(FundingSubmissionLineImmutableSectionNames).includes(sectionName)
-})
 
 async function saveAndNotify() {
   if (isNil(fundingSubmissionLine.value)) return

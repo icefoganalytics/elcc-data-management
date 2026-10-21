@@ -90,10 +90,7 @@ export class UpdateService extends BaseService {
   }
 
   private isChildCareSpaceSection(sectionName: string) {
-    return (
-      sectionName === "Administration (10% of Spaces)" ||
-      sectionName === FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM
-    )
+    return sectionName === "Administration (10% of Spaces)"
   }
 }
 

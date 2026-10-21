@@ -6,3 +6,5 @@ export { EmployeeBenefitsCenterIdFiscalPeriodIdUniqueIndex } from "./employee-be
 export { EmployeeWageTiersFiscalPeriodIdTierLevelUniqueIndex } from "./employee-wage-tiers-fiscal-period-id-tier-level-unique-index"
 export { FiscalPeriodsFundingPeriodIdFiscalYearMonthUniqueIndex } from "./fiscal-periods-fiscal-year-month-unique-index"
 export { FundingRegionsRegionUniqueIndex } from "./funding-regions-region-unique-index"
+export { QualityEnhancementCategoriesFundingPeriodIdCategoryNameUniqueIndex } from "./quality-enhancement-categories-funding-period-id-category-name-unique-index"
+export { QualityEnhancementsCentreIdFiscalPeriodIdCategoryIdUniqueIndex } from "./quality-enhancements-centre-id-fiscal-period-id-category-id-unique-index"

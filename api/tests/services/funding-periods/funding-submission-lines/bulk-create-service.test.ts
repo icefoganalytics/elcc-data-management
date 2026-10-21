@@ -104,13 +104,6 @@ describe("api/src/services/funding-periods/funding-submission-lines/bulk-create-
           monthlyAmount: "100.0000",
           childCareSpaceCategoryId: renamedCategory.id,
         })
-        await fundingSubmissionLineFactory.create({
-          fiscalYear: "2024/25",
-          sectionName: "Quality Enhancement Program",
-          lineName: "Infants",
-          monthlyAmount: "250.0000",
-          childCareSpaceCategoryId: renamedCategory.id,
-        })
 
         const targetFundingPeriod = await fundingPeriodFactory.create({
           fiscalYear: "2025-2026",
@@ -128,23 +121,16 @@ describe("api/src/services/funding-periods/funding-submission-lines/bulk-create-
         const persistedLines = await FundingSubmissionLine.findAll({
           where: { fiscalYear: "2025/26" },
         })
-        expect(persistedLines).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              sectionName: "Administration (10% of Spaces)",
-              lineName: "Infants",
-              monthlyAmount: "100",
-              childCareSpaceCategoryId: targetCategory.id,
-            }),
-            expect.objectContaining({
-              sectionName: "Quality Enhancement Program",
-              lineName: "Infants",
-              monthlyAmount: "250",
-              childCareSpaceCategoryId: targetCategory.id,
-            }),
-          ])
-        )
+        expect(persistedLines).toEqual([
+          expect.objectContaining({
+            sectionName: "Administration (10% of Spaces)",
+            lineName: "Infants",
+            monthlyAmount: "100",
+            childCareSpaceCategoryId: targetCategory.id,
+          }),
+        ])
       })
+
       test("when the newest configuration contains the retired Child Care Spaces section, rejects cloning", async () => {
         // Arrange
         await FundingSubmissionLine.bulkCreate(
