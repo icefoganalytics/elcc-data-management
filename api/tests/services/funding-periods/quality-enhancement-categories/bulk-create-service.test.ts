@@ -106,4 +106,31 @@ describe("api/src/services/funding-periods/quality-enhancement-categories/bulk-c
       }),
     ])
   })
+
+  test("when creating an older missing funding period, clones the latest earlier configuration instead of future rates", async () => {
+    // Arrange
+    const earlierFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2024-2025" })
+    const targetFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2025-2026" })
+    const futureFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2026-2027" })
+    await qualityEnhancementCategoryFactory
+      .associations({ fundingPeriod: earlierFundingPeriod })
+      .create({ categoryName: "Infants", monthlyAmount: "206.1000" })
+    await qualityEnhancementCategoryFactory
+      .associations({ fundingPeriod: futureFundingPeriod })
+      .create({ categoryName: "Infants", monthlyAmount: "300.0000" })
+
+    // Act
+    await BulkCreateService.perform(targetFundingPeriod)
+
+    // Assert
+    const categories = await QualityEnhancementCategory.findAll({
+      where: { fundingPeriodId: targetFundingPeriod.id },
+    })
+    expect(categories).toEqual([
+      expect.objectContaining({
+        categoryName: "Infants",
+        monthlyAmount: "206.1",
+      }),
+    ])
+  })
 })
