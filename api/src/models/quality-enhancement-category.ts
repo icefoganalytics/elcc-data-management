@@ -11,7 +11,6 @@ import {
   AutoIncrement,
   BelongsTo,
   Default,
-  HasMany,
   NotNull,
   PrimaryKey,
   ValidateAttribute,
