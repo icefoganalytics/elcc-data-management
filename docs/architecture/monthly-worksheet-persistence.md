@@ -48,6 +48,8 @@ Missing funding-period mappings or conflicting category references abort the bac
 
 `quality_enhancement_categories` owns annual names, age ranges, base amounts, and optional Child Care Space category links. **Administration → Quality Enhancement Categories** provides dedicated create, read, edit, and retire pages. Only system administrators can mutate configuration; its funding period is immutable after creation. Editing or retiring a category does not rewrite existing monthly snapshots.
 
+New annual configuration copies the latest configured earlier fiscal year, never a future year. Source-period selection includes retired category history so an intentionally emptied year stays empty instead of reviving older categories or defaults.
+
 Each monthly `quality_enhancements` record preserves its category name/link, base amount, hot-meal increment/date, occupancy, and computed totals. Decimal arithmetic calculates its effective amount as base plus increment and rejects inputs beyond four decimal places. Initial centre/year provisioning snapshots active categories and the centre's regional hot-meal amount. Later ensures preserve deliberately absent or retired records.
 
 Hot-meal toggles affect current and future fiscal periods only, preserve occupancy, and recalculate totals from the stored base. Historical months remain unchanged. Editing a regional hot-meal amount does not propagate into existing worksheets. Estimate replication copies occupancy into later months of the same centre, category, and funding period, clears actuals, and preserves each target's rates and links.
