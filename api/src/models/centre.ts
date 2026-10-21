@@ -25,6 +25,7 @@ import FundingReconciliation from "@/models/funding-reconciliation"
 import FundingRegion from "@/models/funding-region"
 import FundingSubmissionLineJson from "@/models/funding-submission-line-json"
 import Payment from "@/models/payment"
+import QualityEnhancement from "@/models/quality-enhancement"
 import WageEnhancement from "@/models/wage-enhancement"
 
 // TODO: normalize status to snake_case
@@ -162,6 +163,14 @@ export class Centre extends BaseModel<InferAttributes<Centre>, InferCreationAttr
     },
   })
   declare childCareSpaces?: NonAttribute<ChildCareSpace[]>
+
+  @HasMany(() => QualityEnhancement, {
+    foreignKey: "centreId",
+    inverse: {
+      as: "centre",
+    },
+  })
+  declare qualityEnhancements?: NonAttribute<QualityEnhancement[]>
 
   @HasMany(() => EmployeeBenefit, {
     foreignKey: "centreId",

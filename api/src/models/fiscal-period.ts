@@ -30,6 +30,7 @@ import EmployeeWageTier from "@/models/employee-wage-tier"
 import FundingPeriod from "@/models/funding-period"
 import FundingReconciliationAdjustment from "@/models/funding-reconciliation-adjustment"
 import Payment from "@/models/payment"
+import QualityEnhancement from "@/models/quality-enhancement"
 
 /** Keep in sync with web/src/api/fiscal-periods-api.ts */
 export enum FiscalPeriodMonths {
@@ -173,6 +174,14 @@ export class FiscalPeriod extends BaseModel<
     },
   })
   declare childCareSpaces?: NonAttribute<ChildCareSpace[]>
+
+  @HasMany(() => QualityEnhancement, {
+    foreignKey: "fiscalPeriodId",
+    inverse: {
+      as: "fiscalPeriod",
+    },
+  })
+  declare qualityEnhancements?: NonAttribute<QualityEnhancement[]>
 
   @HasMany(() => EmployeeBenefit, {
     foreignKey: "fiscalPeriodId",

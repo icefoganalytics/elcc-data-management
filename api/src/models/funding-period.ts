@@ -23,6 +23,7 @@ import BaseModel from "@/models/base-model"
 import FiscalPeriod, { FiscalPeriodMonths } from "@/models/fiscal-period"
 import FundingReconciliation from "@/models/funding-reconciliation"
 import ChildCareSpaceCategory from "@/models/child-care-space-category"
+import QualityEnhancementCategory from "@/models/quality-enhancement-category"
 
 /**
  * Represents a fiscal year for funding reconciliation purposes.
@@ -96,6 +97,12 @@ export class FundingPeriod extends BaseModel<
     inverse: { as: "fundingPeriod" },
   })
   declare childCareSpaceCategories?: NonAttribute<ChildCareSpaceCategory[]>
+
+  @HasMany(() => QualityEnhancementCategory, {
+    foreignKey: "fundingPeriodId",
+    inverse: { as: "fundingPeriod" },
+  })
+  declare qualityEnhancementCategories?: NonAttribute<QualityEnhancementCategory[]>
 
   // Helpers
   forEachMonth(

@@ -7,6 +7,7 @@ import {
   FundingSubmissionLineJson,
   Log,
   Payment,
+  QualityEnhancement,
   WageEnhancement,
 } from "@/models"
 
@@ -21,6 +22,8 @@ import {
   fundingReconciliationFactory,
   fundingSubmissionLineJsonFactory,
   paymentFactory,
+  qualityEnhancementCategoryFactory,
+  qualityEnhancementFactory,
   userFactory,
   wageEnhancementFactory,
 } from "@/factories"
@@ -89,6 +92,37 @@ describe("api/src/services/centres/destroy-service.ts", () => {
           },
         })
         expect(buildingExpenseCount).toEqual(0)
+      })
+
+      test("when deleting a centre, retires its Quality Enhancements without affecting another centre", async () => {
+        // Arrange
+        const currentUser = await userFactory.create()
+        const centre = await centreFactory.create()
+        const otherCentre = await centreFactory.create()
+        const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2026-2027" })
+        const fiscalPeriod = await fiscalPeriodFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          fiscalYear: "2026-27",
+        })
+        const category = await qualityEnhancementCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+        })
+        await qualityEnhancementFactory.associations({ centre, category, fiscalPeriod }).create()
+        const otherQualityEnhancement = await qualityEnhancementFactory
+          .associations({ centre: otherCentre, category, fiscalPeriod })
+          .create()
+
+        // Act
+        await DestroyService.perform(centre, currentUser)
+
+        // Assert
+        const qualityEnhancements = await QualityEnhancement.findAll()
+        expect(qualityEnhancements).toEqual([
+          expect.objectContaining({
+            id: otherQualityEnhancement.id,
+            centreId: otherCentre.id,
+          }),
+        ])
       })
 
       test("when centre has employee benefits, destroys them with the centre", async () => {

@@ -208,54 +208,23 @@ describe("api/src/models/funding-submission-line.ts", () => {
       })
     })
 
-    describe("Model Validators", () => {
-      describe("#ensureImmutableSectionNamesRemainUnchanged", () => {
-        test("when updating immutable section name to different value, validation fails", async () => {
-          // Arrange
-          const fundingSubmissionLine = await fundingSubmissionLineFactory.create({
-            fiscalYear: "2023/24",
-            sectionName: FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM,
-            lineName: "Infants",
-            monthlyAmount: "206.1000",
-          })
-
-          fundingSubmissionLine.set("sectionName", "Administration")
-
-          // Act
-          const validation = fundingSubmissionLine.validate()
-
-          // Assert
-          await expect(validation).rejects.toThrow(
-            `Section name "Quality Enhancement Program" is immutable and cannot be changed.`
-          )
+    describe("retired worksheet sections", () => {
+      test("when Quality Enhancement configuration uses the shared submission-line store, rejects the write", async () => {
+        // Arrange
+        const fundingSubmissionLine = FundingSubmissionLine.build({
+          fiscalYear: "2026/27",
+          sectionName: "Quality Enhancement Program",
+          lineName: "Infants",
+          monthlyAmount: "206.1000",
         })
 
-        test("when an immutable section retains its name, persists other editable fields", async () => {
-          // Arrange
-          const fundingSubmissionLine = await fundingSubmissionLineFactory.create({
-            fiscalYear: "2023/24",
-            sectionName: FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM,
-            lineName: "Infants",
-            monthlyAmount: "206.1000",
-          })
+        // Act
+        const validation = fundingSubmissionLine.validate()
 
-          // Act
-          await fundingSubmissionLine.update({
-            sectionName: FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM,
-            lineName: "Updated Infants",
-            monthlyAmount: "250.0000",
-          })
-
-          // Assert
-          await fundingSubmissionLine.reload()
-          expect(fundingSubmissionLine).toEqual(
-            expect.objectContaining({
-              sectionName: "Quality Enhancement Program",
-              lineName: "Updated Infants",
-              monthlyAmount: "250",
-            })
-          )
-        })
+        // Assert
+        await expect(validation).rejects.toThrow(
+          "Quality Enhancement Program configuration must use Quality Enhancement Categories."
+        )
       })
     })
   })

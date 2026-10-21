@@ -8,7 +8,7 @@
     type="error"
     variant="tonal"
   >
-    Worksheet data could not be loaded. Reload both sources before editing.
+    Worksheet data could not be loaded. Reload all sources before editing.
     <v-btn
       class="ml-3"
       variant="outlined"
@@ -84,9 +84,13 @@ import childCareSpacesApi, { CHILD_CARE_SPACES_SECTION_NAME } from "@/api/child-
 import fundingSubmissionLineJsonsApi, {
   type FundingLineValue,
 } from "@/api/funding-submission-line-jsons-api"
+import qualityEnhancementsApi, {
+  QUALITY_ENHANCEMENTS_SECTION_NAME,
+} from "@/api/quality-enhancements-api"
 import { useNotificationStore } from "@/store/NotificationStore"
 import useChildCareSpaces from "@/use/use-child-care-spaces"
 import useFundingSubmissionLineJson from "@/use/use-funding-submission-line-json"
+import useQualityEnhancements from "@/use/use-quality-enhancements"
 
 import KeyboardShortcutsModal from "@/components/common/KeyboardShortcutsModal.vue"
 import FundingSubmissionLineJsonSectionTable, {
@@ -127,13 +131,31 @@ const {
   refresh: refreshChildCareSpaces,
 } = useChildCareSpaces(childCareSpacesQuery)
 
+const qualityEnhancementsQuery = computed(() => ({
+  where: {
+    centreId: props.centreId,
+    fiscalPeriodId: props.fiscalPeriodId,
+  },
+  perPage: -1,
+}))
+const {
+  qualityEnhancements,
+  isLoading: isLoadingQualityEnhancements,
+  isErrored: isErroredQualityEnhancements,
+  refresh: refreshQualityEnhancements,
+} = useQualityEnhancements(qualityEnhancementsQuery)
+
 const isLoading = computed(
-  () => isLoadingFundingSubmissionLineJson.value || isLoadingChildCareSpaces.value
+  () =>
+    isLoadingFundingSubmissionLineJson.value ||
+    isLoadingChildCareSpaces.value ||
+    isLoadingQualityEnhancements.value
 )
 const isErrored = computed(
   () =>
     isErroredFundingSubmissionLineJson.value ||
     isErroredChildCareSpaces.value ||
+    isErroredQualityEnhancements.value ||
     isNil(fundingSubmissionLineJson.value)
 )
 const isSaving = ref(false)
@@ -165,6 +187,21 @@ const childCareSpacesAsFundingLineValues = computed<FundingLineValue[]>(() => {
     })
   })
 })
+const qualityEnhancementsAsFundingLineValues = computed<FundingLineValue[]>(() =>
+  qualityEnhancements.value.map((qualityEnhancement) =>
+    reactive({
+      submissionLineId: qualityEnhancement.categoryId,
+      childCareSpaceCategoryId: qualityEnhancement.childCareSpaceCategoryId ?? undefined,
+      sectionName: QUALITY_ENHANCEMENTS_SECTION_NAME,
+      lineName: qualityEnhancement.lineName,
+      monthlyAmount: qualityEnhancement.monthlyAmount,
+      estimatedChildOccupancyRate: qualityEnhancement.estimatedChildOccupancyRate,
+      actualChildOccupancyRate: qualityEnhancement.actualChildOccupancyRate,
+      estimatedComputedTotal: qualityEnhancement.estimatedComputedTotal,
+      actualComputedTotal: qualityEnhancement.actualComputedTotal,
+    })
+  )
+)
 const sections = computed<{ sectionName: string; lines: FundingLineValue[] }[]>(() => {
   if (isNil(fundingSubmissionLineJson.value)) {
     return []
@@ -175,9 +212,22 @@ const sections = computed<{ sectionName: string; lines: FundingLineValue[] }[]>(
     ...fundingSubmissionLineJson.value.lines,
   ]
   const sectionGroups = groupBy(lines, "sectionName")
-  return Object.entries(sectionGroups).map(([sectionName, lines]) => {
-    return { sectionName, lines }
-  })
+  const worksheetSections = Object.entries(sectionGroups).map(([sectionName, lines]) => ({
+    sectionName,
+    lines,
+  }))
+  if (qualityEnhancementsAsFundingLineValues.value.length > 0) {
+    const administrationSectionIndex = worksheetSections.findIndex(
+      ({ sectionName }) => sectionName === "Administration (10% of Spaces)"
+    )
+    const qualityEnhancementSectionIndex = Math.max(administrationSectionIndex + 1, 1)
+    worksheetSections.splice(qualityEnhancementSectionIndex, 0, {
+      sectionName: QUALITY_ENHANCEMENTS_SECTION_NAME,
+      lines: qualityEnhancementsAsFundingLineValues.value,
+    })
+  }
+
+  return worksheetSections
 })
 const fundingSubmissionLineJsonSectionTables = ref<
   InstanceType<typeof FundingSubmissionLineJsonSectionTable>[]
@@ -186,7 +236,11 @@ const notificationStore = useNotificationStore()
 
 async function reloadWorksheet() {
   try {
-    await Promise.all([refreshChildCareSpaces(), refreshFundingSubmissionLineJson()])
+    await Promise.all([
+      refreshChildCareSpaces(),
+      refreshQualityEnhancements(),
+      refreshFundingSubmissionLineJson(),
+    ])
   } catch (error) {
     notificationStore.notify({
       text: `Failed to load worksheet: ${error}`,
@@ -237,19 +291,29 @@ async function saveFundingSubmissionLineJson(): Promise<boolean> {
       })
     }
 
-    const childCareSpaceUpdateRequests = childCareSpaceUpdates.map(({ id, update }) =>
-      childCareSpacesApi.update(id, update)
-    )
-    await awaitMutationSettlements(childCareSpaceUpdateRequests)
+    const qualityEnhancementUpdates = buildQualityEnhancementUpdates()
+    const ledgerUpdateRequests = [
+      ...childCareSpaceUpdates.map(({ id, update }) => childCareSpacesApi.update(id, update)),
+      ...qualityEnhancementUpdates.map(({ id, update }) =>
+        qualityEnhancementsApi.update(id, update)
+      ),
+    ]
+    await awaitMutationSettlements(ledgerUpdateRequests)
     const linesInOtherSections = sections.value.filter(
-      ({ sectionName }) => sectionName !== CHILD_CARE_SPACES_SECTION_NAME
+      ({ sectionName }) =>
+        sectionName !== CHILD_CARE_SPACES_SECTION_NAME &&
+        sectionName !== QUALITY_ENHANCEMENTS_SECTION_NAME
     )
     const fundingSubmissionLineJsonLines = linesInOtherSections.flatMap(({ lines }) => lines)
 
     await fundingSubmissionLineJsonsApi.update(fundingSubmissionLineJsonId.value, {
       lines: fundingSubmissionLineJsonLines,
     })
-    await Promise.all([refreshChildCareSpaces(), refreshFundingSubmissionLineJson()])
+    await Promise.all([
+      refreshChildCareSpaces(),
+      refreshQualityEnhancements(),
+      refreshFundingSubmissionLineJson(),
+    ])
 
     emit("update:fundingSubmissionLineJson", fundingSubmissionLineJsonId.value)
     return true
@@ -263,6 +327,40 @@ async function saveFundingSubmissionLineJson(): Promise<boolean> {
   } finally {
     isSaving.value = false
   }
+}
+
+function buildQualityEnhancementUpdates() {
+  const qualityEnhancementsByCategoryId = new Map(
+    qualityEnhancements.value.map((qualityEnhancement) => [
+      qualityEnhancement.categoryId,
+      qualityEnhancement,
+    ])
+  )
+  const updates = []
+
+  for (const line of qualityEnhancementsAsFundingLineValues.value) {
+    const qualityEnhancement = qualityEnhancementsByCategoryId.get(line.submissionLineId)
+    if (isNil(qualityEnhancement)) {
+      throw new Error(`Quality Enhancement for category ${line.submissionLineId} is missing`)
+    }
+
+    if (
+      qualityEnhancement.estimatedChildOccupancyRate === line.estimatedChildOccupancyRate &&
+      qualityEnhancement.actualChildOccupancyRate === line.actualChildOccupancyRate
+    ) {
+      continue
+    }
+
+    updates.push({
+      id: qualityEnhancement.id,
+      update: {
+        estimatedChildOccupancyRate: line.estimatedChildOccupancyRate,
+        actualChildOccupancyRate: line.actualChildOccupancyRate,
+      },
+    })
+  }
+
+  return updates
 }
 
 async function awaitMutationSettlements(mutations: Promise<unknown>[]) {
@@ -286,12 +384,15 @@ async function replicateEstimatesForward() {
 
     const replicationRequests = [
       fundingSubmissionLineJsonsApi.replicateEstimates(fundingSubmissionLineJsonId.value),
-      ...childCareSpaces.value.map((childCareSpace) =>
-        childCareSpacesApi.replicateEstimates(childCareSpace.id)
-      ),
+      replicateChildCareSpaceEstimates(),
+      replicateQualityEnhancementEstimates(),
     ]
     await awaitMutationSettlements(replicationRequests)
-    await Promise.all([refreshChildCareSpaces(), refreshFundingSubmissionLineJson()])
+    await Promise.all([
+      refreshChildCareSpaces(),
+      refreshQualityEnhancements(),
+      refreshFundingSubmissionLineJson(),
+    ])
 
     emit("update:fundingSubmissionLineJson", fundingSubmissionLineJsonId.value)
   } catch (error) {
@@ -301,6 +402,18 @@ async function replicateEstimatesForward() {
     })
   } finally {
     isReplicatingEstimates.value = false
+  }
+}
+
+async function replicateChildCareSpaceEstimates() {
+  for (const childCareSpace of childCareSpaces.value) {
+    await childCareSpacesApi.replicateEstimates(childCareSpace.id)
+  }
+}
+
+async function replicateQualityEnhancementEstimates() {
+  for (const qualityEnhancement of qualityEnhancements.value) {
+    await qualityEnhancementsApi.replicateEstimates(qualityEnhancement.id)
   }
 }
 

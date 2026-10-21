@@ -10,6 +10,8 @@ import db, {
   FundingSubmissionLine,
   FundingSubmissionLineJson,
   Payment,
+  QualityEnhancement,
+  QualityEnhancementCategory,
   WageEnhancement,
 } from "@/models"
 import BaseService from "@/services/base-service"
@@ -36,6 +38,8 @@ export class DestroyService extends BaseService {
     await this.destroyDependentBuildingExpenses(fundingPeriodId)
     await this.destroyDependentChildCareSpaces(fundingPeriodId)
     await this.destroyDependentChildCareSpaceCategories(fundingPeriodId)
+    await this.destroyDependentQualityEnhancements(fundingPeriodId)
+    await this.destroyDependentQualityEnhancementCategories(fundingPeriodId)
     await this.destroyDependentPayments(fundingPeriodId)
     await this.destroyDependentFundingReconciliations(fundingPeriodId)
     await this.destroyDependentFundingSubmissionLines(fundingPeriodId)
@@ -75,6 +79,16 @@ export class DestroyService extends BaseService {
 
   private async destroyDependentChildCareSpaceCategories(fundingPeriodId: number) {
     await ChildCareSpaceCategory.destroy({ where: { fundingPeriodId } })
+  }
+
+  private async destroyDependentQualityEnhancements(fundingPeriodId: number) {
+    await QualityEnhancement.withScope({
+      method: ["byFundingPeriod", fundingPeriodId],
+    }).destroy({ where: {} })
+  }
+
+  private async destroyDependentQualityEnhancementCategories(fundingPeriodId: number) {
+    await QualityEnhancementCategory.destroy({ where: { fundingPeriodId } })
   }
 
   private async destroyDependentPayments(fundingPeriodId: number) {

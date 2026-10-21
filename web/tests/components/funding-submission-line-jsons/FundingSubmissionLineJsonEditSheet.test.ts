@@ -25,17 +25,6 @@ function buildWorksheetRecords() {
         estimatedComputedTotal: "0.0000",
         actualComputedTotal: "0.0000",
       },
-      {
-        submissionLineId: 3,
-        childCareSpaceCategoryId: 9,
-        sectionName: "Quality Enhancement Program",
-        lineName: "Infants",
-        monthlyAmount: "20.0000",
-        estimatedChildOccupancyRate: "0.0000",
-        actualChildOccupancyRate: "0.0000",
-        estimatedComputedTotal: "0.0000",
-        actualComputedTotal: "0.0000",
-      },
     ],
   }
   const childCareSpace = {
@@ -50,8 +39,24 @@ function buildWorksheetRecords() {
     estimatedComputedTotal: "0.0000",
     actualComputedTotal: "0.0000",
   }
+  const qualityEnhancement = {
+    id: 3,
+    centreId: 1,
+    fiscalPeriodId: 1,
+    categoryId: 12,
+    childCareSpaceCategoryId: 9,
+    lineName: "Infants",
+    baseMonthlyAmount: "20.0000",
+    hotMealIncrementAmount: "0.0000",
+    hotMealAppliedAt: null,
+    monthlyAmount: "20.0000",
+    estimatedChildOccupancyRate: "0.0000",
+    actualChildOccupancyRate: "0.0000",
+    estimatedComputedTotal: "0.0000",
+    actualComputedTotal: "0.0000",
+  }
 
-  return { fundingSubmissionLineJson, childCareSpace }
+  return { fundingSubmissionLineJson, childCareSpace, qualityEnhancement }
 }
 
 describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLineJsonEditSheet.vue", () => {
@@ -59,10 +64,14 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
     describe("worksheet editing", () => {
       test("when a renamed category's occupancy changes, renders the ledger and linked section totals", async () => {
         // Arrange
-        const { fundingSubmissionLineJson, childCareSpace } = buildWorksheetRecords()
+        const { fundingSubmissionLineJson, childCareSpace, qualityEnhancement } =
+          buildWorksheetRecords()
         vi.mocked(httpClient, true).get.mockImplementation(async (url) => {
           if (url === "/api/child-care-spaces") {
             return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
+          }
+          if (url === "/api/quality-enhancements") {
+            return { data: { qualityEnhancements: [qualityEnhancement], totalCount: 1 } }
           }
 
           return { data: { fundingSubmissionLineJson } }
@@ -98,7 +107,8 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
 
       test("when a ledger save is pending, keeps every occupancy input read only", async () => {
         // Arrange
-        const { fundingSubmissionLineJson, childCareSpace } = buildWorksheetRecords()
+        const { fundingSubmissionLineJson, childCareSpace, qualityEnhancement } =
+          buildWorksheetRecords()
         const ledgerUpdate = Promise.withResolvers<{
           data: { childCareSpace: typeof childCareSpace }
         }>()
@@ -106,6 +116,9 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         httpClientMock.get.mockImplementation(async (url) => {
           if (url === "/api/child-care-spaces") {
             return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
+          }
+          if (url === "/api/quality-enhancements") {
+            return { data: { qualityEnhancements: [qualityEnhancement], totalCount: 1 } }
           }
 
           return { data: { fundingSubmissionLineJson } }
@@ -149,7 +162,8 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
       })
       test("when one ledger update fails and another is pending, waits before unlocking", async () => {
         // Arrange
-        const { fundingSubmissionLineJson, childCareSpace } = buildWorksheetRecords()
+        const { fundingSubmissionLineJson, childCareSpace, qualityEnhancement } =
+          buildWorksheetRecords()
         const secondChildCareSpace = {
           ...childCareSpace,
           id: 2,
@@ -169,6 +183,9 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
                 totalCount: 2,
               },
             }
+          }
+          if (url === "/api/quality-enhancements") {
+            return { data: { qualityEnhancements: [qualityEnhancement], totalCount: 1 } }
           }
 
           return { data: { fundingSubmissionLineJson } }
@@ -220,13 +237,17 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
 
       test("when estimate replication is pending, keeps every occupancy input read only", async () => {
         // Arrange
-        const { fundingSubmissionLineJson, childCareSpace } = buildWorksheetRecords()
+        const { fundingSubmissionLineJson, childCareSpace, qualityEnhancement } =
+          buildWorksheetRecords()
         const replication = Promise.withResolvers<{ data: undefined }>()
         const replicationStarted = Promise.withResolvers<void>()
         const httpClientMock = vi.mocked(httpClient, true)
         httpClientMock.get.mockImplementation(async (url) => {
           if (url === "/api/child-care-spaces") {
             return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
+          }
+          if (url === "/api/quality-enhancements") {
+            return { data: { qualityEnhancements: [qualityEnhancement], totalCount: 1 } }
           }
 
           return { data: { fundingSubmissionLineJson } }
@@ -274,13 +295,17 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
       })
       test("when estimate replication fails while a sibling is pending, keeps inputs read only", async () => {
         // Arrange
-        const { fundingSubmissionLineJson, childCareSpace } = buildWorksheetRecords()
+        const { fundingSubmissionLineJson, childCareSpace, qualityEnhancement } =
+          buildWorksheetRecords()
         const childSpaceReplication = Promise.withResolvers<{ data: undefined }>()
         const childSpaceReplicationStarted = Promise.withResolvers<void>()
         const httpClientMock = vi.mocked(httpClient, true)
         httpClientMock.get.mockImplementation(async (url) => {
           if (url === "/api/child-care-spaces") {
             return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
+          }
+          if (url === "/api/quality-enhancements") {
+            return { data: { qualityEnhancements: [qualityEnhancement], totalCount: 1 } }
           }
 
           return { data: { fundingSubmissionLineJson } }
@@ -293,6 +318,9 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           if (url === "/api/child-care-spaces/1/replicate-estimates") {
             childSpaceReplicationStarted.resolve()
             return childSpaceReplication.promise
+          }
+          if (url === "/api/quality-enhancements/3/replicate-estimates") {
+            return { data: undefined }
           }
 
           throw new Error(`Unexpected POST ${url}`)
@@ -322,42 +350,52 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         wrapper.unmount()
       })
 
-      test.each(["/api/child-care-spaces", "/api/funding-submission-line-jsons/11"])(
-        "when %s fails to load, withholds all occupancy inputs",
-        async (failedUrl) => {
-          // Arrange
-          const { fundingSubmissionLineJson, childCareSpace } = buildWorksheetRecords()
-          vi.mocked(httpClient, true).get.mockImplementation(async (url) => {
-            if (url === failedUrl) throw new Error("Worksheet source unavailable")
+      test.each([
+        "/api/child-care-spaces",
+        "/api/quality-enhancements",
+        "/api/funding-submission-line-jsons/11",
+      ])("when %s fails to load, withholds all occupancy inputs", async (failedUrl) => {
+        // Arrange
+        const { fundingSubmissionLineJson, childCareSpace, qualityEnhancement } =
+          buildWorksheetRecords()
+        vi.mocked(httpClient, true).get.mockImplementation(async (url) => {
+          if (url === failedUrl) throw new Error("Worksheet source unavailable")
 
-            if (url === "/api/child-care-spaces") {
-              return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
-            }
+          if (url === "/api/child-care-spaces") {
+            return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
+          }
+          if (url === "/api/quality-enhancements") {
+            return { data: { qualityEnhancements: [qualityEnhancement], totalCount: 1 } }
+          }
 
-            return { data: { fundingSubmissionLineJson } }
-          })
-          const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-          await router.push("/")
-          await router.isReady()
-          const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
-            props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
-            global: { plugins: [router, createPinia(), mockVuetify()] },
-          })
+          return { data: { fundingSubmissionLineJson } }
+        })
+        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+        await router.push("/")
+        await router.isReady()
+        const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
+          props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
+          global: { plugins: [router, createPinia(), mockVuetify()] },
+        })
 
-          // Act
-          await flushPromises()
+        // Act
+        await flushPromises()
 
-          // Assert
-          expect(wrapper.findAll("tbody input")).toEqual([])
-          wrapper.unmount()
-        }
-      )
+        // Assert
+        expect(wrapper.findAll("tbody input")).toEqual([])
+        wrapper.unmount()
+      })
 
-      test.each(["/api/child-care-spaces", "/api/funding-submission-line-jsons/11"])(
+      test.each([
+        "/api/child-care-spaces",
+        "/api/quality-enhancements",
+        "/api/funding-submission-line-jsons/11",
+      ])(
         "when %s recovers and the worksheet is reloaded, restores the ledger and linked rows",
         async (failedUrl) => {
           // Arrange
-          const { fundingSubmissionLineJson, childCareSpace } = buildWorksheetRecords()
+          const { fundingSubmissionLineJson, childCareSpace, qualityEnhancement } =
+            buildWorksheetRecords()
           let isRequestFailing = true
           vi.mocked(httpClient, true).get.mockImplementation(async (url) => {
             if (isRequestFailing && url === failedUrl)
@@ -365,6 +403,9 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
 
             if (url === "/api/child-care-spaces") {
               return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
+            }
+            if (url === "/api/quality-enhancements") {
+              return { data: { qualityEnhancements: [qualityEnhancement], totalCount: 1 } }
             }
 
             return { data: { fundingSubmissionLineJson } }
