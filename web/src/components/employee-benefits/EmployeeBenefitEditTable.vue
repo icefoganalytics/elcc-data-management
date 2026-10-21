@@ -1,9 +1,16 @@
 <template>
   <v-skeleton-loader
-    v-if="isNil(employeeBenefit) || employeeBenefit.id !== employeeBenefitId"
+    v-if="isLoading"
     type="table"
   />
-  <v-table v-else>
+  <v-alert
+    v-else-if="isErrored"
+    type="error"
+    variant="tonal"
+  >
+    Employee benefits could not be loaded. Reload the page to try again.
+  </v-alert>
+  <v-table v-else-if="!isNil(employeeBenefit)">
     <thead>
       <tr>
         <th></th>
@@ -261,6 +268,13 @@
       </tr>
     </tbody>
   </v-table>
+  <v-alert
+    v-else
+    type="info"
+    variant="tonal"
+  >
+    No employee benefits are available.
+  </v-alert>
 </template>
 
 <script setup lang="ts">
@@ -271,71 +285,30 @@ import Big from "big.js"
 import { formatMoney } from "@/utils/formatters"
 import minDecimal from "@/utils/min-decimal"
 
-import employeeBenefitsApi from "@/api/employee-benefits-api"
-
 import useSnack from "@/use/use-snack"
-import useEmployeeBenefit from "@/use/use-employee-benefit"
+import useEmployeeBenefit, {
+  type EmployeeBenefitEditableAttribute,
+} from "@/use/use-employee-benefit"
 
 import CurrencyInput from "@/components/CurrencyInput.vue"
-
-type EditableAttribute =
-  | "grossPayrollMonthlyActual"
-  | "grossPayrollMonthlyEstimated"
-  | "costCapPercentage"
-  | "employeeCostActual"
-  | "employeeCostEstimated"
-  | "employerCostActual"
-  | "employerCostEstimated"
 
 const props = defineProps<{
   employeeBenefitId: number
 }>()
 
 const { employeeBenefitId } = toRefs(props)
-const { employeeBenefit } = useEmployeeBenefit(employeeBenefitId)
+const { employeeBenefit, isLoading, isErrored, isSaving, saveError, updateAttribute, save } =
+  useEmployeeBenefit(employeeBenefitId)
 const isEditingCostCapPercentage = ref(false)
-const savedValues = ref<Partial<Record<EditableAttribute, string>>>({})
-const latestValues = ref<Partial<Record<EditableAttribute, string>>>({})
-const savingAttributes = new Set<string>()
-const isSaving = ref(false)
-const saveErrors = ref<Partial<Record<EditableAttribute, string>>>({})
-const saveError = computed(() => Object.values(saveErrors.value).find(Boolean) ?? "")
-const initializedBenefitId = ref<number | null>(null)
-
-watch(
-  employeeBenefitId,
-  () => {
-    savedValues.value = {}
-    latestValues.value = {}
-    saveErrors.value = {}
-    initializedBenefitId.value = null
-  },
-  { flush: "sync" }
-)
-
-watch(
-  [employeeBenefitId, employeeBenefit],
-  ([benefitId, benefit]) => {
-    if (isNil(benefit) || benefit.id !== benefitId || initializedBenefitId.value === benefitId) {
-      return
-    }
-
-    savedValues.value = {
-      grossPayrollMonthlyActual: benefit.grossPayrollMonthlyActual,
-      grossPayrollMonthlyEstimated: benefit.grossPayrollMonthlyEstimated,
-      costCapPercentage: benefit.costCapPercentage,
-      employeeCostActual: benefit.employeeCostActual,
-      employeeCostEstimated: benefit.employeeCostEstimated,
-      employerCostActual: benefit.employerCostActual,
-      employerCostEstimated: benefit.employerCostEstimated,
-    }
-    initializedBenefitId.value = benefitId
-  },
-  { immediate: true }
-)
 
 const costCapPercentageDraft = ref("")
 const costCapPercentageDraftAtEditStart = ref("")
+
+watch(employeeBenefitId, () => {
+  isEditingCostCapPercentage.value = false
+  costCapPercentageDraft.value = ""
+  costCapPercentageDraftAtEditStart.value = ""
+})
 
 const costCapPercentage = computed(() => {
   if (isNil(employeeBenefit.value)) {
@@ -358,11 +331,7 @@ function toggleEditingCostCapPercentage() {
 }
 
 function commitCostCapPercentage() {
-  if (
-    isNil(employeeBenefit.value) ||
-    employeeBenefit.value.id !== employeeBenefitId.value ||
-    costCapPercentageDraft.value === costCapPercentageDraftAtEditStart.value
-  ) {
+  if (costCapPercentageDraft.value === costCapPercentageDraftAtEditStart.value) {
     return
   }
 
@@ -374,8 +343,7 @@ function commitCostCapPercentage() {
     costCapPercentageDraft.value = "0"
   }
 
-  employeeBenefit.value.costCapPercentage = costCapPercentageValue
-  saveAttribute("costCapPercentage", costCapPercentageValue)
+  updateAttribute("costCapPercentage", costCapPercentageValue)
 }
 
 const monthlyBenefitCostCapEstimated = computed(() => {
@@ -441,94 +409,17 @@ const minimumPaidAmountActual = computed(() => {
 })
 
 function updateEmployeeBenefitCurrencyValue(
-  attribute: Exclude<EditableAttribute, "costCapPercentage">,
+  attribute: Exclude<EmployeeBenefitEditableAttribute, "costCapPercentage">,
   newValue: string | null
 ) {
-  if (isNil(employeeBenefit.value) || employeeBenefit.value.id !== employeeBenefitId.value) {
-    return
-  }
-
   const value = newValue === "-" || newValue === "" || newValue === null ? "0" : newValue
-  if (value === employeeBenefit.value[attribute]) {
-    return
-  }
-
-  employeeBenefit.value[attribute] = value
-  saveAttribute(attribute, value)
-}
-
-function saveAttribute(attribute: EditableAttribute, value: string) {
-  const savingKey = `${employeeBenefitId.value}:${attribute}`
-  if (value === savedValues.value[attribute]) {
-    if (savingAttributes.has(savingKey)) {
-      latestValues.value[attribute] = value
-    } else {
-      delete latestValues.value[attribute]
-      delete saveErrors.value[attribute]
-    }
-
-    return
-  }
-
-  latestValues.value[attribute] = value
-  void saveLatestAttributeValue(attribute)
-}
-
-async function saveLatestAttributeValue(attribute: EditableAttribute) {
-  const benefitId = employeeBenefitId.value
-  const savingKey = `${benefitId}:${attribute}`
-  if (savingAttributes.has(savingKey)) {
-    return
-  }
-
-  savingAttributes.add(savingKey)
-  isSaving.value = true
-
-  try {
-    while (latestValues.value[attribute] !== savedValues.value[attribute]) {
-      const value = latestValues.value[attribute]
-      if (
-        isNil(value) ||
-        isNil(employeeBenefit.value) ||
-        employeeBenefit.value.id !== benefitId ||
-        employeeBenefitId.value !== benefitId
-      ) {
-        return
-      }
-
-      await employeeBenefitsApi.update(benefitId, { [attribute]: value })
-      if (employeeBenefitId.value !== benefitId) {
-        return
-      }
-
-      savedValues.value[attribute] = value
-    }
-
-    delete latestValues.value[attribute]
-    delete saveErrors.value[attribute]
-  } catch (error) {
-    if (employeeBenefitId.value === benefitId) {
-      saveErrors.value[attribute] = `Failed to save employee benefit: ${error}`
-    }
-  } finally {
-    savingAttributes.delete(savingKey)
-    isSaving.value = savingAttributes.size > 0
-  }
+  updateAttribute(attribute, value)
 }
 
 const snack = useSnack()
 
 async function saveAndNotify() {
-  if (isNil(employeeBenefit.value) || employeeBenefit.value.id !== employeeBenefitId.value) {
-    return
-  }
-
-  const attributes = Object.keys(latestValues.value) as EditableAttribute[]
-  for (const attribute of attributes) {
-    latestValues.value[attribute] = employeeBenefit.value[attribute]
-  }
-
-  await Promise.all(attributes.map(saveLatestAttributeValue))
+  await save()
 
   if (saveError.value) {
     snack.error(saveError.value)
