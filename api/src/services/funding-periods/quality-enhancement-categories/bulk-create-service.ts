@@ -18,6 +18,7 @@ export class BulkCreateService extends BaseService {
         id: {
           [Op.in]: sql`(SELECT funding_period_id FROM quality_enhancement_categories)`,
         },
+        fiscalYear: { [Op.lt]: this.fundingPeriod.fiscalYear },
       },
       order: [
         ["fiscalYear", "DESC"],
