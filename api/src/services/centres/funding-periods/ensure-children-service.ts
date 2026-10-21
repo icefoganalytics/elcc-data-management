@@ -1,6 +1,4 @@
-import { isNil } from "lodash"
-
-import { Centre, ChildCareSpace, FundingPeriod } from "@/models"
+import { Centre, FundingPeriod } from "@/models"
 import BaseService from "@/services/base-service"
 import { Centres } from "@/services"
 import { AdministrationCosts, ChildCareSpaces } from "@/services/centres/funding-periods"
@@ -18,21 +16,11 @@ export class EnsureChildrenService extends BaseService {
       this.centre,
       this.fundingPeriod
     )
-    const historicalChildCareSpace = await ChildCareSpace.withScope({
-      method: ["byFundingPeriod", this.fundingPeriod.id],
-    }).findOne({
-      attributes: ["id"],
-      where: { centreId: this.centre.id },
-      paranoid: false,
-    })
     const isInitialProvisioning =
       !initializationStatus.hasEmployeeBenefits &&
       !initializationStatus.hasBuildingExpenses &&
       !initializationStatus.hasFundingSubmissionLineJsons &&
-      !initializationStatus.hasFundingReconciliation &&
-      !initializationStatus.hasAdministrationCosts &&
-      isNil(historicalChildCareSpace)
-
+      !initializationStatus.hasFundingReconciliation
     await Centres.FundingPeriods.EmployeeBenefits.BulkEnsureService.perform(
       this.centre,
       this.fundingPeriod
