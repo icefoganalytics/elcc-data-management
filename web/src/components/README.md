@@ -14,9 +14,11 @@ Use this directory for reusable UI building blocks. Keep feature-specific detail
 
 Use model-mirror `use-*` composables for reactive fetching, record or collection state, loading/errors, and straightforward single-record saves. Components own their editing workflows: draft values, dirty tracking, autosave queues, mutation handlers, Retry state, and user feedback.
 
-For an autosaving table, keep pending writes and failed inputs local to the owning component. When a mounted screen changes the selected record or month, hide unresolved views without destroying that owner. Reconcile returning loads with pending edits and writes acknowledged during the load, so stale responses cannot replace newer input.
+For an autosaving table, consume the record or collection refs returned by its model composable directly. Do not copy them into a parallel record store or watch fetched records to merge fields and revision counters.
 
-Parent tables may discover collections and own their mutations while row or tier components display resolved records and emit actions. Keep one editing owner rather than a second persistence snapshot in each child or a global editor cache.
+Keep pending commands and failed-input feedback local to the owning component. If drafts must survive month navigation, retain keyed editor instances with `KeepAlive` for the mounted page instead of changing a single editor's record identity and reconciling returning fetches. Each instance keeps its model ref and queue; committed writes continue while it is inactive.
+
+Parent tables may discover collections and own their mutations while row or tier components display resolved records and emit actions. Keep one model source and one editing owner, not a second persistence snapshot in each child or a global editor cache.
 
 ## Naming and Location
 

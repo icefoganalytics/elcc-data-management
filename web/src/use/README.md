@@ -22,6 +22,8 @@ Use `use-model.ts` for one record identified by an id.
 
 Keep these composables focused on reactive model access and straightforward model actions. Screen-specific drafts, queued edits, autosave, and Retry feedback belong in the consuming component; see [component responsibilities](../components/README.md#model-access-and-editing).
 
+Consume those returned refs directly. A component should not mirror the composable's records in another map and reconcile each fetch into that map; preserve the editor's lifetime when its pending work must survive navigation.
+
 Clear the previous record when its id changes and ignore outdated responses. Loading state
 belongs to the latest request; an earlier request must not end the current loader or restore
 an old record. In-flight saves must not update a different record's local state.
