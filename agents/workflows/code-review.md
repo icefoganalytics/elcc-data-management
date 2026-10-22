@@ -44,7 +44,7 @@ Use this workflow to review TypeScript code for the ELCC project. Apply every ru
 6. **Check Test Naming**
    - Tests must follow `"when [condition], [expected behaviour]"` with full English words (no abbreviations)
    - Numbered entities in test bodies: `user1`, `user2`, `workflowStep1`, `workflowStep2` — never `existingUser`, `newUser`
-   - Describe hierarchy must mirror the source file path
+   - Component and composable describe hierarchy: source file path -> component or composable name -> method or behavior under test -> test scenario.
 
 7. **Validate Failure Diagnostics**
    - Prefer concrete expected values and direct assertions on observable behavior.

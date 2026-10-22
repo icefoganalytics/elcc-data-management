@@ -10,7 +10,7 @@ Run tests from the repository root through `bin/dev`:
 
 ## Component Tests
 
-- Mirror the source path in the test's outer `describe`, then name the component and behavior.
+- Component and composable suites use three nested `describe` scopes: the source file path, the component or composable name, then the method or behavior under test. Keep each `test("when ..., ...")` inside that behavior scope.
 - Use explicit Arrange, Act, and Assert sections with descriptive `when ..., does ...` test names.
 - Keep scenario data, API responses, and `mount(...)` options inside each test. Intentional duplication is preferable to local mount helpers, response builders, or shared scenario fixtures.
 - Reuse existing infrastructure helpers such as `mockVuetify` and the typed frontend factories in `tests/factories`. Keep scenario-specific overrides inline.
