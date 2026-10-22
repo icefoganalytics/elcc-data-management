@@ -37,6 +37,7 @@ Use this workflow to review TypeScript code for the ELCC project. Apply every ru
 5. **Verify One Observable Behavior Per Test**
    - Assert directly on observable results; never construct synthetic summary objects just to force one `expect`.
    - Related facts proving the same behavior may use separate direct expectations in one final Assert section. Split independent behaviors into separate tests.
+   - Keep important mock-call contracts in their own focused tests rather than combining them with independent rendered-output assertions. Do not assert incidental wording.
    - For HTTP responses, assert `response.status` first and `response.body` second with `toEqual(...)`; do not match the complete response object.
    - When asserting "not any of N values", split into N separate tests rather than looping.
 

@@ -15,7 +15,7 @@ Run tests from the repository root through `bin/dev`:
 - Keep scenario data, API responses, and `mount(...)` options inside each test. Intentional duplication is preferable to local mount helpers, response builders, or shared scenario fixtures.
 - Reuse existing infrastructure helpers such as `mockVuetify` and the typed frontend factories in `tests/factories`. Keep scenario-specific overrides inline.
 - Prefer API spies and real composables. Mock dependencies outside the behavior under test, not the component's own state machinery.
-- Assert directly on rendered controls, public child events, and API interactions that prove the behavior. Do not construct summary objects to force one assertion; related facts may use separate direct expectations in one final Assert section.
+- Keep one observable contract per test and assert it directly. Separate API-payload expectations from independent rendered-output checks; mock-call assertions belong in their own focused scenarios. Related loading, error, and stale-data assertions may stay together when they prove one lifecycle invariant. Do not construct summary objects to force one assertion or assert incidental wording.
 - The Vitest configuration resets mocks between tests. Do not add redundant per-test mock resets.
 - Use `enableAutoUnmount(afterEach)` for mounted wrappers. Explicitly unmount only when unmounting is the behavior under test.
 - For slow-save scenarios, a local deferred promise can hold the API spy pending. Keep stale server responses separate from editable records so subsequent edits cannot mutate the response fixture.
