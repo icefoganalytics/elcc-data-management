@@ -189,6 +189,7 @@ describe("web/src/modules/centre/pages/CentreDashboardEmployeesMonthlyWorksheetP
     const policy = { show: true, create: true, update: true, destroy: true }
     const save = Promise.withResolvers<Awaited<ReturnType<typeof wageEnhancementsApi.update>>>()
     const creation = Promise.withResolvers<Awaited<ReturnType<typeof wageEnhancementsApi.create>>>()
+    const savedEmployees = [employee1]
     vi.spyOn(fiscalPeriodsApi, "list").mockImplementation(async (query) => ({
       fiscalPeriods: [query?.where?.month === FiscalPeriodMonths.MAY ? period2 : period1],
       totalCount: 1,
@@ -204,7 +205,10 @@ describe("web/src/modules/centre/pages/CentreDashboardEmployeesMonthlyWorksheetP
     vi.spyOn(wageEnhancementsApi, "list").mockImplementation(async (query) => {
       const tierIds = query?.where?.employeeWageTierId
       if (Array.isArray(tierIds) && tierIds.includes(tier1.id)) {
-        return { wageEnhancements: [employee1], totalCount: 1 }
+        return {
+          wageEnhancements: structuredClone(savedEmployees),
+          totalCount: savedEmployees.length,
+        }
       }
 
       return { wageEnhancements: [], totalCount: 0 }
@@ -223,6 +227,8 @@ describe("web/src/modules/centre/pages/CentreDashboardEmployeesMonthlyWorksheetP
     await wrapper.get('[title="Add employee"]').trigger("click")
     await wrapper.setProps({ month: FiscalPeriodMonths.MAY })
     await flushPromises()
+    employee1.employeeName = "Alexandra"
+    savedEmployees.push(employee2)
     save.resolve({ wageEnhancement: employee1, policy })
     creation.resolve({ wageEnhancement: employee2, policy })
     await flushPromises()
@@ -234,5 +240,75 @@ describe("web/src/modules/centre/pages/CentreDashboardEmployeesMonthlyWorksheetP
     expect(names).toHaveLength(2)
     expect(names[0].element.value).toBe("Alexandra")
     expect(names[1].element.value).toBe("")
+  })
+
+  test("when estimates are replicated into a previously visited month, displays the replicated hours on return", async () => {
+    // Arrange
+    const period1 = {
+      id: 1,
+      fundingPeriodId: 1,
+      fiscalYear: "2026-27",
+      month: FiscalPeriodMonths.APRIL,
+      dateStart: "2026-04-01",
+      dateEnd: "2026-04-30",
+      createdAt: "2026-01-01",
+      updatedAt: "2026-01-01",
+    }
+    const period2 = { ...period1, id: 2, month: FiscalPeriodMonths.MAY }
+    const tier1 = employeeWageTierFactory.build({ id: 2, fiscalPeriodId: 1 })
+    const tier2 = employeeWageTierFactory.build({ id: 4, fiscalPeriodId: 2 })
+    const employee1 = wageEnhancementFactory.build(
+      { id: 3, centreId: 1, hoursEstimated: "80.0000" },
+      { associations: { employeeWageTier: tier1 } }
+    )
+    const employee2 = wageEnhancementFactory.build(
+      { id: 5, centreId: 1, hoursEstimated: "20.0000" },
+      { associations: { employeeWageTier: tier2 } }
+    )
+    vi.spyOn(fiscalPeriodsApi, "list").mockImplementation(async (query) => ({
+      fiscalPeriods: [query?.where?.month === FiscalPeriodMonths.MAY ? period2 : period1],
+      totalCount: 1,
+    }))
+    vi.spyOn(employeeBenefitsApi, "list").mockResolvedValue({
+      employeeBenefits: [],
+      totalCount: 0,
+    })
+    vi.spyOn(employeeWageTiersApi, "list").mockImplementation(async (query) => ({
+      employeeWageTiers: [query?.where?.fiscalPeriodId === 2 ? tier2 : tier1],
+      totalCount: 1,
+    }))
+    vi.spyOn(wageEnhancementsApi, "list").mockImplementation(async (query) => {
+      const tierIds = query?.where?.employeeWageTierId
+      if (Array.isArray(tierIds) && tierIds.includes(tier2.id)) {
+        return { wageEnhancements: structuredClone([employee2]), totalCount: 1 }
+      }
+
+      return { wageEnhancements: structuredClone([employee1]), totalCount: 1 }
+    })
+    vi.spyOn(wageEnhancementsApi, "replicateEstimates").mockImplementation(async () => {
+      employee2.hoursEstimated = "80.0000"
+    })
+    const wrapper = mount(CentreDashboardEmployeesMonthlyWorksheetPage, {
+      props: { centreId: 1, fiscalYearSlug: "2026-27", month: FiscalPeriodMonths.MAY },
+      global: { plugins: [mockVuetify()] },
+    })
+    await flushPromises()
+
+    // Act
+    await wrapper.setProps({ month: FiscalPeriodMonths.APRIL })
+    await flushPromises()
+    const replicateButton = wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("Replicate Estimates"))
+    if (!replicateButton) throw new Error("Expected Replicate Estimates action")
+    await replicateButton.trigger("click")
+    await flushPromises()
+    await wrapper.setProps({ month: FiscalPeriodMonths.MAY })
+    await flushPromises()
+
+    // Assert
+    expect(wrapper.get<HTMLInputElement>('input[aria-label="Hours Estimated"]').element.value).toBe(
+      "80.0000"
+    )
   })
 })

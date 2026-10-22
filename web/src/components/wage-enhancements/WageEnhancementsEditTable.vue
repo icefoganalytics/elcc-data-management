@@ -166,7 +166,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue"
+import { computed, onActivated, reactive, ref } from "vue"
 import { isNil, keyBy, mapValues } from "lodash"
 import Big from "big.js"
 
@@ -212,6 +212,7 @@ const {
   wageEnhancements,
   isLoading: isLoadingWageEnhancements,
   isErrored: isErroredWageEnhancements,
+  refresh,
 } = useWageEnhancements(wageEnhancementsQuery, {
   skipWatchIf: () =>
     isNil(props.fiscalPeriodId) ||
@@ -225,6 +226,21 @@ const pendingIds = reactive(new Set<number>())
 const errorsById = reactive(new Map<number, string>())
 const isCreating = ref(false)
 const snack = useSnack()
+
+onActivated(async () => {
+  if (
+    isLoadingEmployeeWageTiers.value ||
+    isErroredEmployeeWageTiers.value ||
+    isLoadingWageEnhancements.value ||
+    isCreating.value ||
+    pendingIds.size > 0 ||
+    pendingChanges.size > 0 ||
+    errorsById.size > 0
+  )
+    return
+
+  await refresh()
+})
 
 const wageRatePerHoursByEmployeeWageTierId = computed(() =>
   mapValues(keyBy(employeeWageTiers.value, "id"), "wageRatePerHour")
