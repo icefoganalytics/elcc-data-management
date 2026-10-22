@@ -101,9 +101,9 @@ describe("web/src/use/use-wage-enhancement-editor.ts", () => {
     await editor.create(2)
 
     // Assert
-    expect(editor.wageEnhancements.value.map(({ employeeName }) => employeeName)).toEqual([
-      "Alexandra",
-      record2.employeeName,
+    expect(editor.wageEnhancements.value).toEqual([
+      { ...record1, employeeName: "Alexandra" },
+      record2,
     ])
     expect(editor.errorsById.get(3)).toContain("offline")
     expect(editor.isErrored.value).toBe(false)

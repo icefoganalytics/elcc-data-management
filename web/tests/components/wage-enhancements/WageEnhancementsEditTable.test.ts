@@ -67,10 +67,60 @@ describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", (
       [3, { employeeName: "Alex", hoursEstimated: "2.1250", hoursActual: "0.5000" }],
       [3, { employeeName: "Alex", hoursEstimated: "3.3750", hoursActual: "0.5000" }],
     ])
-    expect(hours.element.value).toBe("3.3750")
+    const savedHours = wrapper.get<HTMLInputElement>('input[aria-label="Hours Estimated"]')
+    expect(savedHours.element).toBe(hours.element)
+    expect(savedHours.element.value).toBe("3.3750")
   })
 
-  test("when a failed save is retried, preserves the input and clears the failure only after success", async () => {
+  test("when a failed save is retried while pending, retains the input and visible failure", async () => {
+    // Arrange
+    const employeeWageTier = employeeWageTierFactory.build({ id: 2, wageRatePerHour: "20.00" })
+    const wageEnhancement = wageEnhancementFactory.build(
+      {
+        id: 3,
+        centreId: 1,
+        employeeWageTierId: employeeWageTier.id,
+        employeeName: "Alex",
+        hoursEstimated: "1.2500",
+        hoursActual: "0.5000",
+      },
+      { associations: { employeeWageTier } }
+    )
+    const retry = Promise.withResolvers<Awaited<ReturnType<typeof wageEnhancementsApi.update>>>()
+    vi.spyOn(employeeWageTiersApi, "list").mockResolvedValue({
+      employeeWageTiers: [employeeWageTier],
+      totalCount: 1,
+    })
+    vi.spyOn(wageEnhancementsApi, "list").mockResolvedValue({
+      wageEnhancements: [wageEnhancement],
+      totalCount: 1,
+    })
+    const update = vi
+      .spyOn(wageEnhancementsApi, "update")
+      .mockRejectedValueOnce(new Error("network unavailable"))
+      .mockReturnValueOnce(retry.promise)
+    const wrapper = mount(WageEnhancementsEditTable, {
+      props: { centreId: 1, fiscalPeriodId: employeeWageTier.fiscalPeriodId },
+      global: { plugins: [mockVuetify()] },
+    })
+    await flushPromises()
+
+    // Act
+    const employeeName = wrapper.get('input[aria-label="Employee Name"]')
+    await employeeName.setValue("Alexandra")
+    await employeeName.trigger("blur")
+    await flushPromises()
+    await wrapper.get('[aria-label="Retry saving employee"]').trigger("click")
+    await flushPromises()
+
+    // Assert
+    expect(update).toHaveBeenCalledTimes(2)
+    expect(wrapper.get('[role="alert"]').text()).toContain("network unavailable")
+    const retainedName = wrapper.get<HTMLInputElement>('input[aria-label="Employee Name"]')
+    expect(retainedName.element.value).toBe("Alexandra")
+  })
+
+  test("when a failed save is retried successfully, clears the failure without losing the input", async () => {
     // Arrange
     const employeeWageTier = employeeWageTierFactory.build({ id: 2, wageRatePerHour: "20.00" })
     const wageEnhancement = wageEnhancementFactory.build(
@@ -109,16 +159,13 @@ describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", (
     await employeeName.trigger("blur")
     await flushPromises()
 
-    const failureMessage = wrapper.get('[role="alert"]').text()
-    const retainedName = employeeName.element.value
     await wrapper.get('[aria-label="Retry saving employee"]').trigger("click")
     await flushPromises()
 
     // Assert
-    expect(failureMessage).toContain("network unavailable")
-    expect(retainedName).toBe("Alexandra")
     expect(update).toHaveBeenCalledTimes(2)
-    expect(wrapper.text()).not.toContain("network unavailable")
-    expect(employeeName.element.value).toBe("Alexandra")
+    expect(wrapper.find('[role="alert"]').exists()).toBe(false)
+    const savedName = wrapper.get<HTMLInputElement>('input[aria-label="Employee Name"]')
+    expect(savedName.element.value).toBe("Alexandra")
   })
 })

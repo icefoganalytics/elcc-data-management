@@ -36,8 +36,9 @@ describe("web/src/components/employee-benefits/EmployeeBenefitEditTable.vue", ()
     await flushPromises()
 
     // Assert
+    const saveButton = wrapper.findAll("button").find((button) => button.text().trim() === "Save")
     expect(update).toHaveBeenCalledWith(61, { employerCostEstimated: "125.0000" })
-    expect(wrapper.findAll("button").map((button) => button.text().trim())).not.toContain("Save")
+    expect(saveButton).toBeUndefined()
   })
 
   test("when a percentage edit is committed with Enter, saves the fractional decimal", async () => {

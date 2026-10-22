@@ -97,7 +97,6 @@ export default function useWageEnhancementEditor(context: Ref<EditingContext | u
     }
 
     pendingIds.add(id)
-    errorsById.delete(id)
     const write = persist(id).finally(() => {
       pendingIds.delete(id)
       activeWrites.delete(id)
@@ -116,6 +115,7 @@ export default function useWageEnhancementEditor(context: Ref<EditingContext | u
         persistedAttributes.set(id, attributes)
       }
       pendingChanges.delete(id)
+      errorsById.delete(id)
     } catch (error) {
       errorsById.set(id, String(error))
       console.error(`Failed to save wage enhancement: ${error}`, { error })
