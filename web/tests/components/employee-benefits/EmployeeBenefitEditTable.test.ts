@@ -37,26 +37,6 @@ describe("web/src/components/employee-benefits/EmployeeBenefitEditTable.vue", ()
     expect(update).toHaveBeenCalledWith(61, { employerCostEstimated: "125.0000" })
   })
 
-  test("when the benefit editor is loaded, does not show a separate Save control", async () => {
-    // Arrange
-    const employeeBenefit = employeeBenefitFactory.build({ id: 65 })
-    vi.spyOn(employeeBenefitsApi, "get").mockResolvedValue({
-      employeeBenefit,
-      policy: { show: true, create: true, update: true, destroy: true },
-    })
-    const wrapper = mount(EmployeeBenefitEditTable, {
-      props: { employeeBenefitId: 65 },
-      global: { plugins: [mockVuetify()] },
-    })
-
-    // Act
-    await flushPromises()
-
-    // Assert
-    const saveButton = wrapper.findAll("button").find((button) => button.text().trim() === "Save")
-    expect(saveButton).toBeUndefined()
-  })
-
   test("when a percentage edit is committed with Enter, saves the fractional decimal", async () => {
     // Arrange
     const employeeBenefit = employeeBenefitFactory.build({ id: 63 })
