@@ -58,9 +58,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
 - Category editors clear previous records during navigation and ignore late load/save responses. Linkage recovery retains stable category IDs after names have propagated to monthly records.
 - Child Care Space category writes now require a system administrator, while ordinary users retain occupancy editing. Category amounts reject excess decimal precision, and overlapping category updates use the current propagation baseline.
 - Later seeds preserve intentionally absent Child Care Space months, and historical cutover rejects malformed submission-line IDs before removing source JSON.
-- Employee benefits and wage enhancement edits now save when committed, with visible failures
-  and retry controls, so users do not need to save each Employees-tab section separately.
-  Employee Benefits also keeps pending saves isolated across month changes and ignores outdated loads.
+- Employee benefits and wage enhancement edits now save when committed, without routine Save buttons. Failed edits retain their input and show Retry controls. Both editors preserve queued changes across month navigation and ignore outdated loads.
 - Prevented employee benefits from being double counted in employee adjustment amounts during funding reconciliation calculations.
 - Resolved occasional authentication issues caused by plugin load order.
 - Editor links now reach the correct Docker worktree through library-managed checkout routing,

@@ -21,6 +21,8 @@ Clear the previous record when its id changes and ignore outdated responses. Loa
 belongs to the latest request; an earlier request must not end the current loader or restore
 an old record. In-flight saves must not update a different record's local state.
 
+An editing owner can retain record-local queues while its mounted page changes the selected month. Hide unresolved record views without destroying that owner. Serialize committed changes for the same record, retain failed drafts for Retry, and reconcile returning loads with writes that completed while the request was pending. Keep this state local to the owning editor; it is not an application-wide cache.
+
 ## Plural Composables
 
 Use `use-models.ts` for list and query operations.
@@ -30,6 +32,8 @@ Use `use-models.ts` for list and query operations.
 - Return an array, `totalCount`, loading state, and error state
 - Support reactive filters, pagination, and optional fetch-skipping logic
 - Re-fetch automatically when query options change
+
+When one table edits multiple records, a domain-specific editing composable can own the table's collection and mutations together. Tier or row components then display resolved records and emit user actions; they do not maintain a second persistence snapshot. Collection discovery must clear previous results while a new context loads and ignore older responses.
 
 ## Naming
 
