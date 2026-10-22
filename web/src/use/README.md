@@ -2,6 +2,10 @@
 
 This directory holds shared Vue composables. Follow the singular/plural split for data-access composables.
 
+Keep singular and plural model-mirror composables while the underlying model exists, even
+when they have no current callers. An editor-specific composable does not replace this
+data-access surface; remove model mirrors only when the underlying model is removed.
+
 ## Singular Composables
 
 Use `use-model.ts` for one record identified by an id.

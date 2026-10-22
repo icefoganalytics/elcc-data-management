@@ -69,7 +69,7 @@ Use this workflow to review TypeScript code for the ELCC project. Apply every ru
     - Identify dead code paths or unreachable logic
     - **Flag code with comments like "legacy path" or "no-op here" that should be removed**
     - **When removing features, remove all related types, imports, and exports** - don't leave partially implemented type systems
-    - Verify that all exported functions are actually used somewhere in the codebase
+    - Check unused exports against project conventions before removing them. Keep model-mirror composables while their underlying models exist, even without current callers; see [composable conventions](../../web/src/use/README.md).
 
 11. **Validate Import Organization**
     - Group imports by conceptual distance, separating third-party packages, standard-library modules, and local application imports.
