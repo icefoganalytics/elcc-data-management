@@ -5,15 +5,17 @@ import wageEnhancementsApi, { type WageEnhancementAsIndex } from "@/api/wage-enh
 import { wageEnhancementFactory } from "@/tests/factories"
 import useWageEnhancements from "@/use/use-wage-enhancements"
 
-let scope: EffectScope
-beforeEach(() => {
-  scope = effectScope()
-})
-afterEach(() => {
-  scope.stop()
-})
-
 describe("web/src/use/use-wage-enhancements.ts", () => {
+  let scope: EffectScope
+
+  beforeEach(() => {
+    scope = effectScope()
+  })
+
+  afterEach(() => {
+    scope.stop()
+  })
+
   describe("useWageEnhancements", () => {
     describe("query lifecycle", () => {
       test("when a query is superseded, aborts its request without changing the latest loading state", async () => {

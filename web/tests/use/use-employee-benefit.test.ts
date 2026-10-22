@@ -8,17 +8,17 @@ import useEmployeeBenefit from "@/use/use-employee-benefit"
 
 type BenefitResponse = Awaited<ReturnType<typeof employeeBenefitsApi.get>>
 
-let scope: EffectScope
-
-beforeEach(() => {
-  scope = effectScope()
-})
-
-afterEach(() => {
-  scope.stop()
-})
-
 describe("web/src/use/use-employee-benefit.ts", () => {
+  let scope: EffectScope
+
+  beforeEach(() => {
+    scope = effectScope()
+  })
+
+  afterEach(() => {
+    scope.stop()
+  })
+
   describe("useEmployeeBenefit", () => {
     describe("record lifecycle", () => {
       test("when the selected id changes twice in one update, requests only the final selection", async () => {
