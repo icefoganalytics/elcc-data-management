@@ -316,10 +316,8 @@ const EDITABLE_ATTRIBUTES = [
 type EmployeeBenefitEditableAttribute = (typeof EDITABLE_ATTRIBUTES)[number]
 type EmployeeBenefitChanges = Partial<Pick<EmployeeBenefitAsShow, EmployeeBenefitEditableAttribute>>
 type RecordEditor = {
-  record: EmployeeBenefitAsShow | null
   persistedAttributes: EmployeeBenefitChanges
   pendingChanges: EmployeeBenefitChanges
-  writeRevisions: Partial<Record<EmployeeBenefitEditableAttribute, number>>
   saveErrors: Partial<Record<EmployeeBenefitEditableAttribute, string>>
   savingAttributes: Set<EmployeeBenefitEditableAttribute>
   writes: Map<EmployeeBenefitEditableAttribute, Promise<void>>
@@ -327,80 +325,16 @@ type RecordEditor = {
 
 const props = defineProps<{ employeeBenefitId: number | undefined }>()
 const { employeeBenefitId } = toRefs(props)
-const editors = new Map<number, RecordEditor>()
-const writeRevisionsAtFetchById = new Map<
-  number,
-  Partial<Record<EmployeeBenefitEditableAttribute, number>>
->()
-
-function editorFor(recordId: number): RecordEditor {
-  let editor = editors.get(recordId)
-  if (isUndefined(editor)) {
-    editor = reactive<RecordEditor>({
-      record: null,
-      persistedAttributes: {},
-      pendingChanges: {},
-      writeRevisions: {},
-      saveErrors: {},
-      savingAttributes: new Set(),
-      writes: new Map(),
-    })
-    editors.set(recordId, editor)
-  }
-
-  return editor
-}
-
-// Capture the write boundary for the next selected-record load.
-watch(
-  employeeBenefitId,
-  (recordId) => {
-    if (isNil(recordId)) return
-
-    writeRevisionsAtFetchById.set(recordId, { ...editorFor(recordId).writeRevisions })
-  },
-  { immediate: true }
-)
-const {
-  employeeBenefit: fetchedEmployeeBenefit,
-  isLoading,
-  isErrored,
-  fetch,
-} = useEmployeeBenefit(employeeBenefitId)
-const currentEditor = computed(() => {
-  if (isNil(employeeBenefitId.value)) return undefined
-
-  return editors.get(employeeBenefitId.value)
+const editor = reactive<RecordEditor>({
+  persistedAttributes: {},
+  pendingChanges: {},
+  saveErrors: {},
+  savingAttributes: new Set(),
+  writes: new Map(),
 })
-const employeeBenefit = computed(() => {
-  if (isNil(fetchedEmployeeBenefit.value)) return null
-
-  return currentEditor.value?.record ?? null
-})
-const isSaving = computed(() => (currentEditor.value?.savingAttributes.size ?? 0) > 0)
-const saveError = computed(
-  () => Object.values(currentEditor.value?.saveErrors ?? {}).find(Boolean) ?? ""
-)
-
-watch(fetchedEmployeeBenefit, (record) => {
-  if (isNil(record)) return
-
-  const editor = editorFor(record.id)
-  const revisionsAtFetch = writeRevisionsAtFetchById.get(record.id) ?? {}
-  const mergedRecord = { ...record }
-  for (const attribute of EDITABLE_ATTRIBUTES) {
-    const retainedValue = editor.record?.[attribute] ?? editor.persistedAttributes[attribute]
-    const hasPendingChange = !isUndefined(editor.pendingChanges[attribute])
-    const wasSavedDuringFetch = editor.writeRevisions[attribute] !== revisionsAtFetch[attribute]
-    if ((hasPendingChange || wasSavedDuringFetch) && !isUndefined(retainedValue)) {
-      mergedRecord[attribute] = retainedValue
-      continue
-    }
-
-    editor.persistedAttributes[attribute] = mergedRecord[attribute]
-  }
-  editor.record = mergedRecord
-})
+const { employeeBenefit, isLoading, isErrored, fetch } = useEmployeeBenefit(employeeBenefitId)
+const isSaving = computed(() => editor.savingAttributes.size > 0)
+const saveError = computed(() => Object.values(editor.saveErrors).find(Boolean) ?? "")
 
 const isEditingCostCapPercentage = ref(false)
 
@@ -414,11 +348,14 @@ watch(employeeBenefitId, () => {
 })
 
 function updateAttribute(attribute: EmployeeBenefitEditableAttribute, value: string) {
-  const editor = currentEditor.value
   const recordId = employeeBenefitId.value
-  if (!editor?.record || isNil(employeeBenefit.value) || isNil(recordId)) return
+  const record = employeeBenefit.value
+  if (isNil(record) || isNil(recordId)) return
 
-  editor.record[attribute] = value
+  if (isUndefined(editor.persistedAttributes[attribute])) {
+    editor.persistedAttributes[attribute] = record[attribute]
+  }
+  record[attribute] = value
   if (value === editor.persistedAttributes[attribute] && !editor.writes.has(attribute)) {
     delete editor.pendingChanges[attribute]
     delete editor.saveErrors[attribute]
@@ -458,7 +395,6 @@ async function persistAttribute(
 
       await employeeBenefitsApi.update(recordId, { [attribute]: value })
       editor.persistedAttributes[attribute] = value
-      editor.writeRevisions[attribute] = (editor.writeRevisions[attribute] ?? 0) + 1
     }
     delete editor.pendingChanges[attribute]
     delete editor.saveErrors[attribute]
@@ -469,9 +405,8 @@ async function persistAttribute(
 }
 
 async function save() {
-  const editor = currentEditor.value
   const recordId = employeeBenefitId.value
-  if (!editor || isNil(recordId)) return
+  if (isNil(recordId)) return
 
   const attributes = EDITABLE_ATTRIBUTES.filter(
     (attribute) => !isUndefined(editor.pendingChanges[attribute])
@@ -589,12 +524,6 @@ async function retry() {
 }
 
 async function reload() {
-  if (!isNil(employeeBenefitId.value)) {
-    writeRevisionsAtFetchById.set(employeeBenefitId.value, {
-      ...editorFor(employeeBenefitId.value).writeRevisions,
-    })
-  }
-
   await fetch()
 }
 </script>

@@ -166,15 +166,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from "vue"
-import { isEqual, isNil, keyBy, mapValues } from "lodash"
+import { computed, reactive, ref } from "vue"
+import { isNil, keyBy, mapValues } from "lodash"
 import Big from "big.js"
 
 import { MAX_PER_PAGE } from "@/api/base-api"
 import wageEnhancementsApi, {
   EI_CPP_WCB_RATE,
   type WageEnhancement,
-  type WageEnhancementAsIndex,
 } from "@/api/wage-enhancements-api"
 import { formatMoney } from "@/utils/formatters"
 
@@ -210,7 +209,7 @@ const wageEnhancementsQuery = computed(() => ({
   perPage: MAX_PER_PAGE,
 }))
 const {
-  wageEnhancements: fetchedWageEnhancements,
+  wageEnhancements,
   isLoading: isLoadingWageEnhancements,
   isErrored: isErroredWageEnhancements,
 } = useWageEnhancements(wageEnhancementsQuery, {
@@ -220,67 +219,12 @@ const {
     isErroredEmployeeWageTiers.value,
 })
 
-const records = reactive(new Map<number, WageEnhancementAsIndex>())
-const persistedAttributes = new Map<number, EditableAttributes>()
 const pendingChanges = new Map<number, EditableAttributes>()
 const activeWrites = new Map<number, Promise<void>>()
-const visibleIds = ref<number[]>([])
 const pendingIds = reactive(new Set<number>())
 const errorsById = reactive(new Map<number, string>())
 const isCreating = ref(false)
 const snack = useSnack()
-const wageEnhancements = computed(() => {
-  const visibleRecords: WageEnhancementAsIndex[] = []
-  for (const id of visibleIds.value) {
-    const record = records.get(id)
-    if (record) visibleRecords.push(record)
-  }
-  return visibleRecords
-})
-let baselineAtLoad = new Map<number, EditableAttributes>()
-
-watch([() => props.fiscalPeriodId, () => props.centreId, employeeWageTierIds], () => {
-  baselineAtLoad = new Map(persistedAttributes)
-  visibleIds.value = []
-})
-
-watch(
-  [fetchedWageEnhancements, isLoadingWageEnhancements, isErroredWageEnhancements],
-  ([incomingRecords, loading, errored]) => {
-    if (
-      isNil(props.fiscalPeriodId) ||
-      isLoadingEmployeeWageTiers.value ||
-      isErroredEmployeeWageTiers.value
-    ) {
-      visibleIds.value = []
-      return
-    }
-    if (loading) return
-    if (errored) {
-      visibleIds.value = [...records.values()]
-        .filter(
-          (record) =>
-            record.centreId === props.centreId &&
-            employeeWageTierIds.value.includes(record.employeeWageTierId)
-        )
-        .map(({ id }) => id)
-      return
-    }
-
-    for (const incoming of incomingRecords) {
-      const record = records.get(incoming.id)
-      const baseline = persistedAttributes.get(incoming.id)
-      const hasLocalChanges = record && !isEqual(editableAttributes(record), baseline)
-      const wasSavedDuringLoad = baseline !== baselineAtLoad.get(incoming.id)
-      if (hasLocalChanges || activeWrites.has(incoming.id) || wasSavedDuringLoad) continue
-
-      records.set(incoming.id, { ...incoming })
-      persistedAttributes.set(incoming.id, editableAttributes(incoming))
-    }
-    visibleIds.value = incomingRecords.map(({ id }) => id)
-  },
-  { immediate: true, deep: true }
-)
 
 const wageRatePerHoursByEmployeeWageTierId = computed(() =>
   mapValues(keyBy(employeeWageTiers.value, "id"), "wageRatePerHour")
@@ -316,18 +260,12 @@ const wageEnhancementsActualTotal = computed(() =>
 const eiCppWcbRatePercentage = computed(() => Big(EI_CPP_WCB_RATE).mul(Big("100")).toFixed(2))
 
 function save(id: number): Promise<void> {
-  const record = records.get(id)
-  if (!record) return Promise.resolve()
+  const wageEnhancement = wageEnhancements.value.find((record) => record.id === id)
+  if (!wageEnhancement) return Promise.resolve()
 
-  pendingChanges.set(id, editableAttributes(record))
+  pendingChanges.set(id, editableAttributes(wageEnhancement))
   const activeWrite = activeWrites.get(id)
   if (activeWrite) return activeWrite
-
-  if (isEqual(pendingChanges.get(id), persistedAttributes.get(id))) {
-    pendingChanges.delete(id)
-    errorsById.delete(id)
-    return Promise.resolve()
-  }
 
   pendingIds.add(id)
   const write = persist(id).finally(() => {
@@ -339,20 +277,21 @@ function save(id: number): Promise<void> {
 }
 
 async function persist(id: number) {
-  try {
-    while (!isEqual(pendingChanges.get(id), persistedAttributes.get(id))) {
-      const attributes = pendingChanges.get(id)
-      if (!attributes) return
-
-      await wageEnhancementsApi.update(id, attributes)
-      persistedAttributes.set(id, attributes)
-    }
+  while (pendingChanges.has(id)) {
+    const attributes = pendingChanges.get(id)
     pendingChanges.delete(id)
-    errorsById.delete(id)
-  } catch (error) {
-    errorsById.set(id, String(error))
-    console.error(`Failed to save wage enhancement: ${error}`, { error })
-    snack.error(`Failed to save wage enhancement: ${error}`)
+    if (!attributes) return
+
+    try {
+      await wageEnhancementsApi.update(id, attributes)
+      errorsById.delete(id)
+    } catch (error) {
+      if (!pendingChanges.has(id)) pendingChanges.set(id, attributes)
+      errorsById.set(id, String(error))
+      console.error(`Failed to save wage enhancement: ${error}`, { error })
+      snack.error(`Failed to save wage enhancement: ${error}`)
+      return
+    }
   }
 }
 
@@ -369,16 +308,8 @@ async function create(employeeWageTierId: number) {
       hoursEstimated: "0.0000",
       hoursActual: "0.0000",
     })
-    if (!records.has(wageEnhancement.id)) {
-      records.set(wageEnhancement.id, { ...wageEnhancement })
-      persistedAttributes.set(wageEnhancement.id, editableAttributes(wageEnhancement))
-    }
-    if (
-      props.centreId === selectedCentreId &&
-      employeeWageTierIds.value.includes(employeeWageTierId) &&
-      !visibleIds.value.includes(wageEnhancement.id)
-    ) {
-      visibleIds.value.push(wageEnhancement.id)
+    if (!wageEnhancements.value.some(({ id }) => id === wageEnhancement.id)) {
+      wageEnhancements.value.push(wageEnhancement)
     }
     snack.success("Wage enhancement created")
   } catch (error) {
@@ -394,11 +325,10 @@ async function remove(id: number) {
   pendingIds.add(id)
   try {
     await wageEnhancementsApi.delete(id)
-    records.delete(id)
-    persistedAttributes.delete(id)
+    const index = wageEnhancements.value.findIndex((record) => record.id === id)
+    if (index !== -1) wageEnhancements.value.splice(index, 1)
     pendingChanges.delete(id)
     errorsById.delete(id)
-    visibleIds.value = visibleIds.value.filter((visibleId) => visibleId !== id)
     snack.success("Wage enhancement deleted.")
   } catch (error) {
     console.error(`Failed to delete wage enhancement: ${error}`, { error })

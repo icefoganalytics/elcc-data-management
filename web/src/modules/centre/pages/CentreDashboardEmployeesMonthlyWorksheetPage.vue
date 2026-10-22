@@ -46,10 +46,13 @@
           v-else-if="isLoadingEmployeeBenefits"
           type="table"
         />
-        <EmployeeBenefitEditTable
-          v-show="!isNil(employeeBenefitId)"
-          :employee-benefit-id="employeeBenefitId"
-        />
+        <KeepAlive>
+          <EmployeeBenefitEditTable
+            v-if="!isNil(employeeBenefitId)"
+            :key="employeeBenefitId"
+            :employee-benefit-id="employeeBenefitId"
+          />
+        </KeepAlive>
       </v-col>
     </v-row>
     <v-row v-show="!isNil(fiscalPeriodId)">
@@ -62,10 +65,14 @@
             :fiscal-period-id="fiscalPeriodId"
           />
         </h3>
-        <WageEnhancementsEditTable
-          :centre-id="props.centreId"
-          :fiscal-period-id="fiscalPeriodId"
-        />
+        <KeepAlive>
+          <WageEnhancementsEditTable
+            v-if="!isNil(fiscalPeriodId)"
+            :key="`${props.centreId}:${fiscalPeriodId}`"
+            :centre-id="props.centreId"
+            :fiscal-period-id="fiscalPeriodId"
+          />
+        </KeepAlive>
       </v-col>
     </v-row>
   </v-container>
