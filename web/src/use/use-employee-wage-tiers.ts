@@ -77,14 +77,11 @@ export function useEmployeeWageTiers(
         return
       }
 
-      try {
-        await fetch()
-      } catch {
-        // fetch() records the failure; explicit callers still receive its rejection.
-      }
+      await fetch()
     },
     { deep: true, immediate: true }
   )
+
   onScopeDispose(() => {
     requestController?.abort()
   })

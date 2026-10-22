@@ -1,9 +1,11 @@
 import { effectScope, ref, type EffectScope } from "vue"
-import { flushPromises } from "@vue/test-utils"
+import { enableAutoUnmount, flushPromises, mount } from "@vue/test-utils"
 
 import wageEnhancementsApi, { type WageEnhancementAsIndex } from "@/api/wage-enhancements-api"
 import { wageEnhancementFactory } from "@/tests/factories"
 import useWageEnhancements from "@/use/use-wage-enhancements"
+
+enableAutoUnmount(afterEach)
 
 let scope: EffectScope
 beforeEach(() => {
@@ -67,21 +69,27 @@ describe("web/src/use/use-wage-enhancements.ts", () => {
   test("when the latest query fails, an aborted older response cannot clear its error", async () => {
     // Arrange
     const staleWageEnhancement = wageEnhancementFactory.build({ id: 3, centreId: 1 })
+    const loadError = new Error("Latest wage enhancements are unavailable")
+    const handleError = vi.fn()
     const firstLoad = Promise.withResolvers<{
       wageEnhancements: WageEnhancementAsIndex[]
       totalCount: number
     }>()
     let firstSignal: AbortSignal | undefined
-    vi.spyOn(console, "error").mockImplementation(() => {})
     vi.spyOn(wageEnhancementsApi, "list")
       .mockImplementationOnce((_params, options) => {
         firstSignal = options?.signal
         return firstLoad.promise
       })
-      .mockRejectedValueOnce(new Error("Latest wage enhancements are unavailable"))
+      .mockRejectedValueOnce(loadError)
     const query = ref({ where: { centreId: 1 } })
-    const mirror = scope.run(() => useWageEnhancements(query))
-    if (!mirror) throw new Error("Expected an active wage enhancement mirror")
+    const wrapper = mount(
+      {
+        setup: () => useWageEnhancements(query),
+        render: () => null,
+      },
+      { global: { config: { errorHandler: handleError } } }
+    )
 
     // Act
     query.value = { where: { centreId: 2 } }
@@ -91,10 +99,11 @@ describe("web/src/use/use-wage-enhancements.ts", () => {
 
     // Assert
     expect(firstSignal?.aborted).toBe(true)
-    expect(mirror.wageEnhancements.value).toEqual([])
-    expect(mirror.totalCount.value).toBe(0)
-    expect(mirror.isLoading.value).toBe(false)
-    expect(mirror.isErrored.value).toBe(true)
+    expect(wrapper.vm.wageEnhancements).toEqual([])
+    expect(wrapper.vm.totalCount).toBe(0)
+    expect(wrapper.vm.isLoading).toBe(false)
+    expect(wrapper.vm.isErrored).toBe(true)
+    expect(handleError.mock.calls.map(([error]) => error)).toEqual([loadError])
   })
 
   test("when list watching is skipped, aborts the pending request", async () => {

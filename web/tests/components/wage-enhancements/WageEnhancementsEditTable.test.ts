@@ -335,14 +335,16 @@ describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", (
       employeeName: "",
     })
     const policy = { show: true, create: true, update: true, destroy: true }
+    const loadError = new Error("list unavailable")
+    const handleError = vi.fn()
     vi.spyOn(employeeWageTiersApi, "list")
       .mockResolvedValueOnce({ employeeWageTiers: [employeeWageTier1], totalCount: 1 })
       .mockResolvedValueOnce({ employeeWageTiers: [employeeWageTier2], totalCount: 1 })
       .mockResolvedValueOnce({ employeeWageTiers: [employeeWageTier1], totalCount: 1 })
     vi.spyOn(wageEnhancementsApi, "list")
       .mockResolvedValueOnce({ wageEnhancements: [wageEnhancement1], totalCount: 1 })
-      .mockRejectedValueOnce(new Error("list unavailable"))
-      .mockRejectedValueOnce(new Error("list unavailable"))
+      .mockRejectedValueOnce(loadError)
+      .mockRejectedValueOnce(loadError)
     vi.spyOn(wageEnhancementsApi, "update").mockRejectedValueOnce(new Error("offline"))
     vi.spyOn(wageEnhancementsApi, "create").mockResolvedValue({
       wageEnhancement: wageEnhancement2,
@@ -350,7 +352,10 @@ describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", (
     })
     const wrapper = mount(WageEnhancementsEditTable, {
       props: { centreId: 1, fiscalPeriodId: 1 },
-      global: { plugins: [mockVuetify()] },
+      global: {
+        plugins: [mockVuetify()],
+        config: { errorHandler: handleError },
+      },
     })
     await flushPromises()
 
@@ -372,5 +377,6 @@ describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", (
     expect(employeeNames[0].element.value).toBe("Alexandra")
     expect(employeeNames[1].element.value).toBe("")
     expect(wrapper.text()).toContain("offline")
+    expect(handleError.mock.calls.map(([error]) => error)).toEqual([loadError, loadError])
   })
 })

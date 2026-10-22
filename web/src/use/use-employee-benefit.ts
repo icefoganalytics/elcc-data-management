@@ -106,11 +106,7 @@ export function useEmployeeBenefit(id: Ref<number | null | undefined>) {
       clearRecord()
       if (isNil(employeeBenefitId)) return
 
-      try {
-        await fetch()
-      } catch {
-        // Explicit refresh callers receive the rejection; the UI reads isErrored.
-      }
+      await fetch()
     },
     { immediate: true }
   )

@@ -589,15 +589,12 @@ async function retry() {
 }
 
 async function reload() {
-  try {
-    if (!isNil(employeeBenefitId.value)) {
-      writeRevisionsAtFetchById.set(employeeBenefitId.value, {
-        ...editorFor(employeeBenefitId.value).writeRevisions,
-      })
-    }
-    await fetch()
-  } catch {
-    // The composable records the failure for the visible table state.
+  if (!isNil(employeeBenefitId.value)) {
+    writeRevisionsAtFetchById.set(employeeBenefitId.value, {
+      ...editorFor(employeeBenefitId.value).writeRevisions,
+    })
   }
+
+  await fetch()
 }
 </script>

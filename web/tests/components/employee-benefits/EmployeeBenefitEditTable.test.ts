@@ -70,28 +70,38 @@ describe("web/src/components/employee-benefits/EmployeeBenefitEditTable.vue", ()
     expect(wrapper.text()).toContain("12.50% of above")
   })
 
-  test("when a failed load is retried, replaces the error state with the selected record", async () => {
+  test("when failed loads are retried, reports each failure and restores the selected record", async () => {
     // Arrange
     const employeeBenefit = employeeBenefitFactory.build({ id: 64 })
+    const loadError = new Error("offline")
+    const retryError = new Error("retry offline")
+    const handleError = vi.fn()
     vi.spyOn(employeeBenefitsApi, "get")
-      .mockRejectedValueOnce(new Error("offline"))
+      .mockRejectedValueOnce(loadError)
+      .mockRejectedValueOnce(retryError)
       .mockResolvedValueOnce({
         employeeBenefit,
         policy: { show: true, create: true, update: true, destroy: true },
       })
     const wrapper = mount(EmployeeBenefitEditTable, {
       props: { employeeBenefitId: 64 },
-      global: { plugins: [mockVuetify()] },
+      global: {
+        plugins: [mockVuetify()],
+        config: { errorHandler: handleError },
+      },
     })
     await flushPromises()
 
     // Act
     await wrapper.get("button").trigger("click")
     await flushPromises()
+    await wrapper.get("button").trigger("click")
+    await flushPromises()
 
     // Assert
     expect(wrapper.text()).toContain("Gross Payroll")
     expect(wrapper.text()).not.toContain("could not be loaded")
+    expect(handleError.mock.calls.map(([error]) => error)).toEqual([loadError, retryError])
   })
 
   test("when a failed autosave is retried slowly, retains the failure and shows the saving state", async () => {

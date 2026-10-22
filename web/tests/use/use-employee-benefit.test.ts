@@ -1,12 +1,14 @@
 import { CanceledError } from "axios"
 import { effectScope, ref, type EffectScope } from "vue"
-import { flushPromises } from "@vue/test-utils"
+import { enableAutoUnmount, flushPromises, mount } from "@vue/test-utils"
 
 import employeeBenefitsApi from "@/api/employee-benefits-api"
 import { employeeBenefitFactory } from "@/tests/factories"
 import useEmployeeBenefit from "@/use/use-employee-benefit"
 
 type BenefitResponse = Awaited<ReturnType<typeof employeeBenefitsApi.get>>
+
+enableAutoUnmount(afterEach)
 
 let scope: EffectScope
 
@@ -175,15 +177,22 @@ describe("web/src/use/use-employee-benefit.ts", () => {
   test("when loading fails, reports the error without retaining an editable previous record", async () => {
     // Arrange
     const employeeBenefit = employeeBenefitFactory.build({ id: 41 })
+    const loadError = new Error("offline")
+    const handleError = vi.fn()
     vi.spyOn(employeeBenefitsApi, "get")
       .mockResolvedValueOnce({
         employeeBenefit,
         policy: { show: true, create: true, update: true, destroy: true },
       })
-      .mockRejectedValueOnce(new Error("offline"))
+      .mockRejectedValueOnce(loadError)
     const id = ref(41)
-    const benefit = scope.run(() => useEmployeeBenefit(id))
-    if (!benefit) throw new Error("Expected an active benefit model")
+    const wrapper = mount(
+      {
+        setup: () => useEmployeeBenefit(id),
+        render: () => null,
+      },
+      { global: { config: { errorHandler: handleError } } }
+    )
     await flushPromises()
 
     // Act
@@ -191,9 +200,10 @@ describe("web/src/use/use-employee-benefit.ts", () => {
     await flushPromises()
 
     // Assert
-    expect(benefit.employeeBenefit.value).toBeNull()
-    expect(benefit.isErrored.value).toBe(true)
-    expect(benefit.isLoading.value).toBe(false)
+    expect(wrapper.vm.employeeBenefit).toBeNull()
+    expect(wrapper.vm.isErrored).toBe(true)
+    expect(wrapper.vm.isLoading).toBe(false)
+    expect(handleError.mock.calls.map(([error]) => error)).toEqual([loadError])
   })
 
   test("when a save finishes after another record loads, retains the selected record", async () => {
