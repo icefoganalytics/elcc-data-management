@@ -10,6 +10,14 @@ Use this directory for reusable UI building blocks. Keep feature-specific detail
 - When action visibility depends on page context, compute that state in the parent page and pass a simple boolean prop down to the child component.
 - Handle loading, empty, error, and success states explicitly.
 
+## Model Access and Editing
+
+Use model-mirror `use-*` composables for reactive fetching, record or collection state, loading/errors, and straightforward single-record saves. Components own their editing workflows: draft values, dirty tracking, autosave queues, mutation handlers, Retry state, and user feedback.
+
+For an autosaving table, keep pending writes and failed inputs local to the owning component. When a mounted screen changes the selected record or month, hide unresolved views without destroying that owner. Reconcile returning loads with pending edits and writes acknowledged during the load, so stale responses cannot replace newer input.
+
+Parent tables may discover collections and own their mutations while row or tier components display resolved records and emit actions. Keep one editing owner rather than a second persistence snapshot in each child or a global editor cache.
+
 ## Naming and Location
 
 - Directory names are plural and kebab-case: `components/employee-benefits/`
