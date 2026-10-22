@@ -1,45 +1,40 @@
 <template>
-  <v-skeleton-loader v-if="isNil(fiscalPeriodId)">
-    <template #default>
-      <v-container>
-        <v-row>
-          <v-col>
-            <v-skeleton-loader type="heading" />
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col>
-            <v-skeleton-loader type="heading" />
-            <v-skeleton-loader
-              type="card"
-              height="200px"
-            />
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col>
-            <v-skeleton-loader type="heading" />
-            <v-skeleton-loader
-              type="card"
-              height="200px"
-            />
-          </v-col>
-        </v-row>
-      </v-container>
-    </template>
-  </v-skeleton-loader>
-  <v-container v-else>
-    <v-row>
+  <v-container>
+    <v-skeleton-loader
+      v-if="isLoadingFiscalPeriods"
+      type="heading, table, table"
+    />
+    <v-alert
+      v-else-if="isErroredFiscalPeriods"
+      type="error"
+      variant="tonal"
+    >
+      Monthly employee data could not be loaded. Reload the page to try again.
+    </v-alert>
+    <v-alert
+      v-else-if="isNil(fiscalPeriodId)"
+      type="warning"
+      variant="tonal"
+    >
+      No fiscal period exists for the selected month.
+    </v-alert>
+    <v-row v-show="!isNil(fiscalPeriodId)">
       <v-col>
         <h2>{{ fiscalPeriodFormattedDate }}</h2>
       </v-col>
     </v-row>
-    <v-row>
+    <v-row v-show="!isNil(fiscalPeriodId)">
       <v-col tag="section">
         <h3 class="mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2">Employee Benefits</h3>
-
         <v-alert
-          v-if="employeeBenefitNotFound"
+          v-if="isErroredEmployeeBenefits"
+          type="error"
+          variant="tonal"
+        >
+          Employee benefits could not be loaded. Reload the page to try again.
+        </v-alert>
+        <v-alert
+          v-else-if="employeeBenefitNotFound"
           type="warning"
           variant="tonal"
           title="Employee Benefit Not Found"
@@ -52,23 +47,22 @@
           type="table"
         />
         <EmployeeBenefitEditTable
-          v-else
+          v-show="!isNil(employeeBenefitId)"
           :employee-benefit-id="employeeBenefitId"
         />
       </v-col>
     </v-row>
-    <v-row>
+    <v-row v-show="!isNil(fiscalPeriodId)">
       <v-col tag="section">
         <h3 class="d-flex justify-space-between mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2">
           Wage Enhancements
-
           <ReplicateEstimatesButton
+            v-if="!isNil(fiscalPeriodId)"
             :centre-id="props.centreId"
             :fiscal-period-id="fiscalPeriodId"
           />
         </h3>
-
-        <EditWageEnhancementsWidget
+        <WageEnhancementsEditTable
           :centre-id="props.centreId"
           :fiscal-period-id="fiscalPeriodId"
         />
@@ -86,7 +80,7 @@ import useFiscalPeriods, { FiscalPeriodMonths } from "@/use/use-fiscal-periods"
 import useEmployeeBenefits from "@/use/use-employee-benefits"
 
 import EmployeeBenefitEditTable from "@/components/employee-benefits/EmployeeBenefitEditTable.vue"
-import EditWageEnhancementsWidget from "@/modules/centre/components/EditWageEnhancementsWidget.vue"
+import WageEnhancementsEditTable from "@/components/wage-enhancements/WageEnhancementsEditTable.vue"
 import ReplicateEstimatesButton from "@/components/wage-enhancements/ReplicateEstimatesButton.vue"
 
 const props = defineProps<{
@@ -102,15 +96,18 @@ const fiscalPeriodsQuery = computed(() => ({
   },
   perPage: 1,
 }))
-const { fiscalPeriods } = useFiscalPeriods(fiscalPeriodsQuery)
+const {
+  fiscalPeriods,
+  isLoading: isLoadingFiscalPeriods,
+  isErrored: isErroredFiscalPeriods,
+} = useFiscalPeriods(fiscalPeriodsQuery)
 const fiscalPeriod = computed(() => fiscalPeriods.value[0])
 const fiscalPeriodId = computed(() => fiscalPeriod.value?.id)
 const fiscalPeriodFormattedDate = computed(() => {
-  if (isEmpty(fiscalPeriod.value)) return ""
+  if (isNil(fiscalPeriod.value)) return ""
 
   const { dateStart } = fiscalPeriod.value
-  const formattedDate = DateTimeUtils.fromISO(dateStart).toUTC().toFormat("MMMM yyyy")
-  return formattedDate
+  return DateTimeUtils.fromISO(dateStart).toUTC().toFormat("MMMM yyyy")
 })
 
 const employeeBenefitsQuery = computed(() => ({
@@ -119,16 +116,22 @@ const employeeBenefitsQuery = computed(() => ({
     fiscalPeriodId: fiscalPeriodId.value,
   },
 }))
-const { employeeBenefits, isLoading: isLoadingEmployeeBenefits } = useEmployeeBenefits(
-  employeeBenefitsQuery,
-  {
-    skipWatchIf: () => isNil(fiscalPeriodId.value),
-  }
-)
-const employeeBenefitId = computed(() => employeeBenefits.value[0]?.id)
+const {
+  employeeBenefits,
+  isLoading: isLoadingEmployeeBenefits,
+  isErrored: isErroredEmployeeBenefits,
+} = useEmployeeBenefits(employeeBenefitsQuery, {
+  skipWatchIf: () => isNil(fiscalPeriodId.value),
+})
+const employeeBenefitId = computed(() => {
+  if (isLoadingEmployeeBenefits.value || isErroredEmployeeBenefits.value) return undefined
+
+  return employeeBenefits.value[0]?.id
+})
 const employeeBenefitNotFound = computed(
-  () => !isLoadingEmployeeBenefits.value && isEmpty(employeeBenefits.value)
+  () =>
+    !isLoadingEmployeeBenefits.value &&
+    !isErroredEmployeeBenefits.value &&
+    isEmpty(employeeBenefits.value)
 )
 </script>
-
-<style scoped></style>

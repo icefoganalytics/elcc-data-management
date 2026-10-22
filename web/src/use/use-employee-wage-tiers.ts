@@ -29,32 +29,46 @@ export function useEmployeeWageTiers(
     isLoading: false,
     isErrored: false,
   })
+  let latestRequest = {}
 
   async function fetch(): Promise<EmployeeWageTierAsIndex[]> {
+    const request = {}
+    latestRequest = request
     state.isLoading = true
     try {
       const { employeeWageTiers, totalCount } = await employeeWageTiersApi.list(unref(queryOptions))
-      state.isErrored = false
-      state.employeeWageTiers = employeeWageTiers
-      state.totalCount = totalCount
+      if (latestRequest === request) {
+        state.isErrored = false
+        state.employeeWageTiers = employeeWageTiers
+        state.totalCount = totalCount
+      }
       return employeeWageTiers
     } catch (error) {
       console.error(`Failed to fetch employee wage tiers: ${error}`, { error })
-      state.isErrored = true
+      if (latestRequest === request) state.isErrored = true
       throw error
     } finally {
-      state.isLoading = false
+      if (latestRequest === request) state.isLoading = false
     }
   }
 
   watch(
     () => [skipWatchIf(), unref(queryOptions)],
     async ([skip]) => {
+      latestRequest = {}
+      state.employeeWageTiers = []
+      state.totalCount = 0
+      state.isLoading = false
+      state.isErrored = false
       if (skip) return
 
-      await fetch()
+      try {
+        await fetch()
+      } catch {
+        // fetch() records the failure; explicit callers still receive its rejection.
+      }
     },
-    { deep: true, immediate: true }
+    { deep: true, immediate: true, flush: "sync" }
   )
 
   return {

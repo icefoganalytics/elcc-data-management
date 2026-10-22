@@ -1,5 +1,5 @@
-import { type Ref, computed, reactive, ref, toRefs, unref, watch } from "vue"
-import { isNil, isUndefined, pick } from "lodash"
+import { computed, reactive, shallowRef, toRefs, unref, watch, type Ref } from "vue"
+import { isNil, isUndefined } from "lodash"
 
 import employeeBenefitsApi, {
   type EmployeeBenefitAsShow,
@@ -8,16 +8,26 @@ import employeeBenefitsApi, {
 
 export { type EmployeeBenefitAsShow }
 
-export type EmployeeBenefitEditableAttribute =
-  | "grossPayrollMonthlyActual"
-  | "grossPayrollMonthlyEstimated"
-  | "costCapPercentage"
-  | "employeeCostActual"
-  | "employeeCostEstimated"
-  | "employerCostActual"
-  | "employerCostEstimated"
-
+const EDITABLE_ATTRIBUTES = [
+  "grossPayrollMonthlyActual",
+  "grossPayrollMonthlyEstimated",
+  "costCapPercentage",
+  "employeeCostActual",
+  "employeeCostEstimated",
+  "employerCostActual",
+  "employerCostEstimated",
+] as const
+export type EmployeeBenefitEditableAttribute = (typeof EDITABLE_ATTRIBUTES)[number]
 type EmployeeBenefitChanges = Partial<Pick<EmployeeBenefitAsShow, EmployeeBenefitEditableAttribute>>
+type RecordEditor = {
+  record: EmployeeBenefitAsShow | null
+  persistedAttributes: EmployeeBenefitChanges
+  pendingChanges: EmployeeBenefitChanges
+  writeRevisions: Partial<Record<EmployeeBenefitEditableAttribute, number>>
+  saveErrors: Partial<Record<EmployeeBenefitEditableAttribute, string>>
+  savingAttributes: Set<EmployeeBenefitEditableAttribute>
+  writes: Map<EmployeeBenefitEditableAttribute, Promise<void>>
+}
 
 export function useEmployeeBenefit(id: Ref<number | null | undefined>) {
   const state = reactive<{
@@ -25,22 +35,15 @@ export function useEmployeeBenefit(id: Ref<number | null | undefined>) {
     policy: EmployeeBenefitPolicy | null
     isLoading: boolean
     isErrored: boolean
-    isSaving: boolean
-  }>({
-    employeeBenefit: null,
-    policy: null,
-    isLoading: false,
-    isErrored: false,
-    isSaving: false,
-  })
+  }>({ employeeBenefit: null, policy: null, isLoading: false, isErrored: false })
+  // The page keeps this owner alive while month-specific records are being discovered.
+  const editors = new Map<number, RecordEditor>()
+  const currentEditor = shallowRef<RecordEditor>()
+  const isSaving = computed(() => (currentEditor.value?.savingAttributes.size ?? 0) > 0)
+  const saveError = computed(
+    () => Object.values(currentEditor.value?.saveErrors ?? {}).find(Boolean) ?? ""
+  )
   let latestRequest = {}
-  let persistedAttributes: EmployeeBenefitChanges = {}
-  let pendingChanges: EmployeeBenefitChanges = {}
-  // Serialize writes for the same record and attribute, including after navigation.
-  const attributeSaves = new Map<string, { request: object; promise: Promise<void> }>()
-  let activeSaveCount = 0
-  const saveErrors = ref<Partial<Record<EmployeeBenefitEditableAttribute, string>>>({})
-  const saveError = computed(() => Object.values(saveErrors.value).find(Boolean) ?? "")
 
   function clearRecord() {
     latestRequest = {}
@@ -48,134 +51,124 @@ export function useEmployeeBenefit(id: Ref<number | null | undefined>) {
     state.policy = null
     state.isLoading = false
     state.isErrored = false
-    state.isSaving = false
-    persistedAttributes = {}
-    pendingChanges = {}
-    activeSaveCount = 0
-    saveErrors.value = {}
+    currentEditor.value = undefined
   }
 
   async function fetch(): Promise<EmployeeBenefitAsShow> {
     const employeeBenefitId = unref(id)
-    if (isNil(employeeBenefitId)) {
-      throw new Error("id is required")
-    }
+    if (isNil(employeeBenefitId)) throw new Error("id is required")
 
     clearRecord()
     const request = latestRequest
+    let editor = editors.get(employeeBenefitId)
+    if (isUndefined(editor)) {
+      editor = reactive<RecordEditor>({
+        record: null,
+        persistedAttributes: {},
+        pendingChanges: {},
+        writeRevisions: {},
+        saveErrors: {},
+        savingAttributes: new Set(),
+        writes: new Map(),
+      })
+      editors.set(employeeBenefitId, editor)
+    }
+    currentEditor.value = editor
+    const revisionsAtFetch = { ...editor.writeRevisions }
     state.isLoading = true
     try {
       const { employeeBenefit, policy } = await employeeBenefitsApi.get(employeeBenefitId)
-      if (latestRequest === request) {
-        state.employeeBenefit = employeeBenefit
-        state.policy = policy
-        // A returning record can finish an earlier save while this load is pending.
-        persistedAttributes = {
-          ...pick(employeeBenefit, [
-            "grossPayrollMonthlyActual",
-            "grossPayrollMonthlyEstimated",
-            "costCapPercentage",
-            "employeeCostActual",
-            "employeeCostEstimated",
-            "employerCostActual",
-            "employerCostEstimated",
-          ]),
-          ...persistedAttributes,
+      if (latestRequest !== request) return employeeBenefit
+
+      const record = { ...employeeBenefit }
+      for (const attribute of EDITABLE_ATTRIBUTES) {
+        const retainedValue = editor.record?.[attribute] ?? editor.persistedAttributes[attribute]
+        const hasPendingChange = !isUndefined(editor.pendingChanges[attribute])
+        const wasSavedDuringFetch = editor.writeRevisions[attribute] !== revisionsAtFetch[attribute]
+        if ((hasPendingChange || wasSavedDuringFetch) && !isUndefined(retainedValue)) {
+          record[attribute] = retainedValue
+          continue
         }
+        editor.persistedAttributes[attribute] = record[attribute]
       }
-      return employeeBenefit
+      editor.record = record
+      state.employeeBenefit = editor.record
+      state.policy = policy
+      return record
     } catch (error) {
       console.error(`Failed to fetch employee benefit: ${error}`, { error })
-      if (latestRequest === request) {
-        state.isErrored = true
-      }
+      if (latestRequest === request) state.isErrored = true
       throw error
     } finally {
-      if (latestRequest === request) {
-        state.isLoading = false
-      }
+      if (latestRequest === request) state.isLoading = false
     }
   }
 
   function updateAttribute(attribute: EmployeeBenefitEditableAttribute, value: string) {
-    if (isNil(state.employeeBenefit)) return
+    const editor = currentEditor.value
+    const employeeBenefitId = unref(id)
+    if (!editor?.record || isNil(state.employeeBenefit) || isNil(employeeBenefitId)) return
 
-    state.employeeBenefit[attribute] = value
-    const savingKey = `${state.employeeBenefit.id}:${attribute}`
-    if (value === persistedAttributes[attribute] && !attributeSaves.has(savingKey)) {
-      delete pendingChanges[attribute]
-      delete saveErrors.value[attribute]
+    editor.record[attribute] = value
+    if (value === editor.persistedAttributes[attribute] && !editor.writes.has(attribute)) {
+      delete editor.pendingChanges[attribute]
+      delete editor.saveErrors[attribute]
       return
     }
-
-    pendingChanges[attribute] = value
-    void saveAttribute(attribute)
+    editor.pendingChanges[attribute] = value
+    void saveAttribute(editor, employeeBenefitId, attribute)
   }
 
-  function saveAttribute(attribute: EmployeeBenefitEditableAttribute): Promise<void> {
-    const employeeBenefitId = unref(id)
-    if (isNil(employeeBenefitId) || isNil(state.employeeBenefit)) return Promise.resolve()
+  function saveAttribute(
+    editor: RecordEditor,
+    employeeBenefitId: number,
+    attribute: EmployeeBenefitEditableAttribute
+  ): Promise<void> {
+    const activeWrite = editor.writes.get(attribute)
+    if (activeWrite) return activeWrite
 
-    const request = latestRequest
-    const savingKey = `${employeeBenefitId}:${attribute}`
-    const previousSave = attributeSaves.get(savingKey)
-    if (previousSave?.request === request) return previousSave.promise
-
-    let persistence: Promise<void>
-    if (isUndefined(previousSave)) {
-      persistence = persistAttribute(attribute, employeeBenefitId, request)
-    } else {
-      persistence = previousSave.promise.then(async () => {
-        if (latestRequest !== request) return
-
-        await persistAttribute(attribute, employeeBenefitId, request)
-      })
-    }
-
-    const save = persistence.finally(() => {
-      if (attributeSaves.get(savingKey)?.promise === save) {
-        attributeSaves.delete(savingKey)
-      }
-      if (latestRequest === request) {
-        activeSaveCount -= 1
-        state.isSaving = activeSaveCount > 0
-      }
+    editor.savingAttributes.add(attribute)
+    const write = persistAttribute(editor, employeeBenefitId, attribute).finally(() => {
+      editor.savingAttributes.delete(attribute)
+      editor.writes.delete(attribute)
     })
-    attributeSaves.set(savingKey, { request, promise: save })
-    activeSaveCount += 1
-    state.isSaving = true
-    return save
+    editor.writes.set(attribute, write)
+    return write
   }
 
   async function persistAttribute(
-    attribute: EmployeeBenefitEditableAttribute,
+    editor: RecordEditor,
     employeeBenefitId: number,
-    request: object
+    attribute: EmployeeBenefitEditableAttribute
   ) {
     try {
-      while (pendingChanges[attribute] !== persistedAttributes[attribute]) {
-        const value = pendingChanges[attribute]
+      while (editor.pendingChanges[attribute] !== editor.persistedAttributes[attribute]) {
+        const value = editor.pendingChanges[attribute]
         if (isUndefined(value)) return
 
         await employeeBenefitsApi.update(employeeBenefitId, { [attribute]: value })
-        if (unref(id) !== employeeBenefitId) return
-
-        persistedAttributes[attribute] = value
-        if (latestRequest !== request) return
+        editor.persistedAttributes[attribute] = value
+        editor.writeRevisions[attribute] = (editor.writeRevisions[attribute] ?? 0) + 1
       }
-
-      delete pendingChanges[attribute]
-      delete saveErrors.value[attribute]
+      delete editor.pendingChanges[attribute]
+      delete editor.saveErrors[attribute]
     } catch (error) {
-      if (latestRequest === request) {
-        saveErrors.value[attribute] = `Failed to save employee benefit: ${error}`
-      }
+      editor.saveErrors[attribute] = `Failed to save employee benefit: ${error}`
+      console.error(`Failed to save employee benefit: ${error}`, { error })
     }
   }
 
   async function save() {
-    const attributes = Object.keys(pendingChanges) as EmployeeBenefitEditableAttribute[]
-    await Promise.all(attributes.map(saveAttribute))
+    const editor = currentEditor.value
+    const employeeBenefitId = unref(id)
+    if (!editor || isNil(employeeBenefitId)) return
+
+    const attributes = EDITABLE_ATTRIBUTES.filter(
+      (attribute) => !isUndefined(editor.pendingChanges[attribute])
+    )
+    await Promise.all(
+      attributes.map((attribute) => saveAttribute(editor, employeeBenefitId, attribute))
+    )
   }
 
   watch(
@@ -185,24 +178,16 @@ export function useEmployeeBenefit(id: Ref<number | null | undefined>) {
         clearRecord()
         return
       }
-
       try {
         await fetch()
       } catch {
-        // fetch() records failures; explicit refresh callers still receive the rejection.
+        // Explicit refresh callers receive the rejection; the UI reads isErrored.
       }
     },
     { immediate: true, flush: "sync" }
   )
 
-  return {
-    ...toRefs(state),
-    saveError,
-    fetch,
-    refresh: fetch,
-    updateAttribute,
-    save,
-  }
+  return { ...toRefs(state), isSaving, saveError, fetch, refresh: fetch, updateAttribute, save }
 }
 
 export default useEmployeeBenefit

@@ -29,32 +29,50 @@ export function useEmployeeBenefits(
     isLoading: false,
     isErrored: false,
   })
+  let latestRequest = {}
 
   async function fetch(): Promise<EmployeeBenefit[]> {
+    const request = {}
+    latestRequest = request
     state.isLoading = true
     try {
       const { employeeBenefits, totalCount } = await employeeBenefitsApi.list(unref(queryOptions))
-      state.isErrored = false
-      state.employeeBenefits = employeeBenefits
-      state.totalCount = totalCount
+      if (latestRequest === request) {
+        state.isErrored = false
+        state.employeeBenefits = employeeBenefits
+        state.totalCount = totalCount
+      }
       return employeeBenefits
     } catch (error) {
       console.error(`Failed to fetch employee benefits: ${error}`, { error })
-      state.isErrored = true
+      if (latestRequest === request) {
+        state.isErrored = true
+      }
       throw error
     } finally {
-      state.isLoading = false
+      if (latestRequest === request) {
+        state.isLoading = false
+      }
     }
   }
 
   watch(
     () => [skipWatchIf(), unref(queryOptions)],
     async ([skip]) => {
+      latestRequest = {}
+      state.employeeBenefits = []
+      state.totalCount = 0
+      state.isLoading = false
+      state.isErrored = false
       if (skip) return
 
-      await fetch()
+      try {
+        await fetch()
+      } catch {
+        // fetch() records the failure; explicit callers still receive its rejection.
+      }
     },
-    { deep: true, immediate: true }
+    { deep: true, immediate: true, flush: "sync" }
   )
 
   return {

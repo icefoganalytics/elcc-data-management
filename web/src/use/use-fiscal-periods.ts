@@ -34,32 +34,50 @@ export function useFiscalPeriods(
     isLoading: false,
     isErrored: false,
   })
+  let latestRequest = {}
 
   async function fetch(): Promise<FiscalPeriod[]> {
+    const request = {}
+    latestRequest = request
     state.isLoading = true
     try {
       const { fiscalPeriods, totalCount } = await fiscalPeriodsApi.list(unref(queryOptions))
-      state.isErrored = false
-      state.fiscalPeriods = fiscalPeriods
-      state.totalCount = totalCount
+      if (latestRequest === request) {
+        state.isErrored = false
+        state.fiscalPeriods = fiscalPeriods
+        state.totalCount = totalCount
+      }
       return fiscalPeriods
     } catch (error) {
-      console.error("Failed to fetch fiscal periods:", error)
-      state.isErrored = true
+      console.error(`Failed to fetch fiscal periods: ${error}`, { error })
+      if (latestRequest === request) {
+        state.isErrored = true
+      }
       throw error
     } finally {
-      state.isLoading = false
+      if (latestRequest === request) {
+        state.isLoading = false
+      }
     }
   }
 
   watch(
     () => [skipWatchIf(), unref(queryOptions)],
     async ([skip]) => {
+      latestRequest = {}
+      state.fiscalPeriods = []
+      state.totalCount = 0
+      state.isLoading = false
+      state.isErrored = false
       if (skip) return
 
-      await fetch()
+      try {
+        await fetch()
+      } catch {
+        // fetch() records the failure; explicit callers still receive its rejection.
+      }
     },
-    { deep: true, immediate: true }
+    { deep: true, immediate: true, flush: "sync" }
   )
 
   return {
