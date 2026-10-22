@@ -1,11 +1,9 @@
 import { effectScope, ref, type EffectScope } from "vue"
-import { enableAutoUnmount, flushPromises, mount } from "@vue/test-utils"
+import { flushPromises, mount } from "@vue/test-utils"
 
 import wageEnhancementsApi, { type WageEnhancementAsIndex } from "@/api/wage-enhancements-api"
 import { wageEnhancementFactory } from "@/tests/factories"
 import useWageEnhancements from "@/use/use-wage-enhancements"
-
-enableAutoUnmount(afterEach)
 
 let scope: EffectScope
 beforeEach(() => {

@@ -1,4 +1,4 @@
-import { enableAutoUnmount, flushPromises, mount } from "@vue/test-utils"
+import { flushPromises, mount } from "@vue/test-utils"
 
 import employeeBenefitsApi from "@/api/employee-benefits-api"
 import employeeWageTiersApi from "@/api/employee-wage-tiers-api"
@@ -12,8 +12,6 @@ import {
 import { mockVuetify } from "@/tests/support"
 
 import CentreDashboardEmployeesMonthlyWorksheetPage from "@/modules/centre/pages/CentreDashboardEmployeesMonthlyWorksheetPage.vue"
-
-enableAutoUnmount(afterEach)
 
 describe("web/src/modules/centre/pages/CentreDashboardEmployeesMonthlyWorksheetPage.vue", () => {
   test("when returning to a month with an unfinished save, queues a committed revert behind the original write", async () => {

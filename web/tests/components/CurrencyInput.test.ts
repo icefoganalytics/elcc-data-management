@@ -1,10 +1,8 @@
 import { defineComponent, nextTick, ref } from "vue"
-import { enableAutoUnmount, mount } from "@vue/test-utils"
+import { mount } from "@vue/test-utils"
 
 import CurrencyInput from "@/components/CurrencyInput.vue"
 import { mockVuetify } from "@/tests/support"
-
-enableAutoUnmount(afterEach)
 
 describe("web/src/components/CurrencyInput.vue", () => {
   describe("CurrencyInput", () => {

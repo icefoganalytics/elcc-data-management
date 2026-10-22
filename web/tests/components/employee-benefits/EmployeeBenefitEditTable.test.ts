@@ -1,12 +1,10 @@
-import { enableAutoUnmount, flushPromises, mount } from "@vue/test-utils"
+import { flushPromises, mount } from "@vue/test-utils"
 
 import employeeBenefitsApi from "@/api/employee-benefits-api"
 import { employeeBenefitFactory } from "@/tests/factories"
 import { mockVuetify } from "@/tests/support"
 
 import EmployeeBenefitEditTable from "@/components/employee-benefits/EmployeeBenefitEditTable.vue"
-
-enableAutoUnmount(afterEach)
 
 describe("web/src/components/employee-benefits/EmployeeBenefitEditTable.vue", () => {
   test("when a currency edit is committed with Enter, saves the four-decimal amount", async () => {

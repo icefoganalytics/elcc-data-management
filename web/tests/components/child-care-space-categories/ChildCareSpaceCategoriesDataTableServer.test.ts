@@ -1,11 +1,9 @@
-import { enableAutoUnmount, flushPromises, mount } from "@vue/test-utils"
+import { flushPromises, mount } from "@vue/test-utils"
 
 import httpClient from "@/api/http-client"
 import type { ChildCareSpaceCategoryAsIndex } from "@/api/child-care-space-categories-api"
 import ChildCareSpaceCategoriesDataTableServer from "@/components/child-care-space-categories/ChildCareSpaceCategoriesDataTableServer.vue"
 import { mockRouter, mockVuetify } from "@/tests/support"
-
-enableAutoUnmount(afterEach)
 
 type CategoryListResponse = {
   data: {

@@ -1,4 +1,4 @@
-import { enableAutoUnmount, flushPromises, mount } from "@vue/test-utils"
+import { flushPromises, mount } from "@vue/test-utils"
 
 import employeeWageTiersApi from "@/api/employee-wage-tiers-api"
 import wageEnhancementsApi, {
@@ -14,8 +14,6 @@ import WageEnhancementsEditTable from "@/components/wage-enhancements/WageEnhanc
 vi.mock("@/use/use-snack", () => ({
   default: () => ({ success: vi.fn(), error: vi.fn() }),
 }))
-
-enableAutoUnmount(afterEach)
 
 describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", () => {
   test("when a second edit is committed during a slow save, persists both updates", async () => {

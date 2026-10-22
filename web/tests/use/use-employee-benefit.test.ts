@@ -1,14 +1,12 @@
 import { CanceledError } from "axios"
 import { effectScope, ref, type EffectScope } from "vue"
-import { enableAutoUnmount, flushPromises, mount } from "@vue/test-utils"
+import { flushPromises, mount } from "@vue/test-utils"
 
 import employeeBenefitsApi from "@/api/employee-benefits-api"
 import { employeeBenefitFactory } from "@/tests/factories"
 import useEmployeeBenefit from "@/use/use-employee-benefit"
 
 type BenefitResponse = Awaited<ReturnType<typeof employeeBenefitsApi.get>>
-
-enableAutoUnmount(afterEach)
 
 let scope: EffectScope
 
