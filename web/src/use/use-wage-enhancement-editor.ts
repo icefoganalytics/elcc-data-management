@@ -19,7 +19,7 @@ function editableAttributes(wageEnhancement: WageEnhancement): EditableAttribute
   }
 }
 
-export default function useWageEnhancementEditor(context: Ref<EditingContext | undefined>) {
+export function useWageEnhancementEditor(context: Ref<EditingContext | undefined>) {
   const records = reactive(new Map<number, WageEnhancementAsIndex>())
   const persistedAttributes = new Map<number, EditableAttributes>()
   const pendingChanges = new Map<number, EditableAttributes>()
@@ -199,3 +199,5 @@ export default function useWageEnhancementEditor(context: Ref<EditingContext | u
     remove,
   }
 }
+
+export default useWageEnhancementEditor
