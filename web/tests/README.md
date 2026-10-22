@@ -26,4 +26,6 @@ These conventions follow [WRAP's component-test guidance](https://github.com/ice
 
 Use Fishery for repeated frontend API entities. Factories return the corresponding frontend API type and build related records through the owning factory. They must not import backend models or create persisted data. Keep one-off inputs literal; use `build({ ...overrides })` beside each scenario for meaningful values.
 
+Re-export named factory symbols from `tests/factories/index.ts`, following [`api/tests/factories/index.ts`](../../api/tests/factories/index.ts). Do not alias default exports in the barrel.
+
 The web test service has its own dependency mount. After changing `web/package-lock.json`, refresh source-bound web dependencies as documented in `bin/README.md` and rebuild the isolated test image with `./bin/dev build test_web`.

@@ -8,6 +8,8 @@ Cancel superseded reads with `AbortController`, passing its `signal` through the
 
 Use Vue's default watcher scheduling to batch related state changes. Do not use `flush: "sync"` as a general freshness or cancellation mechanism; an exception needs a demonstrated local ordering requirement.
 
+Watcher callbacks should await `fetch()` directly. Fetch actions may record load errors before rethrowing; do not add catch-and-ignore wrappers merely because the error state was updated.
+
 ## Singular Composables
 
 Use `use-model.ts` for one record identified by an id.
