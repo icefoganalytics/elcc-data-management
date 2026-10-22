@@ -31,31 +31,46 @@ export function useWageEnhancements(
     isErrored: false,
   })
 
+  let latestRequest = {}
+
   async function fetch(): Promise<WageEnhancementAsIndex[]> {
+    const request = {}
+    latestRequest = request
     state.isLoading = true
+    state.isErrored = false
     try {
       const { wageEnhancements, totalCount } = await wageEnhancementsApi.list(unref(queryOptions))
-      state.wageEnhancements = wageEnhancements
-      state.totalCount = totalCount
-      state.isErrored = false
+      if (latestRequest === request) {
+        state.wageEnhancements = wageEnhancements
+        state.totalCount = totalCount
+      }
       return wageEnhancements
     } catch (error) {
       console.error(`Failed to fetch wage enhancements: ${error}`, { error })
-      state.isErrored = true
+      if (latestRequest === request) state.isErrored = true
       throw error
     } finally {
-      state.isLoading = false
+      if (latestRequest === request) state.isLoading = false
     }
   }
 
   watch(
     () => [skipWatchIf(), unref(queryOptions)],
     async ([skip]) => {
+      latestRequest = {}
+      state.wageEnhancements = []
+      state.totalCount = 0
+      state.isLoading = false
+      state.isErrored = false
       if (skip) return
 
-      await fetch()
+      try {
+        await fetch()
+      } catch {
+        // fetch() records the failure; explicit callers still receive its rejection.
+      }
     },
-    { deep: true, immediate: true }
+    { deep: true, immediate: true, flush: "sync" }
   )
 
   return {
