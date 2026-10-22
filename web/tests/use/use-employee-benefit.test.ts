@@ -1,3 +1,4 @@
+import { CanceledError } from "axios"
 import { effectScope, ref, type EffectScope } from "vue"
 import { flushPromises } from "@vue/test-utils"
 
@@ -23,12 +24,14 @@ describe("web/src/use/use-employee-benefit.ts", () => {
     const firstLoad = Promise.withResolvers<BenefitResponse>()
     const selectedLoad = Promise.withResolvers<BenefitResponse>()
     const employeeBenefit = employeeBenefitFactory.build({ id: 41 })
-    vi.spyOn(employeeBenefitsApi, "get")
+    const get = vi
+      .spyOn(employeeBenefitsApi, "get")
       .mockReturnValueOnce(firstLoad.promise)
       .mockReturnValueOnce(selectedLoad.promise)
     const id = ref<number | undefined>(41)
     const benefit = scope.run(() => useEmployeeBenefit(id))
     if (!benefit) throw new Error("Expected an active benefit model")
+    const firstSignal = get.mock.calls[0]?.[1]?.signal
 
     // Act
     id.value = 42
@@ -41,6 +44,34 @@ describe("web/src/use/use-employee-benefit.ts", () => {
     // Assert
     expect(benefit.isLoading.value).toBe(true)
     expect(benefit.employeeBenefit.value).toBeNull()
+    expect(firstSignal?.aborted).toBe(true)
+  })
+
+  test("when a superseded read rejects with cancellation, keeps the selected record without an error", async () => {
+    // Arrange
+    const firstLoad = Promise.withResolvers<BenefitResponse>()
+    const employeeBenefit = employeeBenefitFactory.build({ id: 42 })
+    const policy = { show: true, create: true, update: true, destroy: true }
+    const get = vi
+      .spyOn(employeeBenefitsApi, "get")
+      .mockReturnValueOnce(firstLoad.promise)
+      .mockResolvedValueOnce({ employeeBenefit, policy })
+    const id = ref(41)
+    const benefit = scope.run(() => useEmployeeBenefit(id))
+    if (!benefit) throw new Error("Expected an active benefit model")
+    const firstSignal = get.mock.calls[0]?.[1]?.signal
+
+    // Act
+    id.value = 42
+    await flushPromises()
+    firstLoad.reject(new CanceledError("Request canceled"))
+    await flushPromises()
+
+    // Assert
+    expect(firstSignal?.aborted).toBe(true)
+    expect(benefit.employeeBenefit.value).toEqual(employeeBenefit)
+    expect(benefit.isErrored.value).toBe(false)
+    expect(benefit.isLoading.value).toBe(false)
   })
 
   test("when an earlier response arrives after the selected record loads, retains the selected record", async () => {
@@ -70,6 +101,47 @@ describe("web/src/use/use-employee-benefit.ts", () => {
     // Assert
     expect(benefit.employeeBenefit.value).toEqual(employeeBenefit2)
     expect(benefit.isLoading.value).toBe(false)
+  })
+
+  test("when its scope is disposed, aborts the active read without recording a failure", async () => {
+    // Arrange
+    const pendingLoad = Promise.withResolvers<BenefitResponse>()
+    const get = vi.spyOn(employeeBenefitsApi, "get").mockReturnValueOnce(pendingLoad.promise)
+    const id = ref(41)
+    const benefit = scope.run(() => useEmployeeBenefit(id))
+    if (!benefit) throw new Error("Expected an active benefit model")
+    const signal = get.mock.calls[0]?.[1]?.signal
+
+    // Act
+    scope.stop()
+    pendingLoad.reject(new CanceledError("Request canceled"))
+    await flushPromises()
+
+    // Assert
+    expect(signal?.aborted).toBe(true)
+    expect(benefit.isErrored.value).toBe(false)
+  })
+
+  test("when the selected id becomes undefined, clears state and aborts the pending read", async () => {
+    // Arrange
+    const pendingLoad = Promise.withResolvers<BenefitResponse>()
+    const get = vi.spyOn(employeeBenefitsApi, "get").mockReturnValueOnce(pendingLoad.promise)
+    const id = ref<number | undefined>(41)
+    const benefit = scope.run(() => useEmployeeBenefit(id))
+    if (!benefit) throw new Error("Expected an active benefit model")
+    const signal = get.mock.calls[0]?.[1]?.signal
+
+    // Act
+    id.value = undefined
+    pendingLoad.reject(new CanceledError("Request canceled"))
+    await flushPromises()
+
+    // Assert
+    expect(signal?.aborted).toBe(true)
+    expect(benefit.employeeBenefit.value).toBeNull()
+    expect(benefit.policy.value).toBeNull()
+    expect(benefit.isLoading.value).toBe(false)
+    expect(benefit.isErrored.value).toBe(false)
   })
 
   test("when loading fails, reports the error without retaining an editable previous record", async () => {

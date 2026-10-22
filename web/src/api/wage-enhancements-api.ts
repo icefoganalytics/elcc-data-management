@@ -45,11 +45,14 @@ export type WageEnhancementQueryOptions = QueryOptions<
 >
 
 export const wageEnhancementsApi = {
-  async list(params: WageEnhancementQueryOptions = {}): Promise<{
+  async list(
+    params: WageEnhancementQueryOptions = {},
+    { signal }: { signal?: AbortSignal } = {}
+  ): Promise<{
     wageEnhancements: WageEnhancementAsIndex[]
     totalCount: number
   }> {
-    const { data } = await http.get("/api/wage-enhancements", { params })
+    const { data } = await http.get("/api/wage-enhancements", { params, signal })
     return data
   },
   async get(wageEnhancementId: number): Promise<{

@@ -1,4 +1,5 @@
-import { reactive, ref, toRefs, unref, watch } from "vue"
+import { isCancel } from "axios"
+import { onScopeDispose, reactive, ref, toRefs, unref, watch } from "vue"
 import type { Ref } from "vue"
 
 import employeeWageTiersApi, {
@@ -29,38 +30,52 @@ export function useEmployeeWageTiers(
     isLoading: false,
     isErrored: false,
   })
-  let latestRequest = {}
+  let requestController: AbortController | undefined
 
   async function fetch(): Promise<EmployeeWageTierAsIndex[]> {
-    const request = {}
-    latestRequest = request
+    requestController?.abort()
+    const controller = new AbortController()
+    requestController = controller
     state.isLoading = true
     try {
-      const { employeeWageTiers, totalCount } = await employeeWageTiersApi.list(unref(queryOptions))
-      if (latestRequest === request) {
-        state.isErrored = false
-        state.employeeWageTiers = employeeWageTiers
-        state.totalCount = totalCount
+      const { employeeWageTiers, totalCount } = await employeeWageTiersApi.list(
+        unref(queryOptions),
+        { signal: controller.signal }
+      )
+      if (controller.signal.aborted) {
+        return state.employeeWageTiers
       }
+
+      state.isErrored = false
+      state.employeeWageTiers = employeeWageTiers
+      state.totalCount = totalCount
       return employeeWageTiers
     } catch (error) {
+      if (controller.signal.aborted || isCancel(error)) {
+        return state.employeeWageTiers
+      }
+
       console.error(`Failed to fetch employee wage tiers: ${error}`, { error })
-      if (latestRequest === request) state.isErrored = true
+      state.isErrored = true
       throw error
     } finally {
-      if (latestRequest === request) state.isLoading = false
+      if (!controller.signal.aborted) {
+        state.isLoading = false
+      }
     }
   }
 
   watch(
     () => [skipWatchIf(), unref(queryOptions)],
     async ([skip]) => {
-      latestRequest = {}
       state.employeeWageTiers = []
       state.totalCount = 0
       state.isLoading = false
       state.isErrored = false
-      if (skip) return
+      if (skip) {
+        requestController?.abort()
+        return
+      }
 
       try {
         await fetch()
@@ -70,6 +85,9 @@ export function useEmployeeWageTiers(
     },
     { deep: true, immediate: true, flush: "sync" }
   )
+  onScopeDispose(() => {
+    requestController?.abort()
+  })
 
   return {
     ...toRefs(state),

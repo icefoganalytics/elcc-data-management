@@ -1,4 +1,5 @@
-import { reactive, ref, toRefs, unref, watch } from "vue"
+import { isCancel } from "axios"
+import { onScopeDispose, reactive, ref, toRefs, unref, watch } from "vue"
 import type { Ref } from "vue"
 
 import wageEnhancementsApi, {
@@ -31,38 +32,51 @@ export function useWageEnhancements(
     isErrored: false,
   })
 
-  let latestRequest = {}
+  let requestController: AbortController | undefined
 
   async function fetch(): Promise<WageEnhancementAsIndex[]> {
-    const request = {}
-    latestRequest = request
+    requestController?.abort()
+    const controller = new AbortController()
+    requestController = controller
     state.isLoading = true
     state.isErrored = false
     try {
-      const { wageEnhancements, totalCount } = await wageEnhancementsApi.list(unref(queryOptions))
-      if (latestRequest === request) {
-        state.wageEnhancements = wageEnhancements
-        state.totalCount = totalCount
+      const { wageEnhancements, totalCount } = await wageEnhancementsApi.list(unref(queryOptions), {
+        signal: controller.signal,
+      })
+      if (controller.signal.aborted) {
+        return state.wageEnhancements
       }
+
+      state.wageEnhancements = wageEnhancements
+      state.totalCount = totalCount
       return wageEnhancements
     } catch (error) {
+      if (controller.signal.aborted || isCancel(error)) {
+        return state.wageEnhancements
+      }
+
       console.error(`Failed to fetch wage enhancements: ${error}`, { error })
-      if (latestRequest === request) state.isErrored = true
+      state.isErrored = true
       throw error
     } finally {
-      if (latestRequest === request) state.isLoading = false
+      if (!controller.signal.aborted) {
+        state.isLoading = false
+      }
     }
   }
 
   watch(
     () => [skipWatchIf(), unref(queryOptions)],
     async ([skip]) => {
-      latestRequest = {}
       state.wageEnhancements = []
       state.totalCount = 0
       state.isLoading = false
       state.isErrored = false
-      if (skip) return
+      if (skip) {
+        requestController?.abort()
+        return
+      }
 
       try {
         await fetch()
@@ -72,6 +86,9 @@ export function useWageEnhancements(
     },
     { deep: true, immediate: true, flush: "sync" }
   )
+  onScopeDispose(() => {
+    requestController?.abort()
+  })
 
   return {
     ...toRefs(state),

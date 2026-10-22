@@ -1,4 +1,5 @@
-import { type Ref, reactive, toRefs, ref, unref, watch } from "vue"
+import { isCancel } from "axios"
+import { type Ref, onScopeDispose, reactive, toRefs, ref, unref, watch } from "vue"
 
 import fiscalPeriodsApi, {
   FiscalPeriodMonths,
@@ -34,28 +35,35 @@ export function useFiscalPeriods(
     isLoading: false,
     isErrored: false,
   })
-  let latestRequest = {}
+  let requestController: AbortController | undefined
 
   async function fetch(): Promise<FiscalPeriod[]> {
-    const request = {}
-    latestRequest = request
+    requestController?.abort()
+    const controller = new AbortController()
+    requestController = controller
     state.isLoading = true
     try {
-      const { fiscalPeriods, totalCount } = await fiscalPeriodsApi.list(unref(queryOptions))
-      if (latestRequest === request) {
-        state.isErrored = false
-        state.fiscalPeriods = fiscalPeriods
-        state.totalCount = totalCount
+      const { fiscalPeriods, totalCount } = await fiscalPeriodsApi.list(unref(queryOptions), {
+        signal: controller.signal,
+      })
+      if (controller.signal.aborted) {
+        return state.fiscalPeriods
       }
+
+      state.isErrored = false
+      state.fiscalPeriods = fiscalPeriods
+      state.totalCount = totalCount
       return fiscalPeriods
     } catch (error) {
-      console.error(`Failed to fetch fiscal periods: ${error}`, { error })
-      if (latestRequest === request) {
-        state.isErrored = true
+      if (controller.signal.aborted || isCancel(error)) {
+        return state.fiscalPeriods
       }
+
+      console.error(`Failed to fetch fiscal periods: ${error}`, { error })
+      state.isErrored = true
       throw error
     } finally {
-      if (latestRequest === request) {
+      if (!controller.signal.aborted) {
         state.isLoading = false
       }
     }
@@ -64,12 +72,14 @@ export function useFiscalPeriods(
   watch(
     () => [skipWatchIf(), unref(queryOptions)],
     async ([skip]) => {
-      latestRequest = {}
       state.fiscalPeriods = []
       state.totalCount = 0
       state.isLoading = false
       state.isErrored = false
-      if (skip) return
+      if (skip) {
+        requestController?.abort()
+        return
+      }
 
       try {
         await fetch()
@@ -79,6 +89,9 @@ export function useFiscalPeriods(
     },
     { deep: true, immediate: true, flush: "sync" }
   )
+  onScopeDispose(() => {
+    requestController?.abort()
+  })
 
   return {
     ...toRefs(state),

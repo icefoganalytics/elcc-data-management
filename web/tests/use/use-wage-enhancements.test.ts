@@ -1,7 +1,7 @@
 import { effectScope, ref, type EffectScope } from "vue"
 import { flushPromises } from "@vue/test-utils"
 
-import wageEnhancementsApi from "@/api/wage-enhancements-api"
+import wageEnhancementsApi, { type WageEnhancementAsIndex } from "@/api/wage-enhancements-api"
 import { wageEnhancementFactory } from "@/tests/factories"
 import useWageEnhancements from "@/use/use-wage-enhancements"
 
@@ -14,14 +14,71 @@ afterEach(() => {
 })
 
 describe("web/src/use/use-wage-enhancements.ts", () => {
-  test("when an earlier query finishes last, retains the latest query results and loading state", async () => {
+  test("when a query is superseded, aborts its request without changing the latest loading state", async () => {
     // Arrange
     const wageEnhancement1 = wageEnhancementFactory.build({ id: 3, centreId: 1 })
     const wageEnhancement2 = wageEnhancementFactory.build({ id: 4, centreId: 2 })
-    const firstLoad = Promise.withResolvers<Awaited<ReturnType<typeof wageEnhancementsApi.list>>>()
+    const firstLoad = Promise.withResolvers<{
+      wageEnhancements: WageEnhancementAsIndex[]
+      totalCount: number
+    }>()
+    const latestLoad = Promise.withResolvers<{
+      wageEnhancements: WageEnhancementAsIndex[]
+      totalCount: number
+    }>()
+    let firstSignal: AbortSignal | undefined
+    let latestSignal: AbortSignal | undefined
+    const list = vi.spyOn(wageEnhancementsApi, "list")
+    list
+      .mockImplementationOnce((_params, options) => {
+        firstSignal = options?.signal
+        return firstLoad.promise
+      })
+      .mockImplementationOnce((_params, options) => {
+        latestSignal = options?.signal
+        return latestLoad.promise
+      })
+    const query = ref({ where: { centreId: 1 } })
+    const mirror = scope.run(() => useWageEnhancements(query))
+    if (!mirror) throw new Error("Expected an active wage enhancement mirror")
+
+    // Act
+    query.value = { where: { centreId: 2 } }
+    firstLoad.resolve({ wageEnhancements: [wageEnhancement1], totalCount: 1 })
+    await flushPromises()
+
+    const recordsAfterEarlierResponse = mirror.wageEnhancements.value
+    const loadingAfterEarlierResponse = mirror.isLoading.value
+
+    latestLoad.resolve({ wageEnhancements: [wageEnhancement2], totalCount: 1 })
+    await flushPromises()
+
+    // Assert
+    expect(firstSignal?.aborted).toBe(true)
+    expect(latestSignal?.aborted).toBe(false)
+    expect(recordsAfterEarlierResponse).toEqual([])
+    expect(loadingAfterEarlierResponse).toBe(true)
+    expect(mirror.wageEnhancements.value).toEqual([wageEnhancement2])
+    expect(mirror.totalCount.value).toBe(1)
+    expect(mirror.isLoading.value).toBe(false)
+    expect(mirror.isErrored.value).toBe(false)
+  })
+
+  test("when the latest query fails, an aborted older response cannot clear its error", async () => {
+    // Arrange
+    const staleWageEnhancement = wageEnhancementFactory.build({ id: 3, centreId: 1 })
+    const firstLoad = Promise.withResolvers<{
+      wageEnhancements: WageEnhancementAsIndex[]
+      totalCount: number
+    }>()
+    let firstSignal: AbortSignal | undefined
+    vi.spyOn(console, "error").mockImplementation(() => {})
     vi.spyOn(wageEnhancementsApi, "list")
-      .mockReturnValueOnce(firstLoad.promise)
-      .mockResolvedValueOnce({ wageEnhancements: [wageEnhancement2], totalCount: 1 })
+      .mockImplementationOnce((_params, options) => {
+        firstSignal = options?.signal
+        return firstLoad.promise
+      })
+      .mockRejectedValueOnce(new Error("Latest wage enhancements are unavailable"))
     const query = ref({ where: { centreId: 1 } })
     const mirror = scope.run(() => useWageEnhancements(query))
     if (!mirror) throw new Error("Expected an active wage enhancement mirror")
@@ -29,13 +86,77 @@ describe("web/src/use/use-wage-enhancements.ts", () => {
     // Act
     query.value = { where: { centreId: 2 } }
     await flushPromises()
-    firstLoad.resolve({ wageEnhancements: [wageEnhancement1], totalCount: 1 })
+    firstLoad.resolve({ wageEnhancements: [staleWageEnhancement], totalCount: 1 })
     await flushPromises()
 
     // Assert
-    expect(mirror.wageEnhancements.value).toEqual([wageEnhancement2])
-    expect(mirror.totalCount.value).toBe(1)
+    expect(firstSignal?.aborted).toBe(true)
+    expect(mirror.wageEnhancements.value).toEqual([])
+    expect(mirror.totalCount.value).toBe(0)
     expect(mirror.isLoading.value).toBe(false)
+    expect(mirror.isErrored.value).toBe(true)
+  })
+
+  test("when list watching is skipped, aborts the pending request", async () => {
+    // Arrange
+    const firstLoad = Promise.withResolvers<{
+      wageEnhancements: WageEnhancementAsIndex[]
+      totalCount: number
+    }>()
+    const shouldSkip = ref(false)
+    let requestSignal: AbortSignal | undefined
+    vi.spyOn(wageEnhancementsApi, "list").mockImplementationOnce((_params, options) => {
+      requestSignal = options?.signal
+      return firstLoad.promise
+    })
+    const mirror = scope.run(() =>
+      useWageEnhancements(ref({}), { skipWatchIf: () => shouldSkip.value })
+    )
+    if (!mirror) throw new Error("Expected an active wage enhancement mirror")
+
+    // Act
+    shouldSkip.value = true
+
+    firstLoad.resolve({
+      wageEnhancements: [wageEnhancementFactory.build({ id: 3, centreId: 1 })],
+      totalCount: 1,
+    })
+    await flushPromises()
+
+    // Assert
+    expect(requestSignal?.aborted).toBe(true)
+    expect(mirror.isLoading.value).toBe(false)
+    expect(mirror.wageEnhancements.value).toEqual([])
+    expect(mirror.totalCount.value).toBe(0)
     expect(mirror.isErrored.value).toBe(false)
+  })
+
+  test("when its effect scope is disposed, aborts the pending request", async () => {
+    // Arrange
+    const firstLoad = Promise.withResolvers<{
+      wageEnhancements: WageEnhancementAsIndex[]
+      totalCount: number
+    }>()
+    let requestSignal: AbortSignal | undefined
+    vi.spyOn(wageEnhancementsApi, "list").mockImplementationOnce((_params, options) => {
+      requestSignal = options?.signal
+      return firstLoad.promise
+    })
+    const mirror = scope.run(() => useWageEnhancements())
+    if (!mirror) throw new Error("Expected an active wage enhancement mirror")
+
+    // Act
+    scope.stop()
+
+    firstLoad.resolve({
+      wageEnhancements: [wageEnhancementFactory.build({ id: 3, centreId: 1 })],
+      totalCount: 1,
+    })
+    await flushPromises()
+
+    // Assert
+    expect(requestSignal?.aborted).toBe(true)
+    expect(mirror.wageEnhancements.value).toEqual([])
+    expect(mirror.totalCount.value).toBe(0)
   })
 })

@@ -1,4 +1,5 @@
-import { reactive, toRefs, unref, watch, type Ref } from "vue"
+import { isCancel } from "axios"
+import { onScopeDispose, reactive, toRefs, unref, watch, type Ref } from "vue"
 import { isNil } from "lodash"
 
 import employeeBenefitsApi, {
@@ -15,39 +16,52 @@ export function useEmployeeBenefit(id: Ref<number | null | undefined>) {
     isLoading: boolean
     isErrored: boolean
   }>({ employeeBenefit: null, policy: null, isLoading: false, isErrored: false })
-  let latestRequest = {}
+  let requestController: AbortController | undefined
 
   function clearRecord() {
-    latestRequest = {}
+    requestController?.abort()
+    requestController = undefined
     state.employeeBenefit = null
     state.policy = null
     state.isLoading = false
     state.isErrored = false
   }
 
-  async function fetch(): Promise<EmployeeBenefitAsShow> {
+  async function fetch(): Promise<EmployeeBenefitAsShow | null> {
     const employeeBenefitId = unref(id)
     if (isNil(employeeBenefitId)) throw new Error("id is required")
 
-    const request = {}
-    latestRequest = request
+    requestController?.abort()
+    const controller = new AbortController()
+    requestController = controller
     state.employeeBenefit = null
     state.policy = null
     state.isErrored = false
     state.isLoading = true
     try {
-      const { employeeBenefit, policy } = await employeeBenefitsApi.get(employeeBenefitId)
-      if (latestRequest === request) {
-        state.employeeBenefit = employeeBenefit
-        state.policy = policy
-      }
+      const { employeeBenefit, policy } = await employeeBenefitsApi.get(employeeBenefitId, {
+        signal: controller.signal,
+      })
+      if (controller.signal.aborted) return state.employeeBenefit
+
+      state.employeeBenefit = employeeBenefit
+      state.policy = policy
       return employeeBenefit
     } catch (error) {
+      if (controller.signal.aborted) return state.employeeBenefit
+
+      if (isCancel(error)) {
+        state.isErrored = false
+        return state.employeeBenefit
+      }
+
       console.error(`Failed to fetch employee benefit: ${error}`, { error })
-      if (latestRequest === request) state.isErrored = true
+      state.isErrored = true
       throw error
     } finally {
-      if (latestRequest === request) state.isLoading = false
+      if (!controller.signal.aborted) {
+        state.isLoading = false
+      }
     }
   }
 
@@ -56,16 +70,18 @@ export function useEmployeeBenefit(id: Ref<number | null | undefined>) {
   ): Promise<EmployeeBenefitAsShow> {
     const employeeBenefitId = unref(id)
     if (isNil(employeeBenefitId)) throw new Error("id is required")
-    if (isNil(state.employeeBenefit)) throw new Error("No employee benefit to save")
 
-    const request = latestRequest
+    const selectedRecord = state.employeeBenefit
+    if (isNil(selectedRecord)) throw new Error("No employee benefit to save")
+
+    const signal = requestController?.signal
     state.isLoading = true
     try {
       const { employeeBenefit, policy } = await employeeBenefitsApi.update(employeeBenefitId, {
-        ...state.employeeBenefit,
+        ...selectedRecord,
         ...attributesOverrides,
       })
-      if (latestRequest === request) {
+      if (!signal?.aborted) {
         state.employeeBenefit = employeeBenefit
         state.policy = policy
         state.isErrored = false
@@ -73,20 +89,23 @@ export function useEmployeeBenefit(id: Ref<number | null | undefined>) {
       return employeeBenefit
     } catch (error) {
       console.error(`Failed to save employee benefit: ${error}`, { error })
-      if (latestRequest === request) state.isErrored = true
+      if (!signal?.aborted) {
+        state.isErrored = true
+      }
       throw error
     } finally {
-      if (latestRequest === request) state.isLoading = false
+      if (!signal?.aborted) {
+        state.isLoading = false
+      }
     }
   }
 
   watch(
     () => unref(id),
     async (employeeBenefitId) => {
-      if (isNil(employeeBenefitId)) {
-        clearRecord()
-        return
-      }
+      clearRecord()
+      if (isNil(employeeBenefitId)) return
+
       try {
         await fetch()
       } catch {
@@ -95,6 +114,10 @@ export function useEmployeeBenefit(id: Ref<number | null | undefined>) {
     },
     { immediate: true, flush: "sync" }
   )
+
+  onScopeDispose(() => {
+    requestController?.abort()
+  })
 
   return { ...toRefs(state), fetch, refresh: fetch, save }
 }
