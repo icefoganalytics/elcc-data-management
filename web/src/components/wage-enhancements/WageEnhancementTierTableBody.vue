@@ -89,13 +89,6 @@
           />
         </td>
         <td class="d-flex justify-end align-center">
-          <v-progress-circular
-            v-if="pendingIds.has(wageEnhancement.id)"
-            indeterminate
-            size="20"
-            width="2"
-            aria-label="Saving employee"
-          />
           <v-btn
             icon="mdi-close"
             title="Delete"

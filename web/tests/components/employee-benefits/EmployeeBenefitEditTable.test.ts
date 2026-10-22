@@ -122,7 +122,9 @@ describe("web/src/components/employee-benefits/EmployeeBenefitEditTable.vue", ()
 
     // Assert
     expect(update).toHaveBeenCalledTimes(2)
-    expect(wrapper.text()).toContain("Saving changes…")
+    expect(wrapper.get('[aria-label="Saving employee benefits"]').attributes("aria-hidden")).toBe(
+      "false"
+    )
     expect(wrapper.get('[role="alert"]').text()).toContain("offline")
   })
 })

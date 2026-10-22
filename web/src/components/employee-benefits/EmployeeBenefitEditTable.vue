@@ -1,5 +1,16 @@
 <template>
-  <v-table>
+  <v-table class="position-relative">
+    <template #top>
+      <v-progress-linear
+        :active="isSaving"
+        indeterminate
+        absolute
+        location="top"
+        height="2"
+        color="primary"
+        aria-label="Saving employee benefits"
+      />
+    </template>
     <thead>
       <tr>
         <th></th>
@@ -33,14 +44,6 @@
           >
             Retry
           </v-btn>
-        </td>
-      </tr>
-      <tr v-if="!isNil(employeeBenefit) && isSaving">
-        <td
-          colspan="4"
-          role="status"
-        >
-          Saving changes…
         </td>
       </tr>
       <tr v-if="!isNil(employeeBenefit) && saveError">
