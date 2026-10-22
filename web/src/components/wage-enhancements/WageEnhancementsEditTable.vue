@@ -239,14 +239,10 @@ const wageEnhancements = computed(() => {
 })
 let baselineAtLoad = new Map<number, EditableAttributes>()
 
-watch(
-  [() => props.fiscalPeriodId, () => props.centreId, employeeWageTierIds],
-  () => {
-    baselineAtLoad = new Map(persistedAttributes)
-    visibleIds.value = []
-  },
-  { flush: "sync" }
-)
+watch([() => props.fiscalPeriodId, () => props.centreId, employeeWageTierIds], () => {
+  baselineAtLoad = new Map(persistedAttributes)
+  visibleIds.value = []
+})
 
 watch(
   [fetchedWageEnhancements, isLoadingWageEnhancements, isErroredWageEnhancements],

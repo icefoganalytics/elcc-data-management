@@ -351,7 +351,7 @@ function editorFor(recordId: number): RecordEditor {
   return editor
 }
 
-// Capture the write boundary before the model's id watcher starts the next load.
+// Capture the write boundary for the next selected-record load.
 watch(
   employeeBenefitId,
   (recordId) => {
@@ -359,7 +359,7 @@ watch(
 
     writeRevisionsAtFetchById.set(recordId, { ...editorFor(recordId).writeRevisions })
   },
-  { immediate: true, flush: "sync" }
+  { immediate: true }
 )
 const {
   employeeBenefit: fetchedEmployeeBenefit,
@@ -382,29 +382,25 @@ const saveError = computed(
   () => Object.values(currentEditor.value?.saveErrors ?? {}).find(Boolean) ?? ""
 )
 
-watch(
-  fetchedEmployeeBenefit,
-  (record) => {
-    if (isNil(record)) return
+watch(fetchedEmployeeBenefit, (record) => {
+  if (isNil(record)) return
 
-    const editor = editorFor(record.id)
-    const revisionsAtFetch = writeRevisionsAtFetchById.get(record.id) ?? {}
-    const mergedRecord = { ...record }
-    for (const attribute of EDITABLE_ATTRIBUTES) {
-      const retainedValue = editor.record?.[attribute] ?? editor.persistedAttributes[attribute]
-      const hasPendingChange = !isUndefined(editor.pendingChanges[attribute])
-      const wasSavedDuringFetch = editor.writeRevisions[attribute] !== revisionsAtFetch[attribute]
-      if ((hasPendingChange || wasSavedDuringFetch) && !isUndefined(retainedValue)) {
-        mergedRecord[attribute] = retainedValue
-        continue
-      }
-
-      editor.persistedAttributes[attribute] = mergedRecord[attribute]
+  const editor = editorFor(record.id)
+  const revisionsAtFetch = writeRevisionsAtFetchById.get(record.id) ?? {}
+  const mergedRecord = { ...record }
+  for (const attribute of EDITABLE_ATTRIBUTES) {
+    const retainedValue = editor.record?.[attribute] ?? editor.persistedAttributes[attribute]
+    const hasPendingChange = !isUndefined(editor.pendingChanges[attribute])
+    const wasSavedDuringFetch = editor.writeRevisions[attribute] !== revisionsAtFetch[attribute]
+    if ((hasPendingChange || wasSavedDuringFetch) && !isUndefined(retainedValue)) {
+      mergedRecord[attribute] = retainedValue
+      continue
     }
-    editor.record = mergedRecord
-  },
-  { flush: "sync" }
-)
+
+    editor.persistedAttributes[attribute] = mergedRecord[attribute]
+  }
+  editor.record = mergedRecord
+})
 
 const isEditingCostCapPercentage = ref(false)
 

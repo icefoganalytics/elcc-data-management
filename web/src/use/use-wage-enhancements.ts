@@ -84,7 +84,7 @@ export function useWageEnhancements(
         // fetch() records the failure; explicit callers still receive its rejection.
       }
     },
-    { deep: true, immediate: true, flush: "sync" }
+    { deep: true, immediate: true }
   )
   onScopeDispose(() => {
     requestController?.abort()

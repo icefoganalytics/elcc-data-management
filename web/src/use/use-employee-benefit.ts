@@ -112,7 +112,7 @@ export function useEmployeeBenefit(id: Ref<number | null | undefined>) {
         // Explicit refresh callers receive the rejection; the UI reads isErrored.
       }
     },
-    { immediate: true, flush: "sync" }
+    { immediate: true }
   )
 
   onScopeDispose(() => {

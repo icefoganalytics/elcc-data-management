@@ -19,6 +19,34 @@ afterEach(() => {
 })
 
 describe("web/src/use/use-employee-benefit.ts", () => {
+  test("when the selected month changes twice in one update, loads only the final selection", async () => {
+    // Arrange
+    const firstLoad = Promise.withResolvers<BenefitResponse>()
+    const firstBenefit = employeeBenefitFactory.build({ id: 41 })
+    const selectedBenefit = employeeBenefitFactory.build({ id: 43 })
+    const policy = { show: true, create: true, update: true, destroy: true }
+    const get = vi
+      .spyOn(employeeBenefitsApi, "get")
+      .mockReturnValueOnce(firstLoad.promise)
+      .mockResolvedValueOnce({ employeeBenefit: selectedBenefit, policy })
+    const id = ref(41)
+    const benefit = scope.run(() => useEmployeeBenefit(id))
+    if (!benefit) throw new Error("Expected an active benefit model")
+
+    // Act
+    id.value = 42
+    id.value = 43
+    await flushPromises()
+    firstLoad.resolve({ employeeBenefit: firstBenefit, policy })
+    await flushPromises()
+
+    // Assert
+    expect(get.mock.calls.map(([recordId]) => recordId)).toEqual([41, 43])
+    expect(benefit.employeeBenefit.value).toEqual(selectedBenefit)
+    expect(benefit.isLoading.value).toBe(false)
+    expect(benefit.isErrored.value).toBe(false)
+  })
+
   test("when an earlier load finishes while the selected record is loading, keeps the editor loading without stale data", async () => {
     // Arrange
     const firstLoad = Promise.withResolvers<BenefitResponse>()
