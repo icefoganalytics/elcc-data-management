@@ -18,6 +18,8 @@ For an autosaving table, consume the record or collection refs returned by its m
 
 Keep pending commands and failed-input feedback local to the owning component. If drafts must survive month navigation, retain keyed editor instances with `KeepAlive` for the mounted page instead of changing a single editor's record identity and reconciling returning fetches. Each instance keeps its model ref and queue; committed writes continue while it is inactive.
 
+Refresh a retained wage editor's collection when it becomes active and has no pending mutation or failed edit. This keeps replicated estimates visible without overwriting local input that still needs saving.
+
 Parent tables may discover collections and own their mutations while row or tier components display resolved records and emit actions. Keep one model source and one editing owner, not a second persistence snapshot in each child or a global editor cache.
 
 ## Naming and Location
