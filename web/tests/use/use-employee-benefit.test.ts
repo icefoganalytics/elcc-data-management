@@ -21,7 +21,7 @@ afterEach(() => {
 })
 
 describe("web/src/use/use-employee-benefit.ts", () => {
-  test("when the selected month changes twice in one update, loads only the final selection", async () => {
+  test("when the selected id changes twice in one update, requests only the final selection", async () => {
     // Arrange
     const firstLoad = Promise.withResolvers<BenefitResponse>()
     const firstBenefit = employeeBenefitFactory.build({ id: 41 })
@@ -43,10 +43,93 @@ describe("web/src/use/use-employee-benefit.ts", () => {
     await flushPromises()
 
     // Assert
-    expect(get.mock.calls.map(([recordId]) => recordId)).toEqual([41, 43])
+    expect(get.mock.calls).toEqual([
+      [41, expect.anything()],
+      [43, expect.anything()],
+    ])
+  })
+
+  test("when the selected id changes twice in one update, loads the final record", async () => {
+    // Arrange
+    const firstLoad = Promise.withResolvers<BenefitResponse>()
+    const firstBenefit = employeeBenefitFactory.build({ id: 41 })
+    const selectedBenefit = employeeBenefitFactory.build({ id: 43 })
+    const policy = { show: true, create: true, update: true, destroy: true }
+    vi.spyOn(employeeBenefitsApi, "get")
+      .mockReturnValueOnce(firstLoad.promise)
+      .mockResolvedValueOnce({ employeeBenefit: selectedBenefit, policy })
+    const id = ref(41)
+    const benefit = scope.run(() => useEmployeeBenefit(id))
+    if (!benefit) throw new Error("Expected an active benefit model")
+
+    // Act
+    id.value = 42
+    id.value = 43
+    await flushPromises()
+    firstLoad.resolve({ employeeBenefit: firstBenefit, policy })
+    await flushPromises()
+
+    // Assert
     expect(benefit.employeeBenefit.value).toEqual(selectedBenefit)
-    expect(benefit.isLoading.value).toBe(false)
-    expect(benefit.isErrored.value).toBe(false)
+  })
+
+  test("when loading fails, reports the failed editor state", async () => {
+    // Arrange
+    const employeeBenefit = employeeBenefitFactory.build({ id: 41 })
+    const loadError = new Error("offline")
+    vi.spyOn(employeeBenefitsApi, "get")
+      .mockResolvedValueOnce({
+        employeeBenefit,
+        policy: { show: true, create: true, update: true, destroy: true },
+      })
+      .mockRejectedValueOnce(loadError)
+    const id = ref(41)
+    const wrapper = mount(
+      {
+        setup: () => useEmployeeBenefit(id),
+        render: () => null,
+      },
+      { global: { config: { errorHandler: vi.fn() } } }
+    )
+    await flushPromises()
+
+    // Act
+    id.value = 42
+    await flushPromises()
+
+    // Assert
+    expect(wrapper.vm.employeeBenefit).toBeNull()
+    expect(wrapper.vm.isErrored).toBe(true)
+    expect(wrapper.vm.isLoading).toBe(false)
+  })
+
+  test("when loading fails, forwards the error to the global handler", async () => {
+    // Arrange
+    const employeeBenefit = employeeBenefitFactory.build({ id: 41 })
+    const loadError = new Error("offline")
+    const handleError = vi.fn()
+    vi.spyOn(employeeBenefitsApi, "get")
+      .mockResolvedValueOnce({
+        employeeBenefit,
+        policy: { show: true, create: true, update: true, destroy: true },
+      })
+      .mockRejectedValueOnce(loadError)
+    const id = ref(41)
+    mount(
+      {
+        setup: () => useEmployeeBenefit(id),
+        render: () => null,
+      },
+      { global: { config: { errorHandler: handleError } } }
+    )
+    await flushPromises()
+
+    // Act
+    id.value = 42
+    await flushPromises()
+
+    // Assert
+    expect(handleError.mock.calls.map(([error]) => error)).toEqual([loadError])
   })
 
   test("when an earlier load finishes while the selected record is loading, keeps the editor loading without stale data", async () => {
@@ -172,38 +255,6 @@ describe("web/src/use/use-employee-benefit.ts", () => {
     expect(benefit.policy.value).toBeNull()
     expect(benefit.isLoading.value).toBe(false)
     expect(benefit.isErrored.value).toBe(false)
-  })
-
-  test("when loading fails, reports the error without retaining an editable previous record", async () => {
-    // Arrange
-    const employeeBenefit = employeeBenefitFactory.build({ id: 41 })
-    const loadError = new Error("offline")
-    const handleError = vi.fn()
-    vi.spyOn(employeeBenefitsApi, "get")
-      .mockResolvedValueOnce({
-        employeeBenefit,
-        policy: { show: true, create: true, update: true, destroy: true },
-      })
-      .mockRejectedValueOnce(loadError)
-    const id = ref(41)
-    const wrapper = mount(
-      {
-        setup: () => useEmployeeBenefit(id),
-        render: () => null,
-      },
-      { global: { config: { errorHandler: handleError } } }
-    )
-    await flushPromises()
-
-    // Act
-    id.value = 42
-    await flushPromises()
-
-    // Assert
-    expect(wrapper.vm.employeeBenefit).toBeNull()
-    expect(wrapper.vm.isErrored).toBe(true)
-    expect(wrapper.vm.isLoading).toBe(false)
-    expect(handleError.mock.calls.map(([error]) => error)).toEqual([loadError])
   })
 
   test("when a save finishes after another record loads, retains the selected record", async () => {

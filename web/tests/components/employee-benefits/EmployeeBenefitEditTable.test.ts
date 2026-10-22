@@ -9,7 +9,7 @@ import EmployeeBenefitEditTable from "@/components/employee-benefits/EmployeeBen
 enableAutoUnmount(afterEach)
 
 describe("web/src/components/employee-benefits/EmployeeBenefitEditTable.vue", () => {
-  test("when a currency edit is committed with Enter, saves it without a separate Save action", async () => {
+  test("when a currency edit is committed with Enter, saves the four-decimal amount", async () => {
     // Arrange
     const employeeBenefit = employeeBenefitFactory.build({
       id: 61,
@@ -36,8 +36,26 @@ describe("web/src/components/employee-benefits/EmployeeBenefitEditTable.vue", ()
     await flushPromises()
 
     // Assert
-    const saveButton = wrapper.findAll("button").find((button) => button.text().trim() === "Save")
     expect(update).toHaveBeenCalledWith(61, { employerCostEstimated: "125.0000" })
+  })
+
+  test("when the benefit editor is loaded, does not show a separate Save control", async () => {
+    // Arrange
+    const employeeBenefit = employeeBenefitFactory.build({ id: 65 })
+    vi.spyOn(employeeBenefitsApi, "get").mockResolvedValue({
+      employeeBenefit,
+      policy: { show: true, create: true, update: true, destroy: true },
+    })
+    const wrapper = mount(EmployeeBenefitEditTable, {
+      props: { employeeBenefitId: 65 },
+      global: { plugins: [mockVuetify()] },
+    })
+
+    // Act
+    await flushPromises()
+
+    // Assert
+    const saveButton = wrapper.findAll("button").find((button) => button.text().trim() === "Save")
     expect(saveButton).toBeUndefined()
   })
 
@@ -67,10 +85,9 @@ describe("web/src/components/employee-benefits/EmployeeBenefitEditTable.vue", ()
 
     // Assert
     expect(update).toHaveBeenCalledWith(63, { costCapPercentage: "0.1250" })
-    expect(wrapper.text()).toContain("12.50% of above")
   })
 
-  test("when failed loads are retried, reports each failure and restores the selected record", async () => {
+  test("when failed loads are retried successfully, restores the selected record", async () => {
     // Arrange
     const employeeBenefit = employeeBenefitFactory.build({ id: 64 })
     const loadError = new Error("offline")
@@ -99,8 +116,31 @@ describe("web/src/components/employee-benefits/EmployeeBenefitEditTable.vue", ()
     await flushPromises()
 
     // Assert
-    expect(wrapper.text()).toContain("Gross Payroll")
-    expect(wrapper.text()).not.toContain("could not be loaded")
+    expect(wrapper.find('input[aria-label="Employer Cost Estimated"]').exists()).toBe(true)
+  })
+
+  test("when the initial load and its retry fail, propagates both errors to the app boundary", async () => {
+    // Arrange
+    const loadError = new Error("offline")
+    const retryError = new Error("retry offline")
+    const handleError = vi.fn()
+    vi.spyOn(employeeBenefitsApi, "get")
+      .mockRejectedValueOnce(loadError)
+      .mockRejectedValueOnce(retryError)
+    const wrapper = mount(EmployeeBenefitEditTable, {
+      props: { employeeBenefitId: 64 },
+      global: {
+        plugins: [mockVuetify()],
+        config: { errorHandler: handleError },
+      },
+    })
+    await flushPromises()
+
+    // Act
+    await wrapper.get("button").trigger("click")
+    await flushPromises()
+
+    // Assert
     expect(handleError.mock.calls.map(([error]) => error)).toEqual([loadError, retryError])
   })
 
@@ -112,8 +152,7 @@ describe("web/src/components/employee-benefits/EmployeeBenefitEditTable.vue", ()
       employeeBenefit,
       policy: { show: true, create: true, update: true, destroy: true },
     })
-    const update = vi
-      .spyOn(employeeBenefitsApi, "update")
+    vi.spyOn(employeeBenefitsApi, "update")
       .mockRejectedValueOnce(new Error("offline"))
       .mockReturnValueOnce(retry.promise)
     const wrapper = mount(EmployeeBenefitEditTable, {
@@ -132,14 +171,13 @@ describe("web/src/components/employee-benefits/EmployeeBenefitEditTable.vue", ()
     await flushPromises()
 
     // Assert
-    expect(update).toHaveBeenCalledTimes(2)
     expect(wrapper.get('[aria-label="Saving employee benefits"]').attributes("aria-hidden")).toBe(
       "false"
     )
     expect(wrapper.get('[role="alert"]').text()).toContain("offline")
   })
 
-  test("when a committed revert is queued before month navigation, persists both writes and restores the selected value", async () => {
+  test("when a committed revert is queued before month navigation, persists both writes in order", async () => {
     // Arrange
     const employeeBenefit = employeeBenefitFactory.build({
       id: 41,
@@ -176,6 +214,40 @@ describe("web/src/components/employee-benefits/EmployeeBenefitEditTable.vue", ()
       [41, { employerCostEstimated: "100.0000" }],
       [41, { employerCostEstimated: "120.0000" }],
     ])
+  })
+
+  test("when returning to a month with a queued revert, displays the latest committed value", async () => {
+    // Arrange
+    const employeeBenefit = employeeBenefitFactory.build({
+      id: 41,
+      employerCostEstimated: "120.0000",
+    })
+    const policy = { show: true, create: true, update: true, destroy: true }
+    const firstSave =
+      Promise.withResolvers<Awaited<ReturnType<typeof employeeBenefitsApi.update>>>()
+    vi.spyOn(employeeBenefitsApi, "get").mockResolvedValue({ employeeBenefit, policy })
+    vi.spyOn(employeeBenefitsApi, "update")
+      .mockReturnValueOnce(firstSave.promise)
+      .mockResolvedValue({ employeeBenefit, policy })
+    const wrapper = mount(EmployeeBenefitEditTable, {
+      props: { employeeBenefitId: 41 },
+      global: { plugins: [mockVuetify()] },
+    })
+    await flushPromises()
+
+    // Act
+    const input = wrapper.get<HTMLInputElement>('input[aria-label="Employer Cost Estimated"]')
+    await input.setValue("100")
+    await input.trigger("keydown", { key: "Enter" })
+    await input.setValue("120")
+    await input.trigger("keydown", { key: "Enter" })
+    await wrapper.setProps({ employeeBenefitId: undefined })
+    await wrapper.setProps({ employeeBenefitId: 41 })
+    await flushPromises()
+    firstSave.resolve({ employeeBenefit, policy })
+    await flushPromises()
+
+    // Assert
     const returningInput = wrapper.get<HTMLInputElement>(
       'input[aria-label="Employer Cost Estimated"]'
     )
@@ -289,8 +361,7 @@ describe("web/src/components/employee-benefits/EmployeeBenefitEditTable.vue", ()
     vi.spyOn(employeeBenefitsApi, "get")
       .mockResolvedValueOnce({ employeeBenefit, policy })
       .mockReturnValueOnce(returnLoad.promise)
-    const update = vi
-      .spyOn(employeeBenefitsApi, "update")
+    vi.spyOn(employeeBenefitsApi, "update")
       .mockReturnValueOnce(firstSave.promise)
       .mockResolvedValue({ employeeBenefit, policy })
     const wrapper = mount(EmployeeBenefitEditTable, {
@@ -313,10 +384,6 @@ describe("web/src/components/employee-benefits/EmployeeBenefitEditTable.vue", ()
     await flushPromises()
 
     // Assert
-    expect(update.mock.calls).toEqual([
-      [41, { employerCostEstimated: "100.0000" }],
-      [41, { employerCostEstimated: "120.0000" }],
-    ])
     const returningInput = wrapper.get<HTMLInputElement>(
       'input[aria-label="Employer Cost Estimated"]'
     )

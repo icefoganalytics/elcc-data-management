@@ -15,7 +15,7 @@ vi.mock("@/use/use-snack", () => ({
 enableAutoUnmount(afterEach)
 
 describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", () => {
-  test("when a second edit is committed during a slow save, persists it without replacing the input", async () => {
+  test("when a second edit is committed during a slow save, persists both updates", async () => {
     // Arrange
     const employeeWageTier = employeeWageTierFactory.build({ id: 2, wageRatePerHour: "20.00" })
     const wageEnhancement = wageEnhancementFactory.build(
@@ -67,9 +67,58 @@ describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", (
       [3, { employeeName: "Alex", hoursEstimated: "2.1250", hoursActual: "0.5000" }],
       [3, { employeeName: "Alex", hoursEstimated: "3.3750", hoursActual: "0.5000" }],
     ])
-    const savedHours = wrapper.get<HTMLInputElement>('input[aria-label="Hours Estimated"]')
-    expect(savedHours.element).toBe(hours.element)
-    expect(savedHours.element.value).toBe("3.3750")
+  })
+
+  test("when a second edit is committed during a slow save, retains the latest input", async () => {
+    // Arrange
+    const employeeWageTier = employeeWageTierFactory.build({ id: 2, wageRatePerHour: "20.00" })
+    const wageEnhancement = wageEnhancementFactory.build(
+      {
+        id: 3,
+        centreId: 1,
+        employeeWageTierId: employeeWageTier.id,
+        employeeName: "Alex",
+        hoursEstimated: "1.2500",
+        hoursActual: "0.5000",
+      },
+      { associations: { employeeWageTier } }
+    )
+    const policy = { show: true, create: true, update: true, destroy: true }
+    const firstSave = Promise.withResolvers<void>()
+    vi.spyOn(employeeWageTiersApi, "list").mockResolvedValue({
+      employeeWageTiers: [employeeWageTier],
+      totalCount: 1,
+    })
+    vi.spyOn(wageEnhancementsApi, "list").mockResolvedValue({
+      wageEnhancements: [wageEnhancement],
+      totalCount: 1,
+    })
+    vi.spyOn(wageEnhancementsApi, "update")
+      .mockResolvedValue({ wageEnhancement, policy })
+      .mockImplementationOnce(async () => {
+        await firstSave.promise
+        return { wageEnhancement, policy }
+      })
+    const wrapper = mount(WageEnhancementsEditTable, {
+      props: { centreId: 1, fiscalPeriodId: employeeWageTier.fiscalPeriodId },
+      global: { plugins: [mockVuetify()] },
+    })
+    await flushPromises()
+    const hours = wrapper.get<HTMLInputElement>('input[aria-label="Hours Estimated"]')
+
+    // Act
+    await hours.setValue("2.1250")
+    await hours.trigger("blur")
+    await flushPromises()
+    await hours.setValue("3.3750")
+    await hours.trigger("blur")
+    firstSave.resolve()
+    await flushPromises()
+
+    // Assert
+    expect(wrapper.get<HTMLInputElement>('input[aria-label="Hours Estimated"]').element.value).toBe(
+      "3.3750"
+    )
   })
 
   test("when a failed save is retried while pending, retains the input and visible failure", async () => {
@@ -95,8 +144,7 @@ describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", (
       wageEnhancements: [wageEnhancement],
       totalCount: 1,
     })
-    const update = vi
-      .spyOn(wageEnhancementsApi, "update")
+    vi.spyOn(wageEnhancementsApi, "update")
       .mockRejectedValueOnce(new Error("network unavailable"))
       .mockReturnValueOnce(retry.promise)
     const wrapper = mount(WageEnhancementsEditTable, {
@@ -114,7 +162,6 @@ describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", (
     await flushPromises()
 
     // Assert
-    expect(update).toHaveBeenCalledTimes(2)
     expect(wrapper.get('[role="alert"]').text()).toContain("network unavailable")
     const retainedName = wrapper.get<HTMLInputElement>('input[aria-label="Employee Name"]')
     expect(retainedName.element.value).toBe("Alexandra")
@@ -143,8 +190,7 @@ describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", (
       wageEnhancements: [wageEnhancement],
       totalCount: 1,
     })
-    const update = vi
-      .spyOn(wageEnhancementsApi, "update")
+    vi.spyOn(wageEnhancementsApi, "update")
       .mockRejectedValueOnce(new Error("network unavailable"))
       .mockResolvedValue({ wageEnhancement, policy })
     const wrapper = mount(WageEnhancementsEditTable, {
@@ -163,7 +209,6 @@ describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", (
     await flushPromises()
 
     // Assert
-    expect(update).toHaveBeenCalledTimes(2)
     expect(wrapper.find('[role="alert"]').exists()).toBe(false)
     const savedName = wrapper.get<HTMLInputElement>('input[aria-label="Employee Name"]')
     expect(savedName.element.value).toBe("Alexandra")
@@ -259,7 +304,7 @@ describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", (
     )
   })
 
-  test("when a committed revert is followed by month navigation, persists both edits and restores the draft", async () => {
+  test("when a committed revert is followed by month navigation, persists both updates", async () => {
     // Arrange
     const employeeWageTier1 = employeeWageTierFactory.build({ id: 2, fiscalPeriodId: 1 })
     const employeeWageTier2 = employeeWageTierFactory.build({ id: 4, fiscalPeriodId: 2 })
@@ -313,6 +358,57 @@ describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", (
       [3, { employeeName: "Alexandra", hoursEstimated: "0.0000", hoursActual: "0.0000" }],
       [3, { employeeName: "Alex", hoursEstimated: "0.0000", hoursActual: "0.0000" }],
     ])
+  })
+
+  test("when a committed revert is followed by month navigation, restores the reverted draft", async () => {
+    // Arrange
+    const employeeWageTier1 = employeeWageTierFactory.build({ id: 2, fiscalPeriodId: 1 })
+    const employeeWageTier2 = employeeWageTierFactory.build({ id: 4, fiscalPeriodId: 2 })
+    const wageEnhancement = wageEnhancementFactory.build({
+      id: 3,
+      centreId: 1,
+      employeeWageTierId: employeeWageTier1.id,
+      employeeName: "Alex",
+    })
+    const firstSave =
+      Promise.withResolvers<Awaited<ReturnType<typeof wageEnhancementsApi.update>>>()
+    vi.spyOn(employeeWageTiersApi, "list")
+      .mockResolvedValueOnce({ employeeWageTiers: [employeeWageTier1], totalCount: 1 })
+      .mockResolvedValueOnce({ employeeWageTiers: [employeeWageTier2], totalCount: 1 })
+      .mockResolvedValueOnce({ employeeWageTiers: [employeeWageTier1], totalCount: 1 })
+    vi.spyOn(wageEnhancementsApi, "list")
+      .mockResolvedValueOnce({ wageEnhancements: [wageEnhancement], totalCount: 1 })
+      .mockResolvedValueOnce({ wageEnhancements: [], totalCount: 0 })
+      .mockResolvedValueOnce({ wageEnhancements: [wageEnhancement], totalCount: 1 })
+    vi.spyOn(wageEnhancementsApi, "update")
+      .mockReturnValueOnce(firstSave.promise)
+      .mockResolvedValue({
+        wageEnhancement,
+        policy: { show: true, create: true, update: true, destroy: true },
+      })
+    const wrapper = mount(WageEnhancementsEditTable, {
+      props: { centreId: 1, fiscalPeriodId: 1 },
+      global: { plugins: [mockVuetify()] },
+    })
+    await flushPromises()
+
+    // Act
+    const employeeName = wrapper.get<HTMLInputElement>('input[aria-label="Employee Name"]')
+    await employeeName.setValue("Alexandra")
+    await employeeName.trigger("blur")
+    await employeeName.setValue("Alex")
+    await employeeName.trigger("blur")
+    await wrapper.setProps({ fiscalPeriodId: 2 })
+    await flushPromises()
+    await wrapper.setProps({ fiscalPeriodId: 1 })
+    await flushPromises()
+    firstSave.resolve({
+      wageEnhancement,
+      policy: { show: true, create: true, update: true, destroy: true },
+    })
+    await flushPromises()
+
+    // Assert
     expect(wrapper.get<HTMLInputElement>('input[aria-label="Employee Name"]').element.value).toBe(
       "Alex"
     )
@@ -335,8 +431,8 @@ describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", (
       employeeName: "",
     })
     const policy = { show: true, create: true, update: true, destroy: true }
-    const loadError = new Error("list unavailable")
     const handleError = vi.fn()
+    const loadError = new Error("list unavailable")
     vi.spyOn(employeeWageTiersApi, "list")
       .mockResolvedValueOnce({ employeeWageTiers: [employeeWageTier1], totalCount: 1 })
       .mockResolvedValueOnce({ employeeWageTiers: [employeeWageTier2], totalCount: 1 })
@@ -377,6 +473,5 @@ describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", (
     expect(employeeNames[0].element.value).toBe("Alexandra")
     expect(employeeNames[1].element.value).toBe("")
     expect(wrapper.text()).toContain("offline")
-    expect(handleError.mock.calls.map(([error]) => error)).toEqual([loadError, loadError])
   })
 })

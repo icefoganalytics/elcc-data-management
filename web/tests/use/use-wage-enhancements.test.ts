@@ -70,7 +70,6 @@ describe("web/src/use/use-wage-enhancements.ts", () => {
     // Arrange
     const staleWageEnhancement = wageEnhancementFactory.build({ id: 3, centreId: 1 })
     const loadError = new Error("Latest wage enhancements are unavailable")
-    const handleError = vi.fn()
     const firstLoad = Promise.withResolvers<{
       wageEnhancements: WageEnhancementAsIndex[]
       totalCount: number
@@ -88,7 +87,7 @@ describe("web/src/use/use-wage-enhancements.ts", () => {
         setup: () => useWageEnhancements(query),
         render: () => null,
       },
-      { global: { config: { errorHandler: handleError } } }
+      { global: { config: { errorHandler: vi.fn() } } }
     )
 
     // Act
@@ -103,6 +102,36 @@ describe("web/src/use/use-wage-enhancements.ts", () => {
     expect(wrapper.vm.totalCount).toBe(0)
     expect(wrapper.vm.isLoading).toBe(false)
     expect(wrapper.vm.isErrored).toBe(true)
+  })
+
+  test("when the latest query fails, forwards its error to the global handler", async () => {
+    // Arrange
+    const staleWageEnhancement = wageEnhancementFactory.build({ id: 3, centreId: 1 })
+    const loadError = new Error("Latest wage enhancements are unavailable")
+    const handleError = vi.fn()
+    const firstLoad = Promise.withResolvers<{
+      wageEnhancements: WageEnhancementAsIndex[]
+      totalCount: number
+    }>()
+    vi.spyOn(wageEnhancementsApi, "list")
+      .mockImplementationOnce(() => firstLoad.promise)
+      .mockRejectedValueOnce(loadError)
+    const query = ref({ where: { centreId: 1 } })
+    mount(
+      {
+        setup: () => useWageEnhancements(query),
+        render: () => null,
+      },
+      { global: { config: { errorHandler: handleError } } }
+    )
+
+    // Act
+    query.value = { where: { centreId: 2 } }
+    await flushPromises()
+    firstLoad.resolve({ wageEnhancements: [staleWageEnhancement], totalCount: 1 })
+    await flushPromises()
+
+    // Assert
     expect(handleError.mock.calls.map(([error]) => error)).toEqual([loadError])
   })
 
