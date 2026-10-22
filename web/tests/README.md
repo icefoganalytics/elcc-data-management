@@ -19,6 +19,7 @@ Run tests from the repository root through `bin/dev`:
 - Permanent tests cover current user behavior and invariants, not evidence that a removed feature or old implementation no longer exists. Keep current-state investigation checks disposable; for autosave, prove committed edits are saved rather than asserting the old Save control is absent.
 - The Vitest configuration resets mocks between tests. Do not add redundant per-test mock resets.
 - `tests/setup.ts`, loaded through Vitest's `setupFiles`, enables automatic unmounting for all mounted wrappers. Do not register `enableAutoUnmount` in individual test files. Explicitly unmount only when unmounting is the behavior under test.
+- Keep suite-specific lifecycle state and hooks inside the suite's outer `describe`. Reserve shared setup for infrastructure needed across suites; do not introduce a global fixture for locally owned resources.
 - For slow-save scenarios, a local deferred promise can hold the API spy pending. Keep stale server responses separate from editable records so subsequent edits cannot mutate the response fixture.
 
 These conventions follow [WRAP's component-test guidance](https://github.com/icefoganalytics/wrap/blob/80066b23b3aa0302589847eba7b790c705c748e6/web/tests/README.md#test-style), adapted to this repository's test setup and dependencies.
