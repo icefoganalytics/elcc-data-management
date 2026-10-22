@@ -6,6 +6,8 @@ Keep singular and plural model-mirror composables while the underlying model exi
 
 Cancel superseded reads with `AbortController`, passing its `signal` through the API module to Axios. Abort pending reads when watching is skipped, the selected id is cleared, or the consuming scope is disposed. Cancellation is not a load failure, and an aborted request must not change the replacement request's loading or error state. Do not cancel committed writes when the selected context changes.
 
+Use Vue's default watcher scheduling to batch related state changes. Do not use `flush: "sync"` as a general freshness or cancellation mechanism; an exception needs a demonstrated local ordering requirement.
+
 ## Singular Composables
 
 Use `use-model.ts` for one record identified by an id.
