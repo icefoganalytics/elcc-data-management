@@ -1,4 +1,4 @@
-import { User } from "@/models"
+import { FiscalPeriod, User } from "@/models"
 
 import {
   administrationCostCategoryFactory,
@@ -57,6 +57,71 @@ describe("api/src/controllers/administration-costs-controller.ts", () => {
             },
           ],
           totalCount: 1,
+        })
+      })
+
+      test("when saved category names differ from configuration order, sorts names alphabetically with stable ties", async () => {
+        // Arrange
+        const currentUser = await userFactory.create({ roles: [User.Roles.USER] })
+        mockCurrentUser(currentUser)
+        const centre = await centreFactory.create()
+        const otherCentre = await centreFactory.create()
+        const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2024-2025" })
+        const fiscalPeriod = await fiscalPeriodFactory.associations({ fundingPeriod }).create({
+          fiscalYear: "2024-25",
+          month: FiscalPeriod.Months.APRIL,
+          dateStart: new Date("2024-04-01"),
+          dateEnd: new Date("2024-04-30"),
+        })
+        const toddlersCategory = await administrationCostCategoryFactory
+          .associations({ fundingPeriod })
+          .create({ categoryName: "A renamed toddlers category" })
+        const infantsCategory = await administrationCostCategoryFactory
+          .associations({ fundingPeriod })
+          .create({ categoryName: "Z renamed infants category" })
+        const preschoolCategory = await administrationCostCategoryFactory
+          .associations({ fundingPeriod })
+          .create({ categoryName: "M renamed preschool category" })
+        const firstInfantsCost = await administrationCostFactory
+          .associations({ centre: otherCentre, fiscalPeriod, category: infantsCategory })
+          .create({ lineName: "Infants" })
+        const toddlersCost = await administrationCostFactory
+          .associations({ centre, fiscalPeriod, category: toddlersCategory })
+          .create({ lineName: "Toddlers" })
+        const preschoolCost = await administrationCostFactory
+          .associations({ centre, fiscalPeriod, category: preschoolCategory })
+          .create({ lineName: "Preschool" })
+        const secondInfantsCost = await administrationCostFactory
+          .associations({ centre, fiscalPeriod, category: infantsCategory })
+          .create({ lineName: "Infants" })
+
+        // Act
+        const response = await request()
+          .get("/api/administration-costs")
+          .query({ where: { fiscalPeriodId: fiscalPeriod.id } })
+
+        // Assert
+        expect(response.status).toEqual(200)
+        expect(response.body).toEqual({
+          administrationCosts: [
+            expect.objectContaining({
+              id: firstInfantsCost.id,
+              lineName: "Infants",
+            }),
+            expect.objectContaining({
+              id: secondInfantsCost.id,
+              lineName: "Infants",
+            }),
+            expect.objectContaining({
+              id: preschoolCost.id,
+              lineName: "Preschool",
+            }),
+            expect.objectContaining({
+              id: toddlersCost.id,
+              lineName: "Toddlers",
+            }),
+          ],
+          totalCount: 4,
         })
       })
     })
