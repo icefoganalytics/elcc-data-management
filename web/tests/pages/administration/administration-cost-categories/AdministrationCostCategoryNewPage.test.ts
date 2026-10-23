@@ -15,7 +15,9 @@ describe("web/src/pages/administration/administration-cost-categories/Administra
       }) => {
         // Arrange
         vi.stubGlobal("visualViewport", undefined)
-        onTestFinished(() => vi.unstubAllGlobals())
+        onTestFinished(() => {
+          vi.unstubAllGlobals()
+        })
         const pendingCategories = Promise.withResolvers<{
           data: { childCareSpaceCategories: ChildCareSpaceCategoryAsIndex[]; totalCount: number }
         }>()
