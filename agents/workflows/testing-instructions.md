@@ -6,7 +6,7 @@ Write the existing **Testing Instructions** section of [the PR template](/.githu
 
 ## Project Setup and Commands
 
-[bin guidance](/bin/README.md) owns executable commands, test images, database isolation, and concurrency. [API tests](/api/tests/README.md) and [web tests](/web/tests/README.md) own their harness details. Use `./bin/dev` from the repository root; `dev` is only a shortcut when direnv has added it to PATH.
+[bin guidance](/bin/README.md) owns executable commands, test images, database isolation, and concurrency. [API tests](/api/tests/README.md) and [web tests](/web/tests/README.md) own their harness details. Run the [development wrapper](/bin/dev) from the repository root; `dev` is only a shortcut when direnv has added it to PATH.
 
 For an application scenario, include the relevant test command, startup with `./bin/dev up --build`, and login at the checkout's gateway URL before the first action requiring the app. The base checkout uses http://elcc-data-management.localhost; named worktrees have their own hostnames, as documented in bin guidance. Auth0 must allow that origin; do not bypass login or infer authenticated coverage from mocks. Choose the affected API/web tests and type checks rather than prescribing an unrelated full suite.
 

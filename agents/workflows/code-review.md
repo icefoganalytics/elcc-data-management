@@ -5,7 +5,7 @@ Shared base: `skill://code-review/workflow.md` from MSSRT. Load that direct docu
 ## Local Constraints
 
 - TypeScript: no `any`, non-null assertions, `@ts-ignore`, or `@ts-expect-error`. Use `@/` imports; barrel `index.ts` re-exports may use relative paths so they can bundle siblings.
-- Place necessary `as` assertions at assignment/creation rather than at use. Correct the owning type when possible; retain runtime guards for genuinely untrusted input.
+- Permit `as` assertions only when the type system cannot infer a runtime-known type, at assignment/creation rather than at use. Correct the owning type first when possible; retain runtime guards for genuinely untrusted input.
 - Financial precision, funding/history invariants, and SQL conventions remain in [root guidance](/AGENTS.md), [domain knowledge](/docs/README.md), and the nearest model/database documentation.
 - Preserve Auth0/JWT authentication and policy authorization. Review the protected route tree and explicit serializer fields against [API guidance](/api/README.md), not a generic replacement base class.
 - Backend service actions use static `perform()`; direct construction belongs only in that implementation. Apply the [controller](/api/src/controllers/README.md), [policy](/api/src/policies/README.md), [service](/api/src/services/README.md), and [serializer](/api/src/serializers/README.md) boundaries.

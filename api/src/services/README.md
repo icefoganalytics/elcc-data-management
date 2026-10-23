@@ -1,28 +1,15 @@
 # Services
 
-Services hold business logic for create and update workflows. Controllers should coordinate requests, but services should own multi-step mutations.
+Services own application operations that coordinate business rules or persistence. Controllers coordinate HTTP requests; they should pass authorized inputs to services and serialize the result.
 
-## Responsibilities
+Use the [Express Light Rail workflow](skill://express-light-rail/workflow.md) for shared backend feature guidance and the [Code Organization Reference — Service Orchestration Readability](https://github.com/klondikemarlen/marlens-skills-rules-and-tools/blob/main/docs/references/code-organization-reference.md#service-orchestration-readability) for service structure. This README records the ELCC-specific service and data constraints.
 
-- Validate and normalize complex input before persistence
-- Encapsulate create and update workflows
-- Keep database mutations and business rules out of controllers
-- Return the created or updated model so controllers can serialize the result
+## ELCC conventions
 
-## Guidelines
+- Call services through their static `perform(...)` entry point; construct a service only inside that implementation. Action inputs belong to the constructor and instance `perform()` executes the operation, following ELCC's `BaseService` convention.
+- Keep authorization in policies and response formatting in serializers.
+- Use Sequelize model scopes and helpers for persistence. Prefer `findEach()` when results are only iterated and select only consumed attributes; use `findAll()` when the workflow needs a reusable collection or returns the complete result.
+- For array-backed JSON transformations, build a new array with `map()` and persist it through `update({ field: newValue })` rather than mutating the loaded array or calling `save()`.
+- Funding amounts are decimal strings: use `Big` for arithmetic and preserve the established four-decimal representation with `toFixed(4)`. For funding-submission-line JSON, preserve the existing structure and fields while transforming the targeted lines; do not replace these domain-specific transformations with generic JSON handling.
 
-- Prefer `CreateService` and `UpdateService` classes when the pattern matches existing code
-- Pass the minimum data needed rather than whole request objects
-- Keep authorization in policies and response formatting in serializers
-- Reuse model scopes and helpers instead of duplicating query logic in services
-- Prefer `findEach()` when query results are only iterated, and select only the attributes consumed. Keep `findAll()` when the workflow needs a reusable collection or returns the complete result.
-- When a small piece of service logic repeats, do not over-generalize it into a shared helper unless the ownership and reuse boundary are clear
-
-## Implementation Patterns
-
-### Immutable Data Transformations
-- Use `map()` to create new arrays instead of mutating existing arrays in place
-- Use `update({ field: newValue })` instead of `save()` when modifying model data
-- Pattern: `const newLines = lines.map(line => { ...transform logic... }); await model.update({ lines: newLines })`
-- Rationale: Follows immutable pattern like Big.js, avoids side effects, makes data flow clearer
-- Apply to services that transform array data (e.g., funding submission line JSON lines)
+The shared workflow and reference govern other service design decisions. Keep code-specific implementation details with the service and its tests.

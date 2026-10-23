@@ -1,27 +1,19 @@
 # Controllers
 
-Controllers coordinate the request lifecycle:
+Controllers adapt authenticated HTTP requests to application operations:
 
 ```text
 Route -> Controller -> Policy -> Service -> Model -> Serializer -> Response
 ```
 
-Use controllers to read request state, apply authorization, call services, and render serialized responses. Keep persistence and multi-step business logic in services.
+Use the [Express Light Rail workflow](skill://express-light-rail/workflow.md) for shared backend feature guidance. This README records the ELCC-specific controller boundary.
 
-## Guidelines
+## ELCC conventions
 
-- Extend `BaseController<Model>` for model-backed controllers and implement instance methods
-- Build `where`, scopes, ordering, and pagination in the controller when listing resources
-- Apply policy scope and authorization checks in the controller layer
-- Construct policies in a private `buildPolicy` helper and call it from actions instead of constructing policies inline
-- Use serializers to shape responses
-- Keep error handling consistent and log failures with enough context to debug them
+- Extend `BaseController<Model>` for model-backed controllers and implement instance action methods.
+- Build list-query filters, scopes, ordering, and pagination in the controller; apply the resource policy scope and authorization checks there before calling services.
+- Construct policies in a private `buildPolicy` helper and call it from actions.
+- Use serializers to shape response bodies. Keep persistence and multi-step business logic in services.
+- Prefer namespaced CRUD-style controllers over custom action methods on large resource controllers, such as `Forms.Estimates.GenerateController.create` rather than `FormsController.generateEstimates`.
 
-## Namespacing
-
-Prefer namespaced CRUD-style controllers over custom action methods on large resource controllers.
-
-- Prefer `Forms.Estimates.GenerateController.create`
-- Avoid `FormsController.generateEstimates`
-
-This keeps routes composable and prevents controllers from growing into mixed collections of unrelated custom actions.
+These conventions reflect `BaseController` and the existing resource controllers. The shared workflow remains the source for other backend feature decisions.
