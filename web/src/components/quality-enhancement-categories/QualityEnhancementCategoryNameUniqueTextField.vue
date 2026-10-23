@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import { useTemplateRef, watch } from "vue"
+import { useTemplateRef } from "vue"
 import { isNil } from "lodash"
 import { type VTextField } from "vuetify/components"
 
@@ -61,10 +61,7 @@ async function checkCategoryNameAvailability(name: string) {
 
 const uniqueTextField = useTemplateRef("uniqueTextField")
 
-watch(
-  () => props.fundingPeriodId,
-  async () => {
-    await uniqueTextField.value?.validate()
-  }
-)
+defineExpose({
+  validate: () => uniqueTextField.value?.validate(),
+})
 </script>

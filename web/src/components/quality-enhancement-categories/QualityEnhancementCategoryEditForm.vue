@@ -1,127 +1,129 @@
 <template>
-  <v-skeleton-loader
-    v-if="isLoadingCategory && isNil(qualityEnhancementCategory)"
-    type="card"
-  />
-  <v-alert
-    v-else-if="isCategoryErrored && isNil(qualityEnhancementCategory)"
-    type="error"
-    variant="tonal"
-  >
-    Quality Enhancement category could not be loaded.
-  </v-alert>
-  <v-form
-    v-else-if="!isNil(qualityEnhancementCategory)"
-    ref="form"
-    @submit.prevent="validateSaveAndNotify"
-  >
+  <v-sheet>
+    <v-skeleton-loader
+      v-if="isLoadingCategory && isNil(qualityEnhancementCategory)"
+      type="card"
+    />
     <v-alert
-      v-if="isFundingPeriodErrored"
+      v-else-if="isCategoryErrored && isNil(qualityEnhancementCategory)"
       type="error"
       variant="tonal"
-      class="mb-4"
     >
-      The funding period could not be loaded. Its association remains unchanged.
+      Quality Enhancement category could not be loaded.
     </v-alert>
-    <v-row>
-      <v-col cols="12">
-        <DescriptionElement
-          label="Funding Period"
-          :model-value="fundingPeriodDescription"
-          :loading="isLoadingFundingPeriod"
-          vertical
-        />
-      </v-col>
-    </v-row>
-    <v-divider class="my-4" />
-    <v-row>
-      <v-col cols="12">
-        <QualityEnhancementCategoryNameUniqueTextField
-          v-model="qualityEnhancementCategory.categoryName"
-          :funding-period-id="qualityEnhancementCategory.fundingPeriodId"
-          :excluding-category-id="qualityEnhancementCategoryId"
-          label="Category Name *"
-          :rules="[required]"
-          required
-        />
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col
-        cols="12"
-        md="6"
+    <v-form
+      v-else-if="!isNil(qualityEnhancementCategory)"
+      ref="form"
+      @submit.prevent="validateSaveAndNotify"
+    >
+      <v-alert
+        v-if="isFundingPeriodErrored"
+        type="error"
+        variant="tonal"
+        class="mb-4"
       >
-        <v-text-field
-          :model-value="qualityEnhancementCategory.fromAge"
-          label="From Age"
-          type="number"
-          step="1"
-          min="0"
-          :rules="[wholeNumberOrEmpty, greaterThanOrEqualTo(0)]"
-          @update:model-value="updateAge('fromAge', $event)"
-        />
-      </v-col>
-      <v-col
-        cols="12"
-        md="6"
-      >
-        <v-text-field
-          :model-value="qualityEnhancementCategory.toAge"
-          label="To Age"
-          type="number"
-          step="1"
-          min="0"
-          :rules="toAgeRules"
-          @update:model-value="updateAge('toAge', $event)"
-        />
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col cols="12">
-        <CurrencyInput
-          :model-value="qualityEnhancementCategory.monthlyAmount"
-          label="Monthly Amount *"
-          :options="monthlyAmountOptions"
-          :rules="[required]"
-          required
-          @update:model-value="updateMonthlyAmount"
-        />
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col cols="12">
-        <ChildCareSpaceCategorySelect
-          v-model="qualityEnhancementCategory.childCareSpaceCategoryId"
-          :funding-period-id="fundingPeriodId"
-        />
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col class="d-flex justify-end">
-        <v-btn
-          color="primary"
-          :loading="isSaving"
-          type="submit"
+        The funding period could not be loaded. Its association remains unchanged.
+      </v-alert>
+      <v-row>
+        <v-col cols="12">
+          <DescriptionElement
+            label="Funding Period"
+            :model-value="fundingPeriodDescription"
+            :loading="isLoadingFundingPeriod"
+            vertical
+          />
+        </v-col>
+      </v-row>
+      <v-divider class="my-4" />
+      <v-row>
+        <v-col cols="12">
+          <QualityEnhancementCategoryNameUniqueTextField
+            v-model="qualityEnhancementCategory.categoryName"
+            :funding-period-id="qualityEnhancementCategory.fundingPeriodId"
+            :excluding-category-id="qualityEnhancementCategoryId"
+            label="Category Name *"
+            :rules="[required]"
+            required
+          />
+        </v-col>
+      </v-row>
+      <v-row>
+        <v-col
+          cols="12"
+          md="6"
         >
-          Save Changes
-        </v-btn>
-        <v-spacer />
-        <v-btn
-          color="warning"
-          variant="outlined"
-          :loading="isSaving"
-          :to="{
-            name: 'administration/quality-enhancement-categories/QualityEnhancementCategoryPage',
-            params: {
-              qualityEnhancementCategoryId,
-            },
-          }"
+          <v-text-field
+            :model-value="qualityEnhancementCategory.fromAge"
+            label="From Age"
+            type="number"
+            step="1"
+            min="0"
+            :rules="[wholeNumberOrEmpty, greaterThanOrEqualTo(0)]"
+            @update:model-value="updateAge('fromAge', $event)"
+          />
+        </v-col>
+        <v-col
+          cols="12"
+          md="6"
         >
-          Cancel
-        </v-btn>
-      </v-col>
-    </v-row>
-  </v-form>
+          <v-text-field
+            :model-value="qualityEnhancementCategory.toAge"
+            label="To Age"
+            type="number"
+            step="1"
+            min="0"
+            :rules="toAgeRules"
+            @update:model-value="updateAge('toAge', $event)"
+          />
+        </v-col>
+      </v-row>
+      <v-row>
+        <v-col cols="12">
+          <CurrencyInput
+            :model-value="qualityEnhancementCategory.monthlyAmount"
+            label="Monthly Amount *"
+            :options="monthlyAmountOptions"
+            :rules="[required]"
+            required
+            @update:model-value="updateMonthlyAmount"
+          />
+        </v-col>
+      </v-row>
+      <v-row>
+        <v-col cols="12">
+          <ChildCareSpaceCategorySelect
+            v-model="qualityEnhancementCategory.childCareSpaceCategoryId"
+            :funding-period-id="fundingPeriodId"
+          />
+        </v-col>
+      </v-row>
+      <v-row>
+        <v-col class="d-flex justify-end">
+          <v-btn
+            color="primary"
+            :loading="isSaving"
+            type="submit"
+          >
+            Save Changes
+          </v-btn>
+          <v-spacer />
+          <v-btn
+            color="warning"
+            variant="outlined"
+            :loading="isSaving"
+            :to="{
+              name: 'administration/quality-enhancement-categories/QualityEnhancementCategoryPage',
+              params: {
+                qualityEnhancementCategoryId,
+              },
+            }"
+          >
+            Cancel
+          </v-btn>
+        </v-col>
+      </v-row>
+    </v-form>
+  </v-sheet>
 </template>
 
 <script setup lang="ts">

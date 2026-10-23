@@ -1,77 +1,79 @@
 <template>
-  <v-skeleton-loader
-    v-if="isLoading"
-    type="table"
-  />
-  <v-alert
-    v-else-if="isErrored"
-    type="error"
-    variant="tonal"
-  >
-    Worksheet data could not be loaded. Reload all sources before editing.
-    <v-btn
-      class="ml-3"
-      variant="outlined"
-      @click="reloadWorksheet"
+  <v-sheet>
+    <v-skeleton-loader
+      v-if="isLoading"
+      type="table"
+    />
+    <v-alert
+      v-else-if="isErrored"
+      type="error"
+      variant="tonal"
     >
-      Reload Worksheet
-    </v-btn>
-  </v-alert>
-  <v-sheet
-    v-else
-    @keydown="activateKeyboardShortcutsModalIfCorrectEvent($event)"
-  >
-    <v-btn
-      color="primary"
-      class="float-right"
-      :loading="isSaving"
-      :disabled="isReplicatingEstimates"
-      @click="saveFundingSubmissionLineJson"
-    >
-      Save
-    </v-btn>
-
-    <h2 class="mb-3">{{ dateName }} {{ calendarYear }}</h2>
-    <div class="d-flex justify-end">
+      Worksheet data could not be loaded. Reload all sources before editing.
       <v-btn
-        v-if="dateName == FIRST_FISCAL_MONTH_NAME"
-        :loading="isReplicatingEstimates"
-        :disabled="isSaving"
-        color="yg-sun"
-        size="small"
-        @click="replicateEstimatesForward"
+        class="ml-3"
+        variant="outlined"
+        @click="reloadWorksheet"
       >
-        <v-icon>mdi-content-copy</v-icon> Replicate Estimates
+        Reload Worksheet
       </v-btn>
-    </div>
-
-    <section
-      v-for="({ sectionName, lines }, sectionIndex) in sections"
-      :key="`${sectionName}-${sectionIndex}`"
+    </v-alert>
+    <v-sheet
+      v-else
+      @keydown="activateKeyboardShortcutsModalIfCorrectEvent($event)"
     >
-      <h3
-        class="d-flex justify-space-between align-center mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2"
+      <v-btn
+        color="primary"
+        class="float-right"
+        :loading="isSaving"
+        :disabled="isReplicatingEstimates"
+        @click="saveFundingSubmissionLineJson"
       >
-        {{ sectionName }}
+        Save
+      </v-btn>
 
-        <v-icon
-          title="Show keyboard shortcuts"
-          @click="showKeyboardShortcutsModal"
+      <h2 class="mb-3">{{ dateName }} {{ calendarYear }}</h2>
+      <div class="d-flex justify-end">
+        <v-btn
+          v-if="dateName == FIRST_FISCAL_MONTH_NAME"
+          :loading="isReplicatingEstimates"
+          :disabled="isSaving"
+          color="yg-sun"
+          size="small"
+          @click="replicateEstimatesForward"
         >
-          mdi-keyboard
-        </v-icon>
-      </h3>
+          <v-icon>mdi-content-copy</v-icon> Replicate Estimates
+        </v-btn>
+      </div>
 
-      <FundingSubmissionLineJsonSectionTable
-        ref="fundingSubmissionLineJsonSectionTables"
-        :lines="lines"
-        :readonly="isWorkflowRunning"
-        @focus-beyond-last-in-column="goToNextSection(sectionIndex, $event)"
-        @focus-beyond-first-in-column="goToPreviousSection(sectionIndex, $event)"
-        @line-changed="propagateUpdatesAsNeeded($event)"
-      />
-    </section>
-    <KeyboardShortcutsModal ref="keyboardShortcutsModal" />
+      <section
+        v-for="({ sectionName, lines }, sectionIndex) in sections"
+        :key="`${sectionName}-${sectionIndex}`"
+      >
+        <h3
+          class="d-flex justify-space-between align-center mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2"
+        >
+          {{ sectionName }}
+
+          <v-icon
+            title="Show keyboard shortcuts"
+            @click="showKeyboardShortcutsModal"
+          >
+            mdi-keyboard
+          </v-icon>
+        </h3>
+
+        <FundingSubmissionLineJsonSectionTable
+          ref="fundingSubmissionLineJsonSectionTables"
+          :lines="lines"
+          :readonly="isWorkflowRunning"
+          @focus-beyond-last-in-column="goToNextSection(sectionIndex, $event)"
+          @focus-beyond-first-in-column="goToPreviousSection(sectionIndex, $event)"
+          @line-changed="propagateUpdatesAsNeeded($event)"
+        />
+      </section>
+      <KeyboardShortcutsModal ref="keyboardShortcutsModal" />
+    </v-sheet>
   </v-sheet>
 </template>
 

@@ -32,6 +32,7 @@
     <v-row>
       <v-col cols="12">
         <QualityEnhancementCategoryNameUniqueTextField
+          ref="categoryNameField"
           v-model="categoryAttributes.categoryName"
           :funding-period-id="categoryAttributes.fundingPeriodId"
           label="Category Name *"
@@ -116,7 +117,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue"
+import { computed, ref, watch } from "vue"
 import { useRouter } from "vue-router"
 import { isNil } from "lodash"
 
@@ -154,6 +155,14 @@ const categoryAttributes = ref<CategoryFormAttributes>({
   monthlyAmount: "",
   childCareSpaceCategoryId: null,
 })
+const categoryNameField = ref<{ validate: () => Promise<unknown> } | null>(null)
+
+watch(
+  () => categoryAttributes.value.fundingPeriodId,
+  async () => {
+    await categoryNameField.value?.validate()
+  }
+)
 
 function updateAge(field: "fromAge" | "toAge", value: string | number | null) {
   categoryAttributes.value[field] = isNil(value) || value === "" ? null : Number(value)

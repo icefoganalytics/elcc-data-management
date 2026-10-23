@@ -1,6 +1,6 @@
-import { type Ref, reactive, toRefs, unref, watch } from "vue"
+import { isCancel } from "axios"
 import { isNil } from "lodash"
-
+import { onScopeDispose, reactive, toRefs, unref, watch, type Ref } from "vue"
 import qualityEnhancementCategoriesApi, {
   type QualityEnhancementCategoryAsShow,
   type QualityEnhancementCategoryPolicy,
@@ -23,37 +23,49 @@ export function useQualityEnhancementCategory(
     isErrored: false,
   })
   let latestRequest = {}
+  let requestController: AbortController | undefined
 
-  async function fetch(): Promise<QualityEnhancementCategoryAsShow> {
+  async function fetch(): Promise<QualityEnhancementCategoryAsShow | null> {
     const staticQualityEnhancementCategoryId = unref(qualityEnhancementCategoryId)
     if (isNil(staticQualityEnhancementCategoryId)) {
       throw new Error("qualityEnhancementCategoryId is required")
     }
 
+    requestController?.abort()
+    const controller = new AbortController()
+    requestController = controller
     const request = {}
     latestRequest = request
     state.isLoading = true
+    state.isErrored = false
     try {
       const { qualityEnhancementCategory, policy } = await qualityEnhancementCategoriesApi.get(
-        staticQualityEnhancementCategoryId
+        staticQualityEnhancementCategoryId,
+        { signal: controller.signal }
       )
       if (
-        latestRequest === request &&
-        unref(qualityEnhancementCategoryId) === staticQualityEnhancementCategoryId
+        controller.signal.aborted ||
+        latestRequest !== request ||
+        unref(qualityEnhancementCategoryId) !== staticQualityEnhancementCategoryId
       ) {
-        state.isErrored = false
-        state.qualityEnhancementCategory = qualityEnhancementCategory
-        state.policy = policy
+        return qualityEnhancementCategory
       }
+
+      state.qualityEnhancementCategory = qualityEnhancementCategory
+      state.policy = policy
       return qualityEnhancementCategory
     } catch (error) {
+      if (controller.signal.aborted || isCancel(error)) {
+        return state.qualityEnhancementCategory
+      }
+
       console.error(`Failed to fetch Quality Enhancement category: ${error}`, { error })
       if (latestRequest === request) {
         state.isErrored = true
       }
       throw error
     } finally {
-      if (latestRequest === request) {
+      if (!controller.signal.aborted && latestRequest === request) {
         state.isLoading = false
       }
     }
@@ -111,6 +123,8 @@ export function useQualityEnhancementCategory(
   watch(
     () => unref(qualityEnhancementCategoryId),
     async (newQualityEnhancementCategoryId) => {
+      requestController?.abort()
+      requestController = undefined
       latestRequest = {}
       state.qualityEnhancementCategory = null
       state.policy = null
@@ -123,11 +137,15 @@ export function useQualityEnhancementCategory(
       try {
         await fetch()
       } catch {
-        // fetch() records failures; explicit refresh callers still receive the rejection.
+        // fetch() preserves rejection for explicit callers; watcher failures use isErrored.
       }
     },
     { immediate: true }
   )
+
+  onScopeDispose(() => {
+    requestController?.abort()
+  })
 
   return {
     ...toRefs(state),

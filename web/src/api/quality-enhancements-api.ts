@@ -54,18 +54,26 @@ export type QualityEnhancementUpdateAttributes = Partial<
 >
 
 export const qualityEnhancementsApi = {
-  async list(params: QualityEnhancementQueryOptions = {}): Promise<{
+  async list(
+    params: QualityEnhancementQueryOptions = {},
+    { signal }: { signal?: AbortSignal } = {}
+  ): Promise<{
     qualityEnhancements: QualityEnhancementAsIndex[]
     totalCount: number
   }> {
-    const { data } = await http.get("/api/quality-enhancements", { params })
+    const { data } = await http.get("/api/quality-enhancements", { params, signal })
     return data
   },
-  async get(qualityEnhancementId: number): Promise<{
+  async get(
+    qualityEnhancementId: number,
+    { signal }: { signal?: AbortSignal } = {}
+  ): Promise<{
     qualityEnhancement: QualityEnhancementAsShow
     policy: QualityEnhancementPolicy
   }> {
-    const { data } = await http.get(`/api/quality-enhancements/${qualityEnhancementId}`)
+    const { data } = await http.get(`/api/quality-enhancements/${qualityEnhancementId}`, {
+      signal,
+    })
     return data
   },
   async update(
