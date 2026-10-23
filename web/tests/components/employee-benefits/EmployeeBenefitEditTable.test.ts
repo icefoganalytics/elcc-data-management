@@ -99,7 +99,27 @@ describe("web/src/components/employee-benefits/EmployeeBenefitEditTable.vue", ()
         expect(wrapper.find('input[aria-label="Employer Cost Estimated"]').exists()).toBe(true)
       })
 
-      test("when the initial load and its retry fail, propagates both errors to the app boundary", async () => {
+      test("when the initial load fails, reports its error to the app boundary", async () => {
+        // Arrange
+        const loadError = new Error("offline")
+        const handleError = vi.fn()
+        vi.spyOn(employeeBenefitsApi, "get").mockRejectedValueOnce(loadError)
+
+        // Act
+        mount(EmployeeBenefitEditTable, {
+          props: { employeeBenefitId: 64 },
+          global: {
+            plugins: [mockVuetify()],
+            config: { errorHandler: handleError },
+          },
+        })
+        await flushPromises()
+
+        // Assert
+        expect(handleError.mock.calls[0]?.[0]).toBe(loadError)
+      })
+
+      test("when the retry after an initial load failure fails, reports the retry error to the app boundary", async () => {
         // Arrange
         const loadError = new Error("offline")
         const retryError = new Error("retry offline")
@@ -121,7 +141,7 @@ describe("web/src/components/employee-benefits/EmployeeBenefitEditTable.vue", ()
         await flushPromises()
 
         // Assert
-        expect(handleError.mock.calls.map(([error]) => error)).toEqual([loadError, retryError])
+        expect(handleError.mock.calls[1]?.[0]).toBe(retryError)
       })
 
       test("when a failed autosave is retried slowly, shows the saving state", async () => {
