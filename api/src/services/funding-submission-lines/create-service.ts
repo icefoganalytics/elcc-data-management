@@ -1,4 +1,4 @@
-import { CreationAttributes, Op } from "@sequelize/core"
+import { Op, type CreationAttributes } from "@sequelize/core"
 import { isNil } from "lodash"
 
 import { ChildCareSpaceCategory, FundingPeriod, FundingSubmissionLine } from "@/models"

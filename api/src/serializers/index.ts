@@ -4,10 +4,10 @@ export { FundingSubmissionLineSerializer } from "@/serializers/funding-submissio
 export { UserSerializer } from "@/serializers/user-serializer"
 
 // Bundled exports
-export * as BuildingExpenseCategories from "./building-expense-categories"
-export * as BuildingExpenses from "./building-expenses"
 export * as AdministrationCostCategories from "./administration-cost-categories"
 export * as AdministrationCosts from "./administration-costs"
+export * as BuildingExpenseCategories from "./building-expense-categories"
+export * as BuildingExpenses from "./building-expenses"
 export * as ChildCareSpaces from "./child-care-spaces"
 export * as CurrentUser from "./current-user"
 export * as EmployeeBenefits from "./employee-benefits"

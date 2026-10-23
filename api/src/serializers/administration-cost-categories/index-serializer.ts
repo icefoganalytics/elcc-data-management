@@ -1,7 +1,7 @@
 import { pick } from "lodash"
 
 import { type PolicyAsReference } from "@/policies/base-policy"
-import { AdministrationCostCategory, type User } from "@/models"
+import { type AdministrationCostCategory, type User } from "@/models"
 import { AdministrationCostCategoryPolicy } from "@/policies"
 import BaseSerializer from "@/serializers/base-serializer"
 
@@ -30,10 +30,7 @@ export class IndexSerializer extends BaseSerializer<AdministrationCostCategory> 
   }
 
   perform(): AdministrationCostCategoryAsIndex {
-    const serializedPolicy = new AdministrationCostCategoryPolicy(
-      this.currentUser,
-      this.record
-    ).toJSON()
+    const serializedPolicy = this.serializePolicy(this.record, this.currentUser)
 
     return {
       ...pick(this.record, [
@@ -50,6 +47,13 @@ export class IndexSerializer extends BaseSerializer<AdministrationCostCategory> 
       ]),
       policy: serializedPolicy,
     }
+  }
+
+  private serializePolicy(
+    record: AdministrationCostCategory,
+    currentUser: User
+  ): PolicyAsReference {
+    return new AdministrationCostCategoryPolicy(currentUser, record).toJSON()
   }
 }
 

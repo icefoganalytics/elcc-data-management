@@ -1,7 +1,7 @@
 import { Op, sql, type CreationAttributes } from "@sequelize/core"
 import { isEmpty, isNil } from "lodash"
 
-import { AdministrationCostCategory, ChildCareSpaceCategory, FundingPeriod } from "@/models"
+import { AdministrationCostCategory, ChildCareSpaceCategory, type FundingPeriod } from "@/models"
 import BaseService from "@/services/base-service"
 
 export class BulkCreateService extends BaseService {
@@ -10,7 +10,7 @@ export class BulkCreateService extends BaseService {
   }
 
   async perform(): Promise<AdministrationCostCategory[]> {
-    const categories = await this.buildCategories()
+    const categories = await this.buildCategories(this.fundingPeriod.id)
     return AdministrationCostCategory.bulkCreate(
       categories.map((category) => ({
         ...category,
@@ -19,12 +19,12 @@ export class BulkCreateService extends BaseService {
     )
   }
 
-  private async buildCategories(): Promise<
-    Omit<CreationAttributes<AdministrationCostCategory>, "fundingPeriodId">[]
-  > {
+  private async buildCategories(
+    fundingPeriodId: number
+  ): Promise<Omit<CreationAttributes<AdministrationCostCategory>, "fundingPeriodId">[]> {
     const targetChildCareSpaceCategories = await ChildCareSpaceCategory.findAll({
       attributes: ["id", "categoryName"],
-      where: { fundingPeriodId: this.fundingPeriod.id },
+      where: { fundingPeriodId },
     })
     const targetChildCareSpaceCategoryIdsByName = new Map(
       targetChildCareSpaceCategories.map(({ id, categoryName }) => [categoryName, id])
@@ -54,13 +54,18 @@ export class BulkCreateService extends BaseService {
 
     if (isEmpty(newestCategories)) {
       return AdministrationCostCategory.DEFAULTS.map(
-        ({ categoryName, fromAge, toAge, monthlyAmount }) => ({
-          childCareSpaceCategoryId: targetChildCareSpaceCategoryIdsByName.get(categoryName) ?? null,
-          categoryName,
-          fromAge,
-          toAge,
-          monthlyAmount,
-        })
+        ({ categoryName, fromAge, toAge, monthlyAmount }) => {
+          const childCareSpaceCategoryId =
+            targetChildCareSpaceCategoryIdsByName.get(categoryName) ?? null
+
+          return {
+            childCareSpaceCategoryId,
+            categoryName,
+            fromAge,
+            toAge,
+            monthlyAmount,
+          }
+        }
       )
     }
 
@@ -83,11 +88,14 @@ export class BulkCreateService extends BaseService {
       const sourceChildCareSpaceCategoryName = isNil(sourceChildCareSpaceCategoryId)
         ? undefined
         : sourceChildCareSpaceCategoryNamesById.get(sourceChildCareSpaceCategoryId)
+      let targetChildCareSpaceCategoryId: number | null = null
+      if (!isNil(sourceChildCareSpaceCategoryName)) {
+        targetChildCareSpaceCategoryId =
+          targetChildCareSpaceCategoryIdsByName.get(sourceChildCareSpaceCategoryName) ?? null
+      }
 
       return {
-        childCareSpaceCategoryId: isNil(sourceChildCareSpaceCategoryName)
-          ? null
-          : (targetChildCareSpaceCategoryIdsByName.get(sourceChildCareSpaceCategoryName) ?? null),
+        childCareSpaceCategoryId: targetChildCareSpaceCategoryId,
         categoryName: category.categoryName,
         fromAge: category.fromAge,
         toAge: category.toAge,

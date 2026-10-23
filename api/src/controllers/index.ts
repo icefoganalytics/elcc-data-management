@@ -20,8 +20,8 @@ export { UsersController } from "./users-controller"
 export { WageEnhancementsController } from "./wage-enhancements-controller"
 
 // bundled exports
-export * as Centres from "./centres"
 export * as AdministrationCosts from "./administration-costs"
+export * as Centres from "./centres"
 export * as ChildCareSpaces from "./child-care-spaces"
 export * as FundingReconciliations from "./funding-reconciliations"
 export * as FundingSubmissionLineJsons from "./funding-submission-line-jsons"

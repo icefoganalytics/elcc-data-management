@@ -1,7 +1,7 @@
 import { Op, sql } from "@sequelize/core"
 import { isEmpty, isNil, isUndefined } from "lodash"
 
-import { ChildCareSpaceCategory, FundingPeriod, FundingSubmissionLine } from "@/models"
+import { ChildCareSpaceCategory, FundingSubmissionLine, type FundingPeriod } from "@/models"
 import doesNotUseChildCareSpacesSection from "@/models/validators/does-not-use-child-care-spaces-section"
 import doesNotUseAdministrationSection from "@/models/validators/does-not-use-administration-section"
 
