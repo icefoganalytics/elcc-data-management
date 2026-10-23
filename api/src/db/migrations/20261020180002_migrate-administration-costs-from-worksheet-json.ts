@@ -171,6 +171,12 @@ export async function up(knex: Knex): Promise<void> {
   await removeAdministrationConfiguration(knex)
 }
 
+export async function down(_knex: Knex): Promise<void> {
+  throw new Error(
+    "Restoring Administration configuration and worksheet JSON requires the original data."
+  )
+}
+
 async function findAdministrationWorksheetLines(
   knex: Knex
 ): Promise<AdministrationWorksheetLine[]> {
@@ -1116,10 +1122,4 @@ function exactDecimal(value: string, sourceDescription: string): string {
   }
 
   return fixedValue
-}
-
-export async function down(_knex: Knex): Promise<void> {
-  throw new Error(
-    "Restoring Administration configuration and worksheet JSON requires the original data."
-  )
 }
