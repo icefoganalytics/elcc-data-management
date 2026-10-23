@@ -113,15 +113,16 @@ async function createWorksheet(
 }
 
 describe("api/src/db/migrations/20261020220002_migrate-quality-enhancements-from-worksheet-json.ts", () => {
-  test("when migrating historical worksheets twice, preserves snapshots and unrelated numeric tokens without duplication", async () => {
-    await withLegacyChildCareSpaceSchema(async (transaction) => {
-      // Arrange
-      await createTargetSchema(transaction)
-      const fixture = await createFixture(transaction)
-      const activeWorksheet = await createWorksheet(
-        transaction,
-        fixture.centreId,
-        `[
+  describe("#up", () => {
+    test("when migrating historical worksheets twice, preserves snapshots and unrelated numeric tokens without duplication", async () => {
+      await withLegacyChildCareSpaceSchema(async (transaction) => {
+        // Arrange
+        await createTargetSchema(transaction)
+        const fixture = await createFixture(transaction)
+        const activeWorksheet = await createWorksheet(
+          transaction,
+          fixture.centreId,
+          `[
           {
             "submissionLineId":${fixture.submissionLineId},
             "sectionName":"${SECTION_NAME}",
@@ -138,40 +139,40 @@ describe("api/src/db/migrations/20261020220002_migrate-quality-enhancements-from
           },
           {"sectionName":"General Funding","rawDecimal":12345678901234567890.00000000000000001,"nested":{"rawInteger":900719925474099312345}}
         ]`
-      )
-      const archivedWorksheet = await createWorksheet(
-        transaction,
-        fixture.centreId,
-        JSON.stringify([
-          {
-            submissionLineId: fixture.submissionLineId,
-            sectionName: SECTION_NAME,
-            lineName: "Archived infant snapshot",
-            monthlyAmount: "199.9999",
-            estimatedChildOccupancyRate: "0.4000",
-            actualChildOccupancyRate: "0.2000",
-            estimatedComputedTotal: "44.4444",
-            actualComputedTotal: "22.2222",
-          },
-        ]),
-        new Date("2024-05-02T00:00:00Z")
-      )
+        )
+        const archivedWorksheet = await createWorksheet(
+          transaction,
+          fixture.centreId,
+          JSON.stringify([
+            {
+              submissionLineId: fixture.submissionLineId,
+              sectionName: SECTION_NAME,
+              lineName: "Archived infant snapshot",
+              monthlyAmount: "199.9999",
+              estimatedChildOccupancyRate: "0.4000",
+              actualChildOccupancyRate: "0.2000",
+              estimatedComputedTotal: "44.4444",
+              actualComputedTotal: "22.2222",
+            },
+          ]),
+          new Date("2024-05-02T00:00:00Z")
+        )
 
-      // Act
-      await migrateQualityEnhancements(transaction)
-      await migrateQualityEnhancements(transaction)
+        // Act
+        await migrateQualityEnhancements(transaction)
+        await migrateQualityEnhancements(transaction)
 
-      // Assert
-      const categories = await transaction("quality_enhancement_categories").select(
-        "id",
-        "funding_period_id",
-        "category_name",
-        "from_age",
-        "to_age",
-        "monthly_amount",
-        "child_care_space_category_id"
-      )
-      const enhancements = await transaction.raw<QualityEnhancementRow[]>(`
+        // Assert
+        const categories = await transaction("quality_enhancement_categories").select(
+          "id",
+          "funding_period_id",
+          "category_name",
+          "from_age",
+          "to_age",
+          "monthly_amount",
+          "child_care_space_category_id"
+        )
+        const enhancements = await transaction.raw<QualityEnhancementRow[]>(`
         SELECT
           child_care_space_category_id,
           line_name,
@@ -185,25 +186,18 @@ describe("api/src/db/migrations/20261020220002_migrate-quality-enhancements-from
         FROM quality_enhancements
         ORDER BY id
       `)
-      const activeValues = await transaction("funding_submission_line_jsons")
-        .select("values")
-        .where({ id: activeWorksheet })
-        .first()
-      const archivedValues = await transaction("funding_submission_line_jsons")
-        .select("values")
-        .where({ id: archivedWorksheet })
-        .first()
-      const remainingConfiguration = await transaction("funding_submission_lines").where({
-        section_name: SECTION_NAME,
-      })
-      expect({
-        categories,
-        enhancements,
-        activeValues: activeValues?.values,
-        archivedValues: archivedValues?.values,
-        remainingConfiguration,
-      }).toEqual({
-        categories: [
+        const activeValues = await transaction("funding_submission_line_jsons")
+          .select("values")
+          .where({ id: activeWorksheet })
+          .first()
+        const archivedValues = await transaction("funding_submission_line_jsons")
+          .select("values")
+          .where({ id: archivedWorksheet })
+          .first()
+        const remainingConfiguration = await transaction("funding_submission_lines").where({
+          section_name: SECTION_NAME,
+        })
+        expect(categories).toEqual([
           expect.objectContaining({
             funding_period_id: fixture.fundingPeriodId,
             category_name: "Infants",
@@ -212,8 +206,8 @@ describe("api/src/db/migrations/20261020220002_migrate-quality-enhancements-from
             monthly_amount: 206.1,
             child_care_space_category_id: fixture.spaceCategoryId,
           }),
-        ],
-        enhancements: [
+        ])
+        expect(enhancements).toEqual([
           {
             child_care_space_category_id: fixture.spaceCategoryId,
             line_name: "Infants snapshot",
@@ -236,103 +230,93 @@ describe("api/src/db/migrations/20261020220002_migrate-quality-enhancements-from
             hot_meal_applied_at: null,
             deleted_at: new Date("2024-05-02T00:00:00Z"),
           },
-        ],
-        activeValues:
-          '[{"sectionName":"General Funding","rawDecimal":12345678901234567890.00000000000000001,"nested":{"rawInteger":900719925474099312345}}]',
-        archivedValues: "[]",
-        remainingConfiguration: [],
+        ])
+        expect(activeValues?.values).toEqual(
+          '[{"sectionName":"General Funding","rawDecimal":12345678901234567890.00000000000000001,"nested":{"rawInteger":900719925474099312345}}]'
+        )
+        expect(archivedValues?.values).toEqual("[]")
+        expect(remainingConfiguration).toEqual([])
       })
     })
-  })
 
-  test.each([
-    {
-      scenario: "base and increment disagree with the effective amount",
-      monthlyAmount: "216.1000",
-      preEnhancementAmount: "205.1000",
-      hotMealAmount: "10.0000",
-      expectedError: "inconsistent with its effective monthly amount",
-    },
-    {
-      scenario: "base amount exceeds the supported decimal precision",
-      monthlyAmount: "216.1000",
-      preEnhancementAmount: "206.10001",
-      hotMealAmount: "10.0000",
-      expectedError: "would lose decimal precision",
-    },
-    {
-      scenario: "effective amount exceeds the supported decimal range",
-      monthlyAmount: "100000000000.0000",
-      preEnhancementAmount: null,
-      hotMealAmount: null,
-      expectedError: "exceeds DECIMAL(15,4)",
-    },
-  ])(
-    "when $scenario, rolls back target records and retains sources",
-    async ({ monthlyAmount, preEnhancementAmount, hotMealAmount, expectedError }) => {
-      await withLegacyChildCareSpaceSchema(async (transaction) => {
-        // Arrange
-        await createTargetSchema(transaction)
-        const fixture = await createFixture(transaction)
-        const line: Record<string, unknown> = {
-          submissionLineId: fixture.submissionLineId,
-          sectionName: SECTION_NAME,
-          lineName: "Infants snapshot",
-          monthlyAmount,
-          estimatedChildOccupancyRate: "0.5000",
-          actualChildOccupancyRate: "0.2500",
-          estimatedComputedTotal: "108.0500",
-          actualComputedTotal: "54.0250",
-        }
-        if (preEnhancementAmount !== null && hotMealAmount !== null) {
-          line.programQualityEnhancements = {
-            preEnhancementAmount,
-            hot_meal: {
-              amount: hotMealAmount,
-              appliedAt: "2024-04-10T17:30:00.000Z",
-            },
+    test.each([
+      {
+        scenario: "base and increment disagree with the effective amount",
+        monthlyAmount: "216.1000",
+        preEnhancementAmount: "205.1000",
+        hotMealAmount: "10.0000",
+        expectedError: "inconsistent with its effective monthly amount",
+      },
+      {
+        scenario: "base amount exceeds the supported decimal precision",
+        monthlyAmount: "216.1000",
+        preEnhancementAmount: "206.10001",
+        hotMealAmount: "10.0000",
+        expectedError: "would lose decimal precision",
+      },
+      {
+        scenario: "effective amount exceeds the supported decimal range",
+        monthlyAmount: "100000000000.0000",
+        preEnhancementAmount: null,
+        hotMealAmount: null,
+        expectedError: "exceeds DECIMAL(15,4)",
+      },
+    ])(
+      "when $scenario, rolls back target records and retains sources",
+      async ({ monthlyAmount, preEnhancementAmount, hotMealAmount, expectedError }) => {
+        await withLegacyChildCareSpaceSchema(async (transaction) => {
+          // Arrange
+          await createTargetSchema(transaction)
+          const fixture = await createFixture(transaction)
+          const line: Record<string, unknown> = {
+            submissionLineId: fixture.submissionLineId,
+            sectionName: SECTION_NAME,
+            lineName: "Infants snapshot",
+            monthlyAmount,
+            estimatedChildOccupancyRate: "0.5000",
+            actualChildOccupancyRate: "0.2500",
+            estimatedComputedTotal: "108.0500",
+            actualComputedTotal: "54.0250",
           }
-        }
-        const sourceValues = JSON.stringify([line])
-        const worksheetId = await createWorksheet(transaction, fixture.centreId, sourceValues)
-        let migrationError: unknown
+          if (preEnhancementAmount !== null && hotMealAmount !== null) {
+            line.programQualityEnhancements = {
+              preEnhancementAmount,
+              hot_meal: {
+                amount: hotMealAmount,
+                appliedAt: "2024-04-10T17:30:00.000Z",
+              },
+            }
+          }
+          const sourceValues = JSON.stringify([line])
+          const worksheetId = await createWorksheet(transaction, fixture.centreId, sourceValues)
+          // Act / Assert
+          await expect(
+            transaction.transaction(async (migrationTransaction) => {
+              await migrateQualityEnhancements(migrationTransaction)
+            })
+          ).rejects.toThrow(expectedError)
 
-        // Act
-        try {
-          await transaction.transaction(async (migrationTransaction) => {
-            await migrateQualityEnhancements(migrationTransaction)
-          })
-        } catch (error) {
-          migrationError = error
-        }
+          // Assert
+          const sourceConfiguration = await transaction("funding_submission_lines")
+            .where({ id: fixture.submissionLineId })
+            .first()
+          const sourceWorksheet = await transaction("funding_submission_line_jsons")
+            .select("values")
+            .where({ id: worksheetId })
+            .first()
+          const categories = await transaction("quality_enhancement_categories").select("id")
+          const enhancements = await transaction("quality_enhancements").select("id")
 
-        // Assert
-        const sourceConfiguration = await transaction("funding_submission_lines")
-          .where({ id: fixture.submissionLineId })
-          .first()
-        const sourceWorksheet = await transaction("funding_submission_line_jsons")
-          .select("values")
-          .where({ id: worksheetId })
-          .first()
-        const categories = await transaction("quality_enhancement_categories").select("id")
-        const enhancements = await transaction("quality_enhancements").select("id")
-
-        expect({
-          error: String(migrationError),
-          sourceConfiguration,
-          sourceValues: sourceWorksheet?.values,
-          categories,
-          enhancements,
-        }).toEqual({
-          error: expect.stringContaining(expectedError),
-          sourceConfiguration: expect.objectContaining({
-            id: fixture.submissionLineId,
-          }),
-          sourceValues,
-          categories: [],
-          enhancements: [],
+          expect(sourceConfiguration).toEqual(
+            expect.objectContaining({
+              id: fixture.submissionLineId,
+            })
+          )
+          expect(sourceWorksheet?.values).toEqual(sourceValues)
+          expect(categories).toEqual([])
+          expect(enhancements).toEqual([])
         })
-      })
-    }
-  )
+      }
+    )
+  })
 })
