@@ -1,6 +1,4 @@
-import FiscalPeriod from "@/models/fiscal-period"
-
-import { FundingSubmissionLineJson } from "@/models"
+import { FiscalPeriod, FundingSubmissionLineJson } from "@/models"
 
 import {
   administrationCostCategoryFactory,

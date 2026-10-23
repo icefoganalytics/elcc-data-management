@@ -2,9 +2,9 @@ export { type FundingLineValue } from "@/models/funding-line-value"
 
 import db from "@/db/db-client"
 
-import BuildingExpense from "@/models/building-expense"
 import AdministrationCost from "@/models/administration-cost"
 import AdministrationCostCategory from "@/models/administration-cost-category"
+import BuildingExpense from "@/models/building-expense"
 import BuildingExpenseCategory from "@/models/building-expense-category"
 import Centre from "@/models/centre"
 import ChildCareSpace from "@/models/child-care-space"
@@ -24,9 +24,9 @@ import User from "@/models/user"
 import WageEnhancement from "@/models/wage-enhancement"
 
 db.addModels([
-  BuildingExpense,
   AdministrationCost,
   AdministrationCostCategory,
+  BuildingExpense,
   BuildingExpenseCategory,
   Centre,
   ChildCareSpace,
@@ -46,9 +46,9 @@ db.addModels([
   WageEnhancement,
 ])
 
-BuildingExpense.establishScopes()
 AdministrationCost.establishScopes()
 AdministrationCostCategory.establishScopes()
+BuildingExpense.establishScopes()
 BuildingExpenseCategory.establishScopes()
 Centre.establishScopes()
 ChildCareSpace.establishScopes()

@@ -8,7 +8,8 @@ import {
   fiscalPeriodFactory,
   fundingPeriodFactory,
 } from "@/factories"
-import { UpdateService } from "@/services/administration-cost-categories"
+
+import UpdateService from "@/services/administration-cost-categories/update-service"
 
 describe("api/src/services/administration-cost-categories/update-service.ts", () => {
   describe("UpdateService", () => {
@@ -56,9 +57,10 @@ describe("api/src/services/administration-cost-categories/update-service.ts", ()
         })
 
         // Assert
-        const persistedAdministrationCost = await AdministrationCost.findByPk(administrationCost.id)
-        expect(persistedAdministrationCost).toEqual(
+        const persistedAdministrationCosts = await AdministrationCost.findAll()
+        expect(persistedAdministrationCosts).toEqual([
           expect.objectContaining({
+            id: administrationCost.id,
             categoryId: administrationCostCategory.id,
             childCareSpaceCategoryId: childCareSpaceCategory.id,
             lineName: "Infants",
@@ -67,8 +69,8 @@ describe("api/src/services/administration-cost-categories/update-service.ts", ()
             actualChildOccupancyRate: "0.25",
             estimatedComputedTotal: "35",
             actualComputedTotal: "17.5",
-          })
-        )
+          }),
+        ])
       })
 
       test("when category monthly amount has excess precision, rejects the update", async () => {

@@ -1,4 +1,4 @@
-import { Attributes, Op } from "@sequelize/core"
+import { Op, type Attributes } from "@sequelize/core"
 import { isUndefined } from "lodash"
 
 import { ChildCareSpaceCategory, FundingPeriod, FundingSubmissionLine } from "@/models"

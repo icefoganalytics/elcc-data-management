@@ -17,15 +17,12 @@ export class UpdateService extends BaseService {
   }
 
   async perform(): Promise<AdministrationCost> {
-    return db.transaction(
-      { isolationLevel: IsolationLevel.REPEATABLE_READ },
-      async (transaction) => {
-        await this.administrationCost.reload({ transaction })
-        await this.administrationCost.update(this.attributes, { transaction })
+    return db.transaction({ isolationLevel: IsolationLevel.REPEATABLE_READ }, async () => {
+      await this.administrationCost.reload()
+      await this.administrationCost.update(this.attributes)
 
-        return this.administrationCost.reload({ transaction })
-      }
-    )
+      return this.administrationCost.reload()
+    })
   }
 }
 

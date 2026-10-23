@@ -1,3 +1,5 @@
+import { FundingSubmissionLine } from "@/models"
+
 import {
   childCareSpaceCategoryFactory,
   fundingPeriodFactory,
@@ -5,14 +7,13 @@ import {
 } from "@/factories"
 
 import BulkCreateService from "@/services/funding-periods/funding-submission-lines/bulk-create-service"
-import { FundingSubmissionLine } from "@/models"
 
 describe("api/src/services/funding-periods/funding-submission-lines/bulk-create-service.ts", () => {
   describe("BulkCreateService", () => {
     describe("#perform", () => {
       test("when funding submission lines exist in another fiscal year, copies from newest fiscal year", async () => {
         // Arrange
-        const _olderFundingPeriod = await fundingPeriodFactory.create({
+        await fundingPeriodFactory.create({
           fiscalYear: "2023-2024",
           createdAt: new Date("2023-01-01"),
         })

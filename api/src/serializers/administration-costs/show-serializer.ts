@@ -1,6 +1,6 @@
 import { pick } from "lodash"
 
-import { AdministrationCost } from "@/models"
+import { type AdministrationCost } from "@/models"
 import BaseSerializer from "@/serializers/base-serializer"
 
 export type AdministrationCostAsShow = Pick<

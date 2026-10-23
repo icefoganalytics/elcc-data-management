@@ -1,10 +1,13 @@
 import { type Attributes } from "@sequelize/core"
 
-import { AdministrationCostCategory } from "@/models"
+import { type AdministrationCostCategory } from "@/models"
 import BaseService from "@/services/base-service"
 
 export type AdministrationCostCategoryUpdateAttributes = Partial<
-  Attributes<AdministrationCostCategory>
+  Pick<
+    Attributes<AdministrationCostCategory>,
+    "childCareSpaceCategoryId" | "categoryName" | "fromAge" | "toAge" | "monthlyAmount"
+  >
 >
 
 export class UpdateService extends BaseService {

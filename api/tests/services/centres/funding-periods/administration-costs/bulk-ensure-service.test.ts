@@ -8,6 +8,7 @@ import {
   fiscalPeriodFactory,
   fundingPeriodFactory,
 } from "@/factories"
+
 import BulkEnsureService from "@/services/centres/funding-periods/administration-costs/bulk-ensure-service"
 
 describe("api/src/services/centres/funding-periods/administration-costs/bulk-ensure-service.ts", () => {
@@ -40,34 +41,60 @@ describe("api/src/services/centres/funding-periods/administration-costs/bulk-ens
           .create({ categoryName: "Other care", monthlyAmount: "50.0000" })
 
         // Act
-        const administrationCosts = await BulkEnsureService.perform(centre, fundingPeriod, true)
+        await BulkEnsureService.perform(centre, fundingPeriod, true)
 
         // Assert
-        expect(administrationCosts).toHaveLength(4)
-        expect(administrationCosts).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              centreId: centre.id,
-              fiscalPeriodId: aprilFiscalPeriod.id,
-              categoryId: linkedCategory.id,
-              childCareSpaceCategoryId: childCareSpaceCategory.id,
-              lineName: "Infants",
-              monthlyAmount: "80",
-              estimatedChildOccupancyRate: "0",
-              actualChildOccupancyRate: "0",
-              estimatedComputedTotal: "0",
-              actualComputedTotal: "0",
-            }),
-            expect.objectContaining({
-              centreId: centre.id,
-              fiscalPeriodId: mayFiscalPeriod.id,
-              categoryId: unlinkedCategory.id,
-              childCareSpaceCategoryId: null,
-              lineName: "Other care",
-              monthlyAmount: "50",
-            }),
-          ])
-        )
+        const administrationCosts = await AdministrationCost.findAll()
+        expect(administrationCosts).toEqual([
+          expect.objectContaining({
+            centreId: centre.id,
+            fiscalPeriodId: aprilFiscalPeriod.id,
+            categoryId: linkedCategory.id,
+            childCareSpaceCategoryId: childCareSpaceCategory.id,
+            lineName: "Infants",
+            monthlyAmount: "80",
+            estimatedChildOccupancyRate: "0",
+            actualChildOccupancyRate: "0",
+            estimatedComputedTotal: "0",
+            actualComputedTotal: "0",
+          }),
+          expect.objectContaining({
+            centreId: centre.id,
+            fiscalPeriodId: aprilFiscalPeriod.id,
+            categoryId: unlinkedCategory.id,
+            childCareSpaceCategoryId: null,
+            lineName: "Other care",
+            monthlyAmount: "50",
+            estimatedChildOccupancyRate: "0",
+            actualChildOccupancyRate: "0",
+            estimatedComputedTotal: "0",
+            actualComputedTotal: "0",
+          }),
+          expect.objectContaining({
+            centreId: centre.id,
+            fiscalPeriodId: mayFiscalPeriod.id,
+            categoryId: linkedCategory.id,
+            childCareSpaceCategoryId: childCareSpaceCategory.id,
+            lineName: "Infants",
+            monthlyAmount: "80",
+            estimatedChildOccupancyRate: "0",
+            actualChildOccupancyRate: "0",
+            estimatedComputedTotal: "0",
+            actualComputedTotal: "0",
+          }),
+          expect.objectContaining({
+            centreId: centre.id,
+            fiscalPeriodId: mayFiscalPeriod.id,
+            categoryId: unlinkedCategory.id,
+            childCareSpaceCategoryId: null,
+            lineName: "Other care",
+            monthlyAmount: "50",
+            estimatedChildOccupancyRate: "0",
+            actualChildOccupancyRate: "0",
+            estimatedComputedTotal: "0",
+            actualComputedTotal: "0",
+          }),
+        ])
       })
 
       test("when a centre already has monthly ledger history, preserves missing periods", async () => {

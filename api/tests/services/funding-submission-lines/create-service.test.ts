@@ -1,5 +1,7 @@
-import { childCareSpaceCategoryFactory, fundingPeriodFactory } from "@/factories"
 import { FundingSubmissionLine } from "@/models"
+
+import { childCareSpaceCategoryFactory, fundingPeriodFactory } from "@/factories"
+
 import CreateService from "@/services/funding-submission-lines/create-service"
 
 describe("api/src/services/funding-submission-lines/create-service.ts", () => {

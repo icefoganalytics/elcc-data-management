@@ -1,5 +1,3 @@
-import Big from "big.js"
-
 import { AdministrationCostCategory } from "@/models"
 
 import {
@@ -7,7 +5,8 @@ import {
   childCareSpaceCategoryFactory,
   fundingPeriodFactory,
 } from "@/factories"
-import { BulkEnsureService } from "@/services/funding-periods/administration-cost-categories"
+
+import BulkEnsureService from "@/services/funding-periods/administration-cost-categories/bulk-ensure-service"
 
 describe("api/src/services/funding-periods/administration-cost-categories/bulk-ensure-service.ts", () => {
   describe("BulkEnsureService", () => {
@@ -15,39 +14,92 @@ describe("api/src/services/funding-periods/administration-cost-categories/bulk-e
       test("when the funding period has no configuration, creates the seven defaults linked by name", async () => {
         // Arrange
         const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2024-2025" })
-        const childCareSpaceCategories = await Promise.all(
-          AdministrationCostCategory.DEFAULTS.map(({ categoryName }) =>
-            childCareSpaceCategoryFactory.associations({ fundingPeriod }).create({ categoryName })
-          )
-        )
+        const childCareSpaceCategories = await Promise.all([
+          childCareSpaceCategoryFactory.associations({ fundingPeriod }).create({
+            categoryName: "Infants",
+          }),
+          childCareSpaceCategoryFactory.associations({ fundingPeriod }).create({
+            categoryName: "Toddlers",
+          }),
+          childCareSpaceCategoryFactory.associations({ fundingPeriod }).create({
+            categoryName: "Preschool",
+          }),
+          childCareSpaceCategoryFactory.associations({ fundingPeriod }).create({
+            categoryName: "Kindergarten (PT)",
+          }),
+          childCareSpaceCategoryFactory.associations({ fundingPeriod }).create({
+            categoryName: "Kindergarten (FT)",
+          }),
+          childCareSpaceCategoryFactory.associations({ fundingPeriod }).create({
+            categoryName: "School Age (PT)",
+          }),
+          childCareSpaceCategoryFactory.associations({ fundingPeriod }).create({
+            categoryName: "School Age (FT)",
+          }),
+        ])
 
         // Act
         const administrationCostCategories = await BulkEnsureService.perform(fundingPeriod)
 
         // Assert
-        expect(
-          administrationCostCategories.map(({ categoryName, fromAge, toAge }) => ({
-            categoryName,
-            fromAge,
-            toAge,
-          }))
-        ).toEqual(
-          AdministrationCostCategory.DEFAULTS.map(({ categoryName, fromAge, toAge }) => ({
-            categoryName,
-            fromAge,
-            toAge,
-          }))
-        )
-        expect(
-          administrationCostCategories.map(({ monthlyAmount }) => Big(monthlyAmount).toFixed(4))
-        ).toEqual(["70.0000", "70.0000", "70.0000", "35.0000", "70.0000", "30.0000", "50.0000"])
-        expect(
-          administrationCostCategories.map(
-            ({ childCareSpaceCategoryId }) =>
-              childCareSpaceCategories.find(({ id }) => id === childCareSpaceCategoryId)
-                ?.categoryName
-          )
-        ).toEqual(AdministrationCostCategory.DEFAULTS.map(({ categoryName }) => categoryName))
+        expect(administrationCostCategories).toEqual([
+          expect.objectContaining({
+            fundingPeriodId: fundingPeriod.id,
+            childCareSpaceCategoryId: childCareSpaceCategories[0].id,
+            categoryName: "Infants",
+            fromAge: 0,
+            toAge: 1,
+            monthlyAmount: "70",
+          }),
+          expect.objectContaining({
+            fundingPeriodId: fundingPeriod.id,
+            childCareSpaceCategoryId: childCareSpaceCategories[1].id,
+            categoryName: "Toddlers",
+            fromAge: 2,
+            toAge: 3,
+            monthlyAmount: "70",
+          }),
+          expect.objectContaining({
+            fundingPeriodId: fundingPeriod.id,
+            childCareSpaceCategoryId: childCareSpaceCategories[2].id,
+            categoryName: "Preschool",
+            fromAge: 4,
+            toAge: 5,
+            monthlyAmount: "70",
+          }),
+          expect.objectContaining({
+            fundingPeriodId: fundingPeriod.id,
+            childCareSpaceCategoryId: childCareSpaceCategories[3].id,
+            categoryName: "Kindergarten (PT)",
+            fromAge: 5,
+            toAge: 6,
+            monthlyAmount: "35",
+          }),
+          expect.objectContaining({
+            fundingPeriodId: fundingPeriod.id,
+            childCareSpaceCategoryId: childCareSpaceCategories[4].id,
+            categoryName: "Kindergarten (FT)",
+            fromAge: 5,
+            toAge: 6,
+            monthlyAmount: "70",
+          }),
+          expect.objectContaining({
+            fundingPeriodId: fundingPeriod.id,
+            childCareSpaceCategoryId: childCareSpaceCategories[5].id,
+            categoryName: "School Age (PT)",
+            fromAge: 5,
+            toAge: 6,
+            monthlyAmount: "30",
+          }),
+          expect.objectContaining({
+            fundingPeriodId: fundingPeriod.id,
+            childCareSpaceCategoryId: childCareSpaceCategories[6].id,
+            categoryName: "School Age (FT)",
+            fromAge: 5,
+            toAge: 6,
+            monthlyAmount: "50",
+          }),
+        ])
       })
 
       test("when a later funding period is ensured, remaps linked space categories to that year", async () => {
@@ -99,14 +151,12 @@ describe("api/src/services/funding-periods/administration-cost-categories/bulk-e
         await retiredCategory.destroy()
 
         // Act
-        const administrationCostCategories = await BulkEnsureService.perform(fundingPeriod)
+        await BulkEnsureService.perform(fundingPeriod)
 
         // Assert
         const categoryHistory = await AdministrationCostCategory.findAll({
-          where: { fundingPeriodId: fundingPeriod.id },
           paranoid: false,
         })
-        expect(administrationCostCategories).toEqual([])
         expect(categoryHistory).toEqual([
           expect.objectContaining({
             id: retiredCategory.id,

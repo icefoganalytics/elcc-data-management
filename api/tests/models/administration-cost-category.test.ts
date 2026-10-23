@@ -1,10 +1,10 @@
-import { AdministrationCostCategory } from "@/models"
-
 import {
   administrationCostCategoryFactory,
   childCareSpaceCategoryFactory,
   fundingPeriodFactory,
 } from "@/factories"
+
+import AdministrationCostCategory from "@/models/administration-cost-category"
 
 describe("api/src/models/administration-cost-category.ts", () => {
   describe("AdministrationCostCategory", () => {

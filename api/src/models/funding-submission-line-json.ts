@@ -26,7 +26,7 @@ import { doesNotContainAdministration } from "@/models/validators/does-not-conta
 
 import BaseModel from "@/models/base-model"
 import Centre from "@/models/centre"
-import FundingLineValue from "@/models/funding-line-value"
+import type FundingLineValue from "@/models/funding-line-value"
 
 export enum FundingSubmissionLineJsonMonths {
   APRIL = "April",
