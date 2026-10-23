@@ -22,7 +22,7 @@ describe("api/src/controllers/administration-cost-categories-controller.ts", () 
         })
 
         // Assert
-        expect(response.status).toBe(403)
+        expect(response.status).toEqual(403)
         expect(response.body).toEqual({
           message: "You are not authorized to create administration cost categories",
         })
@@ -50,7 +50,7 @@ describe("api/src/controllers/administration-cost-categories-controller.ts", () 
         })
 
         // Assert
-        expect(response.status).toBe(201)
+        expect(response.status).toEqual(201)
         expect(response.body).toEqual({
           administrationCostCategory: {
             id: expect.any(Number),

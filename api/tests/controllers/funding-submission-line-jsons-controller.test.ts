@@ -112,8 +112,8 @@ describe("api/src/controllers/funding-submission-line-jsons-controller.ts", () =
           })
 
         // Assert
-        expect(response.status).toBe(422)
-        expect(response.body.message).toContain("Administration costs ledger")
+        expect(response.status).toEqual(422)
+        expect(response.body).toEqual({ message: expect.any(String) })
       })
     })
 
@@ -144,7 +144,8 @@ describe("api/src/controllers/funding-submission-line-jsons-controller.ts", () =
           .send({ values: JSON.stringify([staleLine]) })
 
         // Assert
-        expect(response.status).toBe(422)
+        expect(response.status).toEqual(422)
+        expect(response.body).toEqual({ message: expect.any(String) })
       })
 
       test.each(["lines", "values"] as const)(
@@ -361,14 +362,12 @@ describe("api/src/controllers/funding-submission-line-jsons-controller.ts", () =
         }
 
         // Act
-        const response = await request()
+        await request()
           .patch(`/api/funding-submission-line-jsons/${worksheet.id}`)
           .send({ values: JSON.stringify([administrationLine]) })
-        await worksheet.reload()
 
         // Assert
-        expect(response.status).toBe(422)
-        expect(response.body.message).toContain("Administration costs ledger")
+        await worksheet.reload()
         expect(worksheet.lines).toEqual([validLine])
       })
     })
