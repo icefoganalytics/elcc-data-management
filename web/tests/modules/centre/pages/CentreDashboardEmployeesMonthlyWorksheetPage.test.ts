@@ -173,7 +173,67 @@ describe("web/src/modules/centre/pages/CentreDashboardEmployeesMonthlyWorksheetP
         ])
       })
 
-      test("when returning to a month after a failed save, retains the input and Retry feedback", async () => {
+      test("when returning to a month after a failed save, retains error feedback", async () => {
+        // Arrange
+        const period1 = {
+          id: 1,
+          fundingPeriodId: 1,
+          fiscalYear: "2026-27",
+          month: FiscalPeriodMonths.APRIL,
+          dateStart: "2026-04-01",
+          dateEnd: "2026-04-30",
+          createdAt: "2026-01-01",
+          updatedAt: "2026-01-01",
+        }
+        const period2 = { ...period1, id: 2, month: FiscalPeriodMonths.MAY }
+        const benefit1 = employeeBenefitFactory.build({
+          id: 41,
+          fiscalPeriodId: 1,
+          employerCostEstimated: "120.0000",
+        })
+        const benefit2 = employeeBenefitFactory.build({ id: 42, fiscalPeriodId: 2 })
+        vi.spyOn(fiscalPeriodsApi, "list").mockImplementation(async (query) => ({
+          fiscalPeriods: [query?.where?.month === FiscalPeriodMonths.MAY ? period2 : period1],
+          totalCount: 1,
+        }))
+        vi.spyOn(employeeBenefitsApi, "list").mockImplementation(async (query) => ({
+          employeeBenefits: [query?.where?.fiscalPeriodId === 2 ? benefit2 : benefit1],
+          totalCount: 1,
+        }))
+        vi.spyOn(employeeBenefitsApi, "get").mockImplementation(async (id) => ({
+          employeeBenefit: id === 42 ? benefit2 : benefit1,
+          policy: { show: true, create: true, update: true, destroy: true },
+        }))
+        vi.spyOn(employeeBenefitsApi, "update").mockRejectedValue(new Error("offline"))
+        vi.spyOn(employeeWageTiersApi, "list").mockResolvedValue({
+          employeeWageTiers: [],
+          totalCount: 0,
+        })
+        vi.spyOn(wageEnhancementsApi, "list").mockResolvedValue({
+          wageEnhancements: [],
+          totalCount: 0,
+        })
+        const wrapper = mount(CentreDashboardEmployeesMonthlyWorksheetPage, {
+          props: { centreId: 1, fiscalYearSlug: "2026-27", month: FiscalPeriodMonths.APRIL },
+          global: { plugins: [mockVuetify()] },
+        })
+        await flushPromises()
+
+        // Act
+        const input = wrapper.get('input[aria-label="Employer Cost Estimated"]')
+        await input.setValue("150")
+        await input.trigger("keydown", { key: "Enter" })
+        await flushPromises()
+        await wrapper.setProps({ month: FiscalPeriodMonths.MAY })
+        await flushPromises()
+        await wrapper.setProps({ month: FiscalPeriodMonths.APRIL })
+        await flushPromises()
+
+        // Assert
+        expect(wrapper.get('[role="alert"]').text()).toContain("offline")
+      })
+
+      test("when returning to a month after a failed save, retains the input", async () => {
         // Arrange
         const period1 = {
           id: 1,
@@ -233,7 +293,6 @@ describe("web/src/modules/centre/pages/CentreDashboardEmployeesMonthlyWorksheetP
         expect(
           wrapper.get<HTMLInputElement>('input[aria-label="Employer Cost Estimated"]').element.value
         ).toBe("$150.0000")
-        expect(wrapper.get('[role="alert"]').text()).toContain("offline")
       })
 
       test("when a wage save and employee creation finish in an inactive month, retains the edited rows on return", async () => {
@@ -310,10 +369,10 @@ describe("web/src/modules/centre/pages/CentreDashboardEmployeesMonthlyWorksheetP
         await flushPromises()
 
         // Assert
-        const names = wrapper.findAll<HTMLInputElement>('input[aria-label="Employee Name"]')
-        expect(names).toHaveLength(2)
-        expect(names[0].element.value).toBe("Alexandra")
-        expect(names[1].element.value).toBe("")
+        const employeeNames = wrapper
+          .findAll<HTMLInputElement>('input[aria-label="Employee Name"]')
+          .map((input) => input.element.value)
+        expect(employeeNames).toEqual(["Alexandra", ""])
       })
 
       test("when estimates are replicated into a previously visited month, displays the replicated hours on return", async () => {

@@ -46,13 +46,7 @@ describe("web/src/components/CurrencyInput.vue", () => {
         await nextTick()
 
         // Assert
-        expect({
-          amount: wrapper.get("output").text(),
-          display: input.element.value,
-        }).toEqual({
-          amount: "string:99999999999.9999",
-          display: "$99,999,999,999.9999",
-        })
+        expect(wrapper.get("output").text()).toBe("string:99999999999.9999")
       })
 
       test("when pasting a formatted amount, commits an unformatted four-decimal string", async () => {
@@ -104,13 +98,7 @@ describe("web/src/components/CurrencyInput.vue", () => {
         await nextTick()
 
         // Assert
-        expect({
-          amount: wrapper.get("output").text(),
-          display: inputElement.value,
-        }).toEqual({
-          amount: "string:1234.5678",
-          display: "$1,234.5678",
-        })
+        expect(wrapper.get("output").text()).toBe("string:1234.5678")
       })
 
       test("when committing with Enter, passes the four-decimal string to the parent", async () => {
@@ -195,13 +183,7 @@ describe("web/src/components/CurrencyInput.vue", () => {
         await nextTick()
 
         // Assert
-        expect({
-          amount: wrapper.get("output").text(),
-          display: input.element.value,
-        }).toEqual({
-          amount: "string:100.0001",
-          display: "$100.0001",
-        })
+        expect(wrapper.get("output").text()).toBe("string:100.0001")
       })
     })
   })

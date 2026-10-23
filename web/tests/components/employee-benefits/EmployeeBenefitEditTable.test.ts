@@ -124,7 +124,7 @@ describe("web/src/components/employee-benefits/EmployeeBenefitEditTable.vue", ()
         expect(handleError.mock.calls.map(([error]) => error)).toEqual([loadError, retryError])
       })
 
-      test("when a failed autosave is retried slowly, retains the failure and shows the saving state", async () => {
+      test("when a failed autosave is retried slowly, shows the saving state", async () => {
         // Arrange
         const employeeBenefit = employeeBenefitFactory.build({ id: 62 })
         const retry =
@@ -155,6 +155,36 @@ describe("web/src/components/employee-benefits/EmployeeBenefitEditTable.vue", ()
         expect(
           wrapper.get('[aria-label="Saving employee benefits"]').attributes("aria-hidden")
         ).toBe("false")
+      })
+
+      test("when a failed autosave is retried slowly, keeps the failure visible", async () => {
+        // Arrange
+        const employeeBenefit = employeeBenefitFactory.build({ id: 62 })
+        const retry =
+          Promise.withResolvers<Awaited<ReturnType<typeof employeeBenefitsApi.update>>>()
+        vi.spyOn(employeeBenefitsApi, "get").mockResolvedValue({
+          employeeBenefit,
+          policy: { show: true, create: true, update: true, destroy: true },
+        })
+        vi.spyOn(employeeBenefitsApi, "update")
+          .mockRejectedValueOnce(new Error("offline"))
+          .mockReturnValueOnce(retry.promise)
+        const wrapper = mount(EmployeeBenefitEditTable, {
+          props: { employeeBenefitId: 62 },
+          global: { plugins: [mockVuetify()] },
+        })
+        await flushPromises()
+
+        // Act
+        const input = wrapper.get('input[aria-label="Employer Cost Estimated"]')
+        await input.setValue("50")
+        await input.trigger("keydown", { key: "Enter" })
+        await flushPromises()
+        const retryButton = wrapper.get("td.text-right button")
+        await retryButton.trigger("click")
+        await flushPromises()
+
+        // Assert
         expect(wrapper.get('[role="alert"]').text()).toContain("offline")
       })
 
@@ -222,11 +252,6 @@ describe("web/src/components/employee-benefits/EmployeeBenefitEditTable.vue", ()
 
         // Assert
         expect(input.element.value).toBe("$120.0000")
-        firstSave.resolve({
-          employeeBenefit,
-          policy: { show: true, create: true, update: true, destroy: true },
-        })
-        await flushPromises()
       })
     })
   })
