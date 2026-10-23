@@ -24,6 +24,8 @@ export const DEFAULT_POLICY: Policy = {
   destroy: false,
 }
 
+vi.mock("@/api/current-user-api")
+
 /**
  * Usage:
  * At the top section of a test file import:
@@ -41,8 +43,6 @@ export const DEFAULT_POLICY: Policy = {
 export function mockCurrentUserApi(
   currentUserApiGetResponseWithDefaults: { user?: UserAsShow; policy?: Policy } = {}
 ) {
-  vi.mock("@/api/current-user-api")
-
   const userWithDefaults = merge({}, DEFAULT_USER, currentUserApiGetResponseWithDefaults.user)
   const policyWithDefaults = merge({}, DEFAULT_POLICY, currentUserApiGetResponseWithDefaults.policy)
 
