@@ -76,20 +76,19 @@
     </v-alert>
     <v-select
       v-model="childCareSpaceCategoryId"
-      :items="childCareSpaceCategories"
+      :items="availableChildCareSpaceCategories"
       item-title="categoryName"
       item-value="id"
       label="Linked Child Care Space Category"
       :loading="isLoadingSpaceCategories"
-      :disabled="isNil(fundingPeriodId) || isLoadingSpaceCategories || isSpaceCategoriesErrored"
-      clearable
+      :disabled="isNil(fundingPeriodId) || isSpaceCategoriesErrored"
     />
     <template #actions>
       <v-btn
         type="submit"
         color="primary"
         :loading="isSaving"
-        :disabled="isLoadingFundingPeriods || isFundingPeriodsErrored"
+        :disabled="isFundingPeriodsErrored"
       >
         Create Administration Cost Category
       </v-btn>
@@ -148,6 +147,11 @@ const {
 } = useChildCareSpaceCategories(spaceCategoriesQuery, {
   skipWatchIf: () => isNil(fundingPeriodId.value),
 })
+const availableChildCareSpaceCategories = computed(() =>
+  childCareSpaceCategories.value.filter(
+    (category) => category.fundingPeriodId === fundingPeriodId.value
+  )
+)
 
 watch(fundingPeriodId, () => {
   childCareSpaceCategoryId.value = null
