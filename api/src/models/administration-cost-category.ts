@@ -9,10 +9,10 @@ import {
 import {
   Attribute,
   AutoIncrement,
-  BeforeValidate,
   BelongsTo,
   Default,
   HasMany,
+  ModelValidator,
   NotNull,
   PrimaryKey,
   Table,
@@ -100,14 +100,14 @@ export class AdministrationCostCategory extends BaseModel<
   @Attribute(DataTypes.DATE)
   declare deletedAt: Date | null
 
-  @BeforeValidate
-  static async validateChildCareSpaceCategory(category: AdministrationCostCategory): Promise<void> {
-    if (isNil(category.childCareSpaceCategoryId)) return
+  @ModelValidator
+  async validateChildCareSpaceCategory(): Promise<void> {
+    if (isNil(this.childCareSpaceCategoryId)) return
 
     const childCareSpaceCategory = await ChildCareSpaceCategory.findOne({
       where: {
-        id: category.childCareSpaceCategoryId,
-        fundingPeriodId: category.fundingPeriodId,
+        id: this.childCareSpaceCategoryId,
+        fundingPeriodId: this.fundingPeriodId,
       },
       attributes: ["id"],
     })

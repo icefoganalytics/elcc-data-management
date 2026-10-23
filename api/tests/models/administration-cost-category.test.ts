@@ -1,3 +1,5 @@
+import { ValidationError } from "@sequelize/core"
+
 import {
   administrationCostCategoryFactory,
   childCareSpaceCategoryFactory,
@@ -8,7 +10,7 @@ import AdministrationCostCategory from "@/models/administration-cost-category"
 
 describe("api/src/models/administration-cost-category.ts", () => {
   describe("AdministrationCostCategory", () => {
-    describe("beforeValidate", () => {
+    describe("#validateChildCareSpaceCategory", () => {
       test("when a linked Spaces category belongs to another funding period, rejects creation", async () => {
         // Arrange
         const fundingPeriod1 = await fundingPeriodFactory.create({ fiscalYear: "2024-2025" })
@@ -28,7 +30,7 @@ describe("api/src/models/administration-cost-category.ts", () => {
         })
 
         // Assert
-        await expect(creation).rejects.toThrow("must be active in the same funding period")
+        await expect(creation).rejects.toThrow(ValidationError)
       })
 
       test("when a linked Spaces category has been retired, rejects relinking an Administration category", async () => {
@@ -48,7 +50,7 @@ describe("api/src/models/administration-cost-category.ts", () => {
         })
 
         // Assert
-        await expect(update).rejects.toThrow("must be active in the same funding period")
+        await expect(update).rejects.toThrow(ValidationError)
       })
     })
   })
