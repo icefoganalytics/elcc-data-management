@@ -1,4 +1,5 @@
-import { reactive, ref, toRefs, unref, watch } from "vue"
+import { isCancel } from "axios"
+import { onScopeDispose, reactive, ref, toRefs, unref, watch } from "vue"
 import type { Ref } from "vue"
 
 import employeeWageTiersApi, {
@@ -29,33 +30,61 @@ export function useEmployeeWageTiers(
     isLoading: false,
     isErrored: false,
   })
+  let requestController: AbortController | undefined
 
   async function fetch(): Promise<EmployeeWageTierAsIndex[]> {
+    requestController?.abort()
+    const controller = new AbortController()
+    requestController = controller
     state.isLoading = true
     try {
-      const { employeeWageTiers, totalCount } = await employeeWageTiersApi.list(unref(queryOptions))
+      const { employeeWageTiers, totalCount } = await employeeWageTiersApi.list(
+        unref(queryOptions),
+        { signal: controller.signal }
+      )
+      if (controller.signal.aborted) {
+        return state.employeeWageTiers
+      }
+
       state.isErrored = false
       state.employeeWageTiers = employeeWageTiers
       state.totalCount = totalCount
       return employeeWageTiers
     } catch (error) {
+      if (controller.signal.aborted || isCancel(error)) {
+        return state.employeeWageTiers
+      }
+
       console.error(`Failed to fetch employee wage tiers: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {
-      state.isLoading = false
+      if (!controller.signal.aborted) {
+        state.isLoading = false
+      }
     }
   }
 
   watch(
     () => [skipWatchIf(), unref(queryOptions)],
     async ([skip]) => {
-      if (skip) return
+      state.employeeWageTiers = []
+      state.totalCount = 0
+      state.isLoading = false
+      state.isErrored = false
+      if (skip) {
+        requestController?.abort()
+        return
+      }
 
       await fetch()
     },
     { deep: true, immediate: true }
   )
+
+  onScopeDispose(() => {
+    requestController?.abort()
+  })
 
   return {
     ...toRefs(state),

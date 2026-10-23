@@ -46,11 +46,14 @@ export type FiscalPeriodQueryOptions = QueryOptions<
 >
 
 export const fiscalPeriodsApi = {
-  async list(params: FiscalPeriodQueryOptions = {}): Promise<{
+  async list(
+    params: FiscalPeriodQueryOptions = {},
+    { signal }: { signal?: AbortSignal } = {}
+  ): Promise<{
     fiscalPeriods: FiscalPeriod[]
     totalCount: number
   }> {
-    const { data } = await http.get("/api/fiscal-periods", { params })
+    const { data } = await http.get("/api/fiscal-periods", { params, signal })
     return data
   },
 }

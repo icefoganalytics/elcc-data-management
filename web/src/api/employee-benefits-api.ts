@@ -40,18 +40,24 @@ export type EmployeeBenefitQueryOptions = QueryOptions<
 >
 
 export const employeeBenefitsApi = {
-  async list(params: EmployeeBenefitQueryOptions = {}): Promise<{
+  async list(
+    params: EmployeeBenefitQueryOptions = {},
+    { signal }: { signal?: AbortSignal } = {}
+  ): Promise<{
     employeeBenefits: EmployeeBenefitAsIndex[]
     totalCount: number
   }> {
-    const { data } = await http.get("/api/employee-benefits", { params })
+    const { data } = await http.get("/api/employee-benefits", { params, signal })
     return data
   },
-  async get(employeeBenefitId: number): Promise<{
+  async get(
+    employeeBenefitId: number,
+    { signal }: { signal?: AbortSignal } = {}
+  ): Promise<{
     employeeBenefit: EmployeeBenefitAsShow
     policy: EmployeeBenefitPolicy
   }> {
-    const { data } = await http.get(`/api/employee-benefits/${employeeBenefitId}`)
+    const { data } = await http.get(`/api/employee-benefits/${employeeBenefitId}`, { signal })
     return data
   },
   async create(attributes: Partial<EmployeeBenefit>): Promise<{

@@ -10,6 +10,18 @@ Use this directory for reusable UI building blocks. Keep feature-specific detail
 - When action visibility depends on page context, compute that state in the parent page and pass a simple boolean prop down to the child component.
 - Handle loading, empty, error, and success states explicitly.
 
+## Model Access and Editing
+
+Use model-mirror `use-*` composables for reactive fetching, record or collection state, loading/errors, and straightforward single-record saves. Components own their editing workflows: draft values, dirty tracking, autosave queues, mutation handlers, Retry state, and user feedback.
+
+For an autosaving table, consume the record or collection refs returned by its model composable directly. Do not copy them into a parallel record store or watch fetched records to merge fields and revision counters.
+
+Keep pending commands and failed-input feedback local to the owning component. If drafts must survive month navigation, retain keyed editor instances with `KeepAlive` for the mounted page instead of changing a single editor's record identity and reconciling returning fetches. Each instance keeps its model ref and queue; committed writes continue while it is inactive.
+
+Refresh a retained wage editor's collection when it becomes active and has no pending mutation or failed edit. This keeps replicated estimates visible without overwriting local input that still needs saving.
+
+Parent tables may discover collections and own their mutations while row or tier components display resolved records and emit actions. Keep one model source and one editing owner, not a second persistence snapshot in each child or a global editor cache.
+
 ## Naming and Location
 
 - Directory names are plural and kebab-case: `components/employee-benefits/`

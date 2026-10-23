@@ -1,4 +1,5 @@
-import { reactive, ref, toRefs, unref, watch } from "vue"
+import { isCancel } from "axios"
+import { onScopeDispose, reactive, ref, toRefs, unref, watch } from "vue"
 import type { Ref } from "vue"
 
 import wageEnhancementsApi, {
@@ -31,32 +32,60 @@ export function useWageEnhancements(
     isErrored: false,
   })
 
+  let requestController: AbortController | undefined
+
   async function fetch(): Promise<WageEnhancementAsIndex[]> {
+    requestController?.abort()
+    const controller = new AbortController()
+    requestController = controller
     state.isLoading = true
+    state.isErrored = false
     try {
-      const { wageEnhancements, totalCount } = await wageEnhancementsApi.list(unref(queryOptions))
+      const { wageEnhancements, totalCount } = await wageEnhancementsApi.list(unref(queryOptions), {
+        signal: controller.signal,
+      })
+      if (controller.signal.aborted) {
+        return state.wageEnhancements
+      }
+
       state.wageEnhancements = wageEnhancements
       state.totalCount = totalCount
-      state.isErrored = false
       return wageEnhancements
     } catch (error) {
+      if (controller.signal.aborted || isCancel(error)) {
+        return state.wageEnhancements
+      }
+
       console.error(`Failed to fetch wage enhancements: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {
-      state.isLoading = false
+      if (!controller.signal.aborted) {
+        state.isLoading = false
+      }
     }
   }
 
   watch(
     () => [skipWatchIf(), unref(queryOptions)],
     async ([skip]) => {
-      if (skip) return
+      state.wageEnhancements = []
+      state.totalCount = 0
+      state.isLoading = false
+      state.isErrored = false
+      if (skip) {
+        requestController?.abort()
+        return
+      }
 
       await fetch()
     },
     { deep: true, immediate: true }
   )
+
+  onScopeDispose(() => {
+    requestController?.abort()
+  })
 
   return {
     ...toRefs(state),

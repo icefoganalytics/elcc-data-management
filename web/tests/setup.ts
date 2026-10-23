@@ -1,3 +1,4 @@
+import { enableAutoUnmount } from "@vue/test-utils"
 import ResizeObserver from "resize-observer-polyfill"
 
 import { mockHttpClient } from "@/tests/support/mock-http-client"
@@ -11,3 +12,5 @@ beforeEach(() => {
   mockHttpClient()
   mockCurrentUserApi()
 })
+
+enableAutoUnmount(afterEach)

@@ -1,11 +1,9 @@
 import { defineComponent, ref } from "vue"
-import { enableAutoUnmount, flushPromises, mount, type VueWrapper } from "@vue/test-utils"
+import { flushPromises, mount, type VueWrapper } from "@vue/test-utils"
 
 import httpClient from "@/api/http-client"
 import ChildCareSpaceCategoryPropagationControls from "@/components/child-care-space-categories/ChildCareSpaceCategoryPropagationControls.vue"
 import { mockVuetify } from "@/tests/support"
-
-enableAutoUnmount(afterEach)
 
 beforeEach(() => {
   // JSDOM omits this optional browser API used by Vuetify's select overlay.

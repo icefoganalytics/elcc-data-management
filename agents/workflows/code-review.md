@@ -22,44 +22,47 @@ Use this workflow to review TypeScript code for the ELCC project. Apply every ru
    - Prefer proper type definitions over runtime type checks; only use guard clauses when runtime validation is genuinely needed, not just to satisfy TypeScript
    - A cast is only acceptable when the type system genuinely cannot infer a type that is known at runtime
 
-3. **Check Cyclomatic Complexity**
-   - Each function or method should have at most one level of conditional nesting in its main body
-   - Use guard clauses (early returns) to flatten logic
-   - Each guard clause must be followed by a blank line before the next statement
+3. **Review Human Readability**
+   - Keep related behavior in cohesive modules with clear state and effect ownership.
+   - Prefer straightforward control flow and guard clauses, with a blank line before the main path.
+   - Do not split cohesive operations into trivial helpers merely to satisfy a nesting or complexity quota.
 
 4. **Verify Test Completeness**
    - Every test must include explicit Arrange / Act / Assert comments and be fully self-contained
-   - No shared state from `beforeEach` unless it is truly invariant setup (e.g., DB reset)
+   - Keep test-specific data, mount options, and API responses inside each test; do not hide them behind local mount/payload helpers or shared fixtures. Reuse existing factories and infrastructure helpers when appropriate.
+   - Use `beforeEach` for invariant environment or mock setup, not scenario data. Do not repeat mock resets already provided by the test runner.
    - Service test assertions should target database state, not service return values, unless the return value is specifically what is under test
    - Spy assertions — use `expect(spy).not.toHaveBeenCalled()` without arguments. Never use `not.toHaveBeenCalledWith(...)`
 
-5. **Ensure One Expect Per Test**
-   - Consolidate assertions into a single `expect` using `expect.objectContaining`
-   - Exceptions: tests that assert something did NOT happen (e.g., `not.toHaveBeenCalled()`, `not.toBe()`) may be standalone single-line expects
-   - HTTP response exception: assert `response.status` first and `response.body` second with `toEqual(...)`; do not match the complete response object.
-   - When asserting "not any of N values", split into N separate tests rather than looping
+5. **Verify One Observable Behavior Per Test**
+   - Assert directly on observable results; never construct synthetic summary objects just to force one `expect`.
+   - Related facts proving the same behavior may use separate direct expectations in one final Assert section. Split independent behaviors into separate tests.
+   - Keep important mock-call contracts in their own focused tests rather than combining them with independent rendered-output assertions. Do not assert incidental wording.
+   - For HTTP responses, assert `response.status` first and `response.body` second with `toEqual(...)`; do not match the complete response object.
+   - When asserting "not any of N values", split into N separate tests rather than looping.
 
 6. **Check Test Naming**
    - Tests must follow `"when [condition], [expected behaviour]"` with full English words (no abbreviations)
    - Numbered entities in test bodies: `user1`, `user2`, `workflowStep1`, `workflowStep2` — never `existingUser`, `newUser`
-   - Describe hierarchy must mirror the source file path
+   - Component and composable describe hierarchy: source file path -> component or composable name -> method or behavior under test -> test scenario.
 
-7. **Validate Error Messages**
-   - `expect(bool).toBe(true)` is never acceptable — a failing test must tell you what went wrong without reading the source
-   - Split complex boolean assertions into individual named assertions
+7. **Validate Failure Diagnostics**
+   - Prefer concrete expected values and direct assertions on observable behavior.
+   - Boolean assertions are appropriate for Boolean contracts, including visible loading and error states.
+   - Avoid synthetic summary objects and compound Boolean assertions that hide the failing fact.
 
 8. **Check Architecture Consistency**
-    - When multiple classes serve similar purposes, ensure they have consistent APIs and clear differentiation in their type signatures
-    - **When extending functionality, create new types rather than modifying existing ones to avoid breaking changes**
-    - **Ensure similar classes follow the same patterns**
-    - Flag inconsistent naming or patterns between similar classes
+   - When multiple classes serve similar purposes, ensure they have consistent APIs and clear differentiation in their type signatures
+   - Preserve supported caller contracts when extending functionality; introduce a distinct type when the semantics actually differ.
+   - **Ensure similar classes follow the same patterns**
+   - Flag inconsistent naming or patterns between similar classes
 
 9. **Check for Over-Engineering**
-    - Flag additions that were not requested:
-      - New abstractions, helpers, or utilities for a one-time use
-      - Features, flags, or configurability that no current caller needs
-      - Comments explaining what the code does when the names already say it
-      - Error handling for states that cannot be reached
+   - Flag additions that were not requested:
+     - New abstractions, helpers, or utilities for a one-time use
+     - Features, flags, or configurability that no current caller needs
+     - Comments explaining what the code does when the names already say it
+     - Error handling for states that cannot be reached
 
 10. **Check for Orphaned or Non-Sensical Code**
     - Flag functions, methods, or code paths that serve no purpose
@@ -67,14 +70,12 @@ Use this workflow to review TypeScript code for the ELCC project. Apply every ru
     - Identify dead code paths or unreachable logic
     - **Flag code with comments like "legacy path" or "no-op here" that should be removed**
     - **When removing features, remove all related types, imports, and exports** - don't leave partially implemented type systems
-    - Verify that all exported functions are actually used somewhere in the codebase
+    - Check unused exports against project conventions before removing them. Keep model-mirror composables while their underlying models exist, even without current callers; see [composable conventions](../../web/src/use/README.md).
 
 11. **Validate Import Organization**
-    - Imports must follow PEP 8-style grouping with a blank line between each group:
-      1. Node.js built-ins (`path`, `fs`, etc.)
-      2. External packages from `node_modules`
-      3. Internal imports from `@/`
-    - Within each group, alphabetical ordering is required. One import statement per module
+    - Group imports by conceptual distance, separating third-party packages, standard-library modules, and local application imports.
+    - Keep utilities, API clients, composables, and components together by project convention.
+    - Use one import statement per module and remove unused imports. Do not reorder unrelated imports solely to satisfy an alphabetical rule.
 
 12. **Check Naming Conventions**
     - No abbreviations — `workflow` not `wf`, `migration` not `mig`
@@ -83,10 +84,9 @@ Use this workflow to review TypeScript code for the ELCC project. Apply every ru
     - Function names — describe both trigger and behavior
 
 13. **Verify Expanded Style**
-    - Avoid terse functional chains. Each logical step must be on its own line or extracted to a named variable
-    - Extract and rename before constructing objects — never inline a property rename
-    - No chained transformations — break chains at each step
-    - Named constants — hoist every magic number or string to a named `const` at the top of the function or file
+    - Prefer explanatory names, readable spacing, and explicit steps over dense expressions.
+    - Keep a concise expression when it is the clearest form; do not extract single-use variables or helpers mechanically.
+    - Name constants when they express a domain rule, not every literal.
 
 14. **Check Service Pattern**
     - Services encapsulate business logic and are invoked exclusively via their static `perform()` method
@@ -105,6 +105,7 @@ Fix: <one-sentence description of what to change>
 ```
 
 After listing all issues, conclude with one of:
+
 - **APPROVED** — no blocking issues found.
 - **CHANGES REQUESTED** — N blocking issues listed above.
 

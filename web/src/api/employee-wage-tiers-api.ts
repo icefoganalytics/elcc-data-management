@@ -38,11 +38,14 @@ export type EmployeeWageTierQueryOptions = QueryOptions<
 >
 
 export const employeeWageTiersApi = {
-  async list(params: EmployeeWageTierQueryOptions = {}): Promise<{
+  async list(
+    params: EmployeeWageTierQueryOptions = {},
+    { signal }: { signal?: AbortSignal } = {}
+  ): Promise<{
     employeeWageTiers: EmployeeWageTierAsIndex[]
     totalCount: number
   }> {
-    const { data } = await http.get("/api/employee-wage-tiers", { params })
+    const { data } = await http.get("/api/employee-wage-tiers", { params, signal })
     return data
   },
 
