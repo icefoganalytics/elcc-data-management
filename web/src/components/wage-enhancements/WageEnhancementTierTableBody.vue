@@ -26,6 +26,7 @@
             density="compact"
             variant="underlined"
             hide-details
+            :disabled="deletingIds.has(wageEnhancement.id)"
             @blur="emit('save', wageEnhancement.id)"
             @keydown.enter.prevent="emit('save', wageEnhancement.id)"
           />
@@ -49,6 +50,7 @@
             density="compact"
             variant="underlined"
             hide-details
+            :disabled="deletingIds.has(wageEnhancement.id)"
             @blur="emit('save', wageEnhancement.id)"
             @keydown.enter.prevent="emit('save', wageEnhancement.id)"
           />
@@ -72,6 +74,7 @@
             density="compact"
             variant="underlined"
             hide-details
+            :disabled="deletingIds.has(wageEnhancement.id)"
             @blur="emit('save', wageEnhancement.id)"
             @keydown.enter.prevent="emit('save', wageEnhancement.id)"
           />
@@ -96,7 +99,7 @@
             color="error"
             density="comfortable"
             variant="text"
-            :loading="pendingIds.has(wageEnhancement.id)"
+            :loading="deletingIds.has(wageEnhancement.id)"
             @click="emit('remove', wageEnhancement.id)"
           />
         </td>
@@ -113,6 +116,7 @@
             variant="text"
             aria-label="Retry saving employee"
             :loading="pendingIds.has(wageEnhancement.id)"
+            :disabled="deletingIds.has(wageEnhancement.id)"
             @click="emit('save', wageEnhancement.id)"
             >Retry</v-btn
           >
@@ -134,6 +138,7 @@ const props = defineProps<{
   wageEnhancements: WageEnhancementAsIndex[]
   isCreating: boolean
   pendingIds: Set<number>
+  deletingIds: Set<number>
   errorsById: Map<number, string>
 }>()
 const emit = defineEmits<{

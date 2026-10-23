@@ -18,6 +18,131 @@ vi.mock("@/use/use-snack", () => ({
 describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", () => {
   describe("WageEnhancementsEditTable", () => {
     describe("employee editing", () => {
+      test("when hours are committed, saves both hour fields at database precision", async () => {
+        // Arrange
+        const employeeWageTier = employeeWageTierFactory.build({ id: 2, fiscalPeriodId: 1 })
+        const wageEnhancement = wageEnhancementFactory.build({
+          id: 3,
+          centreId: 1,
+          employeeWageTierId: 2,
+          employeeName: "Alex",
+        })
+        vi.spyOn(employeeWageTiersApi, "list").mockResolvedValue({
+          employeeWageTiers: [employeeWageTier],
+          totalCount: 1,
+        })
+        vi.spyOn(wageEnhancementsApi, "list").mockResolvedValue({
+          wageEnhancements: [wageEnhancement],
+          totalCount: 1,
+        })
+        const update = vi.spyOn(wageEnhancementsApi, "update").mockResolvedValue({
+          wageEnhancement,
+          policy: { show: true, create: true, update: true, destroy: true },
+        })
+        const wrapper = mount(WageEnhancementsEditTable, {
+          props: { centreId: 1, fiscalPeriodId: 1 },
+          global: { plugins: [mockVuetify()] },
+        })
+        await flushPromises()
+
+        // Act
+        await wrapper.get('input[aria-label="Hours Actual"]').setValue("2.345")
+        const estimatedHours = wrapper.get('input[aria-label="Hours Estimated"]')
+        await estimatedHours.setValue("1.239")
+        await estimatedHours.trigger("keydown", { key: "Enter" })
+        await flushPromises()
+
+        // Assert
+        expect(update).toHaveBeenCalledWith(3, {
+          employeeName: "Alex",
+          hoursEstimated: "1.24",
+          hoursActual: "2.35",
+        })
+      })
+
+      test("when committed hours have excess precision, displays the total from rounded hours", async () => {
+        // Arrange
+        const employeeWageTier = employeeWageTierFactory.build({
+          id: 2,
+          fiscalPeriodId: 1,
+          wageRatePerHour: "20.0000",
+        })
+        const wageEnhancement = wageEnhancementFactory.build({
+          id: 3,
+          centreId: 1,
+          employeeWageTierId: 2,
+        })
+        vi.spyOn(employeeWageTiersApi, "list").mockResolvedValue({
+          employeeWageTiers: [employeeWageTier],
+          totalCount: 1,
+        })
+        vi.spyOn(wageEnhancementsApi, "list").mockResolvedValue({
+          wageEnhancements: [wageEnhancement],
+          totalCount: 1,
+        })
+        vi.spyOn(wageEnhancementsApi, "update").mockResolvedValue({
+          wageEnhancement: { ...wageEnhancement, hoursEstimated: "1.24" },
+          policy: { show: true, create: true, update: true, destroy: true },
+        })
+        const wrapper = mount(WageEnhancementsEditTable, {
+          props: { centreId: 1, fiscalPeriodId: 1 },
+          global: { plugins: [mockVuetify()] },
+        })
+        await flushPromises()
+
+        // Act
+        const estimatedHours = wrapper.get('input[aria-label="Hours Estimated"]')
+        await estimatedHours.setValue("1.239")
+        await estimatedHours.trigger("keydown", { key: "Enter" })
+        await flushPromises()
+
+        // Assert
+        expect(
+          wrapper.get<HTMLInputElement>('input[aria-label="Wage Enhancement Total Estimated"]')
+            .element.value
+        ).toBe("$24.80")
+      })
+
+      test("when a trailing blur arrives after deletion starts, does not send a new save", async () => {
+        // Arrange
+        const employeeWageTier = employeeWageTierFactory.build({ id: 2, fiscalPeriodId: 1 })
+        const wageEnhancement = wageEnhancementFactory.build({
+          id: 3,
+          centreId: 1,
+          employeeWageTierId: 2,
+          employeeName: "Alex",
+        })
+        const deletion = Promise.withResolvers<void>()
+        vi.spyOn(employeeWageTiersApi, "list").mockResolvedValue({
+          employeeWageTiers: [employeeWageTier],
+          totalCount: 1,
+        })
+        vi.spyOn(wageEnhancementsApi, "list").mockResolvedValue({
+          wageEnhancements: [wageEnhancement],
+          totalCount: 1,
+        })
+        vi.spyOn(wageEnhancementsApi, "delete").mockReturnValueOnce(deletion.promise)
+        const update = vi.spyOn(wageEnhancementsApi, "update").mockResolvedValue({
+          wageEnhancement,
+          policy: { show: true, create: true, update: true, destroy: true },
+        })
+        const wrapper = mount(WageEnhancementsEditTable, {
+          props: { centreId: 1, fiscalPeriodId: 1 },
+          global: { plugins: [mockVuetify()] },
+        })
+        await flushPromises()
+        const employeeName = wrapper.get('input[aria-label="Employee Name"]')
+        await employeeName.setValue("Alexandra")
+
+        // Act
+        await wrapper.get('[title="Delete"]').trigger("click")
+        await employeeName.trigger("blur")
+        await flushPromises()
+
+        // Assert
+        expect(update).not.toHaveBeenCalled()
+      })
+
       test("when a second edit is committed during a slow save, persists both updates", async () => {
         // Arrange
         const employeeWageTier = employeeWageTierFactory.build({ id: 2, wageRatePerHour: "20.00" })
@@ -67,8 +192,8 @@ describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", (
 
         // Assert
         expect(update.mock.calls).toEqual([
-          [3, { employeeName: "Alex", hoursEstimated: "2.1250", hoursActual: "0.5000" }],
-          [3, { employeeName: "Alex", hoursEstimated: "3.3750", hoursActual: "0.5000" }],
+          [3, { employeeName: "Alex", hoursEstimated: "2.13", hoursActual: "0.50" }],
+          [3, { employeeName: "Alex", hoursEstimated: "3.38", hoursActual: "0.50" }],
         ])
       })
 
@@ -121,7 +246,7 @@ describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", (
         // Assert
         expect(
           wrapper.get<HTMLInputElement>('input[aria-label="Hours Estimated"]').element.value
-        ).toBe("3.3750")
+        ).toBe("3.38")
       })
 
       test("when a failed save is retried while pending, keeps the failure visible", async () => {
@@ -388,8 +513,8 @@ describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", (
 
         // Assert
         expect(update.mock.calls).toEqual([
-          [3, { employeeName: "Alexandra", hoursEstimated: "0.0000", hoursActual: "0.0000" }],
-          [3, { employeeName: "Alex", hoursEstimated: "0.0000", hoursActual: "0.0000" }],
+          [3, { employeeName: "Alexandra", hoursEstimated: "0.00", hoursActual: "0.00" }],
+          [3, { employeeName: "Alex", hoursEstimated: "0.00", hoursActual: "0.00" }],
         ])
       })
 

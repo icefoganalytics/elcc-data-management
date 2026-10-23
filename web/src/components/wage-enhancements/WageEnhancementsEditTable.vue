@@ -43,6 +43,7 @@
         "
         :is-creating="isCreating"
         :pending-ids="pendingIds"
+        :deleting-ids="deletingIds"
         :errors-by-id="errorsById"
         @save="save"
         @create="create"
@@ -223,6 +224,7 @@ const {
 const pendingChanges = new Map<number, EditableAttributes>()
 const activeWrites = new Map<number, Promise<void>>()
 const pendingIds = reactive(new Set<number>())
+const deletingIds = reactive(new Set<number>())
 const errorsById = reactive(new Map<number, string>())
 const isCreating = ref(false)
 const snack = useSnack()
@@ -234,6 +236,7 @@ onActivated(async () => {
     isLoadingWageEnhancements.value ||
     isCreating.value ||
     pendingIds.size > 0 ||
+    deletingIds.size > 0 ||
     pendingChanges.size > 0 ||
     errorsById.size > 0
   )
@@ -276,10 +279,17 @@ const wageEnhancementsActualTotal = computed(() =>
 const eiCppWcbRatePercentage = computed(() => Big(EI_CPP_WCB_RATE).mul(Big("100")).toFixed(2))
 
 function save(id: number): Promise<void> {
+  if (deletingIds.has(id)) return Promise.resolve()
+
   const wageEnhancement = wageEnhancements.value.find((record) => record.id === id)
   if (!wageEnhancement) return Promise.resolve()
 
-  pendingChanges.set(id, editableAttributes(wageEnhancement))
+  const attributes = editableAttributes(wageEnhancement)
+  attributes.hoursEstimated = Big(attributes.hoursEstimated || "0").toFixed(2)
+  attributes.hoursActual = Big(attributes.hoursActual || "0").toFixed(2)
+  wageEnhancement.hoursEstimated = attributes.hoursEstimated
+  wageEnhancement.hoursActual = attributes.hoursActual
+  pendingChanges.set(id, attributes)
   const activeWrite = activeWrites.get(id)
   if (activeWrite) return activeWrite
 
@@ -337,9 +347,11 @@ async function create(employeeWageTierId: number) {
 }
 
 async function remove(id: number) {
-  await activeWrites.get(id)
-  pendingIds.add(id)
+  if (deletingIds.has(id)) return
+
+  deletingIds.add(id)
   try {
+    await activeWrites.get(id)
     await wageEnhancementsApi.delete(id)
     const index = wageEnhancements.value.findIndex((record) => record.id === id)
     if (index !== -1) wageEnhancements.value.splice(index, 1)
@@ -350,7 +362,7 @@ async function remove(id: number) {
     console.error(`Failed to delete wage enhancement: ${error}`, { error })
     snack.error(`Failed to delete wage enhancement: ${error}`)
   } finally {
-    pendingIds.delete(id)
+    deletingIds.delete(id)
   }
 }
 </script>
