@@ -4,22 +4,25 @@ A monthly worksheet combines records with different persistence owners. The shar
 
 ## Persistence ownership
 
-| Worksheet data                                                                           | Authoritative store                                                    | Save boundary                                                                |
-| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Child Care Spaces                                                                        | `child_care_spaces`, identified by centre, fiscal period, and category | Only the two occupancy inputs are updated through the Child Care Spaces API. |
-| Remaining JSON-backed sections, including Administration and Quality Enhancement Program | `funding_submission_line_jsons.values`                                 | The worksheet JSON API receives only its own sections.                       |
+| Worksheet data                                                        | Authoritative store                                                       | Save boundary                                                                   |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Child Care Spaces                                                     | `child_care_spaces`, identified by centre, fiscal period, and category    | Only the two occupancy inputs are updated through the Child Care Spaces API.    |
+| Administration (10% of Spaces)                                        | `administration_costs`, identified by centre, fiscal period, and category | Only the two occupancy inputs are updated through the Administration Costs API. |
+| Remaining JSON-backed sections, including Quality Enhancement Program | `funding_submission_line_jsons.values`                                    | The worksheet JSON API receives only its own sections.                          |
 
-The [JSON model](../../api/src/models/funding-submission-line-json.ts) attaches the named [Child Care Spaces exclusion validator](../../api/src/models/validators/does-not-contain-child-care-spaces.ts) to `values`, covering both virtual `lines` and raw `values` writes. This prevents clients opened before a deployment from reintroducing a second copy and double-counting reconciliation. The model imports this model-dependent validator directly; the shared validator barrel remains independent of model initialization.
+The [JSON model](../../api/src/models/funding-submission-line-json.ts) attaches exclusion validators for [Child Care Spaces](../../api/src/models/validators/does-not-contain-child-care-spaces.ts) and [Administration](../../api/src/models/validators/does-not-contain-administration.ts) to `values`, covering both virtual `lines` and raw `values` writes. These prevent clients opened before a deployment from reintroducing a second copy and double-counting reconciliation. The model imports these model-dependent validators directly; the shared validator barrel remains independent of model initialization.
 
-The [worksheet editor](../../web/src/components/funding-submission-line-jsons/FundingSubmissionLineJsonEditSheet.vue) composes both stores for display, persists changed ledger rows before saving JSON-owned lines, and refreshes both resources after success. **Replicate Estimates** first saves, then invokes each store's replication operation. Occupancy inputs remain read only until the entire save or replication workflow finishes, preventing edits between the two persistence requests.
+Both retired Administration labels, `Administration` and `Administration (10% of Spaces)`, are rejected by worksheet JSON and shared configuration writes. The worksheet displays the latter label for its ledger-backed section.
 
-The editor recalculates dependent totals from each section's own snapshotted rate when occupancy changes. If either source fails to load, it withholds editing and reloads both sources through **Reload Worksheet**.
+The [worksheet editor](../../web/src/components/funding-submission-line-jsons/FundingSubmissionLineJsonEditSheet.vue) composes the two ledgers and JSON for display, persists changed ledger rows before saving JSON-owned lines, and refreshes all three resources after success. **Replicate Estimates** first saves, then invokes each store's replication operation. Occupancy inputs remain read only until the entire save or replication workflow finishes, preventing edits between persistence requests.
+
+The editor recalculates dependent totals from each section's own snapshotted rate when occupancy changes. If any source fails to load, it withholds editing and reloads all sources through **Reload Worksheet**.
 
 The monthly page loads the worksheet and fiscal period together before mounting a centre/year/month-specific editor. It discards responses from superseded requests instead of pairing a newly selected worksheet with the previous month's fiscal period.
 
-These are separate API requests, not one worksheet-wide transaction. A save or replication failure is surfaced, but completed requests are not rolled back across stores. All dispatched mutations settle before the editor unlocks, including after a sibling request fails. Each [Child Care Spaces replication operation](../../api/src/services/child-care-spaces/replicate-estimates-service.ts) transacts its later-month updates; occupancy saves and replication reload persisted ledger inputs under repeatable-read isolation before calculating totals.
+These are separate API requests, not one worksheet-wide transaction. A save or replication failure is surfaced, but completed requests are not rolled back across stores. All dispatched mutations settle before the editor unlocks, including after a sibling request fails. Categories replicate sequentially within each ledger to avoid overlapping SQL Server transactions; the independent persistence owners can still run concurrently. Each replication operation transacts its later-month updates; occupancy saves and replication reload persisted ledger inputs under repeatable-read isolation before calculating totals.
 
-Occupancy edits and estimate replication use the standard `update()` authorization action on the [Child Care Spaces policy](../../api/src/policies/child-care-space-policy.ts).
+Occupancy edits and estimate replication use the standard `update()` authorization action on the ledger policies. Ordinary authenticated users retain these actions; only system administrators may create, edit, or retire annual category configuration.
 
 ## Category configuration ownership
 
@@ -27,21 +30,31 @@ Occupancy edits and estimate replication use the standard `update()` authorizati
 
 Explicit category forward application is a transactional exception to snapshot isolation: an inclusive starting fiscal month limits changes to the same funding period. It fills missing pairs without restoring retired rows; edits update only unchanged snapshots without actual occupancy. The [domain rules](../domain/child-care-spaces.md#forward-application) define preservation and recalculation.
 
-Funding-period creation and development/production ensures provision categories separately from the remaining `funding_submission_lines`. Fresh shared-line defaults retain the seven Administration rows. Shared-line writes and bulk cloning reject the retired Child Care Spaces section at their configuration boundary. Centre initialization discovers categories by funding-period ID and adds only missing category/month pairs. The worksheet JSON provisioning service therefore needs no Child Care Spaces section filter.
+Funding-period creation and development/production ensures provision categories separately from the remaining `funding_submission_lines`. The seven Administration defaults now belong to `administration_cost_categories`. Shared-line writes and bulk cloning reject both retired ledger sections at their configuration boundary. Centre initialization discovers categories by funding-period ID; later ensures preserve intentionally absent monthly rows and retired pairs. Worksheet JSON provisioning needs no ledger-section filter because its configuration source contains neither ledger section.
 
-The centre's existing core setup determines worksheet access. Changes to the category catalogue do not make an already initialized year unavailable or require retroactive provisioning of intentionally absent earlier-month rows.
+The centre's existing core setup determines worksheet access and first-time provisioning. Each ledger checks its own active and retired history independently: Spaces propagated before initial setup do not suppress Administration provisioning, while later ensures preserve intentionally absent months. Changes to the category catalogue do not make an already initialized year unavailable.
 
 Ensures distinguish never-configured periods from deliberately emptied periods using category history; they do not restore retired categories. Legacy cleanup removes only rows still belonging to Child Care Spaces, retaining unrelated active and archived configuration referenced by historical ledger records.
 
 The incremental migrations after the JSON cutover create categories, backfill category references, replace the ledger's `funding_submission_line_id` with required `category_id`, and remove migrated source configuration rows. The temporary source ID exists only during these migrations; it is not a runtime compatibility field. Active configuration is mapped to its fiscal year's funding periods. Historical ledger references also resolve changed, moved-year, and soft-deleted source configuration; a category outside its source's current year is retired without changing ledger snapshots.
 
-Administration and Quality Enhancement Program configuration and JSON lines carry `childCareSpaceCategoryId` as linkage metadata, not a second Child Care Spaces value owner. The linkage migration resolves exact annual configuration matches and supported historical worksheet/ledger matches, rejecting conflicting or ambiguous category IDs. It adds metadata without changing historical labels, rates, occupancy, or totals. New dependent configuration is linked by category name within its year; same-year label edits retain identity, and annual cloning remaps to the target period's category. The editor propagates occupancy by this stable ID even when category names and worksheet labels differ.
+Quality Enhancement Program configuration and JSON lines carry `childCareSpaceCategoryId` as linkage metadata, not a second Child Care Spaces value owner. Administration category configuration carries the same stable link, and each Administration monthly row preserves its own link snapshot. The editor propagates occupancy through these IDs even when category names and worksheet labels differ. Annual cloning remaps configuration links to the target funding period.
 
 The linkage migration keeps its SQL Server operations directly in `up` and `down`, with comments explaining candidate matching, ambiguity rejection, and worksheet eligibility. `JSON_MODIFY` changes only category metadata, preserving array order, historical fields, unknown properties, and existing numeric tokens without JavaScript parsing. Reversal discovers the column's foreign-key name so both SQL-created and Knex-created constraints can be removed without changing worksheet or ledger facts.
 
 Historical submission-line IDs are normalized directly from their JSON numeric tokens. Zero and integral decimal and exponent forms resolve the same non-negative 32-bit ID; strings, fractions, and out-of-range values do not match. Normalization avoids floating-point rounding, including for fractions smaller than JavaScript number precision.
 
 Missing funding-period mappings or conflicting category references abort the backfill. Source removal checks that categories exist and active worksheet JSON no longer contains Child Care Spaces. The reference/configuration removal migrations reject automatic reversal because the original source data is required for restoration.
+
+## Administration configuration and historical cutover
+
+**Administration → Administration Cost Categories** manages names, age ranges, rates, and optional links to Child Care Space categories within the same funding period. Its funding period is immutable after creation. Normal edits and retirement affect future provisioning, not existing monthly name, rate, or linkage snapshots. Existing configured rates are preserved; the section title does not derive a live percentage from Child Care Spaces.
+
+The [Administration cutover](../../api/src/db/migrations/20261020180002_migrate-administration-costs-from-worksheet-json.ts) preserves current and historical configuration, monthly occupancy, exact totals, timestamps, and deletion state before removing the old section from worksheet JSON and shared submission lines. Retained JSON is reconstructed from raw elements so unrelated numeric tokens and unknown properties are unchanged. Missing or ambiguous mappings, conflicting snapshots, malformed identifiers, excess decimal precision, and references from surviving sections abort the migration. Restoring pre-cutover configuration or JSON requires the original backup; automatic reversal is intentionally rejected.
+
+Historical Administration rows retain their explicit Spaces link or remain unlinked when the JSON has no link; current configuration never supplies a missing snapshot link. If a source configuration moves to another funding year, its reconstructed historical category is retired and does not inherit the new year's link. Current configuration still requires a link within its own funding period.
+
+Administration saves and replication calculate four-decimal totals with decimal arithmetic using the persisted monthly rate. **Replicate Estimates** targets matching categories in later months of the same centre and funding period, clears actuals, and retains each target month's rate. Reconciliation adds its actual totals once alongside Spaces, remaining JSON, and Building Expenses.
 
 ## Historical JSON cutover
 
@@ -68,7 +81,7 @@ Development and production seeds export `seed(knex)`. They continue to use the a
 - [Child Care Spaces domain rules](../domain/child-care-spaces.md) define historical identity, financial consistency, propagation, and reporting behavior.
 - [Ledger/template and scope patterns](../../api/src/models/README.md) describe snapshot ownership and safe bulk-mutation predicates.
 - [The enrollment chart](../../web/src/components/funding-line-values/FundingLineValuesEnrollmentChart.vue) reads the ledger by centre and fiscal year, ordered by fiscal-period start date.
-- [Eligible-expense calculation](../../api/src/services/funding-reconciliations/calculate-eligible-expenses-period-amount-service.ts) combines the independent persistence owners; it must not reintroduce Child Care Spaces into the JSON sum.
+- [Eligible-expense calculation](../../api/src/services/funding-reconciliations/calculate-eligible-expenses-period-amount-service.ts) combines the independent persistence owners; it must not reintroduce Child Care Spaces or Administration into the JSON sum.
 
 ## Regression evidence
 
@@ -79,6 +92,7 @@ Historical migration fixtures keep schema setup, data, migration calls, assertio
 - [Migration preservation, idempotency, and complete rollback](../../api/tests/db/migrations/migrate-child-care-spaces-from-worksheet-json.test.ts)
 - [Category cutover preservation, moved-year configuration, and rollback](../../api/tests/db/migrations/backfill-child-care-space-categories.test.ts)
 - [Exact historical numeric-ID linkage and metadata preservation](../../api/tests/db/migrations/link-funding-submission-lines-to-child-care-space-categories.test.ts)
+- [Administration migration preservation and fail-closed conversion](../../api/tests/db/migrations/migrate-administration-costs-from-worksheet-json.test.ts)
 - [Financial persistence and precision](../../api/tests/models/child-care-space.test.ts)
 - [Stale-client JSON rejection and accepted JSON-owned writes](../../api/tests/controllers/funding-submission-line-jsons-controller.test.ts)
 - [Historical initialization](../../api/tests/services/centres/funding-periods/is-initialized-service.test.ts)

@@ -1,13 +1,14 @@
 import db, {
   BuildingExpense,
-  Centre,
+  AdministrationCost,
+  type Centre,
   ChildCareSpace,
   EmployeeBenefit,
   FundingReconciliation,
   FundingSubmissionLineJson,
   Log,
   Payment,
-  User,
+  type User,
   WageEnhancement,
 } from "@/models"
 import BaseService from "@/services/base-service"
@@ -23,9 +24,8 @@ export class DestroyService extends BaseService {
   }
 
   async perform(): Promise<void> {
-    const { id: centreId } = this.centre
     await db.transaction(async () => {
-      await this.destroyDependentEntities(centreId)
+      await this.destroyDependentEntities(this.centre.id, this.currentUser)
 
       await this.centre.destroy()
 
@@ -33,20 +33,21 @@ export class DestroyService extends BaseService {
     })
   }
 
-  private async destroyDependentEntities(centreId: number) {
-    await this.destroyDependentBuildingExpenses()
+  private async destroyDependentEntities(centreId: number, currentUser: User) {
+    await this.destroyDependentBuildingExpenses(centreId)
     await this.destroyDependentChildCareSpaces(centreId)
-    await this.destroyDependentEmployeeBenefits()
-    await this.destroyDependentFundingSubmissionLineJsons()
-    await this.destroyDependentPayments()
-    await this.destroyDependentWageEnhancements()
-    await this.destroyDependentFundingReconciliations()
+    await this.destroyDependentAdministrationCosts(centreId)
+    await this.destroyDependentEmployeeBenefits(centreId)
+    await this.destroyDependentFundingSubmissionLineJsons(centreId)
+    await this.destroyDependentPayments(centreId)
+    await this.destroyDependentWageEnhancements(centreId)
+    await this.destroyDependentFundingReconciliations(centreId, currentUser)
   }
 
-  private async destroyDependentBuildingExpenses() {
+  private async destroyDependentBuildingExpenses(centreId: number) {
     await BuildingExpense.destroy({
       where: {
-        centreId: this.centre.id,
+        centreId,
       },
     })
   }
@@ -59,47 +60,53 @@ export class DestroyService extends BaseService {
     })
   }
 
-  private async destroyDependentEmployeeBenefits() {
+  private async destroyDependentAdministrationCosts(centreId: number) {
+    await AdministrationCost.destroy({
+      where: { centreId },
+    })
+  }
+
+  private async destroyDependentEmployeeBenefits(centreId: number) {
     await EmployeeBenefit.destroy({
       where: {
-        centreId: this.centre.id,
+        centreId,
       },
     })
   }
 
-  private async destroyDependentFundingSubmissionLineJsons() {
+  private async destroyDependentFundingSubmissionLineJsons(centreId: number) {
     await FundingSubmissionLineJson.destroy({
       where: {
-        centreId: this.centre.id,
+        centreId,
       },
     })
   }
 
-  private async destroyDependentPayments() {
+  private async destroyDependentPayments(centreId: number) {
     await Payment.destroy({
       where: {
-        centreId: this.centre.id,
+        centreId,
       },
     })
   }
 
-  private async destroyDependentWageEnhancements() {
+  private async destroyDependentWageEnhancements(centreId: number) {
     await WageEnhancement.destroy({
       where: {
-        centreId: this.centre.id,
+        centreId,
       },
     })
   }
 
-  private async destroyDependentFundingReconciliations() {
+  private async destroyDependentFundingReconciliations(centreId: number, currentUser: User) {
     await FundingReconciliation.findEach(
       {
         where: {
-          centreId: this.centre.id,
+          centreId,
         },
       },
       async (fundingReconciliation) => {
-        await FundingReconciliations.DestroyService.perform(fundingReconciliation, this.currentUser)
+        await FundingReconciliations.DestroyService.perform(fundingReconciliation, currentUser)
       }
     )
   }

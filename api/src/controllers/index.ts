@@ -1,3 +1,5 @@
+export { AdministrationCostCategoriesController } from "./administration-cost-categories-controller"
+export { AdministrationCostsController } from "./administration-costs-controller"
 export { BuildingExpenseCategoriesController } from "./building-expense-categories-controller"
 export { BuildingExpensesController } from "./building-expenses-controller"
 export { CentresController } from "./centres-controller"
@@ -18,6 +20,7 @@ export { UsersController } from "./users-controller"
 export { WageEnhancementsController } from "./wage-enhancements-controller"
 
 // bundled exports
+export * as AdministrationCosts from "./administration-costs"
 export * as Centres from "./centres"
 export * as ChildCareSpaces from "./child-care-spaces"
 export * as FundingReconciliations from "./funding-reconciliations"

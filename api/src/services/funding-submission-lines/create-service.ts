@@ -1,4 +1,4 @@
-import { CreationAttributes, Op } from "@sequelize/core"
+import { Op, type CreationAttributes } from "@sequelize/core"
 import { isNil } from "lodash"
 
 import { ChildCareSpaceCategory, FundingPeriod, FundingSubmissionLine } from "@/models"
@@ -46,7 +46,7 @@ export class CreateService extends BaseService {
   }
 
   private async findCategoryId(fiscalYear: string, sectionName: string, lineName: string) {
-    if (!this.isChildCareSpaceSection(sectionName)) {
+    if (sectionName !== FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM) {
       return null
     }
 
@@ -72,13 +72,6 @@ export class CreateService extends BaseService {
     }
 
     return exactMatches[0]?.id ?? null
-  }
-
-  private isChildCareSpaceSection(sectionName: string) {
-    return (
-      sectionName === "Administration (10% of Spaces)" ||
-      sectionName === FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM
-    )
   }
 }
 

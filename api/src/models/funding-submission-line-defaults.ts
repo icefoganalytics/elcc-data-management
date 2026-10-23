@@ -1,4 +1,4 @@
-import FundingSubmissionLine from "@/models/funding-submission-line"
+import type FundingSubmissionLine from "@/models/funding-submission-line"
 
 export enum FundingSubmissionLineImmutableSectionNames {
   QUALITY_ENHANCEMENT_PROGRAM = "Quality Enhancement Program",
@@ -13,55 +13,6 @@ export type FundingSubmissionLineDefault = Pick<
   "sectionName" | "lineName" | "fromAge" | "toAge" | "monthlyAmount"
 >
 export const FUNDING_SUBMISSION_LINE_DEFAULTS = Object.freeze<FundingSubmissionLineDefault[]>([
-  {
-    sectionName: "Administration (10% of Spaces)",
-    lineName: "Infants",
-    fromAge: 0,
-    toAge: 1,
-    monthlyAmount: "70.0",
-  },
-  {
-    sectionName: "Administration (10% of Spaces)",
-    lineName: "Toddlers",
-    fromAge: 2,
-    toAge: 3,
-    monthlyAmount: "70.0",
-  },
-  {
-    sectionName: "Administration (10% of Spaces)",
-    lineName: "Preschool",
-    fromAge: 4,
-    toAge: 5,
-    monthlyAmount: "70.0",
-  },
-  {
-    sectionName: "Administration (10% of Spaces)",
-    lineName: "Kindergarten (PT)",
-    fromAge: 5,
-    toAge: 6,
-    monthlyAmount: "35.0",
-  },
-  {
-    sectionName: "Administration (10% of Spaces)",
-    lineName: "Kindergarten (FT)",
-    fromAge: 5,
-    toAge: 6,
-    monthlyAmount: "70.0",
-  },
-  {
-    sectionName: "Administration (10% of Spaces)",
-    lineName: "School Age (PT)",
-    fromAge: 5,
-    toAge: 6,
-    monthlyAmount: "30.0",
-  },
-  {
-    sectionName: "Administration (10% of Spaces)",
-    lineName: "School Age (FT)",
-    fromAge: 5,
-    toAge: 6,
-    monthlyAmount: "50.0",
-  },
   {
     sectionName: FundingSubmissionLineImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM,
     lineName: "Infants",

@@ -14,6 +14,9 @@ import { centreRouter, fundingPeriodRouter, submissionLineRouter } from "@/route
 
 import {
   BuildingExpenseCategoriesController,
+  AdministrationCostCategoriesController,
+  AdministrationCosts,
+  AdministrationCostsController,
   BuildingExpensesController,
   Centres,
   CentresController,
@@ -114,6 +117,16 @@ router
   .delete(ChildCareSpaceCategoriesController.destroy)
 
 router
+  .route("/api/administration-cost-categories")
+  .get(AdministrationCostCategoriesController.index)
+  .post(AdministrationCostCategoriesController.create)
+router
+  .route("/api/administration-cost-categories/:administrationCostCategoryId")
+  .get(AdministrationCostCategoriesController.show)
+  .patch(AdministrationCostCategoriesController.update)
+  .delete(AdministrationCostCategoriesController.destroy)
+
+router
   .route("/api/building-expenses")
   .get(BuildingExpensesController.index)
   .post(BuildingExpensesController.create)
@@ -131,6 +144,15 @@ router
 router
   .route("/api/child-care-spaces/:childCareSpaceId/replicate-estimates")
   .post(ChildCareSpaces.ReplicateEstimatesController.create)
+
+router.route("/api/administration-costs").get(AdministrationCostsController.index)
+router
+  .route("/api/administration-costs/:administrationCostId")
+  .get(AdministrationCostsController.show)
+  .patch(AdministrationCostsController.update)
+router
+  .route("/api/administration-costs/:administrationCostId/replicate-estimates")
+  .post(AdministrationCosts.ReplicateEstimatesController.create)
 
 router
   .route("/api/funding-reconciliations")

@@ -1,13 +1,9 @@
-import { CreationAttributes, Op } from "@sequelize/core"
+import { Op, type CreationAttributes } from "@sequelize/core"
 import { isUndefined, merge, omit } from "lodash"
 
 import { ChildCareSpaceCategory, FundingPeriod, FundingSubmissionLine } from "@/models"
 import doesNotUseChildCareSpacesSection from "@/models/validators/does-not-use-child-care-spaces-section"
-
-const LINKED_SECTIONS = [
-  "Administration (10% of Spaces)",
-  FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM,
-]
+import doesNotUseAdministrationSection from "@/models/validators/does-not-use-administration-section"
 
 export class FundingSubmissionLineServices {
   static async bulkCreateFrom(
@@ -22,6 +18,7 @@ export class FundingSubmissionLineServices {
       const creationAttributes = omit(originalAttributes, ["id"])
       const lineAttributes = merge(creationAttributes, attributes)
       doesNotUseChildCareSpacesSection(lineAttributes.sectionName ?? line.sectionName)
+      doesNotUseAdministrationSection(lineAttributes.sectionName ?? line.sectionName)
       return lineAttributes
     })
 
@@ -80,7 +77,10 @@ export class FundingSubmissionLineServices {
         sourceLine.childCareSpaceCategoryId === null
           ? (attributes.lineName ?? sourceLine.lineName)
           : sourceCategoryNamesById.get(sourceLine.childCareSpaceCategoryId)
-      if (!LINKED_SECTIONS.includes(sectionName) || isUndefined(categoryName)) {
+      if (
+        sectionName !== FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM ||
+        isUndefined(categoryName)
+      ) {
         return { ...attributes, childCareSpaceCategoryId: null }
       }
 

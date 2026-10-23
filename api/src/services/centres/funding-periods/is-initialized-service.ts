@@ -1,4 +1,5 @@
 import {
+  AdministrationCost,
   BuildingExpense,
   Centre,
   EmployeeBenefit,
@@ -13,6 +14,7 @@ export type InitializationStatus = {
   hasBuildingExpenses: boolean
   hasFundingSubmissionLineJsons: boolean
   hasFundingReconciliation: boolean
+  hasAdministrationCosts: boolean
   isInitialized: boolean
 }
 
@@ -37,6 +39,7 @@ export class IsInitializedService extends BaseService {
       centreId,
       fundingPeriodId
     )
+    const hasAdministrationCosts = await this.checkAdministrationCosts(centreId, fundingPeriodId)
 
     const isInitialized =
       hasEmployeeBenefits &&
@@ -49,6 +52,7 @@ export class IsInitializedService extends BaseService {
       hasBuildingExpenses,
       hasFundingSubmissionLineJsons,
       hasFundingReconciliation,
+      hasAdministrationCosts,
       isInitialized,
     }
   }
@@ -98,6 +102,18 @@ export class IsInitializedService extends BaseService {
         centreId,
         fundingPeriodId,
       },
+    })
+    return count > 0
+  }
+
+  private async checkAdministrationCosts(
+    centreId: number,
+    fundingPeriodId: number
+  ): Promise<boolean> {
+    const count = await AdministrationCost.withScope({
+      method: ["byFundingPeriod", fundingPeriodId],
+    }).count({
+      where: { centreId },
     })
     return count > 0
   }

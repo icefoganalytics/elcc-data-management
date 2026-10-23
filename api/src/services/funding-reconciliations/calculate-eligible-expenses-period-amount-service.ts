@@ -19,10 +19,11 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
       this.centreId,
       this.fiscalPeriodId
     )
+    const administrationCostsTotalAmount = await this.calculateAdministrationCosts()
     const buildingExpensesTotalAmount = await this.calculateBuildingExpenses()
-
     const totalEligibleExpenses = Big(fundingSubmissionExpensesAmount)
       .plus(childCareSpacesTotalAmount)
+      .plus(administrationCostsTotalAmount)
       .plus(buildingExpensesTotalAmount)
 
     return totalEligibleExpenses.toFixed(4)
@@ -109,6 +110,36 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
     const { childCareSpacesTotalAmount } = childCareSpacesResult
 
     return Big(childCareSpacesTotalAmount).toFixed(4)
+  }
+
+  private async calculateAdministrationCosts(): Promise<string> {
+    const [administrationCostsResult] = await db.query<{
+      administrationCostsTotalAmount: string
+    }>(
+      /* sql */ `
+        SELECT
+          CONVERT(
+            VARCHAR(50),
+            COALESCE(SUM(actual_computed_total), 0)
+          ) AS administrationCostsTotalAmount
+        FROM
+          administration_costs
+        WHERE
+          centre_id = :centreId
+          AND fiscal_period_id = :fiscalPeriodId
+          AND deleted_at IS NULL
+      `,
+      {
+        type: QueryTypes.SELECT,
+        replacements: {
+          centreId: this.centreId,
+          fiscalPeriodId: this.fiscalPeriodId,
+        },
+      }
+    )
+    const { administrationCostsTotalAmount } = administrationCostsResult
+
+    return Big(administrationCostsTotalAmount).toFixed(4)
   }
 
   private async calculateBuildingExpenses(): Promise<string> {
