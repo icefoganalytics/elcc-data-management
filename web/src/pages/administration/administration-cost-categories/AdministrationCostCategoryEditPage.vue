@@ -1,113 +1,115 @@
 <template>
-  <v-skeleton-loader
-    v-if="isLoading && isNil(administrationCostCategory)"
-    type="card"
-  />
-  <v-alert
-    v-else-if="isErrored && isNil(administrationCostCategory)"
-    type="error"
-    variant="tonal"
-  >
-    Administration cost category could not be loaded.
-    <v-btn
-      variant="outlined"
-      @click="fetch"
-      >Retry</v-btn
-    >
-  </v-alert>
-  <v-alert
-    v-else-if="administrationCostCategory && !policy?.update"
-    type="warning"
-    variant="tonal"
-  >
-    You do not have permission to edit this Administration cost category.
-  </v-alert>
-  <HeaderActionsFormCard
-    v-else-if="administrationCostCategory"
-    ref="form"
-    title="Edit Administration Cost Category"
-    @submit.prevent="saveCategory"
-  >
-    <v-text-field
-      :model-value="fundingPeriodDescription"
-      label="Funding Period"
-      readonly
-    />
-    <v-text-field
-      v-model="categoryName"
-      label="Category Name *"
-      :rules="[required]"
-    />
-    <v-row>
-      <v-col
-        cols="12"
-        md="6"
-      >
-        <v-text-field
-          v-model="fromAge"
-          label="From Age"
-          type="number"
-          min="0"
-          step="1"
-        />
-      </v-col>
-      <v-col
-        cols="12"
-        md="6"
-      >
-        <v-text-field
-          v-model="toAge"
-          label="To Age"
-          type="number"
-          min="0"
-          step="1"
-        />
-      </v-col>
-    </v-row>
-    <CurrencyInput
-      v-model="monthlyAmount"
-      label="Monthly Amount *"
-      :options="monthlyAmountOptions"
-      :rules="[required]"
+  <div>
+    <v-skeleton-loader
+      v-if="isLoading && isNil(administrationCostCategory)"
+      type="card"
     />
     <v-alert
-      v-if="isSpaceCategoriesErrored"
+      v-else-if="isErrored && isNil(administrationCostCategory)"
       type="error"
       variant="tonal"
-      class="mb-4"
     >
-      Linked Child Care Space categories could not be loaded. Reload the page to try again.
-    </v-alert>
-    <v-select
-      v-model="childCareSpaceCategoryId"
-      :items="childCareSpaceCategories"
-      item-title="categoryName"
-      item-value="id"
-      label="Linked Child Care Space Category"
-      :loading="isLoadingSpaceCategories"
-      :disabled="isLoadingSpaceCategories || isSpaceCategoriesErrored"
-      clearable
-    />
-    <template #actions>
+      Administration cost category could not be loaded.
       <v-btn
-        type="submit"
-        color="primary"
-        :loading="isSaving"
-        >Save Changes</v-btn
-      >
-      <v-spacer />
-      <v-btn
-        color="warning"
         variant="outlined"
-        :to="{
-          name: 'administration/administration-cost-categories/AdministrationCostCategoryPage',
-          params: { administrationCostCategoryId },
-        }"
+        @click="fetch"
+        >Retry</v-btn
       >
-        Cancel
-      </v-btn>
-    </template>
-  </HeaderActionsFormCard>
+    </v-alert>
+    <v-alert
+      v-else-if="administrationCostCategory && !policy?.update"
+      type="warning"
+      variant="tonal"
+    >
+      You do not have permission to edit this Administration cost category.
+    </v-alert>
+    <HeaderActionsFormCard
+      v-else-if="administrationCostCategory"
+      ref="form"
+      title="Edit Administration Cost Category"
+      @submit.prevent="saveCategory"
+    >
+      <v-text-field
+        :model-value="fundingPeriodDescription"
+        label="Funding Period"
+        readonly
+      />
+      <v-text-field
+        v-model="categoryName"
+        label="Category Name *"
+        :rules="[required]"
+      />
+      <v-row>
+        <v-col
+          cols="12"
+          md="6"
+        >
+          <v-text-field
+            v-model="fromAge"
+            label="From Age"
+            type="number"
+            min="0"
+            step="1"
+          />
+        </v-col>
+        <v-col
+          cols="12"
+          md="6"
+        >
+          <v-text-field
+            v-model="toAge"
+            label="To Age"
+            type="number"
+            min="0"
+            step="1"
+          />
+        </v-col>
+      </v-row>
+      <CurrencyInput
+        v-model="monthlyAmount"
+        label="Monthly Amount *"
+        :options="monthlyAmountOptions"
+        :rules="[required]"
+      />
+      <v-alert
+        v-if="isSpaceCategoriesErrored"
+        type="error"
+        variant="tonal"
+        class="mb-4"
+      >
+        Linked Child Care Space categories could not be loaded. Reload the page to try again.
+      </v-alert>
+      <v-select
+        v-model="childCareSpaceCategoryId"
+        :items="availableChildCareSpaceCategories"
+        item-title="categoryName"
+        item-value="id"
+        label="Linked Child Care Space Category"
+        :loading="isLoadingSpaceCategories"
+        :disabled="isSpaceCategoriesErrored"
+        clearable
+      />
+      <template #actions>
+        <v-btn
+          type="submit"
+          color="primary"
+          :loading="isSaving"
+          >Save Changes</v-btn
+        >
+        <v-spacer />
+        <v-btn
+          color="warning"
+          variant="outlined"
+          :to="{
+            name: 'administration/administration-cost-categories/AdministrationCostCategoryPage',
+            params: { administrationCostCategoryId },
+          }"
+        >
+          Cancel
+        </v-btn>
+      </template>
+    </HeaderActionsFormCard>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -146,6 +148,11 @@ const {
 } = useChildCareSpaceCategories(spaceCategoriesQuery, {
   skipWatchIf: () => isNil(fundingPeriodId.value),
 })
+const availableChildCareSpaceCategories = computed(() =>
+  childCareSpaceCategories.value.filter(
+    (category) => category.fundingPeriodId === fundingPeriodId.value
+  )
+)
 const form = ref<InstanceType<typeof HeaderActionsFormCard> | null>(null)
 const categoryName = ref("")
 const fromAge = ref<string | number | null>(null)
