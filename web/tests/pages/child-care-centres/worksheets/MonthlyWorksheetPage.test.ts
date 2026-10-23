@@ -2,9 +2,18 @@ import { createPinia } from "pinia"
 import { flushPromises, mount } from "@vue/test-utils"
 
 import httpClient from "@/api/http-client"
+import { type FiscalPeriod } from "@/api/fiscal-periods-api"
+import { type FundingSubmissionLineJsonAsIndex } from "@/api/funding-submission-line-jsons-api"
 import MonthlyWorksheetPage from "@/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue"
-import { mockRouter, mockVuetify } from "@/tests/support"
 import { FiscalPeriodMonths } from "@/use/use-fiscal-periods"
+
+import {
+  administrationCostFactory,
+  childCareSpaceFactory,
+  fiscalPeriodFactory,
+  fundingSubmissionLineJsonFactory,
+} from "@/tests/factories"
+import { mockRouter, mockVuetify } from "@/tests/support"
 
 describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue", () => {
   describe("MonthlyWorksheetPage", () => {
@@ -12,54 +21,44 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
       test("when an older month request finishes last, saves only the selected month's worksheet", async () => {
         // Arrange
         const aprilWorksheetList = Promise.withResolvers<{
-          data: { fundingSubmissionLineJsons: object[]; totalCount: number }
+          data: {
+            fundingSubmissionLineJsons: FundingSubmissionLineJsonAsIndex[]
+            totalCount: number
+          }
         }>()
         const aprilFiscalPeriodList = Promise.withResolvers<{
-          data: { fiscalPeriods: object[]; totalCount: number }
+          data: { fiscalPeriods: FiscalPeriod[]; totalCount: number }
         }>()
         const mayWorksheetList = Promise.withResolvers<{
-          data: { fundingSubmissionLineJsons: object[]; totalCount: number }
+          data: {
+            fundingSubmissionLineJsons: FundingSubmissionLineJsonAsIndex[]
+            totalCount: number
+          }
         }>()
         const mayFiscalPeriodList = Promise.withResolvers<{
-          data: { fiscalPeriods: object[]; totalCount: number }
+          data: { fiscalPeriods: FiscalPeriod[]; totalCount: number }
         }>()
-        const fundingSubmissionLineJson = {
+        const fundingSubmissionLineJson = fundingSubmissionLineJsonFactory.build({
           id: 55,
           centreId: 1,
-          fiscalYear: "2024/25",
           dateName: "May",
           dateStart: "2024-05-01",
           dateEnd: "2024-05-31",
-          values: "[]",
-          lines: [],
-          createdAt: "2024-05-01",
-          updatedAt: "2024-05-01",
-        }
-        const childCareSpace = {
+        })
+        const childCareSpace = childCareSpaceFactory.build({
           id: 50,
           centreId: 1,
           fiscalPeriodId: 5,
           categoryId: 9,
           lineName: "May Infant Cohort",
-          monthlyAmount: "100.0000",
-          estimatedChildOccupancyRate: "0.0000",
-          actualChildOccupancyRate: "0.0000",
-          estimatedComputedTotal: "0.0000",
-          actualComputedTotal: "0.0000",
-        }
-        const administrationCost = {
+        })
+        const administrationCost = administrationCostFactory.build({
           id: 60,
           centreId: 1,
           fiscalPeriodId: 5,
           categoryId: 15,
-          childCareSpaceCategoryId: 9,
           lineName: "Administration Infant Cohort",
-          monthlyAmount: "10.0000",
-          estimatedChildOccupancyRate: "0.0000",
-          actualChildOccupancyRate: "0.0000",
-          estimatedComputedTotal: "0.0000",
-          actualComputedTotal: "0.0000",
-        }
+        })
         const httpClientMock = vi.mocked(httpClient, true)
         httpClientMock.get.mockImplementation(async (url, config) => {
           if (url === "/api/funding-submission-line-jsons") {
@@ -132,16 +131,13 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         mayFiscalPeriodList.resolve({
           data: {
             fiscalPeriods: [
-              {
+              fiscalPeriodFactory.build({
                 id: 5,
                 fundingPeriodId: 1,
-                fiscalYear: "2024-25",
                 month: FiscalPeriodMonths.MAY,
                 dateStart: "2024-05-01",
                 dateEnd: "2024-05-31",
-                createdAt: "2024-01-01",
-                updatedAt: "2024-01-01",
-              },
+              }),
             ],
             totalCount: 1,
           },
@@ -158,16 +154,11 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         aprilFiscalPeriodList.resolve({
           data: {
             fiscalPeriods: [
-              {
+              fiscalPeriodFactory.build({
                 id: 4,
                 fundingPeriodId: 1,
-                fiscalYear: "2024-25",
                 month: FiscalPeriodMonths.APRIL,
-                dateStart: "2024-04-01",
-                dateEnd: "2024-04-30",
-                createdAt: "2024-01-01",
-                updatedAt: "2024-01-01",
-              },
+              }),
             ],
             totalCount: 1,
           },
@@ -185,39 +176,31 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           "/api/administration-costs/60",
           "/api/funding-submission-line-jsons/55",
         ])
-        wrapper.unmount()
       })
 
       test("when the fiscal period is pending after replication, withholds worksheet editing", async () => {
         // Arrange
         const mayFiscalPeriodList = Promise.withResolvers<{
-          data: { fiscalPeriods: object[]; totalCount: number }
+          data: { fiscalPeriods: FiscalPeriod[]; totalCount: number }
         }>()
-        const aprilWorksheet = {
+        const aprilWorksheet = fundingSubmissionLineJsonFactory.build({
           id: 44,
           centreId: 1,
-          fiscalYear: "2024/25",
           dateName: "April",
-          dateStart: "2024-04-01",
-          dateEnd: "2024-04-30",
-          lines: [],
-        }
-        const mayWorksheet = {
-          ...aprilWorksheet,
+        })
+        const mayWorksheet = fundingSubmissionLineJsonFactory.build({
           id: 55,
+          centreId: 1,
           dateName: "May",
           dateStart: "2024-05-01",
           dateEnd: "2024-05-31",
-        }
-        const aprilFiscalPeriod = {
+        })
+        const aprilFiscalPeriod = fiscalPeriodFactory.build({
           id: 4,
           fundingPeriodId: 1,
-          fiscalYear: "2024-25",
           month: FiscalPeriodMonths.APRIL,
-          dateStart: "2024-04-01",
-          dateEnd: "2024-04-30",
-        }
-        const administrationCost = {
+        })
+        const administrationCost = administrationCostFactory.build({
           id: 70,
           centreId: 1,
           fiscalPeriodId: 4,
@@ -225,11 +208,14 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           childCareSpaceCategoryId: 9,
           lineName: "Administration Infant Cohort",
           monthlyAmount: "10.0000",
-          estimatedChildOccupancyRate: "0.0000",
-          actualChildOccupancyRate: "0.0000",
-          estimatedComputedTotal: "0.0000",
-          actualComputedTotal: "0.0000",
-        }
+        })
+        const childCareSpace = childCareSpaceFactory.build({
+          id: 40,
+          centreId: 1,
+          fiscalPeriodId: 4,
+          categoryId: 9,
+          lineName: "April Infant Cohort",
+        })
         vi.mocked(httpClient, true).get.mockImplementation(async (url, config) => {
           if (url === "/api/fiscal-periods" && config?.params?.where?.month === "may") {
             return mayFiscalPeriodList.promise
@@ -249,23 +235,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             return { data: { administrationCosts: [administrationCost], totalCount: 1 } }
           }
           if (url === "/api/child-care-spaces") {
-            return {
-              data: {
-                childCareSpaces: [
-                  {
-                    id: 40,
-                    categoryId: 9,
-                    lineName: "April Infant Cohort",
-                    monthlyAmount: "100.0000",
-                    estimatedChildOccupancyRate: "0.0000",
-                    actualChildOccupancyRate: "0.0000",
-                    estimatedComputedTotal: "0.0000",
-                    actualComputedTotal: "0.0000",
-                  },
-                ],
-                totalCount: 1,
-              },
-            }
+            return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
           }
 
           return { data: { fundingSubmissionLineJson: aprilWorksheet } }
@@ -302,27 +272,16 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         await flushPromises()
 
         // Assert
-        expect(wrapper.findAll("tbody input")).toEqual([])
-        mayFiscalPeriodList.resolve({
-          data: {
-            fiscalPeriods: [{ ...aprilFiscalPeriod, id: 5, month: FiscalPeriodMonths.MAY }],
-            totalCount: 1,
-          },
-        })
-        await flushPromises()
-        wrapper.unmount()
+        expect(wrapper.findAll("tbody input")).toHaveLength(0)
       })
+
       test("when Administration costs fail to load, withholds worksheet editing", async () => {
         // Arrange
-        const worksheet = {
+        const worksheet = fundingSubmissionLineJsonFactory.build({
           id: 44,
           centreId: 1,
-          fiscalYear: "2024/25",
           dateName: "April",
-          dateStart: "2024-04-01",
-          dateEnd: "2024-04-30",
-          lines: [],
-        }
+        })
         vi.mocked(httpClient, true).get.mockImplementation(async (url) => {
           if (url === "/api/funding-submission-line-jsons") {
             return { data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 } }
@@ -371,8 +330,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         await flushPromises()
 
         // Assert
-        expect(wrapper.findAll("tbody input")).toEqual([])
-        wrapper.unmount()
+        expect(wrapper.findAll("tbody input")).toHaveLength(0)
       })
     })
   })

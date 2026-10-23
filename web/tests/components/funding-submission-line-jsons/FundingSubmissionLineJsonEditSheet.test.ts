@@ -3,66 +3,52 @@ import { flushPromises, mount } from "@vue/test-utils"
 
 import httpClient from "@/api/http-client"
 import FundingSubmissionLineJsonEditSheet from "@/components/funding-submission-line-jsons/FundingSubmissionLineJsonEditSheet.vue"
+import {
+  administrationCostFactory,
+  childCareSpaceFactory,
+  fundingSubmissionLineJsonFactory,
+} from "@/tests/factories"
 import { mockRouter, mockVuetify } from "@/tests/support"
-
-function buildWorksheetRecords() {
-  const fundingSubmissionLineJson = {
-    id: 11,
-    centreId: 1,
-    fiscalYear: "2024/25",
-    dateName: "April",
-    dateStart: "2024-04-01",
-    dateEnd: "2024-04-30",
-    lines: [
-      {
-        submissionLineId: 3,
-        childCareSpaceCategoryId: 9,
-        sectionName: "Quality Enhancement Program",
-        lineName: "Infants",
-        monthlyAmount: "20.0000",
-        estimatedChildOccupancyRate: "0.0000",
-        actualChildOccupancyRate: "0.0000",
-        estimatedComputedTotal: "0.0000",
-        actualComputedTotal: "0.0000",
-      },
-    ],
-  }
-  const childCareSpace = {
-    id: 1,
-    centreId: 1,
-    fiscalPeriodId: 1,
-    categoryId: 9,
-    lineName: "Renamed Infant Cohort",
-    monthlyAmount: "100.0000",
-    estimatedChildOccupancyRate: "0.0000",
-    actualChildOccupancyRate: "0.0000",
-    estimatedComputedTotal: "0.0000",
-    actualComputedTotal: "0.0000",
-  }
-  const administrationCost = {
-    id: 2,
-    centreId: 1,
-    fiscalPeriodId: 1,
-    categoryId: 2,
-    childCareSpaceCategoryId: 9,
-    lineName: "Infants",
-    monthlyAmount: "10.0000",
-    estimatedChildOccupancyRate: "0.0000",
-    actualChildOccupancyRate: "0.0000",
-    estimatedComputedTotal: "0.0000",
-    actualComputedTotal: "0.0000",
-  }
-
-  return { fundingSubmissionLineJson, childCareSpace, administrationCost }
-}
 
 describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLineJsonEditSheet.vue", () => {
   describe("FundingSubmissionLineJsonEditSheet", () => {
     describe("worksheet editing", () => {
       test("when a renamed category's occupancy changes, renders the ledger and linked section totals", async () => {
         // Arrange
-        const { fundingSubmissionLineJson, childCareSpace, administrationCost } =
-          buildWorksheetRecords()
+        const fundingSubmissionLineJson = fundingSubmissionLineJsonFactory.build({
+          id: 11,
+          centreId: 1,
+          lines: [
+            {
+              submissionLineId: 3,
+              childCareSpaceCategoryId: 9,
+              sectionName: "Quality Enhancement Program",
+              lineName: "Infants",
+              monthlyAmount: "20.0000",
+              estimatedChildOccupancyRate: "0.0000",
+              actualChildOccupancyRate: "0.0000",
+              estimatedComputedTotal: "0.0000",
+              actualComputedTotal: "0.0000",
+            },
+          ],
+        })
+        const childCareSpace = childCareSpaceFactory.build({
+          id: 1,
+          centreId: 1,
+          fiscalPeriodId: 1,
+          categoryId: 9,
+          lineName: "Renamed Infant Cohort",
+          monthlyAmount: "100.0000",
+        })
+        const administrationCost = administrationCostFactory.build({
+          id: 2,
+          centreId: 1,
+          fiscalPeriodId: 1,
+          categoryId: 2,
+          childCareSpaceCategoryId: 9,
+          lineName: "Infants",
+          monthlyAmount: "10.0000",
+        })
         vi.mocked(httpClient, true).get.mockImplementation(async (url) => {
           if (url === "/api/child-care-spaces") {
             return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
@@ -92,7 +78,8 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
 
         // Assert
         const renderedTotals = wrapper.findAll("tfoot td:nth-child(4), tfoot td:nth-child(6)")
-        expect(renderedTotals.map((cell) => cell.text())).toEqual([
+        const renderedTotalTexts = renderedTotals.map((cell) => cell.text())
+        expect(renderedTotalTexts).toEqual([
           "$50.00",
           "$25.00",
           "$5.00",
@@ -100,13 +87,16 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           "$10.00",
           "$5.00",
         ])
-        wrapper.unmount()
       })
 
       test("when a ledger save is pending, keeps every occupancy input read only", async () => {
         // Arrange
-        const { fundingSubmissionLineJson, childCareSpace, administrationCost } =
-          buildWorksheetRecords()
+        const fundingSubmissionLineJson = fundingSubmissionLineJsonFactory.build({
+          id: 11,
+          centreId: 1,
+        })
+        const childCareSpace = childCareSpaceFactory.build({ id: 1 })
+        const administrationCost = administrationCostFactory.build()
         const ledgerUpdate = Promise.withResolvers<{
           data: { childCareSpace: typeof childCareSpace }
         }>()
@@ -147,22 +137,18 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
 
         // Assert
         const lockedInputs = wrapper.findAll<HTMLInputElement>("tbody input[readonly]")
-        expect(lockedInputs.map((input) => input.element.value)).toEqual([
-          "0.5",
-          "0.0000",
-          "0.5",
-          "0.0000",
-          "0.5",
-          "0.0000",
-        ])
-        ledgerUpdate.resolve({ data: { childCareSpace } })
-        await flushPromises()
-        wrapper.unmount()
+        const lockedInputValues = lockedInputs.map((input) => input.element.value)
+        expect(lockedInputValues).toEqual(["0.5", "0.0000", "0.5", "0.0000", "0.5", "0.0000"])
       })
+
       test("when one ledger update fails and another is pending, waits before unlocking", async () => {
         // Arrange
-        const { fundingSubmissionLineJson, childCareSpace, administrationCost } =
-          buildWorksheetRecords()
+        const fundingSubmissionLineJson = fundingSubmissionLineJsonFactory.build({
+          id: 11,
+          centreId: 1,
+        })
+        const childCareSpace = childCareSpaceFactory.build({ id: 1 })
+        const administrationCost = administrationCostFactory.build()
         const secondChildCareSpace = {
           ...childCareSpace,
           id: 2,
@@ -225,15 +211,16 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
 
         // Assert
         expect(wrapper.findAll("tbody input[readonly]")).toHaveLength(8)
-        pendingLedgerUpdate.resolve({ data: { childCareSpace: secondChildCareSpace } })
-        await flushPromises()
-        wrapper.unmount()
       })
 
       test("when estimate replication is pending, keeps every occupancy input read only", async () => {
         // Arrange
-        const { fundingSubmissionLineJson, childCareSpace, administrationCost } =
-          buildWorksheetRecords()
+        const fundingSubmissionLineJson = fundingSubmissionLineJsonFactory.build({
+          id: 11,
+          centreId: 1,
+        })
+        const childCareSpace = childCareSpaceFactory.build({ id: 1 })
+        const administrationCost = administrationCostFactory.build()
         const replication = Promise.withResolvers<{ data: undefined }>()
         const replicationStarted = Promise.withResolvers<void>()
         const httpClientMock = vi.mocked(httpClient, true)
@@ -277,7 +264,8 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
 
         // Assert
         const lockedInputs = wrapper.findAll<HTMLInputElement>("tbody input[readonly]")
-        expect(lockedInputs.map((input) => input.element.value)).toEqual([
+        const lockedInputValues = lockedInputs.map((input) => input.element.value)
+        expect(lockedInputValues).toEqual([
           "0.0000",
           "0.0000",
           "0.0000",
@@ -285,14 +273,16 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           "0.0000",
           "0.0000",
         ])
-        replication.resolve({ data: undefined })
-        await flushPromises()
-        wrapper.unmount()
       })
+
       test("when estimate replication fails while a sibling is pending, keeps inputs read only", async () => {
         // Arrange
-        const { fundingSubmissionLineJson, childCareSpace, administrationCost } =
-          buildWorksheetRecords()
+        const fundingSubmissionLineJson = fundingSubmissionLineJsonFactory.build({
+          id: 11,
+          centreId: 1,
+        })
+        const childCareSpace = childCareSpaceFactory.build({ id: 1 })
+        const administrationCost = administrationCostFactory.build()
         const childSpaceReplication = Promise.withResolvers<{ data: undefined }>()
         const childSpaceReplicationStarted = Promise.withResolvers<void>()
         const httpClientMock = vi.mocked(httpClient, true)
@@ -343,9 +333,6 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
 
         // Assert
         expect(wrapper.findAll("tbody input[readonly]")).toHaveLength(6)
-        childSpaceReplication.resolve({ data: undefined })
-        await flushPromises()
-        wrapper.unmount()
       })
 
       test.each([
@@ -354,8 +341,12 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         "/api/funding-submission-line-jsons/11",
       ])("when %s fails to load, withholds all occupancy inputs", async (failedUrl) => {
         // Arrange
-        const { fundingSubmissionLineJson, childCareSpace, administrationCost } =
-          buildWorksheetRecords()
+        const fundingSubmissionLineJson = fundingSubmissionLineJsonFactory.build({
+          id: 11,
+          centreId: 1,
+        })
+        const childCareSpace = childCareSpaceFactory.build({ id: 1 })
+        const administrationCost = administrationCostFactory.build()
         vi.mocked(httpClient, true).get.mockImplementation(async (url) => {
           if (url === failedUrl) throw new Error("Worksheet source unavailable")
 
@@ -381,8 +372,7 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         await flushPromises()
 
         // Assert
-        expect(wrapper.findAll("tbody input")).toEqual([])
-        wrapper.unmount()
+        expect(wrapper.findAll("tbody input")).toHaveLength(0)
       })
 
       test.each([
@@ -393,8 +383,12 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         "when %s recovers and the worksheet is reloaded, restores the ledger and linked rows",
         async (failedUrl) => {
           // Arrange
-          const { fundingSubmissionLineJson, childCareSpace, administrationCost } =
-            buildWorksheetRecords()
+          const fundingSubmissionLineJson = fundingSubmissionLineJsonFactory.build({
+            id: 11,
+            centreId: 1,
+          })
+          const childCareSpace = childCareSpaceFactory.build({ id: 1 })
+          const administrationCost = administrationCostFactory.build()
           let isRequestFailing = true
           vi.mocked(httpClient, true).get.mockImplementation(async (url) => {
             if (isRequestFailing && url === failedUrl)
@@ -426,19 +420,19 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
 
           // Assert
           const renderedLines = wrapper.findAll("tbody tr > td:first-child")
-          expect(renderedLines.map((cell) => cell.text())).toEqual([
-            "Renamed Infant Cohort",
-            "Infants",
-            "Infants",
-          ])
-          wrapper.unmount()
+          const renderedLineNames = renderedLines.map((cell) => cell.text())
+          expect(renderedLineNames).toEqual(["Renamed Infant Cohort", "Infants", "Infants"])
         }
       )
 
       test("when a ledger save fails, does not save dependent worksheet JSON", async () => {
         // Arrange
-        const { fundingSubmissionLineJson, childCareSpace, administrationCost } =
-          buildWorksheetRecords()
+        const fundingSubmissionLineJson = fundingSubmissionLineJsonFactory.build({
+          id: 11,
+          centreId: 1,
+        })
+        const childCareSpace = childCareSpaceFactory.build({ id: 1 })
+        const administrationCost = administrationCostFactory.build()
         const saveWorksheetJson = vi.fn().mockResolvedValue({ data: { fundingSubmissionLineJson } })
         const httpClientMock = vi.mocked(httpClient, true)
         httpClientMock.get.mockImplementation(async (url) => {
@@ -475,13 +469,16 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
 
         // Assert
         expect(saveWorksheetJson).not.toHaveBeenCalled()
-        wrapper.unmount()
       })
 
       test("when each ledger's first category replication is pending, does not dispatch its next category", async () => {
         // Arrange
-        const { fundingSubmissionLineJson, childCareSpace, administrationCost } =
-          buildWorksheetRecords()
+        const fundingSubmissionLineJson = fundingSubmissionLineJsonFactory.build({
+          id: 11,
+          centreId: 1,
+        })
+        const childCareSpace = childCareSpaceFactory.build({ id: 1 })
+        const administrationCost = administrationCostFactory.build()
         const secondChildCareSpace = {
           ...childCareSpace,
           id: 2,
@@ -551,19 +548,15 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           throw new Error("Replicate Estimates button is missing")
         }
 
-        try {
-          // Act
-          await replicateEstimatesButton.trigger("click")
-          await Promise.all([
-            firstSpaceReplicationStarted.promise,
-            firstAdministrationReplicationStarted.promise,
-          ])
+        // Act
+        await replicateEstimatesButton.trigger("click")
+        await Promise.all([
+          firstSpaceReplicationStarted.promise,
+          firstAdministrationReplicationStarted.promise,
+        ])
 
-          // Assert
-          expect(nextCategoryReplication).not.toHaveBeenCalled()
-        } finally {
-          wrapper.unmount()
-        }
+        // Assert
+        expect(nextCategoryReplication).not.toHaveBeenCalled()
       })
     })
   })

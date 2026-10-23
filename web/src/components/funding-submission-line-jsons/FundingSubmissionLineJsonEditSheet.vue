@@ -1,77 +1,76 @@
 <template>
-  <v-skeleton-loader
-    v-if="isLoading"
-    type="table"
-  />
-  <v-alert
-    v-else-if="isErrored"
-    type="error"
-    variant="tonal"
-  >
-    Worksheet data could not be loaded. Reload all sources before editing.
-    <v-btn
-      class="ml-3"
-      variant="outlined"
-      @click="reloadWorksheet"
+  <v-sheet @keydown="activateKeyboardShortcutsModalIfCorrectEvent($event)">
+    <v-skeleton-loader
+      v-if="isLoading"
+      type="table"
+    />
+    <v-alert
+      v-else-if="isErrored"
+      type="error"
+      variant="tonal"
     >
-      Reload Worksheet
-    </v-btn>
-  </v-alert>
-  <v-sheet
-    v-else
-    @keydown="activateKeyboardShortcutsModalIfCorrectEvent($event)"
-  >
-    <v-btn
-      color="primary"
-      class="float-right"
-      :loading="isSaving"
-      :disabled="isWorkflowRunning"
-      @click="saveFundingSubmissionLineJson"
-    >
-      Save
-    </v-btn>
-
-    <h2 class="mb-3">{{ dateName }} {{ calendarYear }}</h2>
-    <div class="d-flex justify-end">
+      Worksheet data could not be loaded. Reload all sources before editing.
       <v-btn
-        v-if="dateName == FIRST_FISCAL_MONTH_NAME"
-        :loading="isReplicatingEstimates"
-        :disabled="isWorkflowRunning"
-        color="yg-sun"
-        size="small"
-        @click="replicateEstimatesForward"
+        class="ml-3"
+        variant="outlined"
+        @click="reloadWorksheet"
       >
-        <v-icon>mdi-content-copy</v-icon> Replicate Estimates
+        Reload Worksheet
       </v-btn>
-    </div>
-
-    <section
-      v-for="({ sectionName, lines }, sectionIndex) in sections"
-      :key="`${sectionName}-${sectionIndex}`"
-    >
-      <h3
-        class="d-flex justify-space-between align-center mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2"
+    </v-alert>
+    <template v-else>
+      <v-btn
+        color="primary"
+        class="float-right"
+        :loading="isSaving"
+        :disabled="isReplicatingEstimates"
+        @click="saveFundingSubmissionLineJson"
       >
-        {{ sectionName }}
+        Save
+      </v-btn>
 
-        <v-icon
-          title="Show keyboard shortcuts"
-          @click="showKeyboardShortcutsModal"
+      <h2 class="mb-3">{{ dateName }} {{ calendarYear }}</h2>
+      <div class="d-flex justify-end">
+        <v-btn
+          v-if="dateName == FIRST_FISCAL_MONTH_NAME"
+          :loading="isReplicatingEstimates"
+          :disabled="isSaving"
+          color="yg-sun"
+          size="small"
+          @click="replicateEstimatesForward"
         >
-          mdi-keyboard
-        </v-icon>
-      </h3>
+          <v-icon>mdi-content-copy</v-icon> Replicate Estimates
+        </v-btn>
+      </div>
 
-      <FundingSubmissionLineJsonSectionTable
-        ref="fundingSubmissionLineJsonSectionTables"
-        :lines="lines"
-        :readonly="isWorkflowRunning"
-        @focus-beyond-last-in-column="goToNextSection(sectionIndex, $event)"
-        @focus-beyond-first-in-column="goToPreviousSection(sectionIndex, $event)"
-        @line-changed="propagateUpdatesAsNeeded($event)"
-      />
-    </section>
-    <KeyboardShortcutsModal ref="keyboardShortcutsModal" />
+      <section
+        v-for="({ sectionName, lines }, sectionIndex) in sections"
+        :key="`${sectionName}-${sectionIndex}`"
+      >
+        <h3
+          class="d-flex justify-space-between align-center mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2"
+        >
+          {{ sectionName }}
+
+          <v-icon
+            title="Show keyboard shortcuts"
+            @click="showKeyboardShortcutsModal"
+          >
+            mdi-keyboard
+          </v-icon>
+        </h3>
+
+        <FundingSubmissionLineJsonSectionTable
+          ref="fundingSubmissionLineJsonSectionTables"
+          :lines="lines"
+          :readonly="isWorkflowRunning"
+          @focus-beyond-last-in-column="goToNextSection(sectionIndex, $event)"
+          @focus-beyond-first-in-column="goToPreviousSection(sectionIndex, $event)"
+          @line-changed="propagateUpdatesAsNeeded($event)"
+        />
+      </section>
+      <KeyboardShortcutsModal ref="keyboardShortcutsModal" />
+    </template>
   </v-sheet>
 </template>
 
@@ -80,14 +79,14 @@ import { DateTime } from "luxon"
 import { computed, reactive, ref, toRefs } from "vue"
 import { groupBy, isNil } from "lodash"
 
-import childCareSpacesApi, { CHILD_CARE_SPACES_SECTION_NAME } from "@/api/child-care-spaces-api"
 import administrationCostsApi, { ADMINISTRATION_SECTION_NAME } from "@/api/administration-costs-api"
+import childCareSpacesApi, { CHILD_CARE_SPACES_SECTION_NAME } from "@/api/child-care-spaces-api"
 import fundingSubmissionLineJsonsApi, {
   type FundingLineValue,
 } from "@/api/funding-submission-line-jsons-api"
 import { useNotificationStore } from "@/store/NotificationStore"
-import useChildCareSpaces from "@/use/use-child-care-spaces"
 import useAdministrationCosts from "@/use/use-administration-costs"
+import useChildCareSpaces from "@/use/use-child-care-spaces"
 import useFundingSubmissionLineJson from "@/use/use-funding-submission-line-json"
 
 import KeyboardShortcutsModal from "@/components/common/KeyboardShortcutsModal.vue"
@@ -122,7 +121,13 @@ const childCareSpacesQuery = computed(() => ({
   },
   perPage: -1,
 }))
-const costsQuery = computed(() => ({
+const {
+  childCareSpaces,
+  isLoading: isLoadingChildCareSpaces,
+  isErrored: isErroredChildCareSpaces,
+  refresh: refreshChildCareSpaces,
+} = useChildCareSpaces(childCareSpacesQuery)
+const administrationCostsQuery = computed(() => ({
   where: {
     centreId: props.centreId,
     fiscalPeriodId: props.fiscalPeriodId,
@@ -134,13 +139,7 @@ const {
   isLoading: isLoadingAdministrationCosts,
   isErrored: isErroredAdministrationCosts,
   fetch: refreshAdministrationCosts,
-} = useAdministrationCosts(costsQuery)
-const {
-  childCareSpaces,
-  isLoading: isLoadingChildCareSpaces,
-  isErrored: isErroredChildCareSpaces,
-  refresh: refreshChildCareSpaces,
-} = useChildCareSpaces(childCareSpacesQuery)
+} = useAdministrationCosts(administrationCostsQuery)
 
 const isLoading = computed(
   () =>

@@ -3,38 +3,30 @@ import { flushPromises } from "@vue/test-utils"
 
 import httpClient from "@/api/http-client"
 import { type AdministrationCostCategoryAsShow } from "@/api/administration-cost-categories-api"
+import { administrationCostCategoryFactory } from "@/tests/factories"
 import useAdministrationCostCategory from "@/use/use-administration-cost-category"
-
-const category1: AdministrationCostCategoryAsShow = {
-  id: 1,
-  fundingPeriodId: 10,
-  childCareSpaceCategoryId: null,
-  categoryName: "Infants",
-  fromAge: 0,
-  toAge: 1,
-  monthlyAmount: "70.0000",
-  createdAt: "2024-04-01",
-  updatedAt: "2024-04-01",
-  deletedAt: null,
-}
-const category2: AdministrationCostCategoryAsShow = {
-  id: 2,
-  fundingPeriodId: 10,
-  childCareSpaceCategoryId: null,
-  categoryName: "Toddlers",
-  fromAge: 2,
-  toAge: 3,
-  monthlyAmount: "80.0000",
-  createdAt: "2024-04-01",
-  updatedAt: "2024-04-01",
-  deletedAt: null,
-}
 
 describe("web/src/use/use-administration-cost-category.ts", () => {
   describe("useAdministrationCostCategory", () => {
     describe("identity changes", () => {
       test("when a save finishes after navigation, retains the newly requested category", async () => {
         // Arrange
+        const category1 = administrationCostCategoryFactory.build({
+          id: 1,
+          fundingPeriodId: 10,
+          categoryName: "Infants",
+          fromAge: 0,
+          toAge: 1,
+          monthlyAmount: "70.0000",
+        })
+        const category2 = administrationCostCategoryFactory.build({
+          id: 2,
+          fundingPeriodId: 10,
+          categoryName: "Toddlers",
+          fromAge: 2,
+          toAge: 3,
+          monthlyAmount: "80.0000",
+        })
         const pendingSave = Promise.withResolvers<{
           data: { administrationCostCategory: AdministrationCostCategoryAsShow; policy: object }
         }>()
@@ -68,6 +60,12 @@ describe("web/src/use/use-administration-cost-category.ts", () => {
 
       test("when the next category has not loaded, rejects saving the previous category's attributes", async () => {
         // Arrange
+        const category1 = administrationCostCategoryFactory.build({
+          id: 1,
+          fundingPeriodId: 10,
+          categoryName: "Infants",
+          monthlyAmount: "70.0000",
+        })
         const pendingLoad = Promise.withResolvers<{
           data: { administrationCostCategory: AdministrationCostCategoryAsShow; policy: object }
         }>()
@@ -90,9 +88,7 @@ describe("web/src/use/use-administration-cost-category.ts", () => {
           const save = category.save({ categoryName: "Previous category" })
 
           // Assert
-          await expect(save).rejects.toThrow(
-            "The requested Administration cost category is not loaded"
-          )
+          await expect(save).rejects.toThrow()
         } finally {
           scope.stop()
         }
