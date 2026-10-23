@@ -20,7 +20,7 @@ Run tests from the repository root through `bin/dev`:
 - Assert live state at the phase the test names. Cover pending and completed requests in separate self-contained scenarios; do not capture intermediate state in variables and assert those snapshots after a later transition.
 - Permanent tests cover current user behavior and invariants, not evidence that a removed feature or old implementation no longer exists. Keep current-state investigation checks disposable; for autosave, prove committed edits are saved rather than asserting the old Save control is absent.
 - The Vitest configuration resets mocks between tests. Do not add redundant per-test mock resets.
-- `tests/setup.ts`, loaded through Vitest's `setupFiles`, enables automatic unmounting for all mounted wrappers. Do not register `enableAutoUnmount` in individual test files. Explicitly unmount only when unmounting is the behavior under test.
+- `tests/setup.ts`, loaded through Vitest's `setupFiles`, enables automatic unmounting for all mounted wrappers. Register `beforeEach` setup before `enableAutoUnmount(afterEach)` teardown. Do not register `enableAutoUnmount` in individual test files. Explicitly unmount only when unmounting is the behavior under test.
 - Keep suite-specific lifecycle state and hooks inside the suite's outer `describe`. Reserve shared setup for infrastructure needed across suites; do not introduce a global fixture for locally owned resources.
 - For slow-save scenarios, a local deferred promise can hold the API spy pending. Keep stale server responses separate from editable records so subsequent edits cannot mutate the response fixture.
 
