@@ -107,6 +107,38 @@ const routes = [
         props: true,
       },
       {
+        path: "administration/quality-enhancement-categories",
+        name: "administration/QualityEnhancementCategoriesPage",
+        component: () =>
+          import("@/pages/administration/AdministrationQualityEnhancementCategoriesPage.vue"),
+      },
+      {
+        path: "administration/quality-enhancement-categories/new",
+        name: "administration/quality-enhancement-categories/QualityEnhancementCategoryNewPage",
+        component: () =>
+          import(
+            "@/pages/administration/quality-enhancement-categories/QualityEnhancementCategoryNewPage.vue"
+          ),
+      },
+      {
+        path: "administration/quality-enhancement-categories/:qualityEnhancementCategoryId",
+        name: "administration/quality-enhancement-categories/QualityEnhancementCategoryPage",
+        component: () =>
+          import(
+            "@/pages/administration/quality-enhancement-categories/QualityEnhancementCategoryPage.vue"
+          ),
+        props: true,
+      },
+      {
+        path: "administration/quality-enhancement-categories/:qualityEnhancementCategoryId/edit",
+        name: "administration/quality-enhancement-categories/QualityEnhancementCategoryEditPage",
+        component: () =>
+          import(
+            "@/pages/administration/quality-enhancement-categories/QualityEnhancementCategoryEditPage.vue"
+          ),
+        props: true,
+      },
+      {
         path: "administration/child-care-space-categories",
         name: "administration/ChildCareSpaceCategoriesPage",
         component: () =>

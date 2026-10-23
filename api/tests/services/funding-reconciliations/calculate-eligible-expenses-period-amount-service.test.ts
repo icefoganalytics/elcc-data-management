@@ -10,6 +10,8 @@ import {
   fiscalPeriodFactory,
   fundingPeriodFactory,
   fundingSubmissionLineJsonFactory,
+  qualityEnhancementCategoryFactory,
+  qualityEnhancementFactory,
 } from "@/factories"
 
 import CalculateEligibleExpensesPeriodAmountService from "@/services/funding-reconciliations/calculate-eligible-expenses-period-amount-service"
@@ -278,6 +280,54 @@ describe("api/src/services/funding-reconciliations/calculate-eligible-expenses-p
 
         // Assert
         expect(result).toBe("60.0000")
+      })
+
+      test("when reconciling a centre and month, includes only their active Quality Enhancement actuals", async () => {
+        // Arrange
+        const centre = await centreFactory.create()
+        const otherCentre = await centreFactory.create()
+        const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2026-2027" })
+        const fiscalPeriod = await fiscalPeriodFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          fiscalYear: "2026-27",
+          dateStart: new Date("2026-04-01"),
+        })
+        const otherFiscalPeriod = await fiscalPeriodFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          fiscalYear: "2026-27",
+          dateStart: new Date("2026-05-01"),
+        })
+        const category = await qualityEnhancementCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          monthlyAmount: "19.9999",
+        })
+        await qualityEnhancementFactory.associations({ centre, category, fiscalPeriod }).create({
+          estimatedChildOccupancyRate: "100.0000",
+          actualChildOccupancyRate: "0.3333",
+        })
+        await qualityEnhancementFactory
+          .associations({ centre: otherCentre, category, fiscalPeriod })
+          .create({ actualChildOccupancyRate: "9.0000" })
+        await qualityEnhancementFactory
+          .associations({ centre, category, fiscalPeriod: otherFiscalPeriod })
+          .create({ actualChildOccupancyRate: "9.0000" })
+        const retiredCategory = await qualityEnhancementCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          monthlyAmount: "100.0000",
+        })
+        const retiredQualityEnhancement = await qualityEnhancementFactory
+          .associations({ centre, category: retiredCategory, fiscalPeriod })
+          .create({ actualChildOccupancyRate: "9.0000" })
+        await retiredQualityEnhancement.destroy()
+
+        // Act
+        const result = await CalculateEligibleExpensesPeriodAmountService.perform(
+          centre.id,
+          fiscalPeriod.id
+        )
+
+        // Assert
+        expect(result).toEqual("6.6660")
       })
 
       test("when ledger totals exceed JavaScript decimal precision, preserves every financial decimal place", async () => {

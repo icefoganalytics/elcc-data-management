@@ -73,6 +73,10 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
           }
 
+          if (url === "/api/quality-enhancements") {
+            return { data: { qualityEnhancements: [], totalCount: 0 } }
+          }
+
           throw new Error(`Unexpected GET ${url}`)
         })
         const savedWorksheetUpdates: string[] = []
@@ -165,7 +169,6 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           "/api/child-care-spaces/50",
           "/api/funding-submission-line-jsons/55",
         ])
-        wrapper.unmount()
       })
 
       test("when the next month's fiscal period is pending, withholds the worksheet inputs", async () => {
@@ -232,6 +235,10 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             }
           }
 
+          if (url === "/api/quality-enhancements") {
+            return { data: { qualityEnhancements: [], totalCount: 0 } }
+          }
+
           return { data: { fundingSubmissionLineJson: aprilWorksheet } }
         })
         const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
@@ -263,7 +270,6 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           },
         })
         await flushPromises()
-        wrapper.unmount()
       })
     })
   })
