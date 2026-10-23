@@ -12,7 +12,10 @@ export class AdministrationCostsController extends BaseController<Administration
     try {
       const where = this.buildWhere()
       const scopes = this.buildFilterScopes()
-      const order = this.buildOrder([["categoryId", "ASC"]])
+      const order = this.buildOrder([
+        ["lineName", "ASC"],
+        ["id", "ASC"],
+      ])
       const scopedAdministrationCosts = AdministrationCostPolicy.applyScope(
         scopes,
         this.currentUser
