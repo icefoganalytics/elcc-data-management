@@ -4,11 +4,11 @@ A monthly worksheet combines records with different persistence owners. The shar
 
 ## Persistence ownership
 
-| Worksheet data                                                                           | Authoritative store                                                    | Save boundary                                                                |
-| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Child Care Spaces                                                                        | `child_care_spaces`, identified by centre, fiscal period, and category | Only the two occupancy inputs are updated through the Child Care Spaces API. |
-| Quality Enhancement Program | `quality_enhancements`, identified by centre, fiscal period, and category | Only the two occupancy inputs are updated through the Quality Enhancements API. |
-| Remaining JSON-backed sections, including Administration | `funding_submission_line_jsons.values` | The worksheet JSON API receives only its own sections. |
+| Worksheet data                                           | Authoritative store                                                       | Save boundary                                                                   |
+| -------------------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Child Care Spaces                                        | `child_care_spaces`, identified by centre, fiscal period, and category    | Only the two occupancy inputs are updated through the Child Care Spaces API.    |
+| Quality Enhancement Program                              | `quality_enhancements`, identified by centre, fiscal period, and category | Only the two occupancy inputs are updated through the Quality Enhancements API. |
+| Remaining JSON-backed sections, including Administration | `funding_submission_line_jsons.values`                                    | The worksheet JSON API receives only its own sections.                          |
 
 The [JSON model](../../api/src/models/funding-submission-line-json.ts) attaches named exclusion validators for Child Care Spaces and Quality Enhancement Program to `values`, covering both virtual `lines` and raw `values` writes. This prevents clients opened before a deployment from reintroducing competing copies and double-counting reconciliation. Model-dependent validators are imported directly; the shared validator barrel remains independent of model initialization.
 
@@ -53,6 +53,8 @@ New annual configuration copies the latest configured earlier fiscal year, never
 Each monthly `quality_enhancements` record preserves its category name/link, base amount, hot-meal increment/date, occupancy, and computed totals. Decimal arithmetic calculates its effective amount as base plus increment and rejects inputs beyond four decimal places. Initial centre/year provisioning snapshots active categories and the centre's regional hot-meal amount. Later ensures preserve deliberately absent or retired records.
 
 Hot-meal toggles affect current and future fiscal periods only, preserve occupancy, and recalculate totals from the stored base. Historical months remain unchanged. Editing a regional hot-meal amount does not propagate into existing worksheets. Estimate replication copies occupancy into later months of the same centre, category, and funding period, clears actuals, and preserves each target's rates and links.
+
+Worksheet and category lookups abort superseded reads and release them when their view closes. Canceled reads do not become load errors; failed active reads retain their reload controls. Category saves are committed mutations and are not canceled by navigation.
 
 The [Quality Enhancement cutover](../../api/src/db/migrations/20261020220002_migrate-quality-enhancements-from-worksheet-json.ts) moves active and archived configuration and worksheet values into the two new stores, preserving supplied historical totals rather than recalculating them. Hot-meal metadata separates base from increment. Conflicting mappings, unknown enhancement metadata, or lossy decimal conversion abort the migration. Only successfully migrated source sections are removed; unrelated JSON numeric tokens remain intact. Reversal requires original source data and a backup.
 
