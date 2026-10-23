@@ -5,7 +5,7 @@ import { mockCurrentUser, request } from "@/support"
 
 describe("api/src/controllers/quality-enhancements-controller.ts", () => {
   describe("QualityEnhancementsController", () => {
-    describe("#update", () => {
+    describe("#update -> PATCH /api/quality-enhancements/:qualityEnhancementId", () => {
       test("when a worksheet user submits snapshot changes with occupancy, saves only occupancy and recalculates totals", async () => {
         // Arrange
         const currentUser = await userFactory.create({ roles: [User.Roles.USER] })

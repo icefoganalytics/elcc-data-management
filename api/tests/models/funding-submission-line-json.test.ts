@@ -25,7 +25,7 @@ describe("api/src/models/funding-submission-line-json.ts", () => {
       })
     })
 
-    describe("retired worksheet sections", () => {
+    describe("#validate", () => {
       test("when Quality Enhancement values use the worksheet JSON store, rejects the write", async () => {
         // Arrange
         const fundingSubmissionLineJson = fundingSubmissionLineJsonFactory.build({

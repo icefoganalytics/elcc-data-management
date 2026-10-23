@@ -208,7 +208,7 @@ describe("api/src/models/funding-submission-line.ts", () => {
       })
     })
 
-    describe("retired worksheet sections", () => {
+    describe("#validate", () => {
       test("when Quality Enhancement configuration uses the shared submission-line store, rejects the write", async () => {
         // Arrange
         const fundingSubmissionLine = FundingSubmissionLine.build({

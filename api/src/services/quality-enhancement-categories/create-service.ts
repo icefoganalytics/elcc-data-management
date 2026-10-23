@@ -1,3 +1,4 @@
+import { type CreationAttributes } from "@sequelize/core"
 import { isNil } from "lodash"
 
 import db from "@/db/db-client"
@@ -5,17 +6,12 @@ import ChildCareSpaceCategory from "@/models/child-care-space-category"
 import QualityEnhancementCategory from "@/models/quality-enhancement-category"
 import BaseService from "@/services/base-service"
 
-export type QualityEnhancementCategoryCreationAttributes = {
-  fundingPeriodId: number
-  categoryName: string
-  fromAge?: number | null
-  toAge?: number | null
-  monthlyAmount: string
-  childCareSpaceCategoryId?: number | null
-}
+export type QualityEnhancementCategoryCreationAttributes = Partial<
+  CreationAttributes<QualityEnhancementCategory>
+>
 
 export class CreateService extends BaseService {
-  constructor(private attributes: Partial<QualityEnhancementCategoryCreationAttributes>) {
+  constructor(private attributes: QualityEnhancementCategoryCreationAttributes) {
     super()
   }
 
