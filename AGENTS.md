@@ -14,13 +14,26 @@ Keep `AGENTS.md` focused on project-wide conventions and high-level concepts. Wh
 
 ---
 
-## Design Philosophy
+## Shared Standards and Local Authority
 
-**Perfection through removal, not addition:**
+Generic authoring, review, and delivery standards belong to [marlens-skills-rules-and-tools (MSSRT)](https://github.com/klondikemarlen/marlens-skills-rules-and-tools). Use the task-relevant direct shared document below first, then its ELCC overlay. Do not invoke a selecting skill from its own overlay: that can route back into the same file.
 
-Perfection is achieved not when there is nothing more to add, but when there is nothing left to take away. Focus on removing unnecessary complexity, verbosity, and redundancy rather than adding more features or content.
+| Task | Direct shared base | ELCC overlay |
+| --- | --- | --- |
+| Readability and code organization | `skill://readable-code/workflow.md` | Source-adjacent READMEs and the local constraints below |
+| Review | `skill://code-review/workflow.md` | [Review constraints](agents/workflows/code-review.md) |
+| Test authoring and review | [Scenario-Oriented Verification](https://github.com/klondikemarlen/marlens-skills-rules-and-tools/blob/main/docs/references/code-organization-reference.md#scenario-oriented-verification) and [test baseline](https://github.com/klondikemarlen/marlens-skills-rules-and-tools/blob/main/docs/references/test-alignment-verifier-reference.md#shared-baseline) | [API tests](api/tests/README.md), [web tests](web/tests/README.md) |
+| Backend authoring | `skill://express-light-rail/workflow.md` | [Controllers](api/src/controllers/README.md), [services](api/src/services/README.md), and adjacent policy/model/serializer guidance |
+| Vue authoring | [Vue component authoring](https://github.com/klondikemarlen/marlens-skills-rules-and-tools/blob/main/docs/references/vue-component-authoring-reference.md) | [Components](web/src/components/README.md), [composables](web/src/use/README.md), [pages](web/src/pages/README.md), and [admin recipe](agents/workflows/create-admin-ui.md) |
+| Pull requests | `skill://pull-request-management/workflow.md` | [PR conventions](agents/workflows/pull-request-management.md) |
+| Testing instructions | `skill://testing-instructions/workflow.md` | [ELCC verification](agents/workflows/testing-instructions.md) |
+| Jira reports, when Jira is the authoritative tracker | `skill://jira-reporting/workflow.md` | [ELCC ticket context](agents/workflows/jira-issue-management.md) |
 
-**Application:** Question whether new features are actually needed before implementing. Simpler is better when the feature doesn't add clear value.
+Resolve shared workflows, references, and templates from the same available MSSRT release. OMP's direct `skill://` documents resolve installed workflows; the public links identify the corresponding repository paths to read in that selected release. Other clients must resolve those paths in an available release before use. Confirm source availability and record the observed version/source in the task's existing evidence, not a permanent version inventory. A missing required source blocks the affected adoption/task; do not install automatically, fall back to moving `main`, or reconstruct rules from memory.
+
+ELCC domain, financial, security, runtime, command, and deliberate local exceptions retain precedence. For a real conflict, preserve local coverage and obtain the project owner's decision before deleting or overriding it. Documentation adoption does not authorize executable library/tooling adoption; that needs separate artifact and compatibility proof.
+
+Discover current local extensions through [agents](agents/README.md) and durable project knowledge through [docs](docs/README.md). Route reusable standards corrections to MSSRT and project-specific corrections here; a proposal or issue is not activated policy or runtime verification.
 
 ---
 
@@ -53,14 +66,7 @@ Useful local documentation:
 
 ## Development Approach
 
-- Study existing code before implementing new features. Prefer adapting established patterns over inventing new ones.
-- Start with the simplest working solution, then improve iteratively.
-- Document uncertainties and follow-up simplifications as you go.
-- Use git to discover emerging patterns when needed:
-
-```bash
-git log --since="3 months ago" --diff-filter=A --name-only --pretty=format: | sort | uniq -c | sort -nr
-```
+Use the shared authoring and review bases above with nearby live ELCC implementations. Keep project-specific architecture and operator knowledge in the linked local documentation rather than copying shared checklists.
 
 ## Development Environment
 
@@ -103,23 +109,6 @@ Frontend responsibility split:
 ```text
 Parent discovers data -> Child displays or edits a specific record
 ```
-
-## Code Style Preferences
-
-### General Principles
-
-- Prefer descriptive naming. Remove redundant context when the caller already provides it.
-- Avoid abbreviations in variables, functions, table names, aliases, and parameters.
-- Prefer self-documenting code over explanatory comments.
-- Prefer expanded, linear code over dense functional style.
-- Use guard clauses with a blank line before the main path.
-- Keep imports grouped by conceptual distance:
-  1. Third-party packages
-  2. Standard library modules
-  3. Local application imports
-- Use one import per line except when importing multiple members from the same module.
-- Remove unused imports.
-
 
 ## Frontend Patterns
 
@@ -178,15 +167,7 @@ Project-wide backend conventions:
 
 ## Testing Conventions
 
-Detailed test guidance lives in [api/tests/README.md](./api/tests/README.md).
-
-Project-wide expectations:
-
-- Tests should map to a specific file under `api/src`.
-- Describe blocks should identify the file, class or model, and method under test.
-- Prefer simple assertions against concrete values.
-- Avoid redundant `where` clauses in isolated scope or query tests unless the filter itself is under test.
-- Use the Arrange, Act, Assert structure.
+Load the shared test sources declared above, then [API test conventions](api/tests/README.md) or [web test conventions](web/tests/README.md). These local overlays own the Vitest harness, canonical wrapper commands, database isolation/concurrency, and deliberate assertion exceptions.
 
 ## Authentication and Authorization
 
