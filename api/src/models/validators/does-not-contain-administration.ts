@@ -15,7 +15,8 @@ export function doesNotContainAdministration(values: string): void {
         typeof line === "object" &&
         line !== null &&
         "sectionName" in line &&
-        line.sectionName === ADMINISTRATION_COST_SECTION_NAME
+        (line.sectionName === ADMINISTRATION_COST_SECTION_NAME ||
+          line.sectionName === "Administration")
     )
   ) {
     throw new Error(
