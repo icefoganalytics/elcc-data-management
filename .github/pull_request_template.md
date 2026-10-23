@@ -1,4 +1,6 @@
-Fixes TODO
+<!-- Link the authoritative ticket. For Jira, use its exact key and URL; do not create a GitHub mirror just to open a PR. If this PR closes a real GitHub issue, replace the line below with `Fixes <GitHub issue URL>`. -->
+
+Related ticket: TODO
 
 Relates to:
 
