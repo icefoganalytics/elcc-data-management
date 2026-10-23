@@ -10,9 +10,12 @@ import { mockRouter, mockVuetify } from "@/tests/support"
 describe("web/src/pages/administration/administration-cost-categories/AdministrationCostCategoryNewPage.vue", () => {
   describe("AdministrationCostCategoryNewPage", () => {
     describe("linked category selection", () => {
-      test("when another funding period is loading, does not offer the previous period's categories", async () => {
+      test("when another funding period is loading, does not offer the previous period's categories", async ({
+        onTestFinished,
+      }) => {
         // Arrange
         vi.stubGlobal("visualViewport", undefined)
+        onTestFinished(() => vi.unstubAllGlobals())
         const pendingCategories = Promise.withResolvers<{
           data: { childCareSpaceCategories: ChildCareSpaceCategoryAsIndex[]; totalCount: number }
         }>()
@@ -84,8 +87,6 @@ describe("web/src/pages/administration/administration-cost-categories/Administra
         } finally {
           pendingCategories.resolve({ data: { childCareSpaceCategories: [], totalCount: 0 } })
           await flushPromises()
-          wrapper.unmount()
-          vi.unstubAllGlobals()
         }
       })
     })
