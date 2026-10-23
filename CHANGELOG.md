@@ -25,6 +25,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
 ### Changed
 
 - Agent guidance now resolves shared authoring, review, and testing standards directly while retaining ELCC's financial, security, API, and development/test requirements locally.
+- Administration worksheet rows now sort alphabetically by their saved category names, with a stable order when names match.
 - Preserved four-decimal currency entry and exact financial calculations when reconciling money amounts.
 - Unified authentication for legacy and modern API endpoints behind one shared boundary,
   preserving public status access and existing role restrictions.
