@@ -16,39 +16,25 @@ Frontend static files and SPA routes remain outside `/api` and do not require an
 
 ---
 
-## Code Style
+## Shared Authoring and Local Style
 
-- TypeScript only — no `any`, `as` casts, `@ts-expect-error`, `@ts-ignore`, or `!` non-null assertions. Use `instanceof` narrowing with fallbacks instead.
-- **Use `type` not `interface`** — `interface` has unexpected side-effects (declaration merging).
-- Optional chaining (`?.`) and nullish coalescing (`??`) for null handling.
-- 2 spaces, no semicolons, double quotes, 100 char line limit.
-- **No abbreviations** — full descriptive names (`fundingSubmission` not `fs`).
-- **Number similar entities:** `user1`, `user2` (not `existingUser`, `newUser`).
-- **Expanded code style:** one thing per line, avoid terse functional chains.
-- **Guard clauses:** early returns with a blank line after each guard.
-- **Named constants:** hoist magic numbers to named `const`.
-- camelCase for variables/functions, PascalCase for classes/types.
-- **Import formatting:** multi-line expanded imports for 4+ named items.
-- **Extract and rename pattern:** extract and rename on separate lines before constructing objects:
+Load the direct MSSRT backend/readability/review sources declared in [root guidance](/AGENTS.md#shared-standards-and-local-authority), then apply the subsystem READMEs below. [ELCC review constraints](/agents/workflows/code-review.md#local-constraints) own the TypeScript safety and necessary assignment/creation-time cast policy; do not maintain a competing blanket cast ban here.
+
+Backend-specific conventions:
+
+- Use `type` rather than `interface` to avoid declaration merging.
+- Follow [the formatter configuration](/.prettierrc.yaml): two spaces, no semicolons, double quotes, and a 100-character print width.
+- Use camelCase for variables/functions and PascalCase for classes/types. Number equivalent entities as `user1`, `user2`, not `existingUser`, `newUser`.
+- Expand imports with four or more named members across multiple lines.
+- The backend import-order exception is Node.js built-ins, external packages, then `@/` imports, with one blank line between groups. Alphabetical order within a group is preferred for new or intentionally changed imports; do not reorder unrelated imports.
+- Preserve the extract-and-rename pattern when a field changes names across a boundary:
 
   ```typescript
-  // Good
   const { order: fundingSubmissionOrder } = this.fundingSubmission
   const data = { fundingSubmissionOrder, ...otherProps }
-
-  // Bad
-  const data = { fundingSubmissionOrder: this.fundingSubmission.order, ...otherProps }
   ```
 
-- **Orchestrate up front:** load associations near the top-level `perform()`, pass simple values into helpers — don't hide async lookups inside helpers.
-
-**Import ordering (PEP8-style):**
-
-1. Node.js built-ins
-2. _(blank line)_
-3. External packages from node_modules
-4. _(blank line)_
-5. Internal imports from `@/` (alphabetical preferred)
+Shared service orchestration guidance owns association preconditions, explicit value handoffs, and visible side effects; [service conventions](src/services/README.md) retain ELCC's persistence and financial constraints.
 
 ---
 

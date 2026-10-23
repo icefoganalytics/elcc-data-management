@@ -10,21 +10,20 @@ Run tests from the repository root through `bin/dev`:
 
 ## Component Tests
 
+Follow [Scenario-Oriented Verification in the shared Code Organization Reference](https://github.com/klondikemarlen/marlens-skills-rules-and-tools/blob/main/docs/references/code-organization-reference.md#scenario-oriented-verification) for named observable contracts, visible component outcomes, and scenario-local setup. The following conventions retain ELCC's suite structure and harness:
+
 - Component and composable suites use three nested `describe` scopes: the source file path, the component or composable name, then the method or behavior under test. Keep each `test("when ..., ...")` inside that behavior scope.
 - Use explicit Arrange, Act, and Assert sections with descriptive `when ..., does ...` test names.
-- Keep scenario data, API responses, and `mount(...)` options inside each test. Intentional duplication is preferable to local mount helpers, response builders, or shared scenario fixtures.
-- Reuse existing infrastructure helpers such as `mockVuetify` and the typed frontend factories in `tests/factories`. Keep scenario-specific overrides inline.
+- Reuse existing infrastructure helpers such as `mockVuetify` and the typed frontend factories in `tests/factories`. Keep scenario-specific factory overrides inline.
 - Prefer API spies and real composables. Mock dependencies outside the behavior under test, not the component's own state machinery.
-- Keep one observable contract per test and assert it directly. Separate API-payload expectations from independent rendered-output checks; mock-call assertions belong in their own focused scenarios. Give request errors, loading completion, returned records, authorization policy, and collection counts separate named scenarios, even when the same request changes them together. Compare actual returned objects or collections directly; do not construct summary objects to combine independent outcomes or assert incidental wording.
-- Give independently observable retry feedback, edited-input retention, and saved API payloads their own named scenarios. Do not combine them merely because they follow the same user actions.
+- ELCC request-state coverage gives errors, loading completion, returned records, authorization policy, and collection counts separate named scenarios. These are independently consumed states, even when one request changes them together.
+- Give independently observable retry feedback, edited-input retention, and saved API payloads their own named scenarios.
 - Assert live state at the phase the test names. Cover pending and completed requests in separate self-contained scenarios; do not capture intermediate state in variables and assert those snapshots after a later transition.
 - Permanent tests cover current user behavior and invariants, not evidence that a removed feature or old implementation no longer exists. Keep current-state investigation checks disposable; for autosave, prove committed edits are saved rather than asserting the old Save control is absent.
 - The Vitest configuration resets mocks between tests. Do not add redundant per-test mock resets.
 - `tests/setup.ts`, loaded through Vitest's `setupFiles`, enables automatic unmounting for all mounted wrappers. Register `beforeEach` setup before `enableAutoUnmount(afterEach)` teardown. Do not register `enableAutoUnmount` in individual test files. Explicitly unmount only when unmounting is the behavior under test.
 - Keep suite-specific lifecycle state and hooks inside the suite's outer `describe`. Reserve shared setup for infrastructure needed across suites; do not introduce a global fixture for locally owned resources.
 - For slow-save scenarios, a local deferred promise can hold the API spy pending. Keep stale server responses separate from editable records so subsequent edits cannot mutate the response fixture.
-
-These conventions follow [WRAP's component-test guidance](https://github.com/icefoganalytics/wrap/blob/80066b23b3aa0302589847eba7b790c705c748e6/web/tests/README.md#test-style), adapted to this repository's test setup and dependencies.
 
 ## Fixture Factories
 

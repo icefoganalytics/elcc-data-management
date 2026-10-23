@@ -1,54 +1,9 @@
-# Workflows
+# ELCC Workflow Extensions
 
-This directory contains reusable AI workflows for the ELCC Data Management system.
+Use the task-specific shared base declared in [root guidance](/AGENTS.md#shared-standards-and-local-authority), then read the relevant local file in this directory. Read the directory contents to discover current extensions; this index is not a second workflow inventory.
 
-## Available Workflows
+Local files hold ELCC constraints and recipes, not copies of the generic shared workflow. Their filenames are direct-reference entrypoints and need not match a client's skill-selector filename. Do not invoke a selecting skill from its own overlay or assume the client automatically discovers these files.
 
-### 📋 [create-admin-ui.md](create-admin-ui.md)
+Use the authoritative ticket's tracker; Jira is not a prerequisite for a GitHub-native issue. Publish the initial draft under the shared delivery workflow, then complete review and targeted verification before readiness/merge. The canonical PR section contract lives in [the PR template](/.github/pull_request_template.md); command and database ownership stay in [bin guidance](/bin/README.md) and the test-directory READMEs.
 
-Complete workflow for adding full CRUD admin UI for any model.
-
-**Includes:**
-- Backend: Model, Controller, Policy, Services, Serializers, Routes
-- Frontend: API Client, Composables, Components, Pages, Integration
-- Testing checklist
-- Common pitfalls
-
-**Reference:** FundingRegion implementation (commit: `973af90`)
-
-### 📋 [pull-request-management.md](pull-request-management.md)
-
-Create and edit well-structured pull requests following ELCC project conventions.
-
-### 📋 [testing-instructions.md](testing-instructions.md)
-
-Generate comprehensive testing instructions with exact UI element names verified from Vue code.
-
-### 📋 [code-review.md](code-review.md)
-
-Code review quality control for TypeScript with 14 hard rules as blocking gates.
-
-### 📋 [jira-issue-management.md](jira-issue-management.md)
-
-Create well-structured Jira issues using project conventions.
-
----
-
-## Complete PR Creation Sequence
-
-1. **jira-issue-management** - Create or review the Jira issue
-2. **code-review** - Review code quality before PR
-3. **pull-request-management** - Create the draft PR
-4. **testing-instructions** - Generate comprehensive testing instructions
-
----
-
-## Using Workflows
-
-Workflows are designed to be used with AI coding assistants like Claude or Windsurf.
-
-See parent [agents/README.md](../README.md) for setup instructions.
-
----
-
-**Last Updated:** 2026-03-15
+For other local material and the missing-source/conflict policy, see [agent discovery](../README.md).

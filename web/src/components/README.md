@@ -2,6 +2,8 @@
 
 Use this directory for reusable UI building blocks. Keep feature-specific details in the feature folder, but document cross-cutting component patterns here.
 
+For generic Vue structure and authoring, use the [shared Vue Component Authoring Reference](https://github.com/klondikemarlen/marlens-skills-rules-and-tools/blob/main/docs/references/vue-component-authoring-reference.md); the conventions below describe ELCC's component boundaries, editing ownership, and naming.
+
 ## Responsibilities
 
 - Prefer dedicated pages over dialogs for complex workflows.
@@ -30,7 +32,7 @@ Parent tables may discover collections and own their mutations while row or tier
   - `EmployeeBenefitsDataTable.vue`
 - Use an optional modifier only when it adds meaning:
   - `Edit`, `Manage`, `Create`, `Server`
-- Suffix the name with the outermost Vuetify component:
+- ELCC naming exception: suffix the name with the outermost Vuetify component, preserving the established feature-directory convention rather than mechanically adopting a generic semantic-root suffix:
   - `Dialog`, `DataTable`, `Table`, `Card`, `Form`
 
 Pattern:
