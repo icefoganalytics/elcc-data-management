@@ -12,6 +12,8 @@ A monthly worksheet combines records with different persistence owners. The shar
 
 The [JSON model](../../api/src/models/funding-submission-line-json.ts) attaches exclusion validators for [Child Care Spaces](../../api/src/models/validators/does-not-contain-child-care-spaces.ts) and [Administration](../../api/src/models/validators/does-not-contain-administration.ts) to `values`, covering both virtual `lines` and raw `values` writes. These prevent clients opened before a deployment from reintroducing a second copy and double-counting reconciliation. The model imports these model-dependent validators directly; the shared validator barrel remains independent of model initialization.
 
+Both retired Administration labels, `Administration` and `Administration (10% of Spaces)`, are rejected by worksheet JSON and shared configuration writes. The worksheet displays the latter label for its ledger-backed section.
+
 The [worksheet editor](../../web/src/components/funding-submission-line-jsons/FundingSubmissionLineJsonEditSheet.vue) composes the two ledgers and JSON for display, persists changed ledger rows before saving JSON-owned lines, and refreshes all three resources after success. **Replicate Estimates** first saves, then invokes each store's replication operation. Occupancy inputs remain read only until the entire save or replication workflow finishes, preventing edits between persistence requests.
 
 The editor recalculates dependent totals from each section's own snapshotted rate when occupancy changes. If any source fails to load, it withholds editing and reloads all sources through **Reload Worksheet**.
