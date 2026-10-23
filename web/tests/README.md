@@ -16,6 +16,7 @@ Run tests from the repository root through `bin/dev`:
 - Reuse existing infrastructure helpers such as `mockVuetify` and the typed frontend factories in `tests/factories`. Keep scenario-specific overrides inline.
 - Prefer API spies and real composables. Mock dependencies outside the behavior under test, not the component's own state machinery.
 - Keep one observable contract per test and assert it directly. Separate API-payload expectations from independent rendered-output checks; mock-call assertions belong in their own focused scenarios. Related loading, error, and stale-data assertions may stay together when they prove one lifecycle invariant. Do not construct summary objects to force one assertion or assert incidental wording.
+- Give independently observable retry feedback, edited-input retention, and saved API payloads their own named scenarios. Do not combine them merely because they follow the same user actions.
 - Assert live state at the phase the test names. Cover pending and completed requests in separate self-contained scenarios; do not capture intermediate state in variables and assert those snapshots after a later transition.
 - Permanent tests cover current user behavior and invariants, not evidence that a removed feature or old implementation no longer exists. Keep current-state investigation checks disposable; for autosave, prove committed edits are saved rather than asserting the old Save control is absent.
 - The Vitest configuration resets mocks between tests. Do not add redundant per-test mock resets.
