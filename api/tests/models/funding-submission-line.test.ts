@@ -1,5 +1,8 @@
-import { FundingSubmissionLine } from "@/models"
+import { ValidationError } from "@sequelize/core"
+
 import { fundingPeriodFactory, fundingSubmissionLineFactory } from "@/factories"
+
+import FundingSubmissionLine from "@/models/funding-submission-line"
 
 describe("api/src/models/funding-submission-line.ts", () => {
   describe("FundingSubmissionLine", () => {
@@ -275,6 +278,22 @@ describe("api/src/models/funding-submission-line.ts", () => {
           await expect(validation).rejects.toThrow(
             "Administration (10% of Spaces) configuration must use the Administration costs ledger."
           )
+        })
+
+        test("when a stale client uses the legacy Administration name, rejects shared configuration", async () => {
+          // Arrange
+          const fundingSubmissionLine = FundingSubmissionLine.build({
+            fiscalYear: "2023/24",
+            sectionName: "Administration",
+            lineName: "Infants",
+            monthlyAmount: "70.0000",
+          })
+
+          // Act
+          const validation = fundingSubmissionLine.validate()
+
+          // Assert
+          await expect(validation).rejects.toThrow(ValidationError)
         })
       })
     })

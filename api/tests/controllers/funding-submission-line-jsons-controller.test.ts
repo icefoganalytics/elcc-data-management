@@ -1,6 +1,7 @@
-import { mockCurrentUser, request } from "@/support"
-import { centreFactory, fundingSubmissionLineJsonFactory, userFactory } from "@/factories"
 import { ChildCareSpace, FundingSubmissionLineJson, User } from "@/models"
+
+import { centreFactory, fundingSubmissionLineJsonFactory, userFactory } from "@/factories"
+import { mockCurrentUser, request } from "@/support"
 
 describe("api/src/controllers/funding-submission-line-jsons-controller.ts", () => {
   describe("FundingSubmissionLineJsonsController", () => {
@@ -117,6 +118,35 @@ describe("api/src/controllers/funding-submission-line-jsons-controller.ts", () =
     })
 
     describe("#update -> PATCH /api/funding-submission-line-jsons/:fundingSubmissionLineJsonId", () => {
+      test("when a stale client restores the legacy Administration section, rejects the worksheet update", async () => {
+        // Arrange
+        const currentUser = await userFactory.create({
+          roles: [User.Roles.SYSTEM_ADMINISTRATOR],
+        })
+        mockCurrentUser(currentUser)
+        const centre = await centreFactory.create()
+        const worksheet = await fundingSubmissionLineJsonFactory.create({
+          centreId: centre.id,
+          lines: [],
+        })
+        const staleLine = {
+          submissionLineId: 2,
+          sectionName: "Administration",
+          lineName: "Infants",
+          monthlyAmount: "70.0000",
+          actualChildOccupancyRate: "0.2500",
+          actualComputedTotal: "17.5000",
+        }
+
+        // Act
+        const response = await request()
+          .patch(`/api/funding-submission-line-jsons/${worksheet.id}`)
+          .send({ values: JSON.stringify([staleLine]) })
+
+        // Assert
+        expect(response.status).toBe(422)
+      })
+
       test.each(["lines", "values"] as const)(
         "when a stale client submits Child Care Spaces through %s, rejects the worksheet update",
         async (payloadKey) => {
