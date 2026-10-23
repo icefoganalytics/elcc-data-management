@@ -12,6 +12,8 @@ Changes since v2025.11.24.1 that will be included in the next release.
 
 - Child Care Spaces now saves per centre and month, preserving historic rates while keeping worksheets, enrollment charts, and reconciliations in sync.
 - Child Care Space categories now have dedicated administration pages and funding-period configuration. Existing names, age ranges, and rates move out of shared submission lines without changing historical monthly records.
+- Employee benefits and wage enhancement edits now save when committed, without routine Save buttons. Failed edits retain their input and show Retry controls; wage errors remain visible until the retry succeeds. Both editors preserve queued changes across month navigation and cancel superseded loads without showing a load error. Saving indicators no longer shift the tables or resize wage columns.
+- Replicated wage estimates appear when returning to a previously visited month, while pending and failed edits remain available for saving or Retry.
 
 - Funding reconciliation feature to calculate and display monthly funding reconciliation amounts based on adjustment records for each funding period.
   Why? To provide a clear, authoritative view of how funding amounts are reconciled over time.
@@ -58,8 +60,6 @@ Changes since v2025.11.24.1 that will be included in the next release.
 - Category editors clear previous records during navigation and ignore late load/save responses. Linkage recovery retains stable category IDs after names have propagated to monthly records.
 - Child Care Space category writes now require a system administrator, while ordinary users retain occupancy editing. Category amounts reject excess decimal precision, and overlapping category updates use the current propagation baseline.
 - Later seeds preserve intentionally absent Child Care Space months, and historical cutover rejects malformed submission-line IDs before removing source JSON.
-- Employee benefits and wage enhancement edits now save when committed, without routine Save buttons. Failed edits retain their input and show Retry controls; wage errors remain visible until the retry succeeds. Both editors preserve queued changes across month navigation and cancel superseded loads without showing a load error. Saving indicators no longer shift the tables or resize wage columns.
-- Replicated wage estimates appear when returning to a previously visited month, while pending and failed edits remain available for saving or Retry.
 - Prevented employee benefits from being double counted in employee adjustment amounts during funding reconciliation calculations.
 - Resolved occasional authentication issues caused by plugin load order.
 - Editor links now reach the correct Docker worktree through library-managed checkout routing,
