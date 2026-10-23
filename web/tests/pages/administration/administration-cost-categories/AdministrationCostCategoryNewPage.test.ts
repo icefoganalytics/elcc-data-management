@@ -69,27 +69,22 @@ describe("web/src/pages/administration/administration-cost-categories/Administra
           attachTo: document.body,
           global: { plugins: [router, createPinia(), mockVuetify()] },
         })
-        try {
-          await flushPromises()
-          const fundingPeriodSelect = wrapper.findAllComponents(VSelect)[0]
-          const linkedCategorySelect = wrapper.findAllComponents(VSelect)[1]
-          await fundingPeriodSelect.setValue(1)
-          await flushPromises()
+        await flushPromises()
+        const fundingPeriodSelect = wrapper.findAllComponents(VSelect)[0]
+        const linkedCategorySelect = wrapper.findAllComponents(VSelect)[1]
+        await fundingPeriodSelect.setValue(1)
+        await flushPromises()
 
-          // Act
-          await fundingPeriodSelect.setValue(2)
-          await flushPromises()
-          await linkedCategorySelect.get(".v-field").trigger("mousedown")
-          await flushPromises()
+        // Act
+        await fundingPeriodSelect.setValue(2)
+        await flushPromises()
+        await linkedCategorySelect.get(".v-field").trigger("mousedown")
+        await flushPromises()
 
-          // Assert
-          const offeredCategories = Array.from(document.querySelectorAll('[role="option"]'))
-          const offeredCategoryNames = offeredCategories.map((option) => option.textContent)
-          expect(offeredCategoryNames).not.toContain("Previous-year Infants")
-        } finally {
-          pendingCategories.resolve({ data: { childCareSpaceCategories: [], totalCount: 0 } })
-          await flushPromises()
-        }
+        // Assert
+        const offeredCategories = Array.from(document.querySelectorAll('[role="option"]'))
+        const offeredCategoryNames = offeredCategories.map((option) => option.textContent)
+        expect(offeredCategoryNames).not.toContain("Previous-year Infants")
       })
     })
   })
