@@ -8,9 +8,9 @@ import { mockCurrentUserApi } from "@/tests/support/mock-current-user-api"
 // See: https://vuetifyjs.com/en/getting-started/unit-testing/#using-vite
 globalThis.ResizeObserver = ResizeObserver
 
-enableAutoUnmount(afterEach)
-
 beforeEach(() => {
   mockHttpClient()
   mockCurrentUserApi()
 })
+
+enableAutoUnmount(afterEach)
