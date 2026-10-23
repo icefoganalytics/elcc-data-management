@@ -4,6 +4,7 @@ import { flushPromises, mount } from "@vue/test-utils"
 
 import employeeBenefitsApi from "@/api/employee-benefits-api"
 import { employeeBenefitFactory } from "@/tests/factories"
+
 import useEmployeeBenefit from "@/use/use-employee-benefit"
 
 type BenefitResponse = Awaited<ReturnType<typeof employeeBenefitsApi.get>>
@@ -73,16 +74,15 @@ describe("web/src/use/use-employee-benefit.ts", () => {
         expect(benefit.employeeBenefit.value).toEqual(selectedBenefit)
       })
 
-      test("when loading fails, reports the failed editor state", async () => {
+      test("when a selected record fails to load, reports the error state", async () => {
         // Arrange
         const employeeBenefit = employeeBenefitFactory.build({ id: 41 })
-        const loadError = new Error("offline")
         vi.spyOn(employeeBenefitsApi, "get")
           .mockResolvedValueOnce({
             employeeBenefit,
             policy: { show: true, create: true, update: true, destroy: true },
           })
-          .mockRejectedValueOnce(loadError)
+          .mockRejectedValueOnce(new Error("offline"))
         const id = ref(41)
         const wrapper = mount(
           {
@@ -99,6 +99,32 @@ describe("web/src/use/use-employee-benefit.ts", () => {
 
         // Assert
         expect(wrapper.vm.isErrored).toBe(true)
+      })
+
+      test("when a selected record fails to load, finishes loading", async () => {
+        // Arrange
+        const employeeBenefit = employeeBenefitFactory.build({ id: 41 })
+        vi.spyOn(employeeBenefitsApi, "get")
+          .mockResolvedValueOnce({
+            employeeBenefit,
+            policy: { show: true, create: true, update: true, destroy: true },
+          })
+          .mockRejectedValueOnce(new Error("offline"))
+        const id = ref(41)
+        const wrapper = mount(
+          {
+            setup: () => useEmployeeBenefit(id),
+            render: () => null,
+          },
+          { global: { config: { errorHandler: vi.fn() } } }
+        )
+        await flushPromises()
+
+        // Act
+        id.value = 42
+        await flushPromises()
+
+        // Assert
         expect(wrapper.vm.isLoading).toBe(false)
       })
 
@@ -158,7 +184,7 @@ describe("web/src/use/use-employee-benefit.ts", () => {
         expect(handleError.mock.calls.map(([error]) => error)).toEqual([loadError])
       })
 
-      test("when an earlier load finishes while the selected record is loading, keeps the editor loading without stale data", async () => {
+      test("when an earlier load finishes while the selected record is loading, keeps the editor loading", async () => {
         // Arrange
         const firstLoad = Promise.withResolvers<BenefitResponse>()
         const selectedLoad = Promise.withResolvers<BenefitResponse>()
@@ -180,20 +206,64 @@ describe("web/src/use/use-employee-benefit.ts", () => {
 
         // Assert
         expect(benefit.isLoading.value).toBe(true)
-        expect(benefit.employeeBenefit.value).toBeNull()
       })
 
-      test("when the selected id changes, aborts the previous read but not the replacement", async () => {
+      test("when an earlier load finishes while the selected record is loading, does not expose stale data", async () => {
         // Arrange
         const firstLoad = Promise.withResolvers<BenefitResponse>()
         const selectedLoad = Promise.withResolvers<BenefitResponse>()
+        const employeeBenefit = employeeBenefitFactory.build({ id: 41 })
+        vi.spyOn(employeeBenefitsApi, "get")
+          .mockReturnValueOnce(firstLoad.promise)
+          .mockReturnValueOnce(selectedLoad.promise)
+        const id = ref<number | undefined>(41)
+        const benefit = scope.run(() => useEmployeeBenefit(id))
+        if (!benefit) throw new Error("Expected an active benefit model")
+
+        // Act
+        id.value = 42
+        firstLoad.resolve({
+          employeeBenefit,
+          policy: { show: true, create: true, update: true, destroy: true },
+        })
+        await flushPromises()
+
+        // Assert
+        expect(benefit.employeeBenefit.value).toBeNull()
+      })
+
+      test("when the selected id changes, aborts the previous read", async () => {
+        // Arrange
+        const firstLoad = Promise.withResolvers<BenefitResponse>()
         let firstSignal: AbortSignal | undefined
-        let selectedSignal: AbortSignal | undefined
         vi.spyOn(employeeBenefitsApi, "get")
           .mockImplementationOnce((_id, options) => {
             firstSignal = options?.signal
             return firstLoad.promise
           })
+          .mockResolvedValueOnce({
+            employeeBenefit: employeeBenefitFactory.build({ id: 42 }),
+            policy: { show: true, create: true, update: true, destroy: true },
+          })
+        const id = ref(41)
+        const benefit = scope.run(() => useEmployeeBenefit(id))
+        if (!benefit) throw new Error("Expected an active benefit model")
+
+        // Act
+        id.value = 42
+        await flushPromises()
+
+        // Assert
+        expect(firstSignal?.aborted).toBe(true)
+      })
+
+      test("when the selected id changes, does not abort the replacement read", async () => {
+        // Arrange
+        const firstLoad = Promise.withResolvers<BenefitResponse>()
+        const selectedLoad = Promise.withResolvers<BenefitResponse>()
+        let selectedSignal: AbortSignal | undefined
+        vi.spyOn(employeeBenefitsApi, "get")
+          .mockReturnValueOnce(firstLoad.promise)
           .mockImplementationOnce((_id, options) => {
             selectedSignal = options?.signal
             return selectedLoad.promise
@@ -207,11 +277,10 @@ describe("web/src/use/use-employee-benefit.ts", () => {
         await flushPromises()
 
         // Assert
-        expect(firstSignal?.aborted).toBe(true)
         expect(selectedSignal?.aborted).toBe(false)
       })
 
-      test("when a superseded read rejects with cancellation, keeps the selected record without an error", async () => {
+      test("when a superseded read rejects with cancellation, keeps the selected record", async () => {
         // Arrange
         const firstLoad = Promise.withResolvers<BenefitResponse>()
         const employeeBenefit = employeeBenefitFactory.build({ id: 42 })
@@ -231,6 +300,27 @@ describe("web/src/use/use-employee-benefit.ts", () => {
 
         // Assert
         expect(benefit.employeeBenefit.value).toEqual(employeeBenefit)
+      })
+
+      test("when a superseded read rejects with cancellation, does not report an error", async () => {
+        // Arrange
+        const firstLoad = Promise.withResolvers<BenefitResponse>()
+        const employeeBenefit = employeeBenefitFactory.build({ id: 42 })
+        const policy = { show: true, create: true, update: true, destroy: true }
+        vi.spyOn(employeeBenefitsApi, "get")
+          .mockReturnValueOnce(firstLoad.promise)
+          .mockResolvedValueOnce({ employeeBenefit, policy })
+        const id = ref(41)
+        const benefit = scope.run(() => useEmployeeBenefit(id))
+        if (!benefit) throw new Error("Expected an active benefit model")
+
+        // Act
+        id.value = 42
+        await flushPromises()
+        firstLoad.reject(new CanceledError("Request canceled"))
+        await flushPromises()
+
+        // Assert
         expect(benefit.isErrored.value).toBe(false)
       })
 
@@ -260,10 +350,37 @@ describe("web/src/use/use-employee-benefit.ts", () => {
 
         // Assert
         expect(benefit.employeeBenefit.value).toEqual(employeeBenefit2)
+      })
+
+      test("when an earlier response arrives after the selected record loads, finishes loading", async () => {
+        // Arrange
+        const firstLoad = Promise.withResolvers<BenefitResponse>()
+        const employeeBenefit1 = employeeBenefitFactory.build({ id: 41 })
+        const employeeBenefit2 = employeeBenefitFactory.build({ id: 42 })
+        vi.spyOn(employeeBenefitsApi, "get")
+          .mockReturnValueOnce(firstLoad.promise)
+          .mockResolvedValueOnce({
+            employeeBenefit: employeeBenefit2,
+            policy: { show: true, create: true, update: true, destroy: true },
+          })
+        const id = ref(41)
+        const benefit = scope.run(() => useEmployeeBenefit(id))
+        if (!benefit) throw new Error("Expected an active benefit model")
+
+        // Act
+        id.value = 42
+        await flushPromises()
+        firstLoad.resolve({
+          employeeBenefit: employeeBenefit1,
+          policy: { show: true, create: true, update: true, destroy: true },
+        })
+        await flushPromises()
+
+        // Assert
         expect(benefit.isLoading.value).toBe(false)
       })
 
-      test("when its scope is disposed, aborts the active read without recording a failure", async () => {
+      test("when its scope is disposed, aborts the active read", async () => {
         // Arrange
         const pendingLoad = Promise.withResolvers<BenefitResponse>()
         const get = vi.spyOn(employeeBenefitsApi, "get").mockReturnValueOnce(pendingLoad.promise)
@@ -279,10 +396,26 @@ describe("web/src/use/use-employee-benefit.ts", () => {
 
         // Assert
         expect(signal?.aborted).toBe(true)
+      })
+
+      test("when its scope is disposed, does not record a failure", async () => {
+        // Arrange
+        const pendingLoad = Promise.withResolvers<BenefitResponse>()
+        vi.spyOn(employeeBenefitsApi, "get").mockReturnValueOnce(pendingLoad.promise)
+        const id = ref(41)
+        const benefit = scope.run(() => useEmployeeBenefit(id))
+        if (!benefit) throw new Error("Expected an active benefit model")
+
+        // Act
+        scope.stop()
+        pendingLoad.reject(new CanceledError("Request canceled"))
+        await flushPromises()
+
+        // Assert
         expect(benefit.isErrored.value).toBe(false)
       })
 
-      test("when the selected id becomes undefined, clears state and aborts the pending read", async () => {
+      test("when the selected id becomes undefined, aborts the pending read", async () => {
         // Arrange
         const pendingLoad = Promise.withResolvers<BenefitResponse>()
         const get = vi.spyOn(employeeBenefitsApi, "get").mockReturnValueOnce(pendingLoad.promise)
@@ -298,7 +431,45 @@ describe("web/src/use/use-employee-benefit.ts", () => {
 
         // Assert
         expect(signal?.aborted).toBe(true)
+      })
+
+      test("when the selected id becomes undefined, clears the selected record", async () => {
+        // Arrange
+        const employeeBenefit = employeeBenefitFactory.build({ id: 41 })
+        vi.spyOn(employeeBenefitsApi, "get").mockResolvedValueOnce({
+          employeeBenefit,
+          policy: { show: true, create: true, update: true, destroy: true },
+        })
+        const id = ref<number | undefined>(41)
+        const benefit = scope.run(() => useEmployeeBenefit(id))
+        if (!benefit) throw new Error("Expected an active benefit model")
+        await flushPromises()
+
+        // Act
+        id.value = undefined
+        await flushPromises()
+
+        // Assert
         expect(benefit.employeeBenefit.value).toBeNull()
+      })
+
+      test("when the selected id becomes undefined, clears its policy", async () => {
+        // Arrange
+        const employeeBenefit = employeeBenefitFactory.build({ id: 41 })
+        vi.spyOn(employeeBenefitsApi, "get").mockResolvedValueOnce({
+          employeeBenefit,
+          policy: { show: true, create: true, update: true, destroy: true },
+        })
+        const id = ref<number | undefined>(41)
+        const benefit = scope.run(() => useEmployeeBenefit(id))
+        if (!benefit) throw new Error("Expected an active benefit model")
+        await flushPromises()
+
+        // Act
+        id.value = undefined
+        await flushPromises()
+
+        // Assert
         expect(benefit.policy.value).toBeNull()
       })
 
@@ -327,6 +498,32 @@ describe("web/src/use/use-employee-benefit.ts", () => {
 
         // Assert
         expect(benefit.employeeBenefit.value).toEqual(employeeBenefit2)
+      })
+
+      test("when a save finishes after another record loads, finishes loading", async () => {
+        // Arrange
+        const employeeBenefit1 = employeeBenefitFactory.build({ id: 41 })
+        const employeeBenefit2 = employeeBenefitFactory.build({ id: 42 })
+        const firstSave =
+          Promise.withResolvers<Awaited<ReturnType<typeof employeeBenefitsApi.update>>>()
+        const policy = { show: true, create: true, update: true, destroy: true }
+        vi.spyOn(employeeBenefitsApi, "get")
+          .mockResolvedValueOnce({ employeeBenefit: employeeBenefit1, policy })
+          .mockResolvedValueOnce({ employeeBenefit: employeeBenefit2, policy })
+        vi.spyOn(employeeBenefitsApi, "update").mockReturnValueOnce(firstSave.promise)
+        const id = ref(41)
+        const benefit = scope.run(() => useEmployeeBenefit(id))
+        if (!benefit) throw new Error("Expected an active benefit model")
+        await flushPromises()
+
+        // Act
+        const save = benefit.save()
+        id.value = 42
+        await flushPromises()
+        firstSave.resolve({ employeeBenefit: employeeBenefit1, policy })
+        await save
+
+        // Assert
         expect(benefit.isLoading.value).toBe(false)
       })
     })
