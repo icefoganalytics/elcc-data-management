@@ -175,6 +175,12 @@ export async function up(knex: Knex): Promise<void> {
   await retireSourceConfigurations(knex)
 }
 
+export async function down(_knex: Knex): Promise<void> {
+  console.warn(
+    "WARNING: Quality Enhancement Program configuration and worksheet values were moved into annual categories and monthly ledger rows. Rolling back requires manual restoration of the original source data."
+  )
+}
+
 async function findFundingPeriods(knex: Knex): Promise<FundingPeriod[]> {
   return knex.raw<FundingPeriod[]>(`
     SELECT
@@ -1189,11 +1195,5 @@ async function retireSourceConfigurations(knex: Knex): Promise<void> {
       AND DATALENGTH(section_name) = DATALENGTH(:sectionName)
   `,
     { sectionName: SECTION_NAME }
-  )
-}
-
-export async function down(_knex: Knex): Promise<void> {
-  console.warn(
-    "WARNING: Quality Enhancement Program configuration and worksheet values were moved into annual categories and monthly ledger rows. Rolling back requires manual restoration of the original source data."
   )
 }
