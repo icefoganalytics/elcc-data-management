@@ -1,5 +1,5 @@
-import { type Ref, reactive, ref, toRefs, unref, watch } from "vue"
-
+import { isCancel } from "axios"
+import { onScopeDispose, reactive, ref, toRefs, unref, watch, type Ref } from "vue"
 import qualityEnhancementsApi, {
   type QualityEnhancementAsIndex,
   type QualityEnhancementFiltersOptions,
@@ -29,29 +29,36 @@ export function useQualityEnhancements(
     isLoading: false,
     isErrored: false,
   })
-  let latestRequest = {}
+  let requestController: AbortController | undefined
 
   async function fetch(): Promise<QualityEnhancementAsIndex[]> {
-    const request = {}
-    latestRequest = request
-    const query = unref(queryOptions)
+    requestController?.abort()
+    const controller = new AbortController()
+    requestController = controller
     state.isLoading = true
+    state.isErrored = false
     try {
-      const { qualityEnhancements, totalCount } = await qualityEnhancementsApi.list(query)
-      if (latestRequest === request) {
-        state.isErrored = false
-        state.qualityEnhancements = qualityEnhancements
-        state.totalCount = totalCount
+      const { qualityEnhancements, totalCount } = await qualityEnhancementsApi.list(
+        unref(queryOptions),
+        { signal: controller.signal }
+      )
+      if (controller.signal.aborted) {
+        return state.qualityEnhancements
       }
+
+      state.qualityEnhancements = qualityEnhancements
+      state.totalCount = totalCount
       return qualityEnhancements
     } catch (error) {
-      console.error(`Failed to fetch Quality Enhancements: ${error}`, { error })
-      if (latestRequest === request) {
-        state.isErrored = true
+      if (controller.signal.aborted || isCancel(error)) {
+        return state.qualityEnhancements
       }
+
+      console.error(`Failed to fetch Quality Enhancements: ${error}`, { error })
+      state.isErrored = true
       throw error
     } finally {
-      if (latestRequest === request) {
+      if (!controller.signal.aborted) {
         state.isLoading = false
       }
     }
@@ -60,19 +67,27 @@ export function useQualityEnhancements(
   watch(
     () => [skipWatchIf(), unref(queryOptions)],
     async ([skip]) => {
+      state.qualityEnhancements = []
+      state.totalCount = 0
+      state.isLoading = false
+      state.isErrored = false
       if (skip) {
+        requestController?.abort()
         return
       }
 
       try {
         await fetch()
       } catch {
-        // fetch() preserves rejection for explicit callers; watcher requests are expected to fail.
+        // fetch() preserves rejection for explicit callers; watcher failures use isErrored.
       }
     },
     { deep: true, immediate: true }
   )
 
+  onScopeDispose(() => {
+    requestController?.abort()
+  })
   return {
     ...toRefs(state),
     fetch,

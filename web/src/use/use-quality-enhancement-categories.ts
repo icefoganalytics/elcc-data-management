@@ -1,5 +1,5 @@
-import { type Ref, reactive, ref, toRefs, unref, watch } from "vue"
-
+import { isCancel } from "axios"
+import { onScopeDispose, reactive, ref, toRefs, unref, watch, type Ref } from "vue"
 import qualityEnhancementCategoriesApi, {
   type QualityEnhancementCategoryAsIndex,
   type QualityEnhancementCategoryFiltersOptions,
@@ -29,30 +29,36 @@ export function useQualityEnhancementCategories(
     isLoading: false,
     isErrored: false,
   })
-  let latestRequest = {}
+  let requestController: AbortController | undefined
 
   async function fetch(): Promise<QualityEnhancementCategoryAsIndex[]> {
-    const request = {}
-    latestRequest = request
-    const query = unref(queryOptions)
+    requestController?.abort()
+    const controller = new AbortController()
+    requestController = controller
     state.isLoading = true
+    state.isErrored = false
     try {
       const { qualityEnhancementCategories, totalCount } =
-        await qualityEnhancementCategoriesApi.list(query)
-      if (latestRequest === request) {
-        state.isErrored = false
-        state.qualityEnhancementCategories = qualityEnhancementCategories
-        state.totalCount = totalCount
+        await qualityEnhancementCategoriesApi.list(unref(queryOptions), {
+          signal: controller.signal,
+        })
+      if (controller.signal.aborted) {
+        return state.qualityEnhancementCategories
       }
+
+      state.qualityEnhancementCategories = qualityEnhancementCategories
+      state.totalCount = totalCount
       return qualityEnhancementCategories
     } catch (error) {
-      console.error(`Failed to fetch Quality Enhancement categories: ${error}`, { error })
-      if (latestRequest === request) {
-        state.isErrored = true
+      if (controller.signal.aborted || isCancel(error)) {
+        return state.qualityEnhancementCategories
       }
+
+      console.error(`Failed to fetch Quality Enhancement categories: ${error}`, { error })
+      state.isErrored = true
       throw error
     } finally {
-      if (latestRequest === request) {
+      if (!controller.signal.aborted) {
         state.isLoading = false
       }
     }
@@ -61,18 +67,27 @@ export function useQualityEnhancementCategories(
   watch(
     () => [skipWatchIf(), unref(queryOptions)],
     async ([skip]) => {
+      state.qualityEnhancementCategories = []
+      state.totalCount = 0
+      state.isLoading = false
+      state.isErrored = false
       if (skip) {
+        requestController?.abort()
         return
       }
 
       try {
         await fetch()
       } catch {
-        // fetch() preserves rejection for explicit callers; watcher requests are expected to fail.
+        // fetch() preserves rejection for explicit callers; watcher failures use isErrored.
       }
     },
     { deep: true, immediate: true }
   )
+
+  onScopeDispose(() => {
+    requestController?.abort()
+  })
 
   return {
     ...toRefs(state),

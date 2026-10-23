@@ -56,19 +56,26 @@ export type QualityEnhancementCategoryQueryOptions = QueryOptions<
 >
 
 export const qualityEnhancementCategoriesApi = {
-  async list(params: QualityEnhancementCategoryQueryOptions = {}): Promise<{
+  async list(
+    params: QualityEnhancementCategoryQueryOptions = {},
+    { signal }: { signal?: AbortSignal } = {}
+  ): Promise<{
     qualityEnhancementCategories: QualityEnhancementCategoryAsIndex[]
     totalCount: number
   }> {
-    const { data } = await http.get("/api/quality-enhancement-categories", { params })
+    const { data } = await http.get("/api/quality-enhancement-categories", { params, signal })
     return data
   },
-  async get(qualityEnhancementCategoryId: number): Promise<{
+  async get(
+    qualityEnhancementCategoryId: number,
+    { signal }: { signal?: AbortSignal } = {}
+  ): Promise<{
     qualityEnhancementCategory: QualityEnhancementCategoryAsShow
     policy: QualityEnhancementCategoryPolicy
   }> {
     const { data } = await http.get(
-      `/api/quality-enhancement-categories/${qualityEnhancementCategoryId}`
+      `/api/quality-enhancement-categories/${qualityEnhancementCategoryId}`,
+      { signal }
     )
     return data
   },

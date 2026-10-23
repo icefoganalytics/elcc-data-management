@@ -1,60 +1,62 @@
 <template>
-  <v-alert
-    v-if="isErrored"
-    type="error"
-    variant="tonal"
-    class="mb-4"
-  >
-    Quality Enhancement categories could not be loaded. Try again by changing a filter or reloading
-    the page.
-  </v-alert>
-  <v-data-table-server
-    v-else
-    v-model:items-per-page="perPage"
-    v-model:sort-by="sortBy"
-    v-model:page="page"
-    :headers="headers"
-    :items="qualityEnhancementCategories"
-    :items-length="totalCount"
-    :loading="isLoading || waiting"
-    class="row-clickable"
-    density="comfortable"
-    multi-sort
-    @dblclick:row="
-      (_event: unknown, { item }: QualityEnhancementCategoryTableRow) =>
-        goToQualityEnhancementCategoryPage(item.id)
-    "
-  >
-    <template #item.fromAge="{ item }">
-      {{ item.fromAge ?? "—" }}
-    </template>
-    <template #item.toAge="{ item }">
-      {{ item.toAge ?? "—" }}
-    </template>
-    <template #item.monthlyAmount="{ item }">
-      {{ formatMoney(item.monthlyAmount, monthlyAmountFormatOptions) }}
-    </template>
-    <template #item.actions="{ item }">
-      <v-btn
-        color="yg-moss"
-        variant="outlined"
-        :to="{
-          name: 'administration/quality-enhancement-categories/QualityEnhancementCategoryPage',
-          params: {
-            qualityEnhancementCategoryId: item.id,
-          },
-        }"
-      >
-        View
-      </v-btn>
-    </template>
-    <template #top="slotProps">
-      <slot
-        name="top"
-        v-bind="slotProps"
-      ></slot>
-    </template>
-  </v-data-table-server>
+  <v-sheet>
+    <v-alert
+      v-if="isErrored"
+      type="error"
+      variant="tonal"
+      class="mb-4"
+    >
+      Quality Enhancement categories could not be loaded. Try again by changing a filter or
+      reloading the page.
+    </v-alert>
+    <v-data-table-server
+      v-else
+      v-model:items-per-page="perPage"
+      v-model:sort-by="sortBy"
+      v-model:page="page"
+      :headers="headers"
+      :items="qualityEnhancementCategories"
+      :items-length="totalCount"
+      :loading="isLoading || waiting"
+      class="row-clickable"
+      density="comfortable"
+      multi-sort
+      @dblclick:row="
+        (_event: unknown, { item }: QualityEnhancementCategoryTableRow) =>
+          goToQualityEnhancementCategoryPage(item.id)
+      "
+    >
+      <template #item.fromAge="{ item }">
+        {{ item.fromAge ?? "—" }}
+      </template>
+      <template #item.toAge="{ item }">
+        {{ item.toAge ?? "—" }}
+      </template>
+      <template #item.monthlyAmount="{ item }">
+        {{ formatMoney(item.monthlyAmount, monthlyAmountFormatOptions) }}
+      </template>
+      <template #item.actions="{ item }">
+        <v-btn
+          color="yg-moss"
+          variant="outlined"
+          :to="{
+            name: 'administration/quality-enhancement-categories/QualityEnhancementCategoryPage',
+            params: {
+              qualityEnhancementCategoryId: item.id,
+            },
+          }"
+        >
+          View
+        </v-btn>
+      </template>
+      <template #top="slotProps">
+        <slot
+          name="top"
+          v-bind="slotProps"
+        ></slot>
+      </template>
+    </v-data-table-server>
+  </v-sheet>
 </template>
 
 <script setup lang="ts">

@@ -102,7 +102,6 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           "$10.00",
           "$5.00",
         ])
-        wrapper.unmount()
       })
 
       test("when a ledger save is pending, keeps every occupancy input read only", async () => {
@@ -158,7 +157,6 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         ])
         ledgerUpdate.resolve({ data: { childCareSpace } })
         await flushPromises()
-        wrapper.unmount()
       })
       test("when one ledger update fails and another is pending, waits before unlocking", async () => {
         // Arrange
@@ -232,7 +230,6 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         ).toBe(false)
         pendingLedgerUpdate.resolve({ data: { childCareSpace: secondChildCareSpace } })
         await flushPromises()
-        wrapper.unmount()
       })
 
       test("when estimate replication is pending, keeps every occupancy input read only", async () => {
@@ -291,7 +288,6 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         ])
         replication.resolve({ data: undefined })
         await flushPromises()
-        wrapper.unmount()
       })
       test("when estimate replication fails while a sibling is pending, keeps inputs read only", async () => {
         // Arrange
@@ -347,7 +343,6 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         expect(wrapper.findAll("tbody input[readonly]")).toHaveLength(6)
         childSpaceReplication.resolve({ data: undefined })
         await flushPromises()
-        wrapper.unmount()
       })
 
       test.each([
@@ -383,7 +378,6 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
 
         // Assert
         expect(wrapper.findAll("tbody input")).toEqual([])
-        wrapper.unmount()
       })
 
       test.each([
@@ -431,7 +425,6 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
             "Infants",
             "Infants",
           ])
-          wrapper.unmount()
         }
       )
     })
