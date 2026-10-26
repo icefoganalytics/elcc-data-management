@@ -71,6 +71,7 @@ export class AdministrationCostCategory extends BaseModel<
   @Attribute(DataTypes.INTEGER)
   declare toAge: number | null
 
+  /** Monthly category rate in Canadian dollars (CAD), not cents. */
   @Attribute(DataTypes.DECIMAL(15, 4))
   @NotNull
   @ValidateAttribute({

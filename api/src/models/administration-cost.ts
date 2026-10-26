@@ -65,6 +65,7 @@ export class AdministrationCost extends BaseModel<
   @NotNull
   declare lineName: string
 
+  /** Historical monthly rate in Canadian dollars (CAD), not cents. */
   @Attribute(DataTypes.DECIMAL(15, 4))
   @NotNull
   declare monthlyAmount: string
@@ -77,10 +78,12 @@ export class AdministrationCost extends BaseModel<
   @NotNull
   declare actualChildOccupancyRate: string
 
+  /** Estimated monthly total in Canadian dollars (CAD), not cents. */
   @Attribute(DataTypes.DECIMAL(15, 4))
   @NotNull
   declare estimatedComputedTotal: string
 
+  /** Actual monthly total in Canadian dollars (CAD), not cents. */
   @Attribute(DataTypes.DECIMAL(15, 4))
   @NotNull
   declare actualComputedTotal: string
