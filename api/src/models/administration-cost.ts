@@ -26,7 +26,8 @@ import AdministrationCostCategory from "@/models/administration-cost-category"
 import Centre from "@/models/centre"
 import ChildCareSpaceCategory from "@/models/child-care-space-category"
 import FiscalPeriod from "@/models/fiscal-period"
-import { ADMINISTRATION_COST_SECTION_NAME } from "@/models/administration-cost-section-name"
+
+const ADMINISTRATION_COSTS_SECTION_NAME = "Administration (10% of Spaces)"
 
 @Table({
   tableName: "administration_costs",
@@ -35,7 +36,7 @@ export class AdministrationCost extends BaseModel<
   InferAttributes<AdministrationCost>,
   InferCreationAttributes<AdministrationCost>
 > {
-  static readonly SECTION_NAME = ADMINISTRATION_COST_SECTION_NAME
+  static readonly SECTION_NAME = ADMINISTRATION_COSTS_SECTION_NAME
 
   @Attribute(DataTypes.INTEGER)
   @PrimaryKey
@@ -97,6 +98,7 @@ export class AdministrationCost extends BaseModel<
   @Attribute(DataTypes.DATE)
   declare deletedAt: Date | null
 
+  // Hooks
   @BeforeSave
   static updateComputedTotals(administrationCost: AdministrationCost) {
     const monthlyAmount = new Big(administrationCost.monthlyAmount)
@@ -116,6 +118,7 @@ export class AdministrationCost extends BaseModel<
     administrationCost.actualComputedTotal = monthlyAmount.mul(actualChildOccupancyRate).toFixed(4)
   }
 
+  // Associations
   @BelongsTo(() => Centre, {
     foreignKey: "centreId",
     inverse: { as: "administrationCosts", type: "hasMany" },
@@ -139,6 +142,7 @@ export class AdministrationCost extends BaseModel<
   })
   declare childCareSpaceCategory?: NonAttribute<ChildCareSpaceCategory>
 
+  // Scopes
   static establishScopes() {
     this.addScope("byFundingPeriod", (fundingPeriodId: number) => ({
       where: {

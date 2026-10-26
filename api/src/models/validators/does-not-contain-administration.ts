@@ -1,4 +1,4 @@
-import ADMINISTRATION_COST_SECTION_NAME from "@/models/administration-cost-section-name"
+import AdministrationCost from "@/models/administration-cost"
 
 export function doesNotContainAdministration(values: string): void {
   let lines: unknown
@@ -15,12 +15,12 @@ export function doesNotContainAdministration(values: string): void {
         typeof line === "object" &&
         line !== null &&
         "sectionName" in line &&
-        (line.sectionName === ADMINISTRATION_COST_SECTION_NAME ||
+        (line.sectionName === AdministrationCost.SECTION_NAME ||
           line.sectionName === "Administration")
     )
   ) {
     throw new Error(
-      `${ADMINISTRATION_COST_SECTION_NAME} values must be written through the Administration costs ledger.`
+      `${AdministrationCost.SECTION_NAME} values must be written through the Administration costs ledger.`
     )
   }
 }

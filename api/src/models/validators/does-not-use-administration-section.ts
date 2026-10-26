@@ -1,10 +1,10 @@
-import ADMINISTRATION_COST_SECTION_NAME from "@/models/administration-cost-section-name"
+import AdministrationCost from "@/models/administration-cost"
 
 export function doesNotUseAdministrationSection(sectionName: string): void {
-  if (sectionName !== ADMINISTRATION_COST_SECTION_NAME && sectionName !== "Administration") return
+  if (sectionName !== AdministrationCost.SECTION_NAME && sectionName !== "Administration") return
 
   throw new Error(
-    `${ADMINISTRATION_COST_SECTION_NAME} configuration must use the Administration costs ledger.`
+    `${AdministrationCost.SECTION_NAME} configuration must use the Administration costs ledger.`
   )
 }
 

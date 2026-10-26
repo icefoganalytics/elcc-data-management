@@ -27,7 +27,6 @@ import BaseModel from "@/models/base-model"
 import AdministrationCost from "@/models/administration-cost"
 import ChildCareSpaceCategory from "@/models/child-care-space-category"
 import FundingPeriod from "@/models/funding-period"
-import { ADMINISTRATION_COST_SECTION_NAME } from "@/models/administration-cost-section-name"
 
 export const ADMINISTRATION_COST_CATEGORY_DEFAULTS = Object.freeze([
   { categoryName: "Infants", fromAge: 0, toAge: 1, monthlyAmount: "70.0" },
@@ -46,7 +45,6 @@ export class AdministrationCostCategory extends BaseModel<
   InferAttributes<AdministrationCostCategory>,
   InferCreationAttributes<AdministrationCostCategory>
 > {
-  static readonly SECTION_NAME = ADMINISTRATION_COST_SECTION_NAME
   static readonly DEFAULTS = ADMINISTRATION_COST_CATEGORY_DEFAULTS
 
   @Attribute(DataTypes.INTEGER)
@@ -100,6 +98,7 @@ export class AdministrationCostCategory extends BaseModel<
   @Attribute(DataTypes.DATE)
   declare deletedAt: Date | null
 
+  // Validators
   @ModelValidator
   async validateChildCareSpaceCategory(): Promise<void> {
     if (isNil(this.childCareSpaceCategoryId)) return
@@ -116,6 +115,7 @@ export class AdministrationCostCategory extends BaseModel<
     }
   }
 
+  // Associations
   @BelongsTo(() => FundingPeriod, {
     foreignKey: "fundingPeriodId",
     inverse: { as: "administrationCostCategories", type: "hasMany" },
@@ -133,6 +133,7 @@ export class AdministrationCostCategory extends BaseModel<
   })
   declare administrationCosts?: NonAttribute<AdministrationCost[]>
 
+  // Scopes
   static establishScopes() {
     this.addSearchScope(["categoryName"])
   }
