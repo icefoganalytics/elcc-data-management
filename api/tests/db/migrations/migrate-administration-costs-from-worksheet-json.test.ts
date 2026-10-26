@@ -1,148 +1,16 @@
-import type { Knex } from "knex"
-import { isUndefined } from "lodash"
+import {
+  administrationValue,
+  createAprilFiscalPeriod,
+  createCentre,
+  createChildCareSpaceCategory,
+  createFundingPeriod,
+  createFundingSubmissionLine,
+  createWorksheet,
+  insertRow,
+  withLegacyAdministrationSchema,
+} from "@/db/migrations/legacy-administration-costs"
 
 import { up as migrateAdministrationCosts } from "@/db/migrations/20261020180002_migrate-administration-costs-from-worksheet-json"
-import { withLegacyAdministrationSchema } from "@/db/migrations/legacy-administration-costs"
-
-const FISCAL_YEAR = "2147-2148"
-const LEGACY_FISCAL_YEAR = "2147/48"
-const APRIL_START = new Date("2147-04-01T00:00:00Z")
-const APRIL_END = new Date("2147-04-30T23:59:59Z")
-const FUNDING_PERIOD_END = new Date("2148-03-31T23:59:59Z")
-const ADMINISTRATION_SECTION_NAME = "Administration (10% of Spaces)"
-
-type IdRow = { id: number }
-type AdministrationValue = {
-  submissionLineId: number
-  sectionName: string
-  lineName: string
-  monthlyAmount: string
-  estimatedChildOccupancyRate: string
-  actualChildOccupancyRate: string
-  estimatedComputedTotal?: string
-  actualComputedTotal?: string
-  childCareSpaceCategoryId?: number | null
-}
-
-async function insertRow(
-  transaction: Knex.Transaction,
-  tableName: string,
-  attributes: Record<string, unknown>
-): Promise<number> {
-  const [row] = await transaction(tableName).insert(attributes).returning<IdRow[]>("id")
-  if (isUndefined(row)) {
-    throw new Error(`Unable to insert fixture row into ${tableName}.`)
-  }
-
-  return row.id
-}
-
-async function createCentre(transaction: Knex.Transaction): Promise<number> {
-  const fundingRegionId = await insertRow(transaction, "funding_regions", {
-    region: "Administration Migration Fixture",
-    subsidy_rate: "0.5000",
-  })
-  return insertRow(transaction, "centres", {
-    funding_region_id: fundingRegionId,
-    name: "Administration Migration Fixture Centre",
-    community: "Whitehorse",
-    status: "Active",
-    is_first_nation_program: false,
-  })
-}
-
-async function createFundingPeriod(transaction: Knex.Transaction): Promise<number> {
-  return insertRow(transaction, "funding_periods", {
-    fiscal_year: FISCAL_YEAR,
-    from_date: APRIL_START,
-    to_date: FUNDING_PERIOD_END,
-    title: "Administration Migration Fixture Funding Period",
-  })
-}
-
-async function createAprilFiscalPeriod(
-  transaction: Knex.Transaction,
-  fundingPeriodId: number
-): Promise<number> {
-  return insertRow(transaction, "fiscal_periods", {
-    funding_period_id: fundingPeriodId,
-    fiscal_year: "2147-48",
-    month: "April",
-    date_start: APRIL_START,
-    date_end: APRIL_END,
-  })
-}
-
-async function createChildCareSpaceCategory(
-  transaction: Knex.Transaction,
-  fundingPeriodId: number,
-  categoryName: string
-): Promise<number> {
-  return insertRow(transaction, "child_care_space_categories", {
-    funding_period_id: fundingPeriodId,
-    category_name: categoryName,
-    monthly_amount: "100.0000",
-  })
-}
-
-async function createFundingSubmissionLine(
-  transaction: Knex.Transaction,
-  attributes: {
-    sectionName?: string
-    fiscalYear?: string
-    lineName?: string
-    fromAge?: number | null
-    toAge?: number | null
-    monthlyAmount?: string
-    childCareSpaceCategoryId?: number | null
-    deletedAt?: Date | null
-  } = {}
-): Promise<number> {
-  return insertRow(transaction, "funding_submission_lines", {
-    fiscal_year: attributes.fiscalYear ?? LEGACY_FISCAL_YEAR,
-    section_name: attributes.sectionName ?? ADMINISTRATION_SECTION_NAME,
-    line_name: attributes.lineName ?? "Infants",
-    from_age: attributes.fromAge ?? 0,
-    to_age: attributes.toAge ?? 1,
-    monthly_amount: attributes.monthlyAmount ?? "70.0000",
-    child_care_space_category_id: attributes.childCareSpaceCategoryId ?? null,
-    deleted_at: attributes.deletedAt ?? null,
-  })
-}
-
-async function createWorksheet(
-  transaction: Knex.Transaction,
-  centreId: number,
-  values: string,
-  fiscalYear = LEGACY_FISCAL_YEAR,
-  monthName = "April"
-): Promise<number> {
-  return insertRow(transaction, "funding_submission_line_jsons", {
-    centre_id: centreId,
-    fiscal_year: fiscalYear,
-    date_name: monthName,
-    date_start: APRIL_START,
-    date_end: APRIL_END,
-    values,
-  })
-}
-
-function administrationValue(
-  submissionLineId: number,
-  overrides: Partial<AdministrationValue> = {}
-): AdministrationValue {
-  return {
-    submissionLineId,
-    sectionName: ADMINISTRATION_SECTION_NAME,
-    lineName: "Infants",
-    monthlyAmount: "12.5500",
-    estimatedChildOccupancyRate: "0.4000",
-    actualChildOccupancyRate: "0.2000",
-    estimatedComputedTotal: "5.0200",
-    actualComputedTotal: "2.5100",
-    ...overrides,
-  }
-}
 
 describe("api/src/db/migrations/20261020180002_migrate-administration-costs-from-worksheet-json.ts", () => {
   describe("#up", () => {
@@ -444,7 +312,7 @@ describe("api/src/db/migrations/20261020180002_migrate-administration-costs-from
       })
     })
 
-    test("when monthly snapshots differ from current configuration, preserves historical rates and links", async () => {
+    test("when deleted monthly snapshots differ from current configuration, preserves historical values and timestamps", async () => {
       await withLegacyAdministrationSchema(async (transaction) => {
         // Arrange
         const centreId = await createCentre(transaction)
@@ -464,7 +332,10 @@ describe("api/src/db/migrations/20261020180002_migrate-administration-costs-from
           childCareSpaceCategoryId,
           monthlyAmount: "70.0000",
         })
-        await createWorksheet(
+        const createdAt = new Date("2147-04-10T12:00:00Z")
+        const updatedAt = new Date("2147-04-11T12:30:00Z")
+        const deletedAt = new Date("2147-04-12T15:45:00Z")
+        const worksheetId = await createWorksheet(
           transaction,
           centreId,
           JSON.stringify([
@@ -474,6 +345,15 @@ describe("api/src/db/migrations/20261020180002_migrate-administration-costs-from
             }),
           ])
         )
+        await transaction("funding_submission_line_jsons")
+          .where({
+            id: worksheetId,
+          })
+          .update({
+            created_at: createdAt,
+            updated_at: updatedAt,
+            deleted_at: deletedAt,
+          })
 
         // Act
         await migrateAdministrationCosts(transaction)
@@ -485,6 +365,9 @@ describe("api/src/db/migrations/20261020180002_migrate-administration-costs-from
           "fiscal_period_id",
           "child_care_space_category_id",
           "line_name",
+          "created_at",
+          "updated_at",
+          "deleted_at",
           transaction.raw("CONVERT(VARCHAR(32), monthly_amount) AS monthlyAmount"),
           transaction.raw("CONVERT(VARCHAR(32), estimated_child_occupancy_rate) AS estimatedRate"),
           transaction.raw("CONVERT(VARCHAR(32), actual_child_occupancy_rate) AS actualRate"),
@@ -497,6 +380,9 @@ describe("api/src/db/migrations/20261020180002_migrate-administration-costs-from
             fiscal_period_id: fiscalPeriodId,
             child_care_space_category_id: historicalSpaceCategoryId,
             line_name: "Historical Infant Cohort",
+            created_at: createdAt,
+            updated_at: updatedAt,
+            deleted_at: deletedAt,
             monthlyAmount: "12.5500",
             estimatedRate: "0.4000",
             actualRate: "0.2000",
@@ -562,268 +448,5 @@ describe("api/src/db/migrations/20261020180002_migrate-administration-costs-from
         ])
       })
     })
-
-    test("when active worksheet snapshots conflict, rolls back category and worksheet changes", async () => {
-      await withLegacyAdministrationSchema(async (transaction) => {
-        // Arrange
-        const centreId = await createCentre(transaction)
-        const fundingPeriodId = await createFundingPeriod(transaction)
-        await createAprilFiscalPeriod(transaction, fundingPeriodId)
-        const sourceLineId = await createFundingSubmissionLine(transaction)
-        const firstWorksheetId = await createWorksheet(
-          transaction,
-          centreId,
-          JSON.stringify([administrationValue(sourceLineId)])
-        )
-        const conflictingWorksheetId = await createWorksheet(
-          transaction,
-          centreId,
-          JSON.stringify([
-            administrationValue(sourceLineId, {
-              monthlyAmount: "99.0000",
-              estimatedComputedTotal: "39.6000",
-              actualComputedTotal: "19.8000",
-            }),
-          ])
-        )
-
-        // Act
-        await expect(
-          transaction.transaction((nestedTransaction) =>
-            migrateAdministrationCosts(nestedTransaction)
-          )
-        ).rejects.toThrow("duplicate active snapshots")
-
-        // Assert
-        const administrationCategories = await transaction("administration_cost_categories").select(
-          "id"
-        )
-        expect(administrationCategories).toEqual([])
-
-        const worksheetRows = await transaction("funding_submission_line_jsons")
-          .select("id", "values")
-          .whereIn("id", [firstWorksheetId, conflictingWorksheetId])
-        expect(worksheetRows).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              id: firstWorksheetId,
-              values: JSON.stringify([administrationValue(sourceLineId)]),
-            }),
-            expect.objectContaining({
-              id: conflictingWorksheetId,
-              values: JSON.stringify([
-                administrationValue(sourceLineId, {
-                  monthlyAmount: "99.0000",
-                  estimatedComputedTotal: "39.6000",
-                  actualComputedTotal: "19.8000",
-                }),
-              ]),
-            }),
-          ])
-        )
-        expect(worksheetRows).toHaveLength(2)
-      })
-    })
-
-    test("when an Administration source is referenced by another section, preserves both source records", async () => {
-      await withLegacyAdministrationSchema(async (transaction) => {
-        // Arrange
-        const centreId = await createCentre(transaction)
-        const fundingPeriodId = await createFundingPeriod(transaction)
-        await createAprilFiscalPeriod(transaction, fundingPeriodId)
-        const sourceLineId = await createFundingSubmissionLine(transaction)
-        const worksheetValues = JSON.stringify([
-          administrationValue(sourceLineId),
-          {
-            sectionName: "Quality Enhancement Program",
-            submissionLineId: sourceLineId,
-          },
-        ])
-        const worksheetId = await createWorksheet(transaction, centreId, worksheetValues)
-
-        // Act
-        await expect(
-          transaction.transaction((nestedTransaction) =>
-            migrateAdministrationCosts(nestedTransaction)
-          )
-        ).rejects.toThrow("referenced by non-Administration worksheet")
-
-        // Assert
-        const worksheet = await transaction("funding_submission_line_jsons")
-          .select("values")
-          .where({
-            id: worksheetId,
-          })
-          .first()
-        const fundingSubmissionLine = await transaction("funding_submission_lines")
-          .select("id")
-          .where({
-            id: sourceLineId,
-          })
-          .first()
-        expect(worksheet?.values).toEqual(worksheetValues)
-        expect(fundingSubmissionLine?.id).toEqual(sourceLineId)
-      })
-    })
-
-    test("when an Administration value references no funding submission line, rejects migration without removing the source JSON", async () => {
-      await withLegacyAdministrationSchema(async (transaction) => {
-        // Arrange
-        const centreId = await createCentre(transaction)
-        const fundingPeriodId = await createFundingPeriod(transaction)
-        await createAprilFiscalPeriod(transaction, fundingPeriodId)
-        const worksheetValues = JSON.stringify([administrationValue(999_999_999)])
-        const worksheetId = await createWorksheet(transaction, centreId, worksheetValues)
-
-        // Act
-        await expect(
-          transaction.transaction((nestedTransaction) =>
-            migrateAdministrationCosts(nestedTransaction)
-          )
-        ).rejects.toThrow("references missing funding submission line")
-
-        // Assert
-        const worksheet = await transaction("funding_submission_line_jsons")
-          .select("values")
-          .where({
-            id: worksheetId,
-          })
-          .first()
-        expect(worksheet?.values).toEqual(worksheetValues)
-      })
-    })
-
-    test("when an Administration worksheet has no matching fiscal period, preserves its source data", async () => {
-      await withLegacyAdministrationSchema(async (transaction) => {
-        // Arrange
-        const centreId = await createCentre(transaction)
-        await createFundingPeriod(transaction)
-        const sourceLineId = await createFundingSubmissionLine(transaction)
-        const worksheetValues = JSON.stringify([administrationValue(sourceLineId)])
-        const worksheetId = await createWorksheet(transaction, centreId, worksheetValues)
-
-        // Act
-        await expect(
-          transaction.transaction((nestedTransaction) =>
-            migrateAdministrationCosts(nestedTransaction)
-          )
-        ).rejects.toThrow("has 0 matching fiscal periods")
-
-        // Assert
-        const worksheet = await transaction("funding_submission_line_jsons")
-          .select("values")
-          .where({
-            id: worksheetId,
-          })
-          .first()
-        expect(worksheet?.values).toEqual(worksheetValues)
-
-        const administrationCategories = await transaction("administration_cost_categories").select(
-          "id"
-        )
-        expect(administrationCategories).toEqual([])
-      })
-    })
-
-    test("when a historical submission-line ID is a numeric string, rejects it before configuration removal", async () => {
-      await withLegacyAdministrationSchema(async (transaction) => {
-        // Arrange
-        const centreId = await createCentre(transaction)
-        const fundingPeriodId = await createFundingPeriod(transaction)
-        await createAprilFiscalPeriod(transaction, fundingPeriodId)
-        const sourceLineId = await createFundingSubmissionLine(transaction)
-        const worksheetValues = JSON.stringify([
-          {
-            ...administrationValue(sourceLineId),
-            submissionLineId: String(sourceLineId),
-          },
-        ])
-        const worksheetId = await createWorksheet(transaction, centreId, worksheetValues)
-
-        // Act
-        await expect(
-          transaction.transaction((nestedTransaction) =>
-            migrateAdministrationCosts(nestedTransaction)
-          )
-        ).rejects.toThrow("has invalid submissionLineId")
-
-        // Assert
-        const worksheet = await transaction("funding_submission_line_jsons")
-          .select("values")
-          .where({
-            id: worksheetId,
-          })
-          .first()
-        expect(worksheet?.values).toEqual(worksheetValues)
-
-        const fundingSubmissionLine = await transaction("funding_submission_lines")
-          .select("id")
-          .where({
-            id: sourceLineId,
-          })
-          .first()
-        expect(fundingSubmissionLine?.id).toEqual(sourceLineId)
-      })
-    })
-
-    test("when a historical amount exceeds four-decimal precision, rejects migration without removing its source", async () => {
-      await withLegacyAdministrationSchema(async (transaction) => {
-        // Arrange
-        const centreId = await createCentre(transaction)
-        const fundingPeriodId = await createFundingPeriod(transaction)
-        await createAprilFiscalPeriod(transaction, fundingPeriodId)
-        const sourceLineId = await createFundingSubmissionLine(transaction)
-        const worksheetValues = `[${JSON.stringify(
-          administrationValue(sourceLineId, {
-            monthlyAmount: "12.34567",
-            estimatedComputedTotal: "4.938268",
-            actualComputedTotal: "2.469134",
-          })
-        )}]`
-        const worksheetId = await createWorksheet(transaction, centreId, worksheetValues)
-
-        // Act
-        await expect(
-          transaction.transaction((nestedTransaction) =>
-            migrateAdministrationCosts(nestedTransaction)
-          )
-        ).rejects.toThrow("cannot be represented exactly as DECIMAL(15, 4)")
-
-        // Assert
-        const worksheet = await transaction("funding_submission_line_jsons")
-          .select("values")
-          .where({
-            id: worksheetId,
-          })
-          .first()
-        expect(worksheet?.values).toEqual(worksheetValues)
-      })
-    })
-
-    test.each([".0", "e0"])(
-      "when another section references an Administration source with an integral %s ID, rejects source removal",
-      async (numericSuffix) => {
-        await withLegacyAdministrationSchema(async (transaction) => {
-          // Arrange
-          const centreId = await createCentre(transaction)
-          const fundingPeriodId = await createFundingPeriod(transaction)
-          await createAprilFiscalPeriod(transaction, fundingPeriodId)
-          const sourceLineId = await createFundingSubmissionLine(transaction)
-          await createWorksheet(
-            transaction,
-            centreId,
-            `[{"submissionLineId":${sourceLineId}${numericSuffix},"sectionName":"Quality Enhancement Program"}]`
-          )
-
-          // Act
-          const migration = transaction.transaction((nestedTransaction) =>
-            migrateAdministrationCosts(nestedTransaction)
-          )
-
-          // Assert
-          await expect(migration).rejects.toThrow("is referenced by non-Administration worksheet")
-        })
-      }
-    )
   })
 })

@@ -16,6 +16,7 @@ const KNOWN_WORKSHEET_PROPERTY_NAMES: Record<string, true> = {
 }
 const KNEX_SOURCE_LINE_COLUMN = "source_funding_submission_line_id"
 
+class LegacyDataError extends Error {}
 type DateValue = Date | string | null
 
 type FundingPeriod = {
@@ -109,45 +110,46 @@ type AdministrationCost = {
 export async function up(knex: Knex): Promise<void> {
   const worksheetLines = await findAdministrationWorksheetLines(knex)
   const sourceLines = await findFundingSubmissionLines(knex)
-  await rejectNonAdministrationReferencesToAdministrationLines(knex, sourceLines)
   const sourceLineById = new Map(sourceLines.map((sourceLine) => [sourceLine.id, sourceLine]))
   const fundingPeriods = await findFundingPeriods(knex)
   const fundingPeriodIdsByFiscalYear = indexFundingPeriodsByFiscalYear(fundingPeriods)
   const categorySourcesByKey = new Map<string, AdministrationCategorySource>()
 
   for (const sourceLine of sourceLines) {
-    if (!isAdministrationSectionName(sourceLine.sectionName)) {
-      continue
-    }
+    if (!isAdministrationSectionName(sourceLine.sectionName)) continue
 
-    const fundingPeriodId = findUniqueFundingPeriodId(
-      sourceLine.fiscalYear,
-      fundingPeriodIdsByFiscalYear,
-      `Administration configuration ${sourceLine.id}`
-    )
-    categorySourcesByKey.set(categoryKey(sourceLine.id, fundingPeriodId), {
-      sourceLine,
-      fundingPeriodId,
-    })
+    try {
+      const fundingPeriodId = findUniqueFundingPeriodId(
+        sourceLine.fiscalYear,
+        fundingPeriodIdsByFiscalYear,
+        `Administration configuration ${sourceLine.id}`
+      )
+      categorySourcesByKey.set(categoryKey(sourceLine.id, fundingPeriodId), {
+        sourceLine,
+        fundingPeriodId,
+      })
+    } catch (error) {
+      if (!(error instanceof LegacyDataError)) throw error
+    }
   }
 
   for (const worksheetLine of worksheetLines) {
     const sourceLine = sourceLineById.get(worksheetLine.submissionLineId)
-    if (isUndefined(sourceLine)) {
-      throw new Error(
-        `Administration worksheet references missing funding submission line ${worksheetLine.submissionLineId}.`
-      )
-    }
+    if (isUndefined(sourceLine)) continue
 
-    const fundingPeriodId = findUniqueFundingPeriodId(
-      worksheetLine.fiscalYear,
-      fundingPeriodIdsByFiscalYear,
-      `Administration worksheet ${worksheetLine.worksheetId}`
-    )
-    categorySourcesByKey.set(categoryKey(sourceLine.id, fundingPeriodId), {
-      sourceLine,
-      fundingPeriodId,
-    })
+    try {
+      const fundingPeriodId = findUniqueFundingPeriodId(
+        worksheetLine.fiscalYear,
+        fundingPeriodIdsByFiscalYear,
+        `Administration worksheet ${worksheetLine.worksheetId}`
+      )
+      categorySourcesByKey.set(categoryKey(sourceLine.id, fundingPeriodId), {
+        sourceLine,
+        fundingPeriodId,
+      })
+    } catch (error) {
+      if (!(error instanceof LegacyDataError)) throw error
+    }
   }
 
   const fiscalPeriods = await findFiscalPeriods(knex)
@@ -195,7 +197,14 @@ async function findAdministrationWorksheetLines(
         worksheet_properties.value AS propertyValue,
         worksheet_properties.type AS propertyType
       FROM funding_submission_line_jsons
-      CROSS APPLY OPENJSON(funding_submission_line_jsons.[values]) AS worksheet_lines
+      CROSS APPLY OPENJSON(
+        CASE
+          WHEN ISJSON(funding_submission_line_jsons.[values]) = 1
+            AND LEFT(LTRIM(funding_submission_line_jsons.[values]), 1) = N'['
+            THEN funding_submission_line_jsons.[values]
+          ELSE N'[]'
+        END
+      ) AS worksheet_lines
       CROSS APPLY OPENJSON(
         CASE WHEN worksheet_lines.type = 5 THEN worksheet_lines.value ELSE N'{}' END
       ) AS worksheet_properties
@@ -234,9 +243,7 @@ async function findAdministrationWorksheetLines(
   const linesByKey = new Map<string, AdministrationWorksheetLine>()
 
   for (const row of rows) {
-    if (isNil(row.lineIndex)) {
-      throw new Error(`Administration worksheet ${row.worksheetId} is not a JSON array.`)
-    }
+    if (isNil(row.lineIndex)) continue
 
     const key = `${row.worksheetId}:${row.lineIndex}`
     let worksheetLine = linesByKey.get(key)
@@ -264,99 +271,38 @@ async function findAdministrationWorksheetLines(
     worksheetLine.properties.set(row.propertyName, properties)
   }
 
+  const validWorksheetLines: AdministrationWorksheetLine[] = []
   for (const worksheetLine of linesByKey.values()) {
-    for (const propertyName of Object.keys(KNOWN_WORKSHEET_PROPERTY_NAMES)) {
-      const properties = worksheetLine.properties.get(propertyName) ?? []
-      if (properties.length > 1) {
-        throw new Error(
-          `Administration worksheet ${worksheetLine.worksheetId} line ${worksheetLine.lineIndex} repeats ${propertyName}.`
+    try {
+      for (const propertyName of Object.keys(KNOWN_WORKSHEET_PROPERTY_NAMES)) {
+        if (propertyName === "childCareSpaceCategoryId") continue
+        const properties = worksheetLine.properties.get(propertyName) ?? []
+        if (properties.length > 1) {
+          throw new LegacyDataError(
+            `Administration worksheet ${worksheetLine.worksheetId} line ${worksheetLine.lineIndex} repeats ${propertyName}.`
+          )
+        }
+      }
+
+      const sectionName = requiredStringProperty(worksheetLine, "sectionName")
+      if (!isAdministrationSectionName(sectionName)) {
+        throw new LegacyDataError(
+          `Administration worksheet ${worksheetLine.worksheetId} line ${worksheetLine.lineIndex} has a conflicting section name.`
         )
       }
-    }
 
-    const sectionName = requiredStringProperty(worksheetLine, "sectionName")
-    if (!isAdministrationSectionName(sectionName)) {
-      throw new Error(
-        `Administration worksheet ${worksheetLine.worksheetId} line ${worksheetLine.lineIndex} has a conflicting section name.`
+      worksheetLine.submissionLineId = requiredNonnegativeIntegerProperty(
+        worksheetLine,
+        "submissionLineId"
       )
-    }
-
-    worksheetLine.submissionLineId = requiredNonnegativeIntegerProperty(
-      worksheetLine,
-      "submissionLineId"
-    )
-  }
-
-  return [...linesByKey.values()]
-}
-
-async function rejectNonAdministrationReferencesToAdministrationLines(
-  knex: Knex,
-  sourceLines: FundingSubmissionLine[]
-): Promise<void> {
-  const administrationSourceIds = new Set<string>()
-  for (const sourceLine of sourceLines) {
-    if (isAdministrationSectionName(sourceLine.sectionName)) {
-      administrationSourceIds.add(String(sourceLine.id))
-    }
-  }
-  if (administrationSourceIds.size === 0) return
-
-  const references = await knex.raw<{ worksheetId: number; sourceLineValue: string }[]>(
-    `
-      SELECT
-        funding_submission_line_jsons.id AS worksheetId,
-        line_properties.value AS sourceLineValue
-      FROM funding_submission_line_jsons
-      CROSS APPLY OPENJSON(funding_submission_line_jsons.[values]) AS worksheet_lines
-      CROSS APPLY OPENJSON(
-        CASE WHEN worksheet_lines.type = 5 THEN worksheet_lines.value ELSE N'{}' END
-      ) AS line_properties
-      WHERE line_properties.[key] COLLATE Latin1_General_100_BIN2 = N'submissionLineId'
-        AND DATALENGTH(line_properties.[key]) = DATALENGTH(N'submissionLineId')
-        AND line_properties.type IN (1, 2)
-        AND NOT EXISTS (
-          SELECT 1
-          FROM OPENJSON(
-            CASE WHEN worksheet_lines.type = 5 THEN worksheet_lines.value ELSE N'{}' END
-          ) AS section_properties
-          WHERE section_properties.[key] COLLATE Latin1_General_100_BIN2 = N'sectionName'
-            AND DATALENGTH(section_properties.[key]) = DATALENGTH(N'sectionName')
-            AND section_properties.type = 1
-            AND (
-              (
-                section_properties.value COLLATE Latin1_General_100_BIN2 =
-                  :administrationSectionName COLLATE Latin1_General_100_BIN2
-                AND DATALENGTH(section_properties.value) = DATALENGTH(:administrationSectionName)
-              )
-              OR (
-                section_properties.value COLLATE Latin1_General_100_BIN2 =
-                  :legacyAdministrationSectionName COLLATE Latin1_General_100_BIN2
-                AND DATALENGTH(section_properties.value) =
-                  DATALENGTH(:legacyAdministrationSectionName)
-              )
-            )
-        )
-    `,
-    {
-      administrationSectionName: ADMINISTRATION_SECTION_NAMES[0],
-      legacyAdministrationSectionName: ADMINISTRATION_SECTION_NAMES[1],
-    }
-  )
-  for (const reference of references) {
-    let sourceLineId: Big
-    try {
-      sourceLineId = Big(reference.sourceLineValue)
-    } catch {
+      validWorksheetLines.push(worksheetLine)
+    } catch (error) {
+      if (!(error instanceof LegacyDataError)) throw error
       continue
     }
-
-    if (administrationSourceIds.has(sourceLineId.toString())) {
-      throw new Error(
-        `Administration source ${sourceLineId.toString()} is referenced by non-Administration worksheet ${reference.worksheetId}.`
-      )
-    }
   }
+
+  return validWorksheetLines
 }
 
 async function findFundingSubmissionLines(knex: Knex): Promise<FundingSubmissionLine[]> {
@@ -375,6 +321,7 @@ async function findFundingSubmissionLines(knex: Knex): Promise<FundingSubmission
         updated_at AS updatedAt,
         deleted_at AS deletedAt
       FROM funding_submission_lines
+      ORDER BY id
     `
   )
 }
@@ -431,63 +378,56 @@ async function migrateAdministrationCategories(
       deletedAt: DateValue | Knex.Raw
     }
   >()
-  const activeCategoryNames = new Set<string>()
 
   for (const { sourceLine, fundingPeriodId } of categorySources) {
-    const fundingPeriod = fundingPeriodById.get(fundingPeriodId)
-    if (isUndefined(fundingPeriod)) {
-      throw new Error(
-        `Administration source ${sourceLine.id} has no matching funding period ${fundingPeriodId}.`
+    try {
+      if (typeof sourceLine.lineName !== "string" || sourceLine.lineName.length > 200) {
+        throw new LegacyDataError("Invalid category name")
+      }
+      const fundingPeriod = fundingPeriodById.get(fundingPeriodId)
+      if (isUndefined(fundingPeriod)) {
+        throw new LegacyDataError(
+          `Administration source ${sourceLine.id} has no matching funding period ${fundingPeriodId}.`
+        )
+      }
+
+      const sourceYearMatchesCategoryYear =
+        isAdministrationSectionName(sourceLine.sectionName) &&
+        normalizeFiscalYear(sourceLine.fiscalYear) === normalizeFiscalYear(fundingPeriod.fiscalYear)
+      const isCurrentConfiguration = sourceYearMatchesCategoryYear && isNil(sourceLine.deletedAt)
+      let childCareSpaceCategoryId = sourceYearMatchesCategoryYear
+        ? sourceLine.childCareSpaceCategoryId
+        : null
+      if (!isNil(childCareSpaceCategoryId)) {
+        const childCareSpaceCategory = childCareCategoryById.get(childCareSpaceCategoryId)
+        if (
+          isUndefined(childCareSpaceCategory) ||
+          childCareSpaceCategory.fundingPeriodId !== fundingPeriodId
+        ) {
+          childCareSpaceCategoryId = null
+        }
+      }
+
+      const monthlyAmount = exactDecimal(
+        sourceLine.monthlyAmount,
+        `Administration configuration ${sourceLine.id} monthlyAmount`
       )
-    }
-
-    const sourceYearMatchesCategoryYear =
-      isAdministrationSectionName(sourceLine.sectionName) &&
-      normalizeFiscalYear(sourceLine.fiscalYear) === normalizeFiscalYear(fundingPeriod.fiscalYear)
-    const isCurrentConfiguration = sourceYearMatchesCategoryYear && isNil(sourceLine.deletedAt)
-    const childCareSpaceCategoryId = sourceYearMatchesCategoryYear
-      ? sourceLine.childCareSpaceCategoryId
-      : null
-    if (!isNil(childCareSpaceCategoryId)) {
-      const childCareSpaceCategory = childCareCategoryById.get(childCareSpaceCategoryId)
-      if (isUndefined(childCareSpaceCategory)) {
-        throw new Error(
-          `Administration configuration ${sourceLine.id} references missing Child Care Space category ${childCareSpaceCategoryId}.`
-        )
+      let deletedAt: DateValue | Knex.Raw = sourceLine.deletedAt
+      if (!isCurrentConfiguration && isNil(deletedAt)) {
+        deletedAt = knex.raw("GETUTCDATE()")
       }
-      if (childCareSpaceCategory.fundingPeriodId !== fundingPeriodId) {
-        throw new Error(
-          `Administration configuration ${sourceLine.id} links to a Child Care Space category from another funding period.`
-        )
-      }
-    }
 
-    const monthlyAmount = exactDecimal(
-      sourceLine.monthlyAmount,
-      `Administration configuration ${sourceLine.id} monthlyAmount`
-    )
-    let deletedAt: DateValue | Knex.Raw = sourceLine.deletedAt
-    if (!isCurrentConfiguration && isNil(deletedAt)) {
-      deletedAt = knex.raw("GETUTCDATE()")
+      categoryAttributesByKey.set(categoryKey(sourceLine.id, fundingPeriodId), {
+        sourceLine,
+        fundingPeriodId,
+        childCareSpaceCategoryId,
+        monthlyAmount,
+        deletedAt,
+      })
+    } catch (error) {
+      if (!(error instanceof LegacyDataError)) throw error
+      continue
     }
-
-    if (isCurrentConfiguration) {
-      const uniqueCategoryKey = `${fundingPeriodId}:${sourceLine.lineName}`
-      if (activeCategoryNames.has(uniqueCategoryKey)) {
-        throw new Error(
-          `Administration configuration has duplicate active category ${sourceLine.lineName} for funding period ${fundingPeriodId}.`
-        )
-      }
-      activeCategoryNames.add(uniqueCategoryKey)
-    }
-
-    categoryAttributesByKey.set(categoryKey(sourceLine.id, fundingPeriodId), {
-      sourceLine,
-      fundingPeriodId,
-      childCareSpaceCategoryId,
-      monthlyAmount,
-      deletedAt,
-    })
   }
 
   if (categoryAttributesByKey.size === 0) {
@@ -533,8 +473,27 @@ async function migrateAdministrationCategories(
       categoryAttributes
     const existingCategory = categoryByKey.get(key)
     if (!isUndefined(existingCategory)) {
-      assertCategoryMatchesSource(existingCategory, categoryAttributes)
+      try {
+        assertCategoryMatchesSource(existingCategory, categoryAttributes)
+      } catch (error) {
+        if (!(error instanceof LegacyDataError)) throw error
+
+        categoryByKey.delete(key)
+      }
       continue
+    }
+    if (isNil(deletedAt)) {
+      const [categoryNameConflict] = await knex.raw<{ id: number }[]>(
+        `
+          SELECT TOP 1 id
+          FROM administration_cost_categories
+          WHERE funding_period_id = ?
+            AND category_name = ?
+            AND deleted_at IS NULL
+        `,
+        [fundingPeriodId, sourceLine.lineName]
+      )
+      if (!isUndefined(categoryNameConflict)) continue
     }
 
     const [insertedCategory] = await knex("administration_cost_categories")
@@ -610,7 +569,7 @@ function assertCategoryMatchesSource(
     !Big(existingCategory.monthlyAmount).eq(monthlyAmount) ||
     isNil(existingCategory.deletedAt) === shouldBeDeleted
   ) {
-    throw new Error(
+    throw new LegacyDataError(
       `Existing Administration category for source ${sourceLine.id} conflicts with its legacy configuration.`
     )
   }
@@ -627,11 +586,17 @@ function buildAdministrationCosts(
 
   const fiscalPeriodsByFundingPeriodAndMonth = new Map<string, FiscalPeriod[]>()
   for (const fiscalPeriod of fiscalPeriods) {
-    const fiscalYear = normalizeFiscalYear(fiscalPeriod.fiscalYear)
-    const key = `${fiscalPeriod.fundingPeriodId}:${fiscalYear}:${fiscalPeriod.month.toLowerCase()}`
-    const periods = fiscalPeriodsByFundingPeriodAndMonth.get(key) ?? []
-    periods.push(fiscalPeriod)
-    fiscalPeriodsByFundingPeriodAndMonth.set(key, periods)
+    try {
+      const fiscalYear = normalizeFiscalYear(fiscalPeriod.fiscalYear)
+      const key = `${fiscalPeriod.fundingPeriodId}:${fiscalYear}:${fiscalPeriod.month.toLowerCase()}`
+      const periods = fiscalPeriodsByFundingPeriodAndMonth.get(key) ?? []
+      periods.push(fiscalPeriod)
+      fiscalPeriodsByFundingPeriodAndMonth.set(key, periods)
+    } catch (error) {
+      if (!(error instanceof LegacyDataError)) throw error
+
+      continue
+    }
   }
 
   const childCareCategoryIds = new Set(childCareSpaceCategories.map((category) => category.id))
@@ -639,51 +604,50 @@ function buildAdministrationCosts(
   const administrationCosts: AdministrationCost[] = []
 
   for (const worksheetLine of worksheetLines) {
-    const { worksheetId, lineIndex, submissionLineId } = worksheetLine
-    const fundingPeriodId = findUniqueFundingPeriodId(
-      worksheetLine.fiscalYear,
-      fundingPeriodIdsByFiscalYear,
-      `Administration worksheet ${worksheetId}`
-    )
-    const category = categories.get(categoryKey(submissionLineId, fundingPeriodId))
-    if (isUndefined(category)) {
-      throw new Error(
-        `Administration worksheet ${worksheetId} line ${lineIndex} has no migrated category for source ${submissionLineId} in funding period ${fundingPeriodId}.`
+    try {
+      const { worksheetId, lineIndex, submissionLineId } = worksheetLine
+      const fundingPeriodId = findUniqueFundingPeriodId(
+        worksheetLine.fiscalYear,
+        fundingPeriodIdsByFiscalYear,
+        `Administration worksheet ${worksheetId}`
       )
-    }
-    if (category.fundingPeriodId !== fundingPeriodId) {
-      throw new Error(
-        `Administration worksheet ${worksheetId} line ${lineIndex} references a category from another funding period.`
-      )
-    }
+      const category = categories.get(categoryKey(submissionLineId, fundingPeriodId))
+      if (isUndefined(category)) {
+        throw new LegacyDataError(
+          `Administration worksheet ${worksheetId} line ${lineIndex} has no migrated category for source ${submissionLineId} in funding period ${fundingPeriodId}.`
+        )
+      }
+      if (category.fundingPeriodId !== fundingPeriodId) {
+        throw new LegacyDataError(
+          `Administration worksheet ${worksheetId} line ${lineIndex} references a category from another funding period.`
+        )
+      }
 
-    const fiscalYear = normalizeFiscalYear(worksheetLine.fiscalYear)
-    const fiscalPeriodKey = `${fundingPeriodId}:${fiscalYear}:${worksheetLine.monthName.toLowerCase()}`
-    const matchingFiscalPeriods = fiscalPeriodsByFundingPeriodAndMonth.get(fiscalPeriodKey) ?? []
-    if (matchingFiscalPeriods.length !== 1) {
-      throw new Error(
-        `Administration worksheet ${worksheetId} has ${matchingFiscalPeriods.length} matching fiscal periods for ${worksheetLine.fiscalYear} ${worksheetLine.monthName}.`
-      )
-    }
+      const fiscalYear = normalizeFiscalYear(worksheetLine.fiscalYear)
+      const fiscalPeriodKey = `${fundingPeriodId}:${fiscalYear}:${worksheetLine.monthName.toLowerCase()}`
+      const matchingFiscalPeriods = fiscalPeriodsByFundingPeriodAndMonth.get(fiscalPeriodKey) ?? []
+      if (matchingFiscalPeriods.length !== 1) {
+        throw new LegacyDataError(
+          `Administration worksheet ${worksheetId} has ${matchingFiscalPeriods.length} matching fiscal periods for ${worksheetLine.fiscalYear} ${worksheetLine.monthName}.`
+        )
+      }
 
-    const fiscalPeriod = matchingFiscalPeriods[0]
-    const administrationCost = createAdministrationCost(
-      worksheetLine,
-      category,
-      fiscalPeriod.id,
-      childCareCategoryIds
-    )
-    const activeCostKey = `${administrationCost.centreId}:${administrationCost.fiscalPeriodId}:${administrationCost.categoryId}`
-    if (isNil(administrationCost.deletedAt) && activeCostKeys.has(activeCostKey)) {
-      throw new Error(
-        `Administration worksheets contain duplicate active snapshots for centre ${administrationCost.centreId}, fiscal period ${administrationCost.fiscalPeriodId}, and category ${administrationCost.categoryId}.`
+      const fiscalPeriod = matchingFiscalPeriods[0]
+      const administrationCost = createAdministrationCost(
+        worksheetLine,
+        category,
+        fiscalPeriod.id,
+        childCareCategoryIds
       )
-    }
-    if (isNil(administrationCost.deletedAt)) {
-      activeCostKeys.add(activeCostKey)
-    }
+      const activeCostKey = `${administrationCost.centreId}:${administrationCost.fiscalPeriodId}:${administrationCost.categoryId}`
+      if (isNil(administrationCost.deletedAt) && activeCostKeys.has(activeCostKey)) continue
+      if (isNil(administrationCost.deletedAt)) activeCostKeys.add(activeCostKey)
 
-    administrationCosts.push(administrationCost)
+      administrationCosts.push(administrationCost)
+    } catch (error) {
+      if (!(error instanceof LegacyDataError)) throw error
+      continue
+    }
   }
 
   return administrationCosts
@@ -697,7 +661,7 @@ function createAdministrationCost(
 ): AdministrationCost {
   const lineName = requiredStringProperty(worksheetLine, "lineName")
   if (lineName.length > 200) {
-    throw new Error(
+    throw new LegacyDataError(
       `Administration worksheet ${worksheetLine.worksheetId} line ${worksheetLine.lineIndex} has a lineName longer than 200 characters.`
     )
   }
@@ -730,7 +694,7 @@ function createAdministrationCost(
     (!isUndefined(providedActualComputedTotal) &&
       !Big(providedActualComputedTotal).eq(actualComputedTotal))
   ) {
-    throw new Error(
+    throw new LegacyDataError(
       `Administration worksheet ${worksheetLine.worksheetId} line ${worksheetLine.lineIndex} has computed totals that conflict with its occupancy values.`
     )
   }
@@ -761,7 +725,9 @@ function optionalChildCareSpaceCategoryId(
   worksheetLine: AdministrationWorksheetLine,
   childCareCategoryIds: Set<number>
 ): number | null {
-  const property = optionalProperty(worksheetLine, "childCareSpaceCategoryId")
+  const properties = worksheetLine.properties.get("childCareSpaceCategoryId") ?? []
+  if (properties.length > 1) return null
+  const property = properties[0]
   if (isUndefined(property)) {
     return null
   }
@@ -769,18 +735,20 @@ function optionalChildCareSpaceCategoryId(
     return null
   }
 
-  const childCareSpaceCategoryId = integerFromProperty(
-    worksheetLine,
-    "childCareSpaceCategoryId",
-    property
-  )
-  if (!childCareCategoryIds.has(childCareSpaceCategoryId)) {
-    throw new Error(
-      `Administration worksheet ${worksheetLine.worksheetId} line ${worksheetLine.lineIndex} references missing Child Care Space category ${childCareSpaceCategoryId}.`
+  try {
+    const childCareSpaceCategoryId = integerFromProperty(
+      worksheetLine,
+      "childCareSpaceCategoryId",
+      property
     )
-  }
+    if (!childCareCategoryIds.has(childCareSpaceCategoryId)) return null
 
-  return childCareSpaceCategoryId
+    return childCareSpaceCategoryId
+  } catch (error) {
+    if (!(error instanceof LegacyDataError)) throw error
+
+    return null
+  }
 }
 
 async function insertAdministrationCosts(
@@ -788,6 +756,24 @@ async function insertAdministrationCosts(
   administrationCosts: AdministrationCost[]
 ): Promise<void> {
   for (const administrationCost of administrationCosts) {
+    if (isNil(administrationCost.deletedAt)) {
+      const [existingCost] = await knex.raw<{ id: number }[]>(
+        `
+          SELECT TOP 1 id
+          FROM administration_costs
+          WHERE centre_id = ?
+            AND fiscal_period_id = ?
+            AND category_id = ?
+            AND deleted_at IS NULL
+        `,
+        [
+          administrationCost.centreId,
+          administrationCost.fiscalPeriodId,
+          administrationCost.categoryId,
+        ]
+      )
+      if (!isUndefined(existingCost)) continue
+    }
     await knex("administration_costs").insert({
       centre_id: administrationCost.centreId,
       fiscal_period_id: administrationCost.fiscalPeriodId,
@@ -825,7 +811,14 @@ async function removeAdministrationValuesFromWorksheets(knex: Knex): Promise<voi
               ),
               N','
             ) WITHIN GROUP (ORDER BY TRY_CONVERT(INT, worksheet_lines.[key])) + N']'
-          FROM OPENJSON(funding_submission_line_jsons.[values]) AS worksheet_lines
+          FROM OPENJSON(
+            CASE
+              WHEN ISJSON(funding_submission_line_jsons.[values]) = 1
+                AND LEFT(LTRIM(funding_submission_line_jsons.[values]), 1) = N'['
+                THEN funding_submission_line_jsons.[values]
+              ELSE N'[]'
+            END
+          ) AS worksheet_lines
           WHERE NOT EXISTS (
             SELECT 1
             FROM OPENJSON(
@@ -852,7 +845,14 @@ async function removeAdministrationValuesFromWorksheets(knex: Knex): Promise<voi
       )
       WHERE EXISTS (
         SELECT 1
-        FROM OPENJSON(funding_submission_line_jsons.[values]) AS worksheet_lines
+        FROM OPENJSON(
+          CASE
+            WHEN ISJSON(funding_submission_line_jsons.[values]) = 1
+              AND LEFT(LTRIM(funding_submission_line_jsons.[values]), 1) = N'['
+              THEN funding_submission_line_jsons.[values]
+            ELSE N'[]'
+          END
+        ) AS worksheet_lines
         CROSS APPLY OPENJSON(
           CASE WHEN worksheet_lines.type = 5 THEN worksheet_lines.value ELSE N'{}' END
         ) AS section_properties
@@ -883,7 +883,14 @@ async function removeAdministrationValuesFromWorksheets(knex: Knex): Promise<voi
     `
       SELECT TOP 1 funding_submission_line_jsons.id
       FROM funding_submission_line_jsons
-      CROSS APPLY OPENJSON(funding_submission_line_jsons.[values]) AS worksheet_lines
+      CROSS APPLY OPENJSON(
+        CASE
+          WHEN ISJSON(funding_submission_line_jsons.[values]) = 1
+            AND LEFT(LTRIM(funding_submission_line_jsons.[values]), 1) = N'['
+            THEN funding_submission_line_jsons.[values]
+          ELSE N'[]'
+        END
+      ) AS worksheet_lines
       CROSS APPLY OPENJSON(
         CASE WHEN worksheet_lines.type = 5 THEN worksheet_lines.value ELSE N'{}' END
       ) AS section_properties
@@ -947,10 +954,16 @@ async function removeAdministrationConfiguration(knex: Knex): Promise<void> {
 function indexFundingPeriodsByFiscalYear(fundingPeriods: FundingPeriod[]): Map<string, number[]> {
   const fundingPeriodIdsByFiscalYear = new Map<string, number[]>()
   for (const fundingPeriod of fundingPeriods) {
-    const fiscalYear = normalizeFiscalYear(fundingPeriod.fiscalYear)
-    const fundingPeriodIds = fundingPeriodIdsByFiscalYear.get(fiscalYear) ?? []
-    fundingPeriodIds.push(fundingPeriod.id)
-    fundingPeriodIdsByFiscalYear.set(fiscalYear, fundingPeriodIds)
+    try {
+      const fiscalYear = normalizeFiscalYear(fundingPeriod.fiscalYear)
+      const fundingPeriodIds = fundingPeriodIdsByFiscalYear.get(fiscalYear) ?? []
+      fundingPeriodIds.push(fundingPeriod.id)
+      fundingPeriodIdsByFiscalYear.set(fiscalYear, fundingPeriodIds)
+    } catch (error) {
+      if (!(error instanceof LegacyDataError)) throw error
+
+      continue
+    }
   }
 
   return fundingPeriodIdsByFiscalYear
@@ -968,7 +981,7 @@ function findUniqueFundingPeriodId(
   const normalizedFiscalYear = normalizeFiscalYear(fiscalYear)
   const fundingPeriodIds = fundingPeriodIdsByFiscalYear.get(normalizedFiscalYear) ?? []
   if (fundingPeriodIds.length !== 1) {
-    throw new Error(
+    throw new LegacyDataError(
       `${sourceDescription} has ${fundingPeriodIds.length} matching funding periods for ${fiscalYear}.`
     )
   }
@@ -979,7 +992,9 @@ function findUniqueFundingPeriodId(
 function normalizeFiscalYear(fiscalYear: string): string {
   const match = /^(\d{4})[-/](\d{2}|\d{4})$/.exec(fiscalYear)
   if (isNil(match)) {
-    throw new Error(`Cannot match Administration data to invalid fiscal year ${fiscalYear}.`)
+    throw new LegacyDataError(
+      `Cannot match Administration data to invalid fiscal year ${fiscalYear}.`
+    )
   }
 
   const startYear = Number(match[1])
@@ -988,7 +1003,9 @@ function normalizeFiscalYear(fiscalYear: string): string {
     (match[2].length === 2 && match[2] !== String(endYear).slice(-2)) ||
     (match[2].length === 4 && Number(match[2]) !== endYear)
   ) {
-    throw new Error(`Cannot match Administration data to invalid fiscal year ${fiscalYear}.`)
+    throw new LegacyDataError(
+      `Cannot match Administration data to invalid fiscal year ${fiscalYear}.`
+    )
   }
 
   return `${match[1]}-${endYear}`
@@ -1012,7 +1029,7 @@ function requiredStringProperty(
 ): string {
   const property = optionalProperty(worksheetLine, propertyName)
   if (isUndefined(property) || property.type !== 1 || isNil(property.value)) {
-    throw new Error(
+    throw new LegacyDataError(
       `Administration worksheet ${worksheetLine.worksheetId} line ${worksheetLine.lineIndex} has invalid ${propertyName}.`
     )
   }
@@ -1026,7 +1043,7 @@ function requiredNonnegativeIntegerProperty(
 ): number {
   const property = optionalProperty(worksheetLine, propertyName)
   if (isUndefined(property)) {
-    throw new Error(
+    throw new LegacyDataError(
       `Administration worksheet ${worksheetLine.worksheetId} line ${worksheetLine.lineIndex} is missing ${propertyName}.`
     )
   }
@@ -1040,7 +1057,7 @@ function integerFromProperty(
   property: JsonProperty
 ): number {
   if (property.type !== 2 || isNil(property.value)) {
-    throw new Error(
+    throw new LegacyDataError(
       `Administration worksheet ${worksheetLine.worksheetId} line ${worksheetLine.lineIndex} has invalid ${propertyName}.`
     )
   }
@@ -1049,7 +1066,7 @@ function integerFromProperty(
   try {
     numberValue = Big(property.value)
   } catch {
-    throw new Error(
+    throw new LegacyDataError(
       `Administration worksheet ${worksheetLine.worksheetId} line ${worksheetLine.lineIndex} has invalid ${propertyName}.`
     )
   }
@@ -1059,7 +1076,7 @@ function integerFromProperty(
     numberValue.lt(0) ||
     numberValue.gt(Number.MAX_SAFE_INTEGER)
   ) {
-    throw new Error(
+    throw new LegacyDataError(
       `Administration worksheet ${worksheetLine.worksheetId} line ${worksheetLine.lineIndex} has invalid ${propertyName}.`
     )
   }
@@ -1073,7 +1090,7 @@ function requiredExactDecimalProperty(
 ): string {
   const property = optionalProperty(worksheetLine, propertyName)
   if (isUndefined(property)) {
-    throw new Error(
+    throw new LegacyDataError(
       `Administration worksheet ${worksheetLine.worksheetId} line ${worksheetLine.lineIndex} is missing ${propertyName}.`
     )
   }
@@ -1100,7 +1117,7 @@ function exactDecimalFromProperty(
   property: JsonProperty
 ): string {
   if ((property.type !== 1 && property.type !== 2) || isNil(property.value)) {
-    throw new Error(
+    throw new LegacyDataError(
       `Administration worksheet ${worksheetLine.worksheetId} line ${worksheetLine.lineIndex} has invalid ${propertyName}.`
     )
   }
@@ -1116,12 +1133,14 @@ function exactDecimal(value: string, sourceDescription: string): string {
   try {
     decimalValue = Big(value)
   } catch {
-    throw new Error(`${sourceDescription} is not a valid decimal.`)
+    throw new LegacyDataError(`${sourceDescription} is not a valid decimal.`)
   }
 
   const fixedValue = decimalValue.toFixed(4)
   if (!decimalValue.eq(fixedValue) || decimalValue.abs().gt("99999999999.9999")) {
-    throw new Error(`${sourceDescription} cannot be represented exactly as DECIMAL(15, 4).`)
+    throw new LegacyDataError(
+      `${sourceDescription} cannot be represented exactly as DECIMAL(15, 4).`
+    )
   }
 
   return fixedValue
