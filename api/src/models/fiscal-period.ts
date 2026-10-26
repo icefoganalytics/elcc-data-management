@@ -174,6 +174,7 @@ export class FiscalPeriod extends BaseModel<
     },
   })
   declare childCareSpaces?: NonAttribute<ChildCareSpace[]>
+
   @HasMany(() => AdministrationCost, {
     foreignKey: "fiscalPeriodId",
     inverse: { as: "fiscalPeriod" },

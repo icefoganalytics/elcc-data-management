@@ -163,6 +163,7 @@ export class Centre extends BaseModel<InferAttributes<Centre>, InferCreationAttr
     },
   })
   declare childCareSpaces?: NonAttribute<ChildCareSpace[]>
+
   @HasMany(() => AdministrationCost, {
     foreignKey: "centreId",
     inverse: { as: "centre" },
