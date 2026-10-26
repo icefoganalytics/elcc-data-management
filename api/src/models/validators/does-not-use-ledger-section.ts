@@ -1,9 +1,11 @@
+const LEDGER_SECTION_NAMES = [
+  "Child Care Spaces",
+  "Administration (10% of Spaces)",
+  "Administration",
+]
+
 export function doesNotUseLedgerSection(sectionName: string): void {
-  if (
-    sectionName !== "Child Care Spaces" &&
-    sectionName !== "Administration (10% of Spaces)" &&
-    sectionName !== "Administration"
-  ) {
+  if (!LEDGER_SECTION_NAMES.includes(sectionName)) {
     return
   }
 
