@@ -50,7 +50,9 @@ Missing funding-period mappings or conflicting category references abort the bac
 
 **Administration → Administration Cost Categories** manages names, age ranges, rates, and optional links to Child Care Space categories within the same funding period. Its funding period is immutable after creation. Normal edits and retirement affect future provisioning, not existing monthly name, rate, or linkage snapshots. Existing configured rates are preserved; the section title does not derive a live percentage from Child Care Spaces.
 
-The [Administration cutover](../../api/src/db/migrations/20261020180002_migrate-administration-costs-from-worksheet-json.ts) preserves current and historical configuration, monthly occupancy, exact totals, timestamps, and deletion state before removing the old section from worksheet JSON and shared submission lines. Retained JSON is reconstructed from raw elements so unrelated numeric tokens and unknown properties are unchanged. Missing or ambiguous mappings, conflicting snapshots, malformed identifiers, excess decimal precision, and references from surviving sections abort the migration. Restoring pre-cutover configuration or JSON requires the original backup; automatic reversal is intentionally rejected.
+The [Administration cutover](../../api/src/db/migrations/20261020180002_migrate-administration-costs-from-worksheet-json.ts) preserves valid configuration, monthly values, exact totals, timestamps, and deletion state before retiring the old Administration stores. Malformed rows, invalid identifiers or decimals, inconsistent totals, unresolved fiscal context, and conflicts are skipped rather than blocking deployment. The first valid active snapshot in worksheet-ID and line order wins duplicate ledger keys; existing target records are not overwritten. Invalid optional Spaces links become null without losing valid financial values.
+
+Cleanup discards unusable Administration entries along with migrated entries. Unrelated raw JSON, including references to retired Administration source IDs, remains unchanged; whole malformed or nonarray JSON documents are ignored unchanged. SQL, schema, and connection failures remain fatal and roll back the migration batch. Restoring discarded history requires the original backup; automatic reversal is intentionally rejected.
 
 Historical Administration rows retain their explicit Spaces link or remain unlinked when the JSON has no link; current configuration never supplies a missing snapshot link. If a source configuration moves to another funding year, its reconstructed historical category is retired and does not inherit the new year's link. Current configuration still requires a link within its own funding period.
 
@@ -92,7 +94,7 @@ Historical migration fixtures keep schema setup, data, migration calls, assertio
 - [Migration preservation, idempotency, and complete rollback](../../api/tests/db/migrations/migrate-child-care-spaces-from-worksheet-json.test.ts)
 - [Category cutover preservation, moved-year configuration, and rollback](../../api/tests/db/migrations/backfill-child-care-space-categories.test.ts)
 - [Exact historical numeric-ID linkage and metadata preservation](../../api/tests/db/migrations/link-funding-submission-lines-to-child-care-space-categories.test.ts)
-- [Administration migration preservation and fail-closed conversion](../../api/tests/db/migrations/migrate-administration-costs-from-worksheet-json.test.ts)
+- [Administration migration preservation and best-effort legacy-data cleanup](../../api/tests/db/migrations/migrate-administration-costs-from-worksheet-json.test.ts)
 - [Financial persistence and precision](../../api/tests/models/child-care-space.test.ts)
 - [Stale-client JSON rejection and accepted JSON-owned writes](../../api/tests/controllers/funding-submission-line-jsons-controller.test.ts)
 - [Historical initialization](../../api/tests/services/centres/funding-periods/is-initialized-service.test.ts)
