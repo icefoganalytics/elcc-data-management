@@ -88,13 +88,21 @@ describe("api/src/services/funding-periods/destroy-service.ts", () => {
           fiscalYear: "2025-26",
         })
         const selectedCategory = await administrationCostCategoryFactory
-          .associations({ fundingPeriod: selectedFundingPeriod })
+          .associations({
+            fundingPeriod: selectedFundingPeriod,
+          })
           .create()
         const unrelatedCategory = await administrationCostCategoryFactory
-          .associations({ fundingPeriod: unrelatedFundingPeriod })
+          .associations({
+            fundingPeriod: unrelatedFundingPeriod,
+          })
           .create()
         await administrationCostFactory
-          .associations({ centre, fiscalPeriod: selectedFiscalPeriod, category: selectedCategory })
+          .associations({
+            centre,
+            fiscalPeriod: selectedFiscalPeriod,
+            category: selectedCategory,
+          })
           .create()
         await administrationCostFactory
           .associations({

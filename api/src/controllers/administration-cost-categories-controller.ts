@@ -19,7 +19,9 @@ export class AdministrationCostCategoriesController extends BaseController<Admin
       const order = this.buildOrder([["categoryName", "ASC"]])
       const scopedCategories = AdministrationCostCategoryPolicy.applyScope(scopes, this.currentUser)
 
-      const totalCount = await scopedCategories.count({ where })
+      const totalCount = await scopedCategories.count({
+        where,
+      })
       const administrationCostCategories = await scopedCategories.findAll({
         where,
         order,
@@ -36,7 +38,9 @@ export class AdministrationCostCategoriesController extends BaseController<Admin
         totalCount,
       })
     } catch (error) {
-      logger.error(`Error fetching administration cost categories: ${error}`, { error })
+      logger.error(`Error fetching administration cost categories: ${error}`, {
+        error,
+      })
       return this.response.status(400).json({
         message: `Error fetching administration cost categories: ${error}`,
       })
@@ -65,7 +69,9 @@ export class AdministrationCostCategoriesController extends BaseController<Admin
         policy,
       })
     } catch (error) {
-      logger.error(`Error fetching administration cost category: ${error}`, { error })
+      logger.error(`Error fetching administration cost category: ${error}`, {
+        error,
+      })
       return this.response.status(400).json({
         message: `Error fetching administration cost category: ${error}`,
       })
@@ -89,7 +95,9 @@ export class AdministrationCostCategoriesController extends BaseController<Admin
         policy,
       })
     } catch (error) {
-      logger.error(`Error creating administration cost category: ${error}`, { error })
+      logger.error(`Error creating administration cost category: ${error}`, {
+        error,
+      })
       return this.response.status(422).json({
         message: `Error creating administration cost category: ${error}`,
       })
@@ -123,7 +131,9 @@ export class AdministrationCostCategoriesController extends BaseController<Admin
         policy,
       })
     } catch (error) {
-      logger.error(`Error updating administration cost category: ${error}`, { error })
+      logger.error(`Error updating administration cost category: ${error}`, {
+        error,
+      })
       return this.response.status(422).json({
         message: `Error updating administration cost category: ${error}`,
       })
@@ -149,7 +159,9 @@ export class AdministrationCostCategoriesController extends BaseController<Admin
       await DestroyService.perform(administrationCostCategory)
       return this.response.status(204).send()
     } catch (error) {
-      logger.error(`Error deleting administration cost category: ${error}`, { error })
+      logger.error(`Error deleting administration cost category: ${error}`, {
+        error,
+      })
       return this.response.status(422).json({
         message: `Error deleting administration cost category: ${error}`,
       })

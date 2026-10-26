@@ -264,24 +264,42 @@ describe("api/src/services/centres/destroy-service.ts", () => {
         const fundingPeriod = await fundingPeriodFactory.create({
           fiscalYear: "2024-2025",
         })
-        const fiscalPeriod = await fiscalPeriodFactory.associations({ fundingPeriod }).create({
-          fiscalYear: "2024-25",
-        })
+        const fiscalPeriod = await fiscalPeriodFactory
+          .associations({
+            fundingPeriod,
+          })
+          .create({
+            fiscalYear: "2024-25",
+          })
         const category = await administrationCostCategoryFactory
-          .associations({ fundingPeriod })
+          .associations({
+            fundingPeriod,
+          })
           .create()
-        await administrationCostFactory.associations({ centre, fiscalPeriod, category }).create()
+        await administrationCostFactory
+          .associations({
+            centre,
+            fiscalPeriod,
+            category,
+          })
+          .create()
 
         // Act
         await DestroyService.perform(centre, currentUser)
 
         // Assert
         const administrationCostCount = await AdministrationCost.count({
-          where: { centreId: centre.id },
+          where: {
+            centreId: centre.id,
+          },
         })
         const persistedCategory = await AdministrationCostCategory.findByPk(category.id)
         expect(administrationCostCount).toBe(0)
-        expect(persistedCategory).toEqual(expect.objectContaining({ deletedAt: null }))
+        expect(persistedCategory).toEqual(
+          expect.objectContaining({
+            deletedAt: null,
+          })
+        )
       })
     })
   })

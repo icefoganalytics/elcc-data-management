@@ -24,29 +24,57 @@ export const administrationCostFactory = Factory.define<AdministrationCost>(
       }
     })
 
-    const centre = associations.centre ?? centreFactory.build({ id: params.centreId })
+    const centre =
+      associations.centre ??
+      centreFactory.build({
+        id: params.centreId,
+      })
     const fiscalPeriod =
-      associations.fiscalPeriod ?? fiscalPeriodFactory.build({ id: params.fiscalPeriodId })
+      associations.fiscalPeriod ??
+      fiscalPeriodFactory.build({
+        id: params.fiscalPeriodId,
+      })
     const fundingPeriod =
-      fiscalPeriod.fundingPeriod ?? fundingPeriodFactory.build({ id: fiscalPeriod.fundingPeriodId })
+      fiscalPeriod.fundingPeriod ??
+      fundingPeriodFactory.build({
+        id: fiscalPeriod.fundingPeriodId,
+      })
     fiscalPeriod.fundingPeriod = fundingPeriod
     const category =
       associations.category ??
-      administrationCostCategoryFactory.associations({ fundingPeriod }).build({
-        id: params.categoryId,
-      })
+      administrationCostCategoryFactory
+        .associations({
+          fundingPeriod,
+        })
+        .build({
+          id: params.categoryId,
+        })
     const childCareSpaceCategory =
       associations.childCareSpaceCategory ??
       (category.childCareSpaceCategoryId === null
         ? undefined
-        : childCareSpaceCategoryFactory.associations({ fundingPeriod }).build({
-            id: category.childCareSpaceCategoryId,
-          }))
+        : childCareSpaceCategoryFactory
+            .associations({
+              fundingPeriod,
+            })
+            .build({
+              id: category.childCareSpaceCategoryId,
+            }))
     const monthlyAmount = params.monthlyAmount ?? category.monthlyAmount
     const estimatedChildOccupancyRate =
-      params.estimatedChildOccupancyRate ?? faker.finance.amount({ min: 0, max: 1, dec: 4 })
+      params.estimatedChildOccupancyRate ??
+      faker.finance.amount({
+        min: 0,
+        max: 1,
+        dec: 4,
+      })
     const actualChildOccupancyRate =
-      params.actualChildOccupancyRate ?? faker.finance.amount({ min: 0, max: 1, dec: 4 })
+      params.actualChildOccupancyRate ??
+      faker.finance.amount({
+        min: 0,
+        max: 1,
+        dec: 4,
+      })
 
     const administrationCost = AdministrationCost.build({
       centreId: centre.id,

@@ -177,7 +177,9 @@ export class FiscalPeriod extends BaseModel<
 
   @HasMany(() => AdministrationCost, {
     foreignKey: "fiscalPeriodId",
-    inverse: { as: "fiscalPeriod" },
+    inverse: {
+      as: "fiscalPeriod",
+    },
   })
   declare administrationCosts?: NonAttribute<AdministrationCost[]>
 

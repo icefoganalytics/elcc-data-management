@@ -124,19 +124,28 @@ export class AdministrationCost extends BaseModel<
   // Associations
   @BelongsTo(() => Centre, {
     foreignKey: "centreId",
-    inverse: { as: "administrationCosts", type: "hasMany" },
+    inverse: {
+      as: "administrationCosts",
+      type: "hasMany",
+    },
   })
   declare centre?: NonAttribute<Centre>
 
   @BelongsTo(() => FiscalPeriod, {
     foreignKey: "fiscalPeriodId",
-    inverse: { as: "administrationCosts", type: "hasMany" },
+    inverse: {
+      as: "administrationCosts",
+      type: "hasMany",
+    },
   })
   declare fiscalPeriod?: NonAttribute<FiscalPeriod>
 
   @BelongsTo(() => AdministrationCostCategory, {
     foreignKey: "categoryId",
-    inverse: { as: "administrationCosts", type: "hasMany" },
+    inverse: {
+      as: "administrationCosts",
+      type: "hasMany",
+    },
   })
   declare category?: NonAttribute<AdministrationCostCategory>
 
@@ -169,7 +178,9 @@ export class AdministrationCost extends BaseModel<
       include: [
         {
           association: "fiscalPeriod",
-          where: { fiscalYear },
+          where: {
+            fiscalYear,
+          },
         },
       ],
     }))

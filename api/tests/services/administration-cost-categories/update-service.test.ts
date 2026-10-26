@@ -17,18 +17,31 @@ describe("api/src/services/administration-cost-categories/update-service.ts", ()
       test("when category configuration changes, preserves existing ledger snapshots", async () => {
         // Arrange
         const centre = await centreFactory.create()
-        const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2024-2025" })
-        const fiscalPeriod = await fiscalPeriodFactory.associations({ fundingPeriod }).create({
-          fiscalYear: "2024-25",
-          month: FiscalPeriod.Months.APRIL,
-          dateStart: new Date("2024-04-01"),
-          dateEnd: new Date("2024-04-30"),
+        const fundingPeriod = await fundingPeriodFactory.create({
+          fiscalYear: "2024-2025",
         })
+        const fiscalPeriod = await fiscalPeriodFactory
+          .associations({
+            fundingPeriod,
+          })
+          .create({
+            fiscalYear: "2024-25",
+            month: FiscalPeriod.Months.APRIL,
+            dateStart: new Date("2024-04-01"),
+            dateEnd: new Date("2024-04-30"),
+          })
         const childCareSpaceCategory = await childCareSpaceCategoryFactory
-          .associations({ fundingPeriod })
-          .create({ categoryName: "Infants" })
+          .associations({
+            fundingPeriod,
+          })
+          .create({
+            categoryName: "Infants",
+          })
         const administrationCostCategory = await administrationCostCategoryFactory
-          .associations({ fundingPeriod, childCareSpaceCategory })
+          .associations({
+            fundingPeriod,
+            childCareSpaceCategory,
+          })
           .create({
             categoryName: "Infants",
             childCareSpaceCategoryId: childCareSpaceCategory.id,
@@ -78,7 +91,9 @@ describe("api/src/services/administration-cost-categories/update-service.ts", ()
         const administrationCostCategory = await administrationCostCategoryFactory.create()
 
         // Act
-        const updatePromise = administrationCostCategory.update({ monthlyAmount: "70.12345" })
+        const updatePromise = administrationCostCategory.update({
+          monthlyAmount: "70.12345",
+        })
 
         // Assert
         await expect(updatePromise).rejects.toThrow("at most four decimal places")

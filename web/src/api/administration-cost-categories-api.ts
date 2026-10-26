@@ -51,7 +51,9 @@ export const administrationCostCategoriesApi = {
     administrationCostCategories: AdministrationCostCategoryAsIndex[]
     totalCount: number
   }> {
-    const { data } = await http.get("/api/administration-cost-categories", { params })
+    const { data } = await http.get("/api/administration-cost-categories", {
+      params,
+    })
     return data
   },
   async get(administrationCostCategoryId: number): Promise<{

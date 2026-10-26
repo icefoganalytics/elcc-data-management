@@ -113,7 +113,9 @@ describe("api/src/controllers/funding-submission-line-jsons-controller.ts", () =
 
         // Assert
         expect(response.status).toEqual(422)
-        expect(response.body).toEqual({ message: expect.any(String) })
+        expect(response.body).toEqual({
+          message: expect.any(String),
+        })
       })
     })
 
@@ -141,11 +143,15 @@ describe("api/src/controllers/funding-submission-line-jsons-controller.ts", () =
         // Act
         const response = await request()
           .patch(`/api/funding-submission-line-jsons/${worksheet.id}`)
-          .send({ values: JSON.stringify([staleLine]) })
+          .send({
+            values: JSON.stringify([staleLine]),
+          })
 
         // Assert
         expect(response.status).toEqual(422)
-        expect(response.body).toEqual({ message: expect.any(String) })
+        expect(response.body).toEqual({
+          message: expect.any(String),
+        })
       })
 
       test.each(["lines", "values"] as const)(
@@ -167,7 +173,10 @@ describe("api/src/controllers/funding-submission-line-jsons-controller.ts", () =
             estimatedComputedTotal: "50",
             actualComputedTotal: "50",
           }
-          const remainingLine = { ...staleLine, sectionName: "Children with Diverse Needs" }
+          const remainingLine = {
+            ...staleLine,
+            sectionName: "Children with Diverse Needs",
+          }
           const worksheet = await fundingSubmissionLineJsonFactory.create({
             centreId: centre.id,
             lines: [remainingLine],
@@ -212,7 +221,10 @@ describe("api/src/controllers/funding-submission-line-jsons-controller.ts", () =
             estimatedComputedTotal: "50",
             actualComputedTotal: "50",
           }
-          const remainingLine = { ...staleLine, sectionName: "Children with Diverse Needs" }
+          const remainingLine = {
+            ...staleLine,
+            sectionName: "Children with Diverse Needs",
+          }
           const worksheet = await fundingSubmissionLineJsonFactory.create({
             centreId: centre.id,
             lines: [remainingLine],
@@ -364,7 +376,9 @@ describe("api/src/controllers/funding-submission-line-jsons-controller.ts", () =
         // Act
         await request()
           .patch(`/api/funding-submission-line-jsons/${worksheet.id}`)
-          .send({ values: JSON.stringify([administrationLine]) })
+          .send({
+            values: JSON.stringify([administrationLine]),
+          })
 
         // Assert
         await worksheet.reload()

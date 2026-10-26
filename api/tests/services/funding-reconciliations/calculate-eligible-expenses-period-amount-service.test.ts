@@ -72,18 +72,33 @@ describe("api/src/services/funding-reconciliations/calculate-eligible-expenses-p
           dateEnd: new Date("2025-04-30"),
         })
         const category = await administrationCostCategoryFactory
-          .associations({ fundingPeriod })
-          .create({ categoryName: "Infants", monthlyAmount: "80.0000" })
+          .associations({
+            fundingPeriod,
+          })
+          .create({
+            categoryName: "Infants",
+            monthlyAmount: "80.0000",
+          })
         await administrationCostFactory
-          .associations({ centre, fiscalPeriod, category })
-          .create({ actualChildOccupancyRate: "0.2500" })
+          .associations({
+            centre,
+            fiscalPeriod,
+            category,
+          })
+          .create({
+            actualChildOccupancyRate: "0.2500",
+          })
         await fundingSubmissionLineJsonFactory.create({
           centreId: centre.id,
           fiscalYear: "2025/26",
           dateName: FundingSubmissionLineJson.Months.APRIL,
           dateStart: new Date("2025-04-01"),
           dateEnd: new Date("2025-04-30"),
-          values: JSON.stringify([{ actualComputedTotal: "50.0000" }]),
+          values: JSON.stringify([
+            {
+              actualComputedTotal: "50.0000",
+            },
+          ]),
         })
 
         // Act

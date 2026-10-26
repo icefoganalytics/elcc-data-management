@@ -19,7 +19,9 @@ export class BulkEnsureService extends BaseService {
         method: ["byFundingPeriod", this.fundingPeriod.id],
       }).findOne({
         attributes: ["id"],
-        where: { centreId: this.centre.id },
+        where: {
+          centreId: this.centre.id,
+        },
         paranoid: false,
       })
       if (isNil(historicalAdministrationCost)) {
@@ -30,7 +32,9 @@ export class BulkEnsureService extends BaseService {
     return AdministrationCost.withScope({
       method: ["byFundingPeriod", this.fundingPeriod.id],
     }).findAll({
-      where: { centreId: this.centre.id },
+      where: {
+        centreId: this.centre.id,
+      },
     })
   }
 }

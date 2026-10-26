@@ -12,7 +12,9 @@ export class BulkEnsureService extends BaseService {
   async perform(): Promise<AdministrationCostCategory[]> {
     const categoryHistory = await AdministrationCostCategory.findOne({
       attributes: ["id"],
-      where: { fundingPeriodId: this.fundingPeriod.id },
+      where: {
+        fundingPeriodId: this.fundingPeriod.id,
+      },
       paranoid: false,
     })
     if (isNil(categoryHistory)) {
@@ -20,7 +22,9 @@ export class BulkEnsureService extends BaseService {
     }
 
     return AdministrationCostCategory.findAll({
-      where: { fundingPeriodId: this.fundingPeriod.id },
+      where: {
+        fundingPeriodId: this.fundingPeriod.id,
+      },
       order: [["id", "ASC"]],
     })
   }

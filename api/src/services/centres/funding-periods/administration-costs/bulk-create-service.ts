@@ -21,7 +21,9 @@ export class BulkCreateService extends BaseService {
   async perform(): Promise<AdministrationCost[]> {
     const fiscalPeriods = await FiscalPeriod.findAll({
       attributes: ["id"],
-      where: { fundingPeriodId: this.fundingPeriod.id },
+      where: {
+        fundingPeriodId: this.fundingPeriod.id,
+      },
       order: [["dateStart", "ASC"]],
     })
     if (isEmpty(fiscalPeriods)) {
@@ -30,7 +32,9 @@ export class BulkCreateService extends BaseService {
 
     const categories = await AdministrationCostCategory.findAll({
       attributes: ["id", "childCareSpaceCategoryId", "categoryName", "monthlyAmount"],
-      where: { fundingPeriodId: this.fundingPeriod.id },
+      where: {
+        fundingPeriodId: this.fundingPeriod.id,
+      },
       order: [["id", "ASC"]],
     })
     if (isEmpty(categories)) {

@@ -15,7 +15,12 @@ export function useAdministrationCostCategory(
     policy: AdministrationCostCategoryPolicy | null
     isLoading: boolean
     isErrored: boolean
-  }>({ administrationCostCategory: null, policy: null, isLoading: false, isErrored: false })
+  }>({
+    administrationCostCategory: null,
+    policy: null,
+    isLoading: false,
+    isErrored: false,
+  })
   let latestRequest = {}
 
   async function fetch() {
@@ -85,10 +90,17 @@ export function useAdministrationCostCategory(
         // Fetch state exposes the error to the page.
       }
     },
-    { immediate: true }
+    {
+      immediate: true,
+    }
   )
 
-  return { ...toRefs(state), fetch, save, remove }
+  return {
+    ...toRefs(state),
+    fetch,
+    save,
+    remove,
+  }
 }
 
 export default useAdministrationCostCategory

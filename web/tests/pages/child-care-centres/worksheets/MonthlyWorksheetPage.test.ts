@@ -86,7 +86,12 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           }
 
           if (url === "/api/administration-costs") {
-            return { data: { administrationCosts: [administrationCost], totalCount: 1 } }
+            return {
+              data: {
+                administrationCosts: [administrationCost],
+                totalCount: 1,
+              },
+            }
           }
           throw new Error(`Unexpected GET ${url}`)
         })
@@ -97,7 +102,11 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             return { data: { childCareSpace } }
           }
           if (url === "/api/administration-costs/60") {
-            return { data: { administrationCost } }
+            return {
+              data: {
+                administrationCost,
+              },
+            }
           }
 
           return { data: { fundingSubmissionLineJson } }
@@ -232,17 +241,42 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           }
 
           if (url === "/api/administration-costs") {
-            return { data: { administrationCosts: [administrationCost], totalCount: 1 } }
+            return {
+              data: {
+                administrationCosts: [administrationCost],
+                totalCount: 1,
+              },
+            }
           }
           if (url === "/api/child-care-spaces") {
-            return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
+            return {
+              data: {
+                childCareSpaces: [childCareSpace],
+                totalCount: 1,
+              },
+            }
           }
 
-          return { data: { fundingSubmissionLineJson: aprilWorksheet } }
+          return {
+            data: {
+              fundingSubmissionLineJson: aprilWorksheet,
+            },
+          }
         })
-        vi.mocked(httpClient, true).patch.mockResolvedValue({ data: {} })
-        vi.mocked(httpClient, true).post.mockResolvedValue({ data: {} })
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+        vi.mocked(httpClient, true).patch.mockResolvedValue({
+          data: {},
+        })
+        vi.mocked(httpClient, true).post.mockResolvedValue({
+          data: {},
+        })
+        const router = mockRouter([
+          {
+            path: "/",
+            component: {
+              template: "<div />",
+            },
+          },
+        ])
         await router.push("/")
         await router.isReady()
         const wrapper = mount(MonthlyWorksheetPage, {
@@ -253,7 +287,10 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           },
           global: {
             plugins: [router, createPinia(), mockVuetify()],
-            stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
+            stubs: {
+              BuildingExpenseCreateFormCard: true,
+              BuildingExpensesEditTable: true,
+            },
           },
         })
         await flushPromises()
@@ -268,7 +305,9 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         await replicateEstimatesButton.trigger("click")
         await flushPromises()
 
-        await wrapper.setProps({ month: FiscalPeriodMonths.MAY })
+        await wrapper.setProps({
+          month: FiscalPeriodMonths.MAY,
+        })
         await flushPromises()
 
         // Assert
@@ -284,7 +323,12 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         })
         vi.mocked(httpClient, true).get.mockImplementation(async (url) => {
           if (url === "/api/funding-submission-line-jsons") {
-            return { data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 } }
+            return {
+              data: {
+                fundingSubmissionLineJsons: [worksheet],
+                totalCount: 1,
+              },
+            }
           }
           if (url === "/api/fiscal-periods") {
             return {
@@ -301,17 +345,33 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             }
           }
           if (url === "/api/funding-submission-line-jsons/44") {
-            return { data: { fundingSubmissionLineJson: worksheet } }
+            return {
+              data: {
+                fundingSubmissionLineJson: worksheet,
+              },
+            }
           }
           if (url === "/api/child-care-spaces") {
-            return { data: { childCareSpaces: [], totalCount: 0 } }
+            return {
+              data: {
+                childCareSpaces: [],
+                totalCount: 0,
+              },
+            }
           }
           if (url === "/api/administration-costs") {
             throw new Error("Administration costs unavailable")
           }
           throw new Error(`Unexpected GET ${url}`)
         })
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+        const router = mockRouter([
+          {
+            path: "/",
+            component: {
+              template: "<div />",
+            },
+          },
+        ])
         await router.push("/")
         await router.isReady()
         const wrapper = mount(MonthlyWorksheetPage, {
@@ -322,7 +382,10 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           },
           global: {
             plugins: [router, createPinia(), mockVuetify()],
-            stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
+            stubs: {
+              BuildingExpenseCreateFormCard: true,
+              BuildingExpensesEditTable: true,
+            },
           },
         })
 

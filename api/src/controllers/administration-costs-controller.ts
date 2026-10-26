@@ -21,7 +21,9 @@ export class AdministrationCostsController extends BaseController<Administration
         this.currentUser
       )
 
-      const totalCount = await scopedAdministrationCosts.count({ where })
+      const totalCount = await scopedAdministrationCosts.count({
+        where,
+      })
       const administrationCosts = await scopedAdministrationCosts.findAll({
         where,
         order,
@@ -38,7 +40,9 @@ export class AdministrationCostsController extends BaseController<Administration
         totalCount,
       })
     } catch (error) {
-      logger.error(`Error fetching administration costs: ${error}`, { error })
+      logger.error(`Error fetching administration costs: ${error}`, {
+        error,
+      })
       return this.response.status(400).json({
         message: `Error fetching administration costs: ${error}`,
       })
@@ -67,7 +71,9 @@ export class AdministrationCostsController extends BaseController<Administration
         policy,
       })
     } catch (error) {
-      logger.error(`Error fetching administration cost: ${error}`, { error })
+      logger.error(`Error fetching administration cost: ${error}`, {
+        error,
+      })
       return this.response.status(400).json({
         message: `Error fetching administration cost: ${error}`,
       })
@@ -101,7 +107,9 @@ export class AdministrationCostsController extends BaseController<Administration
         policy,
       })
     } catch (error) {
-      logger.error(`Error updating administration cost: ${error}`, { error })
+      logger.error(`Error updating administration cost: ${error}`, {
+        error,
+      })
       return this.response.status(422).json({
         message: `Error updating administration cost: ${error}`,
       })

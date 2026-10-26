@@ -37,8 +37,14 @@ describe("web/src/pages/administration/administration-cost-categories/Administra
             return {
               data: {
                 fundingPeriods: [
-                  { id: 1, fiscalYear: "2024-2025" },
-                  { id: 2, fiscalYear: "2025-2026" },
+                  {
+                    id: 1,
+                    fiscalYear: "2024-2025",
+                  },
+                  {
+                    id: 2,
+                    fiscalYear: "2025-2026",
+                  },
                 ],
                 totalCount: 2,
               },
@@ -48,7 +54,12 @@ describe("web/src/pages/administration/administration-cost-categories/Administra
             url === "/api/child-care-space-categories" &&
             config?.params?.where?.fundingPeriodId === 1
           ) {
-            return { data: { childCareSpaceCategories: [previousCategory], totalCount: 1 } }
+            return {
+              data: {
+                childCareSpaceCategories: [previousCategory],
+                totalCount: 1,
+              },
+            }
           }
           if (url === "/api/child-care-space-categories") {
             return pendingCategories.promise
@@ -60,14 +71,18 @@ describe("web/src/pages/administration/administration-cost-categories/Administra
           {
             path: "/",
             name: "administration/AdministrationCostCategoriesPage",
-            component: { template: "<div />" },
+            component: {
+              template: "<div />",
+            },
           },
         ])
         await router.push("/")
         await router.isReady()
         const wrapper = mount(AdministrationCostCategoryNewPage, {
           attachTo: document.body,
-          global: { plugins: [router, createPinia(), mockVuetify()] },
+          global: {
+            plugins: [router, createPinia(), mockVuetify()],
+          },
         })
         await flushPromises()
         const fundingPeriodSelect = wrapper.findAllComponents(VSelect)[0]

@@ -102,7 +102,9 @@
           variant="outlined"
           :to="{
             name: 'administration/administration-cost-categories/AdministrationCostCategoryPage',
-            params: { administrationCostCategoryId },
+            params: {
+              administrationCostCategoryId,
+            },
           }"
         >
           Cancel
@@ -126,19 +128,27 @@ import useSnack from "@/use/use-snack"
 import CurrencyInput from "@/components/CurrencyInput.vue"
 import HeaderActionsFormCard from "@/components/common/HeaderActionsFormCard.vue"
 
-const monthlyAmountOptions = { precision: 4 }
+const monthlyAmountOptions = {
+  precision: 4,
+}
 const props = defineProps<{ administrationCostCategoryId: string }>()
 const administrationCostCategoryId = computed(() => Number(props.administrationCostCategoryId))
 const { administrationCostCategory, policy, isLoading, isErrored, fetch, save } =
   useAdministrationCostCategory(administrationCostCategoryId)
 const fundingPeriodId = computed(() => administrationCostCategory.value?.fundingPeriodId)
-const { fundingPeriods } = useFundingPeriods(ref({ perPage: -1 }))
+const { fundingPeriods } = useFundingPeriods(
+  ref({
+    perPage: -1,
+  })
+)
 const fundingPeriodDescription = computed(() => {
   const fundingPeriod = fundingPeriods.value.find(({ id }) => id === fundingPeriodId.value)
   return fundingPeriod?.fiscalYear ?? String(fundingPeriodId.value)
 })
 const spaceCategoriesQuery = computed(() => ({
-  where: { fundingPeriodId: fundingPeriodId.value },
+  where: {
+    fundingPeriodId: fundingPeriodId.value,
+  },
   perPage: -1,
 }))
 const {
@@ -173,7 +183,9 @@ watch(
     monthlyAmount.value = category.monthlyAmount
     childCareSpaceCategoryId.value = category.childCareSpaceCategoryId
   },
-  { immediate: true }
+  {
+    immediate: true,
+  }
 )
 
 async function saveCategory() {
@@ -200,16 +212,25 @@ async function saveCategory() {
 }
 
 useBreadcrumbs("Edit Administration Cost Category", [
-  { title: "Administration", to: { name: "AdministrationPage" } },
+  {
+    title: "Administration",
+    to: {
+      name: "AdministrationPage",
+    },
+  },
   {
     title: "Administration Cost Categories",
-    to: { name: "administration/AdministrationCostCategoriesPage" },
+    to: {
+      name: "administration/AdministrationCostCategoriesPage",
+    },
   },
   {
     title: "Edit Administration Cost Category",
     to: {
       name: "administration/administration-cost-categories/AdministrationCostCategoryEditPage",
-      params: { administrationCostCategoryId: administrationCostCategoryId.value },
+      params: {
+        administrationCostCategoryId: administrationCostCategoryId.value,
+      },
     },
   },
 ])

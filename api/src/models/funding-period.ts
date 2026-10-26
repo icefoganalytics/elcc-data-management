@@ -100,7 +100,9 @@ export class FundingPeriod extends BaseModel<
 
   @HasMany(() => AdministrationCostCategory, {
     foreignKey: "fundingPeriodId",
-    inverse: { as: "fundingPeriod" },
+    inverse: {
+      as: "fundingPeriod",
+    },
   })
   declare administrationCostCategories?: NonAttribute<AdministrationCostCategory[]>
 

@@ -29,13 +29,48 @@ import ChildCareSpaceCategory from "@/models/child-care-space-category"
 import FundingPeriod from "@/models/funding-period"
 
 export const ADMINISTRATION_COST_CATEGORY_DEFAULTS = Object.freeze([
-  { categoryName: "Infants", fromAge: 0, toAge: 1, monthlyAmount: "70.0" },
-  { categoryName: "Toddlers", fromAge: 2, toAge: 3, monthlyAmount: "70.0" },
-  { categoryName: "Preschool", fromAge: 4, toAge: 5, monthlyAmount: "70.0" },
-  { categoryName: "Kindergarten (PT)", fromAge: 5, toAge: 6, monthlyAmount: "35.0" },
-  { categoryName: "Kindergarten (FT)", fromAge: 5, toAge: 6, monthlyAmount: "70.0" },
-  { categoryName: "School Age (PT)", fromAge: 5, toAge: 6, monthlyAmount: "30.0" },
-  { categoryName: "School Age (FT)", fromAge: 5, toAge: 6, monthlyAmount: "50.0" },
+  {
+    categoryName: "Infants",
+    fromAge: 0,
+    toAge: 1,
+    monthlyAmount: "70.0",
+  },
+  {
+    categoryName: "Toddlers",
+    fromAge: 2,
+    toAge: 3,
+    monthlyAmount: "70.0",
+  },
+  {
+    categoryName: "Preschool",
+    fromAge: 4,
+    toAge: 5,
+    monthlyAmount: "70.0",
+  },
+  {
+    categoryName: "Kindergarten (PT)",
+    fromAge: 5,
+    toAge: 6,
+    monthlyAmount: "35.0",
+  },
+  {
+    categoryName: "Kindergarten (FT)",
+    fromAge: 5,
+    toAge: 6,
+    monthlyAmount: "70.0",
+  },
+  {
+    categoryName: "School Age (PT)",
+    fromAge: 5,
+    toAge: 6,
+    monthlyAmount: "30.0",
+  },
+  {
+    categoryName: "School Age (FT)",
+    fromAge: 5,
+    toAge: 6,
+    monthlyAmount: "50.0",
+  },
 ])
 
 @Table({
@@ -119,7 +154,10 @@ export class AdministrationCostCategory extends BaseModel<
   // Associations
   @BelongsTo(() => FundingPeriod, {
     foreignKey: "fundingPeriodId",
-    inverse: { as: "administrationCostCategories", type: "hasMany" },
+    inverse: {
+      as: "administrationCostCategories",
+      type: "hasMany",
+    },
   })
   declare fundingPeriod?: NonAttribute<FundingPeriod>
 
@@ -130,7 +168,9 @@ export class AdministrationCostCategory extends BaseModel<
 
   @HasMany(() => AdministrationCost, {
     foreignKey: "categoryId",
-    inverse: { as: "category" },
+    inverse: {
+      as: "category",
+    },
   })
   declare administrationCosts?: NonAttribute<AdministrationCost[]>
 

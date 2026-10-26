@@ -55,7 +55,12 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           }
 
           if (url === "/api/administration-costs") {
-            return { data: { administrationCosts: [administrationCost], totalCount: 1 } }
+            return {
+              data: {
+                administrationCosts: [administrationCost],
+                totalCount: 1,
+              },
+            }
           }
 
           return { data: { fundingSubmissionLineJson } }
@@ -95,7 +100,9 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           id: 11,
           centreId: 1,
         })
-        const childCareSpace = childCareSpaceFactory.build({ id: 1 })
+        const childCareSpace = childCareSpaceFactory.build({
+          id: 1,
+        })
         const administrationCost = administrationCostFactory.build()
         const ledgerUpdate = Promise.withResolvers<{
           data: { childCareSpace: typeof childCareSpace }
@@ -107,7 +114,12 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           }
 
           if (url === "/api/administration-costs") {
-            return { data: { administrationCosts: [administrationCost], totalCount: 1 } }
+            return {
+              data: {
+                administrationCosts: [administrationCost],
+                totalCount: 1,
+              },
+            }
           }
 
           return { data: { fundingSubmissionLineJson } }
@@ -147,7 +159,9 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           id: 11,
           centreId: 1,
         })
-        const childCareSpace = childCareSpaceFactory.build({ id: 1 })
+        const childCareSpace = childCareSpaceFactory.build({
+          id: 1,
+        })
         const administrationCost = administrationCostFactory.build()
         const secondChildCareSpace = {
           ...childCareSpace,
@@ -171,7 +185,12 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           }
 
           if (url === "/api/administration-costs") {
-            return { data: { administrationCosts: [administrationCost], totalCount: 1 } }
+            return {
+              data: {
+                administrationCosts: [administrationCost],
+                totalCount: 1,
+              },
+            }
           }
 
           return { data: { fundingSubmissionLineJson } }
@@ -219,7 +238,9 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           id: 11,
           centreId: 1,
         })
-        const childCareSpace = childCareSpaceFactory.build({ id: 1 })
+        const childCareSpace = childCareSpaceFactory.build({
+          id: 1,
+        })
         const administrationCost = administrationCostFactory.build()
         const replication = Promise.withResolvers<{ data: undefined }>()
         const replicationStarted = Promise.withResolvers<void>()
@@ -230,7 +251,12 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           }
 
           if (url === "/api/administration-costs") {
-            return { data: { administrationCosts: [administrationCost], totalCount: 1 } }
+            return {
+              data: {
+                administrationCosts: [administrationCost],
+                totalCount: 1,
+              },
+            }
           }
 
           return { data: { fundingSubmissionLineJson } }
@@ -281,7 +307,9 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           id: 11,
           centreId: 1,
         })
-        const childCareSpace = childCareSpaceFactory.build({ id: 1 })
+        const childCareSpace = childCareSpaceFactory.build({
+          id: 1,
+        })
         const administrationCost = administrationCostFactory.build()
         const childSpaceReplication = Promise.withResolvers<{ data: undefined }>()
         const childSpaceReplicationStarted = Promise.withResolvers<void>()
@@ -292,7 +320,12 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           }
 
           if (url === "/api/administration-costs") {
-            return { data: { administrationCosts: [administrationCost], totalCount: 1 } }
+            return {
+              data: {
+                administrationCosts: [administrationCost],
+                totalCount: 1,
+              },
+            }
           }
 
           return { data: { fundingSubmissionLineJson } }
@@ -308,7 +341,9 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           }
 
           if (url === "/api/administration-costs/2/replicate-estimates") {
-            return { data: undefined }
+            return {
+              data: undefined,
+            }
           }
 
           throw new Error(`Unexpected POST ${url}`)
@@ -345,27 +380,56 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           id: 11,
           centreId: 1,
         })
-        const childCareSpace = childCareSpaceFactory.build({ id: 1 })
+        const childCareSpace = childCareSpaceFactory.build({
+          id: 1,
+        })
         const administrationCost = administrationCostFactory.build()
         vi.mocked(httpClient, true).get.mockImplementation(async (url) => {
           if (url === failedUrl) throw new Error("Worksheet source unavailable")
 
           if (url === "/api/child-care-spaces") {
-            return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
+            return {
+              data: {
+                childCareSpaces: [childCareSpace],
+                totalCount: 1,
+              },
+            }
           }
 
           if (url === "/api/administration-costs") {
-            return { data: { administrationCosts: [administrationCost], totalCount: 1 } }
+            return {
+              data: {
+                administrationCosts: [administrationCost],
+                totalCount: 1,
+              },
+            }
           }
 
-          return { data: { fundingSubmissionLineJson } }
+          return {
+            data: {
+              fundingSubmissionLineJson,
+            },
+          }
         })
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+        const router = mockRouter([
+          {
+            path: "/",
+            component: {
+              template: "<div />",
+            },
+          },
+        ])
         await router.push("/")
         await router.isReady()
         const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
-          props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
-          global: { plugins: [router, createPinia(), mockVuetify()] },
+          props: {
+            fundingSubmissionLineJsonId: 11,
+            centreId: 1,
+            fiscalPeriodId: 1,
+          },
+          global: {
+            plugins: [router, createPinia(), mockVuetify()],
+          },
         })
 
         // Act
@@ -387,7 +451,9 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
             id: 11,
             centreId: 1,
           })
-          const childCareSpace = childCareSpaceFactory.build({ id: 1 })
+          const childCareSpace = childCareSpaceFactory.build({
+            id: 1,
+          })
           const administrationCost = administrationCostFactory.build()
           let isRequestFailing = true
           vi.mocked(httpClient, true).get.mockImplementation(async (url) => {
@@ -399,7 +465,12 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
             }
 
             if (url === "/api/administration-costs") {
-              return { data: { administrationCosts: [administrationCost], totalCount: 1 } }
+              return {
+                data: {
+                  administrationCosts: [administrationCost],
+                  totalCount: 1,
+                },
+              }
             }
 
             return { data: { fundingSubmissionLineJson } }
@@ -431,32 +502,69 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           id: 11,
           centreId: 1,
         })
-        const childCareSpace = childCareSpaceFactory.build({ id: 1 })
+        const childCareSpace = childCareSpaceFactory.build({
+          id: 1,
+        })
         const administrationCost = administrationCostFactory.build()
-        const saveWorksheetJson = vi.fn().mockResolvedValue({ data: { fundingSubmissionLineJson } })
+        const saveWorksheetJson = vi.fn().mockResolvedValue({
+          data: {
+            fundingSubmissionLineJson,
+          },
+        })
         const httpClientMock = vi.mocked(httpClient, true)
         httpClientMock.get.mockImplementation(async (url) => {
           if (url === "/api/child-care-spaces") {
-            return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
+            return {
+              data: {
+                childCareSpaces: [childCareSpace],
+                totalCount: 1,
+              },
+            }
           }
           if (url === "/api/administration-costs") {
-            return { data: { administrationCosts: [administrationCost], totalCount: 1 } }
+            return {
+              data: {
+                administrationCosts: [administrationCost],
+                totalCount: 1,
+              },
+            }
           }
 
-          return { data: { fundingSubmissionLineJson } }
+          return {
+            data: {
+              fundingSubmissionLineJson,
+            },
+          }
         })
         httpClientMock.patch.mockImplementation(async (url) => {
           if (url === "/api/child-care-spaces/1") throw new Error("Ledger save failed")
           if (url === "/api/funding-submission-line-jsons/11") return saveWorksheetJson()
 
-          return { data: { administrationCost } }
+          return {
+            data: {
+              administrationCost,
+            },
+          }
         })
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+        const router = mockRouter([
+          {
+            path: "/",
+            component: {
+              template: "<div />",
+            },
+          },
+        ])
         await router.push("/")
         await router.isReady()
         const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
-          props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
-          global: { plugins: [router, createPinia(), mockVuetify()] },
+          props: {
+            fundingSubmissionLineJsonId: 11,
+            centreId: 1,
+            fiscalPeriodId: 1,
+          },
+          global: {
+            plugins: [router, createPinia(), mockVuetify()],
+          },
         })
         await flushPromises()
         const estimateInput = wrapper.get("tbody input")
@@ -477,7 +585,9 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           id: 11,
           centreId: 1,
         })
-        const childCareSpace = childCareSpaceFactory.build({ id: 1 })
+        const childCareSpace = childCareSpaceFactory.build({
+          id: 1,
+        })
         const administrationCost = administrationCostFactory.build()
         const secondChildCareSpace = {
           ...childCareSpace,
@@ -495,12 +605,17 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         const pendingReplication = Promise.withResolvers<{ data: undefined }>()
         const firstSpaceReplicationStarted = Promise.withResolvers<void>()
         const firstAdministrationReplicationStarted = Promise.withResolvers<void>()
-        const nextCategoryReplication = vi.fn().mockResolvedValue({ data: undefined })
+        const nextCategoryReplication = vi.fn().mockResolvedValue({
+          data: undefined,
+        })
         const httpClientMock = vi.mocked(httpClient, true)
         httpClientMock.get.mockImplementation(async (url) => {
           if (url === "/api/child-care-spaces") {
             return {
-              data: { childCareSpaces: [childCareSpace, secondChildCareSpace], totalCount: 2 },
+              data: {
+                childCareSpaces: [childCareSpace, secondChildCareSpace],
+                totalCount: 2,
+              },
             }
           }
           if (url === "/api/administration-costs") {
@@ -512,9 +627,17 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
             }
           }
 
-          return { data: { fundingSubmissionLineJson } }
+          return {
+            data: {
+              fundingSubmissionLineJson,
+            },
+          }
         })
-        httpClientMock.patch.mockResolvedValue({ data: { fundingSubmissionLineJson } })
+        httpClientMock.patch.mockResolvedValue({
+          data: {
+            fundingSubmissionLineJson,
+          },
+        })
         httpClientMock.post.mockImplementation(async (url) => {
           if (url === "/api/child-care-spaces/1/replicate-estimates") {
             firstSpaceReplicationStarted.resolve()
@@ -531,14 +654,29 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
             return nextCategoryReplication()
           }
 
-          return { data: undefined }
+          return {
+            data: undefined,
+          }
         })
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+        const router = mockRouter([
+          {
+            path: "/",
+            component: {
+              template: "<div />",
+            },
+          },
+        ])
         await router.push("/")
         await router.isReady()
         const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
-          props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
-          global: { plugins: [router, createPinia(), mockVuetify()] },
+          props: {
+            fundingSubmissionLineJsonId: 11,
+            centreId: 1,
+            fiscalPeriodId: 1,
+          },
+          global: {
+            plugins: [router, createPinia(), mockVuetify()],
+          },
         })
         await flushPromises()
         const replicateEstimatesButton = wrapper

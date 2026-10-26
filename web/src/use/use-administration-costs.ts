@@ -27,7 +27,9 @@ export function useAdministrationCosts(queryOptions: Ref<AdministrationCostQuery
       }
       return response.administrationCosts
     } catch (error) {
-      console.error(`Failed to fetch Administration costs: ${error}`, { error })
+      console.error(`Failed to fetch Administration costs: ${error}`, {
+        error,
+      })
       if (latestRequest === request) state.isErrored = true
       throw error
     } finally {
@@ -43,9 +45,15 @@ export function useAdministrationCosts(queryOptions: Ref<AdministrationCostQuery
         // Fetch state exposes the error to the worksheet.
       }
     },
-    { deep: true, immediate: true }
+    {
+      deep: true,
+      immediate: true,
+    }
   )
-  return { ...toRefs(state), fetch }
+  return {
+    ...toRefs(state),
+    fetch,
+  }
 }
 
 export default useAdministrationCosts

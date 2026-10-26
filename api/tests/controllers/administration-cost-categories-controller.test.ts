@@ -8,7 +8,9 @@ describe("api/src/controllers/administration-cost-categories-controller.ts", () 
     describe("#create -> POST /api/administration-cost-categories", () => {
       test("when an ordinary user creates annual configuration, denies the request", async () => {
         // Arrange
-        const currentUser = await userFactory.create({ roles: [User.Roles.USER] })
+        const currentUser = await userFactory.create({
+          roles: [User.Roles.USER],
+        })
         mockCurrentUser(currentUser)
         const fundingPeriod = await fundingPeriodFactory.create()
 
@@ -36,8 +38,12 @@ describe("api/src/controllers/administration-cost-categories-controller.ts", () 
         mockCurrentUser(currentUser)
         const fundingPeriod = await fundingPeriodFactory.create()
         const childCareSpaceCategory = await childCareSpaceCategoryFactory
-          .associations({ fundingPeriod })
-          .create({ categoryName: "Infants" })
+          .associations({
+            fundingPeriod,
+          })
+          .create({
+            categoryName: "Infants",
+          })
 
         // Act
         const response = await request().post("/api/administration-cost-categories").send({
@@ -64,7 +70,12 @@ describe("api/src/controllers/administration-cost-categories-controller.ts", () 
             updatedAt: expect.any(String),
             deletedAt: null,
           },
-          policy: { show: true, create: true, update: true, destroy: true },
+          policy: {
+            show: true,
+            create: true,
+            update: true,
+            destroy: true,
+          },
         })
       })
     })

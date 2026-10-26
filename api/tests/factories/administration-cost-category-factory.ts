@@ -21,7 +21,10 @@ export const administrationCostCategoryFactory = Factory.define<AdministrationCo
     })
 
     const fundingPeriod =
-      associations.fundingPeriod ?? fundingPeriodFactory.build({ id: params.fundingPeriodId })
+      associations.fundingPeriod ??
+      fundingPeriodFactory.build({
+        id: params.fundingPeriodId,
+      })
     const categoryName =
       params.categoryName ?? `${faker.commerce.productAdjective()} admin-${sequence}`
     const childCareSpaceCategory = associations.childCareSpaceCategory

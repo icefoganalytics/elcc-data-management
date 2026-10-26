@@ -51,7 +51,9 @@
         Child Care Space Categories
       </v-list-item>
       <v-list-item
-        :to="{ name: 'administration/AdministrationCostCategoriesPage' }"
+        :to="{
+          name: 'administration/AdministrationCostCategoriesPage',
+        }"
         prepend-icon="mdi-percent"
         exact
         :active="isActiveByRoutePathStartsWith('/administration/administration-cost-categories')"

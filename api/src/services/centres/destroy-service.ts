@@ -62,7 +62,9 @@ export class DestroyService extends BaseService {
 
   private async destroyDependentAdministrationCosts(centreId: number) {
     await AdministrationCost.destroy({
-      where: { centreId },
+      where: {
+        centreId,
+      },
     })
   }
 

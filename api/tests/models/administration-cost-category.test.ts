@@ -13,10 +13,16 @@ describe("api/src/models/administration-cost-category.ts", () => {
     describe("#validateChildCareSpaceCategory", () => {
       test("when a linked Spaces category belongs to another funding period, rejects creation", async () => {
         // Arrange
-        const fundingPeriod1 = await fundingPeriodFactory.create({ fiscalYear: "2024-2025" })
-        const fundingPeriod2 = await fundingPeriodFactory.create({ fiscalYear: "2025-2026" })
+        const fundingPeriod1 = await fundingPeriodFactory.create({
+          fiscalYear: "2024-2025",
+        })
+        const fundingPeriod2 = await fundingPeriodFactory.create({
+          fiscalYear: "2025-2026",
+        })
         const childCareSpaceCategory = await childCareSpaceCategoryFactory
-          .associations({ fundingPeriod: fundingPeriod1 })
+          .associations({
+            fundingPeriod: fundingPeriod1,
+          })
           .create()
 
         // Act
@@ -35,13 +41,21 @@ describe("api/src/models/administration-cost-category.ts", () => {
 
       test("when a linked Spaces category has been retired, rejects relinking an Administration category", async () => {
         // Arrange
-        const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2024-2025" })
+        const fundingPeriod = await fundingPeriodFactory.create({
+          fiscalYear: "2024-2025",
+        })
         const childCareSpaceCategory = await childCareSpaceCategoryFactory
-          .associations({ fundingPeriod })
+          .associations({
+            fundingPeriod,
+          })
           .create()
         const administrationCostCategory = await administrationCostCategoryFactory
-          .associations({ fundingPeriod })
-          .create({ childCareSpaceCategoryId: null })
+          .associations({
+            fundingPeriod,
+          })
+          .create({
+            childCareSpaceCategoryId: null,
+          })
         await childCareSpaceCategory.destroy()
 
         // Act

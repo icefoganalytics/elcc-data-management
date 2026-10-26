@@ -26,7 +26,9 @@
           color="primary"
           :to="{
             name: 'administration/administration-cost-categories/AdministrationCostCategoryEditPage',
-            params: { administrationCostCategoryId },
+            params: {
+              administrationCostCategoryId,
+            },
           }"
           >Edit</v-btn
         >
@@ -81,12 +83,19 @@ import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useFundingPeriods from "@/use/use-funding-periods"
 import { blockedToTrueConfirm } from "@/utils/blocked-to-true-confirm"
 
-const amountFormatOptions = { minimumFractionDigits: 2, maximumFractionDigits: 4 }
+const amountFormatOptions = {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 4,
+}
 const props = defineProps<{ administrationCostCategoryId: string }>()
 const administrationCostCategoryId = computed(() => Number(props.administrationCostCategoryId))
 const { administrationCostCategory, policy, isLoading, isErrored, fetch, remove } =
   useAdministrationCostCategory(administrationCostCategoryId)
-const { fundingPeriods } = useFundingPeriods(ref({ perPage: -1 }))
+const { fundingPeriods } = useFundingPeriods(
+  ref({
+    perPage: -1,
+  })
+)
 const fundingPeriodDescription = computed(() => {
   const fundingPeriod = fundingPeriods.value.find(
     ({ id }) => id === administrationCostCategory.value?.fundingPeriodId
@@ -104,7 +113,9 @@ async function deleteCategory() {
   try {
     await remove()
     snack.success("Administration cost category deleted.")
-    await router.push({ name: "administration/AdministrationCostCategoriesPage" })
+    await router.push({
+      name: "administration/AdministrationCostCategoriesPage",
+    })
   } catch (error) {
     snack.error(`Failed to delete Administration cost category: ${error}`)
   } finally {
@@ -113,16 +124,25 @@ async function deleteCategory() {
 }
 
 useBreadcrumbs("Administration Cost Category", [
-  { title: "Administration", to: { name: "AdministrationPage" } },
+  {
+    title: "Administration",
+    to: {
+      name: "AdministrationPage",
+    },
+  },
   {
     title: "Administration Cost Categories",
-    to: { name: "administration/AdministrationCostCategoriesPage" },
+    to: {
+      name: "administration/AdministrationCostCategoriesPage",
+    },
   },
   {
     title: "Administration Cost Category",
     to: {
       name: "administration/administration-cost-categories/AdministrationCostCategoryPage",
-      params: { administrationCostCategoryId: administrationCostCategoryId.value },
+      params: {
+        administrationCostCategoryId: administrationCostCategoryId.value,
+      },
     },
   },
 ])

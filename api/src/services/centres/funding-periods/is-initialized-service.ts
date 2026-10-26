@@ -113,7 +113,9 @@ export class IsInitializedService extends BaseService {
     const count = await AdministrationCost.withScope({
       method: ["byFundingPeriod", fundingPeriodId],
     }).count({
-      where: { centreId },
+      where: {
+        centreId,
+      },
     })
     return count > 0
   }

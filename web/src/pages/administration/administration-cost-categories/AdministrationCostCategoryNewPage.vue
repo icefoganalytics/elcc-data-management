@@ -96,7 +96,9 @@
       <v-btn
         color="warning"
         variant="outlined"
-        :to="{ name: 'administration/AdministrationCostCategoriesPage' }"
+        :to="{
+          name: 'administration/AdministrationCostCategoriesPage',
+        }"
       >
         Cancel
       </v-btn>
@@ -119,7 +121,9 @@ import useSnack from "@/use/use-snack"
 import CurrencyInput from "@/components/CurrencyInput.vue"
 import HeaderActionsFormCard from "@/components/common/HeaderActionsFormCard.vue"
 
-const monthlyAmountOptions = { precision: 4 }
+const monthlyAmountOptions = {
+  precision: 4,
+}
 const router = useRouter()
 const snack = useSnack()
 const form = ref<InstanceType<typeof HeaderActionsFormCard> | null>(null)
@@ -135,9 +139,15 @@ const {
   fundingPeriods,
   isLoading: isLoadingFundingPeriods,
   isErrored: isFundingPeriodsErrored,
-} = useFundingPeriods(ref({ perPage: -1 }))
+} = useFundingPeriods(
+  ref({
+    perPage: -1,
+  })
+)
 const spaceCategoriesQuery = computed(() => ({
-  where: { fundingPeriodId: fundingPeriodId.value ?? undefined },
+  where: {
+    fundingPeriodId: fundingPeriodId.value ?? undefined,
+  },
   perPage: -1,
 }))
 const {
@@ -176,7 +186,9 @@ async function createCategory() {
     snack.success("Administration cost category created successfully!")
     await router.push({
       name: "administration/administration-cost-categories/AdministrationCostCategoryPage",
-      params: { administrationCostCategoryId: administrationCostCategory.id },
+      params: {
+        administrationCostCategoryId: administrationCostCategory.id,
+      },
     })
   } catch (error) {
     snack.error(`Failed to create Administration cost category: ${error}`)
@@ -186,14 +198,23 @@ async function createCategory() {
 }
 
 useBreadcrumbs("New Administration Cost Category", [
-  { title: "Administration", to: { name: "AdministrationPage" } },
+  {
+    title: "Administration",
+    to: {
+      name: "AdministrationPage",
+    },
+  },
   {
     title: "Administration Cost Categories",
-    to: { name: "administration/AdministrationCostCategoriesPage" },
+    to: {
+      name: "administration/AdministrationCostCategoriesPage",
+    },
   },
   {
     title: "New Administration Cost Category",
-    to: { name: "administration/administration-cost-categories/AdministrationCostCategoryNewPage" },
+    to: {
+      name: "administration/administration-cost-categories/AdministrationCostCategoryNewPage",
+    },
   },
 ])
 </script>

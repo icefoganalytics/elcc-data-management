@@ -58,7 +58,10 @@ import useAdministrationCostCategories from "@/use/use-administration-cost-categ
 import HeaderActionsCard from "@/components/common/HeaderActionsCard.vue"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 
-const amountFormatOptions = { minimumFractionDigits: 2, maximumFractionDigits: 4 }
+const amountFormatOptions = {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 4,
+}
 
 const router = useRouter()
 const fundingPeriodsQuery = ref<FundingPeriodQueryOptions>({
@@ -72,16 +75,32 @@ const {
 } = useFundingPeriods(fundingPeriodsQuery)
 const selectedFundingPeriodId = ref<number | null>(null)
 const query = computed(() => ({
-  where: selectedFundingPeriodId.value ? { fundingPeriodId: selectedFundingPeriodId.value } : {},
+  where: selectedFundingPeriodId.value
+    ? {
+        fundingPeriodId: selectedFundingPeriodId.value,
+      }
+    : {},
   perPage: -1,
 }))
 const { administrationCostCategories, isLoading, isErrored, fetch } =
   useAdministrationCostCategories(query)
 const headers = [
-  { title: "Category Name", key: "categoryName" },
-  { title: "From Age", key: "fromAge" },
-  { title: "To Age", key: "toAge" },
-  { title: "Monthly Amount", key: "monthlyAmount" },
+  {
+    title: "Category Name",
+    key: "categoryName",
+  },
+  {
+    title: "From Age",
+    key: "fromAge",
+  },
+  {
+    title: "To Age",
+    key: "toAge",
+  },
+  {
+    title: "Monthly Amount",
+    key: "monthlyAmount",
+  },
 ]
 
 watch(fundingPeriods, (periods) => {
@@ -93,15 +112,24 @@ watch(fundingPeriods, (periods) => {
 function openCategory(_event: Event, { item }: { item: { id: number } }) {
   router.push({
     name: "administration/administration-cost-categories/AdministrationCostCategoryPage",
-    params: { administrationCostCategoryId: item.id },
+    params: {
+      administrationCostCategoryId: item.id,
+    },
   })
 }
 
 useBreadcrumbs("Administration Cost Categories", [
-  { title: "Administration", to: { name: "AdministrationPage" } },
+  {
+    title: "Administration",
+    to: {
+      name: "AdministrationPage",
+    },
+  },
   {
     title: "Administration Cost Categories",
-    to: { name: "administration/AdministrationCostCategoriesPage" },
+    to: {
+      name: "administration/AdministrationCostCategoriesPage",
+    },
   },
 ])
 </script>

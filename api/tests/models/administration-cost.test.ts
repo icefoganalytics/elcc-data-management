@@ -15,12 +15,24 @@ describe("api/src/models/administration-cost.ts", () => {
         // Arrange
         const centre = await centreFactory.create()
         const fundingPeriod = await fundingPeriodFactory.create()
-        const fiscalPeriod = await fiscalPeriodFactory.associations({ fundingPeriod }).create()
+        const fiscalPeriod = await fiscalPeriodFactory
+          .associations({
+            fundingPeriod,
+          })
+          .create()
         const category = await administrationCostCategoryFactory
-          .associations({ fundingPeriod })
-          .create({ monthlyAmount: "10.0000" })
+          .associations({
+            fundingPeriod,
+          })
+          .create({
+            monthlyAmount: "10.0000",
+          })
         const administrationCost = administrationCostFactory
-          .associations({ centre, fiscalPeriod, category })
+          .associations({
+            centre,
+            fiscalPeriod,
+            category,
+          })
           .build({
             monthlyAmount: "10.0000",
             estimatedChildOccupancyRate: "0.1234",
@@ -72,7 +84,9 @@ describe("api/src/models/administration-cost.ts", () => {
         const administrationCost = await administrationCostFactory.create()
 
         // Act
-        const updatePromise = administrationCost.update({ monthlyAmount: "10.00001" })
+        const updatePromise = administrationCost.update({
+          monthlyAmount: "10.00001",
+        })
 
         // Assert
         await expect(updatePromise).rejects.toThrow("at most four decimal places")

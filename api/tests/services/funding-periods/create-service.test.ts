@@ -215,7 +215,9 @@ describe("api/src/services/funding-periods/create-service.ts", () => {
 
         // Assert
         const administrationSubmissionLines = await FundingSubmissionLine.findAll({
-          where: { sectionName: "Administration (10% of Spaces)" },
+          where: {
+            sectionName: "Administration (10% of Spaces)",
+          },
         })
         expect(administrationSubmissionLines).toEqual([])
       })

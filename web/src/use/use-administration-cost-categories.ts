@@ -30,7 +30,9 @@ export function useAdministrationCostCategories(
       }
       return response.administrationCostCategories
     } catch (error) {
-      console.error(`Failed to fetch Administration categories: ${error}`, { error })
+      console.error(`Failed to fetch Administration categories: ${error}`, {
+        error,
+      })
       if (latestRequest === request) {
         state.isErrored = true
       }
@@ -51,9 +53,15 @@ export function useAdministrationCostCategories(
         // Fetch state exposes the error to the page.
       }
     },
-    { deep: true, immediate: true }
+    {
+      deep: true,
+      immediate: true,
+    }
   )
-  return { ...toRefs(state), fetch }
+  return {
+    ...toRefs(state),
+    fetch,
+  }
 }
 
 export default useAdministrationCostCategories

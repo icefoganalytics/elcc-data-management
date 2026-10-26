@@ -80,14 +80,20 @@ export class DestroyService extends BaseService {
   private async destroyDependentAdministrationCosts(fundingPeriodId: number) {
     await AdministrationCost.withScope({
       method: ["byFundingPeriod", fundingPeriodId],
-    }).destroy({ where: {} })
+    }).destroy({
+      where: {},
+    })
   }
 
   private async destroyDependentChildCareSpaceCategories(fundingPeriodId: number) {
     await ChildCareSpaceCategory.destroy({ where: { fundingPeriodId } })
   }
   private async destroyDependentAdministrationCostCategories(fundingPeriodId: number) {
-    await AdministrationCostCategory.destroy({ where: { fundingPeriodId } })
+    await AdministrationCostCategory.destroy({
+      where: {
+        fundingPeriodId,
+      },
+    })
   }
 
   private async destroyDependentPayments(fundingPeriodId: number) {

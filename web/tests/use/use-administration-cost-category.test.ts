@@ -32,9 +32,17 @@ describe("web/src/use/use-administration-cost-category.ts", () => {
         }>()
         vi.mocked(httpClient, true)
           .get.mockResolvedValueOnce({
-            data: { administrationCostCategory: category1, policy: {} },
+            data: {
+              administrationCostCategory: category1,
+              policy: {},
+            },
           })
-          .mockResolvedValueOnce({ data: { administrationCostCategory: category2, policy: {} } })
+          .mockResolvedValueOnce({
+            data: {
+              administrationCostCategory: category2,
+              policy: {},
+            },
+          })
         vi.mocked(httpClient, true).patch.mockReturnValueOnce(pendingSave.promise)
         const categoryId = ref<number | null>(1)
         const scope = effectScope()
@@ -43,12 +51,19 @@ describe("web/src/use/use-administration-cost-category.ts", () => {
 
         try {
           await flushPromises()
-          const save = category.save({ monthlyAmount: "90.0000" })
+          const save = category.save({
+            monthlyAmount: "90.0000",
+          })
 
           // Act
           categoryId.value = 2
           await flushPromises()
-          pendingSave.resolve({ data: { administrationCostCategory: category1, policy: {} } })
+          pendingSave.resolve({
+            data: {
+              administrationCostCategory: category1,
+              policy: {},
+            },
+          })
           await save
 
           // Assert
@@ -71,7 +86,10 @@ describe("web/src/use/use-administration-cost-category.ts", () => {
         }>()
         vi.mocked(httpClient, true)
           .get.mockResolvedValueOnce({
-            data: { administrationCostCategory: category1, policy: {} },
+            data: {
+              administrationCostCategory: category1,
+              policy: {},
+            },
           })
           .mockReturnValueOnce(pendingLoad.promise)
         const categoryId = ref<number | null>(1)
@@ -85,7 +103,9 @@ describe("web/src/use/use-administration-cost-category.ts", () => {
           await flushPromises()
 
           // Act
-          const save = category.save({ categoryName: "Previous category" })
+          const save = category.save({
+            categoryName: "Previous category",
+          })
 
           // Assert
           await expect(save).rejects.toThrow()

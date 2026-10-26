@@ -13,29 +13,59 @@ describe("api/src/services/funding-periods/administration-cost-categories/bulk-e
     describe("#perform", () => {
       test("when the funding period has no configuration, creates the seven defaults linked by name", async () => {
         // Arrange
-        const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2024-2025" })
+        const fundingPeriod = await fundingPeriodFactory.create({
+          fiscalYear: "2024-2025",
+        })
         const childCareSpaceCategories = await Promise.all([
-          childCareSpaceCategoryFactory.associations({ fundingPeriod }).create({
-            categoryName: "Infants",
-          }),
-          childCareSpaceCategoryFactory.associations({ fundingPeriod }).create({
-            categoryName: "Toddlers",
-          }),
-          childCareSpaceCategoryFactory.associations({ fundingPeriod }).create({
-            categoryName: "Preschool",
-          }),
-          childCareSpaceCategoryFactory.associations({ fundingPeriod }).create({
-            categoryName: "Kindergarten (PT)",
-          }),
-          childCareSpaceCategoryFactory.associations({ fundingPeriod }).create({
-            categoryName: "Kindergarten (FT)",
-          }),
-          childCareSpaceCategoryFactory.associations({ fundingPeriod }).create({
-            categoryName: "School Age (PT)",
-          }),
-          childCareSpaceCategoryFactory.associations({ fundingPeriod }).create({
-            categoryName: "School Age (FT)",
-          }),
+          childCareSpaceCategoryFactory
+            .associations({
+              fundingPeriod,
+            })
+            .create({
+              categoryName: "Infants",
+            }),
+          childCareSpaceCategoryFactory
+            .associations({
+              fundingPeriod,
+            })
+            .create({
+              categoryName: "Toddlers",
+            }),
+          childCareSpaceCategoryFactory
+            .associations({
+              fundingPeriod,
+            })
+            .create({
+              categoryName: "Preschool",
+            }),
+          childCareSpaceCategoryFactory
+            .associations({
+              fundingPeriod,
+            })
+            .create({
+              categoryName: "Kindergarten (PT)",
+            }),
+          childCareSpaceCategoryFactory
+            .associations({
+              fundingPeriod,
+            })
+            .create({
+              categoryName: "Kindergarten (FT)",
+            }),
+          childCareSpaceCategoryFactory
+            .associations({
+              fundingPeriod,
+            })
+            .create({
+              categoryName: "School Age (PT)",
+            }),
+          childCareSpaceCategoryFactory
+            .associations({
+              fundingPeriod,
+            })
+            .create({
+              categoryName: "School Age (FT)",
+            }),
         ])
 
         // Act
@@ -111,11 +141,19 @@ describe("api/src/services/funding-periods/administration-cost-categories/bulk-e
           fiscalYear: "2025-2026",
         })
         const sourceChildCareSpaceCategory = await childCareSpaceCategoryFactory
-          .associations({ fundingPeriod: sourceFundingPeriod })
-          .create({ categoryName: "Infants" })
+          .associations({
+            fundingPeriod: sourceFundingPeriod,
+          })
+          .create({
+            categoryName: "Infants",
+          })
         const targetChildCareSpaceCategory = await childCareSpaceCategoryFactory
-          .associations({ fundingPeriod: targetFundingPeriod })
-          .create({ categoryName: "Infants" })
+          .associations({
+            fundingPeriod: targetFundingPeriod,
+          })
+          .create({
+            categoryName: "Infants",
+          })
         await administrationCostCategoryFactory
           .associations({
             fundingPeriod: sourceFundingPeriod,
@@ -144,10 +182,16 @@ describe("api/src/services/funding-periods/administration-cost-categories/bulk-e
 
       test("when every category has been retired, preserves the deliberate empty configuration", async () => {
         // Arrange
-        const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2024-2025" })
+        const fundingPeriod = await fundingPeriodFactory.create({
+          fiscalYear: "2024-2025",
+        })
         const retiredCategory = await administrationCostCategoryFactory
-          .associations({ fundingPeriod })
-          .create({ categoryName: "Retired category" })
+          .associations({
+            fundingPeriod,
+          })
+          .create({
+            categoryName: "Retired category",
+          })
         await retiredCategory.destroy()
 
         // Act

@@ -28,7 +28,9 @@ export class ReplicateEstimatesController extends BaseController<AdministrationC
         message: "Replicated administration cost estimates to later fiscal periods.",
       })
     } catch (error) {
-      logger.error(`Error replicating administration cost estimates: ${error}`, { error })
+      logger.error(`Error replicating administration cost estimates: ${error}`, {
+        error,
+      })
       return this.response.status(422).json({
         message: `Error replicating administration cost estimates: ${error}`,
       })

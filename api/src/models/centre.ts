@@ -166,7 +166,9 @@ export class Centre extends BaseModel<InferAttributes<Centre>, InferCreationAttr
 
   @HasMany(() => AdministrationCost, {
     foreignKey: "centreId",
-    inverse: { as: "centre" },
+    inverse: {
+      as: "centre",
+    },
   })
   declare administrationCosts?: NonAttribute<AdministrationCost[]>
 
