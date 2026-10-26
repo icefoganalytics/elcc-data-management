@@ -149,7 +149,7 @@ describe("api/src/services/administration-costs/replicate-estimates-service.ts",
           .create({
             dateStart: new Date("2024-05-01"),
           })
-        await fiscalPeriodFactory
+        const juneFiscalPeriod = await fiscalPeriodFactory
           .associations({
             fundingPeriod,
           })
@@ -187,7 +187,7 @@ describe("api/src/services/administration-costs/replicate-estimates-service.ts",
 
         // Act / Assert
         await expect(ReplicateEstimatesService.perform(sourceAdministrationCost)).rejects.toThrow(
-          Error
+          `fiscal period ${juneFiscalPeriod.id} and category ${category.id}`
         )
         await mayAdministrationCost.reload()
         expect(mayAdministrationCost).toEqual(
