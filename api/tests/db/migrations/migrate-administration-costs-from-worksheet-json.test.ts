@@ -163,13 +163,48 @@ describe("api/src/db/migrations/20261020180002_migrate-administration-costs-from
           "Historical Infant Cohort"
         )
         const currentTemplates = [
-          { lineName: "Infants", fromAge: 0, toAge: 1, monthlyAmount: "70.0000" },
-          { lineName: "Toddlers", fromAge: 2, toAge: 3, monthlyAmount: "70.0000" },
-          { lineName: "Preschool", fromAge: 4, toAge: 5, monthlyAmount: "70.0000" },
-          { lineName: "Kindergarten (PT)", fromAge: 5, toAge: 6, monthlyAmount: "35.0000" },
-          { lineName: "Kindergarten (FT)", fromAge: 5, toAge: 6, monthlyAmount: "70.0000" },
-          { lineName: "School Age (PT)", fromAge: 5, toAge: 6, monthlyAmount: "30.0000" },
-          { lineName: "School Age (FT)", fromAge: 5, toAge: 6, monthlyAmount: "50.0000" },
+          {
+            lineName: "Infants",
+            fromAge: 0,
+            toAge: 1,
+            monthlyAmount: "70.0000",
+          },
+          {
+            lineName: "Toddlers",
+            fromAge: 2,
+            toAge: 3,
+            monthlyAmount: "70.0000",
+          },
+          {
+            lineName: "Preschool",
+            fromAge: 4,
+            toAge: 5,
+            monthlyAmount: "70.0000",
+          },
+          {
+            lineName: "Kindergarten (PT)",
+            fromAge: 5,
+            toAge: 6,
+            monthlyAmount: "35.0000",
+          },
+          {
+            lineName: "Kindergarten (FT)",
+            fromAge: 5,
+            toAge: 6,
+            monthlyAmount: "70.0000",
+          },
+          {
+            lineName: "School Age (PT)",
+            fromAge: 5,
+            toAge: 6,
+            monthlyAmount: "30.0000",
+          },
+          {
+            lineName: "School Age (FT)",
+            fromAge: 5,
+            toAge: 6,
+            monthlyAmount: "50.0000",
+          },
         ]
         const templateLineIds: number[] = []
         for (const template of currentTemplates) {
@@ -216,11 +251,21 @@ describe("api/src/db/migrations/20261020180002_migrate-administration-costs-from
         // Assert
         const administrationCategories = await transaction("administration_cost_categories").select(
           "id",
-          { fundingPeriodId: "funding_period_id" },
-          { childCareSpaceCategoryId: "child_care_space_category_id" },
-          { categoryName: "category_name" },
-          { fromAge: "from_age" },
-          { toAge: "to_age" },
+          {
+            fundingPeriodId: "funding_period_id",
+          },
+          {
+            childCareSpaceCategoryId: "child_care_space_category_id",
+          },
+          {
+            categoryName: "category_name",
+          },
+          {
+            fromAge: "from_age",
+          },
+          {
+            toAge: "to_age",
+          },
           transaction.raw("CONVERT(VARCHAR(32), monthly_amount) AS monthlyAmount"),
           "deleted_at"
         )
@@ -319,7 +364,11 @@ describe("api/src/db/migrations/20261020180002_migrate-administration-costs-from
         const administrationCosts = await transaction("administration_costs").select(
           "child_care_space_category_id"
         )
-        expect(administrationCosts).toEqual([{ child_care_space_category_id: null }])
+        expect(administrationCosts).toEqual([
+          {
+            child_care_space_category_id: null,
+          },
+        ])
       })
     })
 
@@ -371,10 +420,18 @@ describe("api/src/db/migrations/20261020180002_migrate-administration-costs-from
             "administration_costs.category_id"
           )
           .select(
-            { fundingPeriodId: "administration_cost_categories.funding_period_id" },
-            { categoryLink: "administration_cost_categories.child_care_space_category_id" },
-            { snapshotLink: "administration_costs.child_care_space_category_id" },
-            { categoryDeletedAt: "administration_cost_categories.deleted_at" }
+            {
+              fundingPeriodId: "administration_cost_categories.funding_period_id",
+            },
+            {
+              categoryLink: "administration_cost_categories.child_care_space_category_id",
+            },
+            {
+              snapshotLink: "administration_costs.child_care_space_category_id",
+            },
+            {
+              categoryDeletedAt: "administration_cost_categories.deleted_at",
+            }
           )
         expect(administrationCosts).toEqual([
           {
@@ -470,7 +527,9 @@ describe("api/src/db/migrations/20261020180002_migrate-administration-costs-from
 
         // Assert
         const worksheet = await transaction("funding_submission_line_jsons")
-          .where({ id: worksheetId })
+          .where({
+            id: worksheetId,
+          })
           .first("values")
         expect(worksheet?.values).toEqual(
           '[{"sectionName":"Quality Enhancement Program","monthlyAmount":1.2300,"originalNumber":9007199254740993,"unknown":{"kept":true}}]'
@@ -592,11 +651,15 @@ describe("api/src/db/migrations/20261020180002_migrate-administration-costs-from
         // Assert
         const worksheet = await transaction("funding_submission_line_jsons")
           .select("values")
-          .where({ id: worksheetId })
+          .where({
+            id: worksheetId,
+          })
           .first()
         const fundingSubmissionLine = await transaction("funding_submission_lines")
           .select("id")
-          .where({ id: sourceLineId })
+          .where({
+            id: sourceLineId,
+          })
           .first()
         expect(worksheet?.values).toEqual(worksheetValues)
         expect(fundingSubmissionLine?.id).toEqual(sourceLineId)
@@ -622,7 +685,9 @@ describe("api/src/db/migrations/20261020180002_migrate-administration-costs-from
         // Assert
         const worksheet = await transaction("funding_submission_line_jsons")
           .select("values")
-          .where({ id: worksheetId })
+          .where({
+            id: worksheetId,
+          })
           .first()
         expect(worksheet?.values).toEqual(worksheetValues)
       })
@@ -647,7 +712,9 @@ describe("api/src/db/migrations/20261020180002_migrate-administration-costs-from
         // Assert
         const worksheet = await transaction("funding_submission_line_jsons")
           .select("values")
-          .where({ id: worksheetId })
+          .where({
+            id: worksheetId,
+          })
           .first()
         expect(worksheet?.values).toEqual(worksheetValues)
 
@@ -683,13 +750,17 @@ describe("api/src/db/migrations/20261020180002_migrate-administration-costs-from
         // Assert
         const worksheet = await transaction("funding_submission_line_jsons")
           .select("values")
-          .where({ id: worksheetId })
+          .where({
+            id: worksheetId,
+          })
           .first()
         expect(worksheet?.values).toEqual(worksheetValues)
 
         const fundingSubmissionLine = await transaction("funding_submission_lines")
           .select("id")
-          .where({ id: sourceLineId })
+          .where({
+            id: sourceLineId,
+          })
           .first()
         expect(fundingSubmissionLine?.id).toEqual(sourceLineId)
       })
@@ -721,7 +792,9 @@ describe("api/src/db/migrations/20261020180002_migrate-administration-costs-from
         // Assert
         const worksheet = await transaction("funding_submission_line_jsons")
           .select("values")
-          .where({ id: worksheetId })
+          .where({
+            id: worksheetId,
+          })
           .first()
         expect(worksheet?.values).toEqual(worksheetValues)
       })

@@ -257,7 +257,10 @@ async function findAdministrationWorksheetLines(
     }
 
     const properties = worksheetLine.properties.get(row.propertyName) ?? []
-    properties.push({ value: row.propertyValue, type: row.propertyType })
+    properties.push({
+      value: row.propertyValue,
+      type: row.propertyType,
+    })
     worksheetLine.properties.set(row.propertyName, properties)
   }
 
