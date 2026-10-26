@@ -37,10 +37,10 @@ export class CreateService extends BaseService {
 
     return AdministrationCostCategory.create({
       fundingPeriodId,
-      childCareSpaceCategoryId: childCareSpaceCategoryId ?? null,
+      childCareSpaceCategoryId,
       categoryName,
-      fromAge: fromAge ?? null,
-      toAge: toAge ?? null,
+      fromAge,
+      toAge,
       monthlyAmount,
     })
   }
