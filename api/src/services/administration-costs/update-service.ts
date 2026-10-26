@@ -1,6 +1,6 @@
-import { IsolationLevel, type Attributes } from "@sequelize/core"
+import { type Attributes } from "@sequelize/core"
 
-import db, { AdministrationCost } from "@/models"
+import { AdministrationCost } from "@/models"
 import BaseService from "@/services/base-service"
 
 export type AdministrationCostUpdateAttributes = Pick<
@@ -17,17 +17,9 @@ export class UpdateService extends BaseService {
   }
 
   async perform(): Promise<AdministrationCost> {
-    return db.transaction(
-      {
-        isolationLevel: IsolationLevel.REPEATABLE_READ,
-      },
-      async () => {
-        await this.administrationCost.reload()
-        await this.administrationCost.update(this.attributes)
+    await this.administrationCost.update(this.attributes)
 
-        return this.administrationCost.reload()
-      }
-    )
+    return this.administrationCost.reload()
   }
 }
 
