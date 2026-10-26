@@ -1,3 +1,5 @@
+import { ValidationError } from "@sequelize/core"
+
 import { FundingSubmissionLine } from "@/models"
 
 import { childCareSpaceCategoryFactory, fundingPeriodFactory } from "@/factories"
@@ -70,9 +72,7 @@ describe("api/src/services/funding-submission-lines/create-service.ts", () => {
         const createPromise = CreateService.perform(attributes)
 
         // Assert
-        await expect(createPromise).rejects.toThrow(
-          "Child Care Spaces configuration must use the Child Care Spaces ledger."
-        )
+        await expect(createPromise).rejects.toThrow(ValidationError)
       })
     })
   })

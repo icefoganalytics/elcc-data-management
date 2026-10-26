@@ -19,9 +19,7 @@ import {
 } from "@sequelize/core/decorators-legacy"
 import { isNil } from "lodash"
 
-import { isValidFiscalYearLegacy } from "@/models/validators"
-import doesNotUseChildCareSpacesSection from "@/models/validators/does-not-use-child-care-spaces-section"
-import doesNotUseAdministrationSection from "@/models/validators/does-not-use-administration-section"
+import { doesNotUseLedgerSection, isValidFiscalYearLegacy } from "@/models/validators"
 
 import BaseModel from "@/models/base-model"
 import ChildCareSpaceCategory from "@/models/child-care-space-category"
@@ -54,8 +52,7 @@ export class FundingSubmissionLine extends BaseModel<
   @Attribute(DataTypes.STRING(200))
   @NotNull
   @ValidateAttribute({
-    doesNotUseChildCareSpacesSection,
-    doesNotUseAdministrationSection,
+    doesNotUseLedgerSection,
   })
   declare sectionName: string
 

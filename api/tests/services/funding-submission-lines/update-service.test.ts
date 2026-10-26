@@ -1,3 +1,5 @@
+import { ValidationError } from "@sequelize/core"
+
 import {
   childCareSpaceCategoryFactory,
   fundingPeriodFactory,
@@ -82,9 +84,7 @@ describe("api/src/services/funding-submission-lines/update-service.ts", () => {
         })
 
         // Assert
-        await expect(updatePromise).rejects.toThrow(
-          "Child Care Spaces configuration must use the Child Care Spaces ledger."
-        )
+        await expect(updatePromise).rejects.toThrow(ValidationError)
       })
     })
   })

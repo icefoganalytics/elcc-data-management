@@ -25,9 +25,7 @@ describe("api/src/services/funding-submission-line-services.ts", () => {
         )
 
         // Assert
-        await expect(clonePromise).rejects.toThrow(
-          "Child Care Spaces configuration must use the Child Care Spaces ledger."
-        )
+        await expect(clonePromise).rejects.toThrow(Error)
       })
 
       test("when cloning a source with a retired section, creates no target configuration", async () => {

@@ -2,8 +2,7 @@ import { Op, type CreationAttributes } from "@sequelize/core"
 import { isUndefined, merge, omit } from "lodash"
 
 import { ChildCareSpaceCategory, FundingPeriod, FundingSubmissionLine } from "@/models"
-import doesNotUseChildCareSpacesSection from "@/models/validators/does-not-use-child-care-spaces-section"
-import doesNotUseAdministrationSection from "@/models/validators/does-not-use-administration-section"
+import { doesNotUseLedgerSection } from "@/models/validators"
 
 export class FundingSubmissionLineServices {
   static async bulkCreateFrom(
@@ -17,8 +16,7 @@ export class FundingSubmissionLineServices {
       const originalAttributes = line.get()
       const creationAttributes = omit(originalAttributes, ["id"])
       const lineAttributes = merge(creationAttributes, attributes)
-      doesNotUseChildCareSpacesSection(lineAttributes.sectionName ?? line.sectionName)
-      doesNotUseAdministrationSection(lineAttributes.sectionName ?? line.sectionName)
+      doesNotUseLedgerSection(lineAttributes.sectionName ?? line.sectionName)
       return lineAttributes
     })
 

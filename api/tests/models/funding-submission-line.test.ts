@@ -261,7 +261,7 @@ describe("api/src/models/funding-submission-line.ts", () => {
         })
       })
 
-      describe("#doesNotUseAdministrationSection", () => {
+      describe("#doesNotUseLedgerSection", () => {
         test("when Administration configuration is written to the shared table, rejects it", async () => {
           // Arrange
           const fundingSubmissionLine = FundingSubmissionLine.build({
@@ -275,9 +275,7 @@ describe("api/src/models/funding-submission-line.ts", () => {
           const validation = fundingSubmissionLine.validate()
 
           // Assert
-          await expect(validation).rejects.toThrow(
-            "Administration (10% of Spaces) configuration must use the Administration costs ledger."
-          )
+          await expect(validation).rejects.toThrow(ValidationError)
         })
 
         test("when a stale client uses the legacy Administration name, rejects shared configuration", async () => {

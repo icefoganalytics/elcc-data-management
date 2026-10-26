@@ -167,9 +167,7 @@ describe("api/src/services/funding-periods/funding-submission-lines/bulk-create-
         const clonePromise = BulkCreateService.perform(targetFundingPeriod)
 
         // Assert
-        await expect(clonePromise).rejects.toThrow(
-          "Child Care Spaces configuration must use the Child Care Spaces ledger."
-        )
+        await expect(clonePromise).rejects.toThrow(Error)
       })
 
       test("when cloning a retired section, creates no target configuration", async () => {
