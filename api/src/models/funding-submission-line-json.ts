@@ -17,8 +17,8 @@ import {
   Table,
   ValidateAttribute,
 } from "@sequelize/core/decorators-legacy"
-import { DateTime } from "luxon"
 import { upperFirst } from "lodash"
+import { DateTime } from "luxon"
 
 import { doesNotContainLedgerSections, isValidFiscalYearLegacy } from "@/models/validators"
 

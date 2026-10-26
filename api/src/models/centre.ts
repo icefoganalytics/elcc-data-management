@@ -17,9 +17,9 @@ import {
   ValidateAttribute,
 } from "@sequelize/core/decorators-legacy"
 
+import AdministrationCost from "@/models/administration-cost"
 import BaseModel from "@/models/base-model"
 import BuildingExpense from "@/models/building-expense"
-import AdministrationCost from "@/models/administration-cost"
 import ChildCareSpace from "@/models/child-care-space"
 import EmployeeBenefit from "@/models/employee-benefit"
 import FundingReconciliation from "@/models/funding-reconciliation"
