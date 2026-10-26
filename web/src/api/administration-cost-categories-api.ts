@@ -11,7 +11,6 @@ export type AdministrationCostCategory = {
   monthlyAmount: string
   createdAt: string
   updatedAt: string
-  deletedAt: string | null
 }
 
 export type AdministrationCostCategoryPolicy = Policy

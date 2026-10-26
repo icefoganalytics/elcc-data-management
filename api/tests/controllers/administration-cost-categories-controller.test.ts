@@ -68,7 +68,6 @@ describe("api/src/controllers/administration-cost-categories-controller.ts", () 
             monthlyAmount: "42.1234",
             createdAt: expect.any(String),
             updatedAt: expect.any(String),
-            deletedAt: null,
           },
           policy: {
             show: true,

@@ -14,7 +14,6 @@ export type AdministrationCostCategoryAsShow = Pick<
   | "monthlyAmount"
   | "createdAt"
   | "updatedAt"
-  | "deletedAt"
 >
 
 export class ShowSerializer extends BaseSerializer<AdministrationCostCategory> {
@@ -29,7 +28,6 @@ export class ShowSerializer extends BaseSerializer<AdministrationCostCategory> {
       "monthlyAmount",
       "createdAt",
       "updatedAt",
-      "deletedAt",
     ])
   }
 }

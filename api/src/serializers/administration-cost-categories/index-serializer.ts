@@ -16,7 +16,6 @@ export type AdministrationCostCategoryAsIndex = Pick<
   | "monthlyAmount"
   | "createdAt"
   | "updatedAt"
-  | "deletedAt"
 > & {
   policy: PolicyAsReference
 }
@@ -43,7 +42,6 @@ export class IndexSerializer extends BaseSerializer<AdministrationCostCategory> 
         "monthlyAmount",
         "createdAt",
         "updatedAt",
-        "deletedAt",
       ]),
       policy: serializedPolicy,
     }

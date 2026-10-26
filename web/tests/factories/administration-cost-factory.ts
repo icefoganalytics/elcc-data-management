@@ -19,7 +19,6 @@ export const administrationCostFactory = Factory.define<AdministrationCostAsShow
     actualComputedTotal: "0.0000",
     createdAt: timestamp,
     updatedAt: timestamp,
-    deletedAt: null,
   }
 })
 

@@ -17,7 +17,6 @@ export type AdministrationCost = {
   actualComputedTotal: string
   createdAt: string
   updatedAt: string
-  deletedAt: string | null
 }
 
 export type AdministrationCostPolicy = Policy

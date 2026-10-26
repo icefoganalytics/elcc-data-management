@@ -16,7 +16,6 @@ export const administrationCostCategoryFactory = Factory.define<AdministrationCo
       monthlyAmount: "0.0000",
       createdAt: timestamp,
       updatedAt: timestamp,
-      deletedAt: null,
     }
   }
 )
