@@ -1,7 +1,7 @@
 import { Op, sql, type CreationAttributes } from "@sequelize/core"
 import { isEmpty, isNil } from "lodash"
 
-import { AdministrationCostCategory, ChildCareSpaceCategory, type FundingPeriod } from "@/models"
+import { AdministrationCostCategory, ChildCareSpaceCategory, FundingPeriod } from "@/models"
 import BaseService from "@/services/base-service"
 
 export class BulkCreateService extends BaseService {

@@ -4,9 +4,9 @@ import { isEmpty } from "lodash"
 import {
   AdministrationCost,
   AdministrationCostCategory,
+  Centre,
   FiscalPeriod,
-  type Centre,
-  type FundingPeriod,
+  FundingPeriod,
 } from "@/models"
 import BaseService from "@/services/base-service"
 

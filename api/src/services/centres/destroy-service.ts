@@ -1,14 +1,14 @@
 import db, {
-  BuildingExpense,
   AdministrationCost,
-  type Centre,
+  BuildingExpense,
+  Centre,
   ChildCareSpace,
   EmployeeBenefit,
   FundingReconciliation,
   FundingSubmissionLineJson,
   Log,
   Payment,
-  type User,
+  User,
   WageEnhancement,
 } from "@/models"
 import BaseService from "@/services/base-service"

@@ -1,6 +1,6 @@
 import { isNil } from "lodash"
 
-import { AdministrationCost, type Centre, type FundingPeriod } from "@/models"
+import { AdministrationCost, Centre, FundingPeriod } from "@/models"
 import BaseService from "@/services/base-service"
 import BulkCreateService from "@/services/centres/funding-periods/administration-costs/bulk-create-service"
 

@@ -1,7 +1,7 @@
 import { type Attributes, type FindOptions } from "@sequelize/core"
 
 import { type Path } from "@/utils/deep-pick"
-import { AdministrationCost, type User } from "@/models"
+import { AdministrationCost, User } from "@/models"
 import { ALL_RECORDS_SCOPE, PolicyFactory } from "@/policies/base-policy"
 
 export class AdministrationCostPolicy extends PolicyFactory(AdministrationCost) {

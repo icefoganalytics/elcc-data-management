@@ -1,4 +1,4 @@
-import { type FundingPeriod } from "@/models"
+import { FundingPeriod } from "@/models"
 import BaseService from "@/services/base-service"
 import * as AdministrationCostCategories from "@/services/funding-periods/administration-cost-categories"
 import * as ChildCareSpaceCategories from "@/services/funding-periods/child-care-space-categories"

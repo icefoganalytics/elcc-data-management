@@ -1,6 +1,6 @@
 import { type Attributes } from "@sequelize/core"
 
-import { type AdministrationCostCategory } from "@/models"
+import { AdministrationCostCategory } from "@/models"
 import BaseService from "@/services/base-service"
 
 export type AdministrationCostCategoryUpdateAttributes = Partial<

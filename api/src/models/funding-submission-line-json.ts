@@ -24,7 +24,7 @@ import { doesNotContainLedgerSections, isValidFiscalYearLegacy } from "@/models/
 
 import BaseModel from "@/models/base-model"
 import Centre from "@/models/centre"
-import type FundingLineValue from "@/models/funding-line-value"
+import FundingLineValue from "@/models/funding-line-value"
 
 export enum FundingSubmissionLineJsonMonths {
   APRIL = "April",

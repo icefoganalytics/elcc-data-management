@@ -1,4 +1,4 @@
-import type FundingSubmissionLine from "@/models/funding-submission-line"
+import FundingSubmissionLine from "@/models/funding-submission-line"
 
 export enum FundingSubmissionLineImmutableSectionNames {
   QUALITY_ENHANCEMENT_PROGRAM = "Quality Enhancement Program",

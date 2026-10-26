@@ -1,7 +1,7 @@
 import { pick } from "lodash"
 
 import { type PolicyAsReference } from "@/policies/base-policy"
-import { type AdministrationCost, type User } from "@/models"
+import { AdministrationCost, User } from "@/models"
 import { AdministrationCostPolicy } from "@/policies"
 import BaseSerializer from "@/serializers/base-serializer"
 

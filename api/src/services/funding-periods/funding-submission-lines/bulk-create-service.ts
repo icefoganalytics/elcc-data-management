@@ -1,7 +1,7 @@
 import { Op, sql } from "@sequelize/core"
 import { isEmpty, isNil, isUndefined } from "lodash"
 
-import { ChildCareSpaceCategory, FundingSubmissionLine, type FundingPeriod } from "@/models"
+import { ChildCareSpaceCategory, FundingPeriod, FundingSubmissionLine } from "@/models"
 import { doesNotUseLedgerSection } from "@/models/validators"
 
 import BaseService from "@/services/base-service"
