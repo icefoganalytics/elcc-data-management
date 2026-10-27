@@ -156,3 +156,57 @@ dev sqlcmd -i ./data/funding_submission_lines.sql
 assuming the file is located at `/db/data/funding_submission_lines.sql`
 
 Note that the `dev` command uses the `db` service, and so only has access to folders under the top-level `db` directory.
+
+## API Test Commands and Isolation
+
+Run tests through `bin/dev` from the repository root. The wrapper selects the isolated API test container and database; see [Database Connection Isolation](#database-connection-isolation).
+
+```bash
+bin/dev test api -- --run
+bin/dev test api -- --run tests/services/funding-periods/create-service.test.ts
+bin/dev test api tests/services/funding-periods/create-service.test.ts
+bin/dev test api -- --run -t "fiscal year"
+bin/dev test api --skip-setup -- --run tests/services/funding-periods/create-service.test.ts
+bin/dev check-types
+```
+
+The commands run the complete API suite, one file, one file in watch mode, matching test names, one file without global setup, and the test-inclusive API typecheck, respectively.
+
+`--skip-setup` sets `VITEST_SKIP_GLOBAL_SETUP=true`; use it only after global setup has completed for the current test database. Do not skip setup on the first run, after a database reset, or when migrations or seeds have changed. Normal global setup runs the API initializers.
+
+The test setup cleans the database before each test, and the configured Vitest fork pool runs tests in a single fork. Do not run concurrent API test containers against the same test database; they can deadlock. Observe an existing test container instead of starting another.
+
+[Vitest configuration](/api/vite.config.mts) loads [global setup](/api/tests/global-setup.ts) and [per-test setup](/api/tests/setup.ts), resolves the API and test TypeScript configurations, and enables mock and global cleanup. After factory dependency changes, follow [Dependencies and SQL Scripts](#dependencies-and-sql-scripts) to refresh source-bound API dependencies, then rebuild the isolated test image with `bin/dev build test_api`.
+
+## VS Code Test-File Configuration
+
+The [Create Test File extension](https://marketplace.visualstudio.com/items?itemName=klondikemarlen.create-test-file) uses this configuration in workspace settings or `.vscode/settings.json`. When stored in workspace configuration, put these values inside its `"settings"` object.
+
+```json
+{
+  "createTestFile.nameTemplate": "{filename}.test.{extension}",
+  "createTestFile.languages": {
+    "[vue]": {
+      "createTestFile.nameTemplate": "{filename}.test.{extension}.ts"
+    }
+  },
+  "createTestFile.pathMaps": [
+    {
+      "pathPattern": "(api)/src/?(.*)",
+      "testFilePathPattern": "$1/tests/$2"
+    },
+    {
+      "pathPattern": "(web)/src/?(.*)",
+      "testFilePathPattern": "$1/tests/$2"
+    }
+  ],
+  "createTestFile.isTestFileMatchers": [
+    "^(?:test|spec)s?/",
+    "/(?:test|spec)s?/",
+    "/?(?:test|spec)s?_",
+    "/?_(?:test|spec)s?",
+    "/?\\.(?:test|spec)s?",
+    "/?(?:test|spec)s?\\."
+  ]
+}
+```

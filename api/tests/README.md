@@ -1,75 +1,28 @@
 # API Tests
 
-Use the [Code Review Workflow](skill://code-review/workflow.md), its [Scenario-Oriented Verification reference](https://github.com/klondikemarlen/marlens-skills-rules-and-tools/blob/main/docs/references/code-organization-reference.md#scenario-oriented-verification), and the shared [Test Alignment Baseline](https://github.com/klondikemarlen/marlens-skills-rules-and-tools/blob/main/docs/references/test-alignment-verifier-reference.md#shared-baseline) for shared test design. Use the [Factory Trait Workflow](skill://test-factory-traits-and-service-shape/workflow.md) for persisted fixture setup. This README records ELCC's runnable test harness and local assertion conventions.
+Use API tests to prove ELCC's current application behavior and maintained domain invariants. Choose the suite by the responsibility being exercised, not by the implementation that a feature replaced. Test commands, database isolation, dependency refresh, and editor configuration belong in [bin guidance](/bin/README.md#api-test-commands-and-isolation).
 
-## Running tests
+Use the [Code Review Workflow](skill://code-review/workflow.md), [Scenario-Oriented Verification](https://github.com/klondikemarlen/marlens-skills-rules-and-tools/blob/main/docs/references/code-organization-reference.md#scenario-oriented-verification), and [Test Alignment Baseline](https://github.com/klondikemarlen/marlens-skills-rules-and-tools/blob/main/docs/references/test-alignment-verifier-reference.md#shared-baseline) for shared test design. The [Factory Trait Workflow](skill://test-factory-traits-and-service-shape/workflow.md) governs reusable persisted relationship setup. Apply the root [shared-standards source contract](/AGENTS.md#shared-standards-and-local-authority); this guide retains ELCC's test-layer and harness constraints.
 
-Run API tests through `bin/dev` from the repository root so they use the isolated API test container and database described in [bin guidance](/bin/README.md#database-connection-isolation):
+## Choose the Test Boundary
 
-- All API tests: `bin/dev test api -- --run`
-- One test file: `bin/dev test api -- --run tests/services/example.test.ts`
-- Watch one test file: `bin/dev test api tests/services/example.test.ts`
-- Match test names: `bin/dev test api -- --run -t "fiscal year"`
-- Skip global setup after it has already completed for the current test database:
-  `bin/dev test api --skip-setup -- --run tests/services/example.test.ts`
+- Model tests prove application-owned validation, calculations, scopes, and persistence invariants. Use decimal strings for financial values and preserve the precision contract in [root guidance](/AGENTS.md#financial-precision); do not test Sequelize's ordinary persistence or timestamp behavior.
+- Service tests prove business operations and their persisted outcomes. Observe records through Sequelize unless the returned value is itself the application contract. Use virtual attributes such as `lines` instead of parsing stored `values`, and include record IDs when matching multiple persisted records.
+- Controller tests prove authentication, policy-filtered inputs, and the HTTP response contract. Keep independent persistence outcomes in service or model scenarios rather than adding them to a response test.
+- Factory setup supports these scenarios; it is not the business operation under test. Use the project's factories to arrange data instead of calling production provisioning services for setup.
 
-`--skip-setup` sets `VITEST_SKIP_GLOBAL_SETUP=true`; do not use it on first run, after a database reset, or when migrations or seeds have changed. The normal global setup runs the API initializers. The test setup cleans the database before each test, and the configured Vitest fork pool runs tests in a single fork. Do not run concurrent API test containers against the shared test database; they can deadlock. If a test container is already running, observe that container instead of starting another.
+Mirror the owning source path under `api/tests` with a `.test.ts` filename and describe the source file, class/model, and method in nested suites. Move or remove the suite with its owning source. Migration checks are disposable: verify migrations during implementation, then delete their test files and dedicated fixtures before committing.
 
-Vitest configuration is in `api/vite.config.mts`: it loads `tests/global-setup.ts` and `tests/setup.ts`, resolves the API and test TypeScript configurations, and enables mock and global cleanup. The test TypeScript check is `bin/dev check-types` (or `bin/dev api npm run check-types`).
+## Scenario and Assertion Contracts
 
-## Factory Library Boundary
+Keep setup local to the scenario, using explicit fixture names such as `user1` and `user2` for equivalent records. Use one `expect` per test; separate rejection, persistence, and preservation outcomes rather than bundling them. A controller HTTP response is the deliberate exception: assert `response.status` first with `toEqual(...)`, then the complete `response.body` with `toEqual(...)`. These two assertions describe one coupled response, not permission to add independent outcomes.
 
-Use [Factory Shark](https://github.com/klondikemarlen/factory-shark#readme) for Sequelize model factories under `tests/factories`. Return scalar attributes and declare `belongsTo` dependencies with `associate`; the library owns building and persistence. Keep Fishery for `FundingLineValue`, which is a plain JSON value rather than a Sequelize model. Frontend API response factories likewise remain separate from backend persistence.
+For a negative spy contract, use `expect(spy).not.toHaveBeenCalled()` without arguments. Time-dependent suites use `vi.useFakeTimers()` with `vi.useRealTimers()` teardown; set the clock with `vi.setSystemTime(new Date("YYYY-MM-DD"))`, leave a blank line before scenario setup, and use explicit dates relative to that clock.
 
-Use persisted parents with `.associations({ parent }).create()` or pass their foreign keys to `.create({ parentId })`. Register dependent associations after their prerequisites and use lazy overrides when they share a funding period. Derive snapshots from resolved associations in `beforeCreate`, not from generated placeholders that can differ from the records ultimately saved. `build()` is database-free; unlike `create()`, it does not load existing parents by ID.
+## Factory and Harness Boundaries
 
-When generating a category whose funding period depends on a fiscal period, pass the persisted fiscal period through `.associations({ fiscalPeriod })`. Factory Shark 1.1.0 loads ID-only parents after creating dependent associations, so their attributes are not yet available to lazy category defaults.
+Use [Factory Shark](https://github.com/klondikemarlen/factory-shark#readme) for Sequelize model factories in `tests/factories`. Declare scalar attributes and `belongsTo` dependencies with `associate`; the library owns building and persistence. Fishery remains appropriate for `FundingLineValue`, a plain JSON value, and frontend API response fixtures rather than Sequelize models.
 
-Keep Factory Shark and the application's ORM/dialect versions within the library's [qualified compatibility contract](https://github.com/klondikemarlen/factory-shark/blob/v1.1.0/docs/architecture/sequelize-compatibility.md). Refresh the isolated test image after dependency changes as well as the source-bound API dependencies.
+Reuse persisted parents with `.associations({ parent }).create()` or pass their foreign keys to `.create({ parentId })`. Register dependent associations after their prerequisites and use lazy overrides for shared funding-period context. Derive historical snapshots from resolved associations in `beforeCreate`, preserving explicit financial values and null links. `build()` is database-free and does not load existing parents by ID. When a category's funding period depends on a fiscal period, pass the persisted fiscal period through `.associations({ fiscalPeriod })`: Factory Shark 1.1.0 resolves ID-only parents after dependent associations, too late for those lazy category defaults.
 
-## Local Suite and ORM Conventions
-
-- Mirror the source path under `api/tests` with a `.test.ts` filename. Describe the source file, class/model, and method in nested suites; move or remove its tests with the owning source.
-- Migration checks are disposable: verify migrations while implementing them, then delete their test files and dedicated fixtures before committing. Do not add migration tests to the permanent suite.
-- Keep scenario fixture names explicit; number equivalent records as `user1`, `user2` rather than naming them for incidental creation order.
-- Observe service persistence through Sequelize records unless the return value is itself the contract. Use virtual attributes such as `lines`, not manual parsing of the stored `values`; include record IDs when matching multiple persisted records.
-- Use one `expect` per service test. Give rejection, persistence, and preservation outcomes separate scenarios with explicit local setup.
-- For a negative spy contract, use `expect(spy).not.toHaveBeenCalled()` without arguments, not `not.toHaveBeenCalledWith(...)`.
-- Time-dependent suites use `vi.useFakeTimers()` with `vi.useRealTimers()` teardown. Set the clock with `vi.setSystemTime(new Date("YYYY-MM-DD"))`, leave a blank line before scenario setup, and use explicit dates relative to that fixed clock.
-
-## Local HTTP assertion convention
-
-For an HTTP response, assert `response.status` first with `toEqual(...)`, then assert the complete `response.body` with `toEqual(...)`. These two direct assertions describe one coupled HTTP result; keep independent persistence outcomes in separate tests. This is the established ELCC exception where a suitable HTTP response matcher is not in use, consistent with the shared review workflow.
-
-## VS Code test-file configuration
-
-The [Create Test File extension](https://marketplace.visualstudio.com/items?itemName=klondikemarlen.create-test-file) uses this configuration in workspace settings or `.vscode/settings.json`. When stored in workspace configuration, put these values inside its `"settings"` object.
-
-```json
-{
-  "createTestFile.nameTemplate": "{filename}.test.{extension}",
-  "createTestFile.languages": {
-    "[vue]": {
-      "createTestFile.nameTemplate": "{filename}.test.{extension}.ts"
-    }
-  },
-  "createTestFile.pathMaps": [
-    {
-      "pathPattern": "(api)/src/?(.*)",
-      "testFilePathPattern": "$1/tests/$2"
-    },
-    {
-      "pathPattern": "(web)/src/?(.*)",
-      "testFilePathPattern": "$1/tests/$2"
-    }
-  ],
-  "createTestFile.isTestFileMatchers": [
-    "^(?:test|spec)s?/",
-    "/(?:test|spec)s?/",
-    "/?(?:test|spec)s?_",
-    "/?_(?:test|spec)s?",
-    "/?\\.(?:test|spec)s?",
-    "/?(?:test|spec)s?\\."
-  ]
-}
-```
+Keep Factory Shark and the ORM/dialect within the library's [qualified compatibility contract](https://github.com/klondikemarlen/factory-shark/blob/v1.1.0/docs/architecture/sequelize-compatibility.md). The [isolated test harness](/bin/README.md#api-test-commands-and-isolation) owns database cleanup; do not add competing cleanup or run concurrent containers against the same test database.
