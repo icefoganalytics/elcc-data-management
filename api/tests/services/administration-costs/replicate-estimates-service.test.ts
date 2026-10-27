@@ -129,6 +129,68 @@ describe("api/src/services/administration-costs/replicate-estimates-service.ts",
         ])
       })
 
+      test("when a later month is missing its row, rejects with the missing month and category", async () => {
+        // Arrange
+        const centre = await centreFactory.create()
+        const fundingPeriod = await fundingPeriodFactory.create({
+          fiscalYear: "2024-2025",
+        })
+        const aprilFiscalPeriod = await fiscalPeriodFactory
+          .associations({
+            fundingPeriod,
+          })
+          .create({
+            dateStart: new Date("2024-04-01"),
+          })
+        const mayFiscalPeriod = await fiscalPeriodFactory
+          .associations({
+            fundingPeriod,
+          })
+          .create({
+            dateStart: new Date("2024-05-01"),
+          })
+        const juneFiscalPeriod = await fiscalPeriodFactory
+          .associations({
+            fundingPeriod,
+          })
+          .create({
+            dateStart: new Date("2024-06-01"),
+          })
+        const category = await administrationCostCategoryFactory
+          .associations({
+            fundingPeriod,
+          })
+          .create({
+            categoryName: "Infants",
+            monthlyAmount: "80.0000",
+          })
+        const sourceAdministrationCost = await administrationCostFactory
+          .associations({
+            centre,
+            fiscalPeriod: aprilFiscalPeriod,
+            category,
+          })
+          .create({
+            estimatedChildOccupancyRate: "0.8000",
+            actualChildOccupancyRate: "0.7500",
+          })
+        await administrationCostFactory
+          .associations({
+            centre,
+            fiscalPeriod: mayFiscalPeriod,
+            category,
+          })
+          .create({
+            estimatedChildOccupancyRate: "0.1000",
+            actualChildOccupancyRate: "0.5000",
+          })
+
+        // Act / Assert
+        await expect(ReplicateEstimatesService.perform(sourceAdministrationCost)).rejects.toThrow(
+          `fiscal period ${juneFiscalPeriod.id} and category ${category.id}`
+        )
+      })
+
       test("when a later month is missing its row, rolls back earlier replicated changes", async () => {
         // Arrange
         const centre = await centreFactory.create()
@@ -185,10 +247,21 @@ describe("api/src/services/administration-costs/replicate-estimates-service.ts",
             actualChildOccupancyRate: "0.5000",
           })
 
-        // Act / Assert
-        await expect(ReplicateEstimatesService.perform(sourceAdministrationCost)).rejects.toThrow(
-          `fiscal period ${juneFiscalPeriod.id} and category ${category.id}`
+        // Act
+        await ReplicateEstimatesService.perform(sourceAdministrationCost).catch(
+          (error: unknown) => {
+            if (
+              !(error instanceof Error) ||
+              !error.message.includes(
+                `fiscal period ${juneFiscalPeriod.id} and category ${category.id}`
+              )
+            ) {
+              throw error
+            }
+          }
         )
+
+        // Assert
         await mayAdministrationCost.reload()
         expect(mayAdministrationCost).toEqual(
           expect.objectContaining({

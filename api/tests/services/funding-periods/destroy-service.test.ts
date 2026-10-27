@@ -70,7 +70,7 @@ describe("api/src/services/funding-periods/destroy-service.ts", () => {
         ])
       })
 
-      test("when deleting a funding period, removes only its administration configuration and ledger", async () => {
+      test("when deleting a funding period, removes only its administration ledger", async () => {
         // Arrange
         const centre = await centreFactory.create()
         const selectedFundingPeriod = await fundingPeriodFactory.create({
@@ -117,7 +117,6 @@ describe("api/src/services/funding-periods/destroy-service.ts", () => {
 
         // Assert
         const remainingAdministrationCosts = await AdministrationCost.findAll()
-        const remainingAdministrationCostCategories = await AdministrationCostCategory.findAll()
         expect(remainingAdministrationCosts).toEqual([
           expect.objectContaining({
             centreId: centre.id,
@@ -125,6 +124,55 @@ describe("api/src/services/funding-periods/destroy-service.ts", () => {
             categoryId: unrelatedCategory.id,
           }),
         ])
+      })
+
+      test("when deleting a funding period, removes only its administration configuration", async () => {
+        // Arrange
+        const centre = await centreFactory.create()
+        const selectedFundingPeriod = await fundingPeriodFactory.create({
+          fiscalYear: "2024-2025",
+        })
+        const unrelatedFundingPeriod = await fundingPeriodFactory.create({
+          fiscalYear: "2025-2026",
+        })
+        const selectedFiscalPeriod = await fiscalPeriodFactory.create({
+          fundingPeriodId: selectedFundingPeriod.id,
+          fiscalYear: "2024-25",
+        })
+        const unrelatedFiscalPeriod = await fiscalPeriodFactory.create({
+          fundingPeriodId: unrelatedFundingPeriod.id,
+          fiscalYear: "2025-26",
+        })
+        const selectedCategory = await administrationCostCategoryFactory
+          .associations({
+            fundingPeriod: selectedFundingPeriod,
+          })
+          .create()
+        const unrelatedCategory = await administrationCostCategoryFactory
+          .associations({
+            fundingPeriod: unrelatedFundingPeriod,
+          })
+          .create()
+        await administrationCostFactory
+          .associations({
+            centre,
+            fiscalPeriod: selectedFiscalPeriod,
+            category: selectedCategory,
+          })
+          .create()
+        await administrationCostFactory
+          .associations({
+            centre,
+            fiscalPeriod: unrelatedFiscalPeriod,
+            category: unrelatedCategory,
+          })
+          .create()
+
+        // Act
+        await DestroyService.perform(selectedFundingPeriod)
+
+        // Assert
+        const remainingAdministrationCostCategories = await AdministrationCostCategory.findAll()
         expect(remainingAdministrationCostCategories).toEqual([
           expect.objectContaining({
             id: unrelatedCategory.id,
