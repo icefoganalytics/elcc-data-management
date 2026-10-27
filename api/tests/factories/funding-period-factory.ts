@@ -1,23 +1,11 @@
-import { Factory } from "fishery"
+import FactoryShark from "factory-shark"
 import { DateTime } from "luxon"
 
 import { FundingPeriod } from "@/models"
-import { nestedSaveAndAssociateIfNew } from "@/factories/helpers"
 
-export const fundingPeriodFactory = Factory.define<FundingPeriod>(
-  ({ params, sequence, onCreate }) => {
-    onCreate(async (fundingPeriod) => {
-      try {
-        await nestedSaveAndAssociateIfNew(fundingPeriod)
-        return fundingPeriod
-      } catch (error) {
-        console.error(error)
-        throw new Error(
-          `Could not create FundingPeriod with attributes: ${JSON.stringify(fundingPeriod.dataValues, null, 2)}`
-        )
-      }
-    })
-
+export const fundingPeriodFactory = FactoryShark.define<FundingPeriod>(
+  FundingPeriod,
+  ({ params, sequence }) => {
     let currentYear = DateTime.now().year
     if (params.fiscalYear) {
       currentYear = parseInt(params.fiscalYear.split("-")[0])
@@ -39,12 +27,12 @@ export const fundingPeriodFactory = Factory.define<FundingPeriod>(
       .toJSDate()
     const title = `Funding Period ${sequence}`
 
-    return FundingPeriod.build({
+    return {
       fiscalYear,
       fromDate,
       toDate,
       title,
-    })
+    }
   }
 )
 

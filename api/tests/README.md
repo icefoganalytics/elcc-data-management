@@ -17,6 +17,14 @@ Run API tests through `bin/dev` from the repository root so they use the isolate
 
 Vitest configuration is in `api/vite.config.mts`: it loads `tests/global-setup.ts` and `tests/setup.ts`, resolves the API and test TypeScript configurations, and enables mock and global cleanup. The test TypeScript check is `bin/dev check-types` (or `bin/dev api npm run check-types`).
 
+## Factory Library Boundary
+
+Use [Factory Shark](https://github.com/klondikemarlen/factory-shark#readme) for Sequelize model factories under `tests/factories`. Return scalar attributes and declare `belongsTo` dependencies with `associate`; the library owns building and persistence. Keep Fishery for `FundingLineValue`, which is a plain JSON value rather than a Sequelize model. Frontend API response factories likewise remain separate from backend persistence.
+
+Use persisted parents with `.associations({ parent }).create()` or pass their foreign keys to `.create({ parentId })`. Register dependent associations after their prerequisites and use lazy overrides when they share a funding period. Derive snapshots from resolved associations in `beforeCreate`, not from generated placeholders that can differ from the records ultimately saved. `build()` is database-free; unlike `create()`, it does not load existing parents by ID.
+
+Keep Factory Shark and the application's ORM/dialect versions within the library's [qualified compatibility contract](https://github.com/klondikemarlen/factory-shark/blob/v1.1.0/docs/architecture/sequelize-compatibility.md). Refresh the isolated test image after dependency changes as well as the source-bound API dependencies.
+
 ## Local Suite and ORM Conventions
 
 - Mirror the source path under `api/tests` with a `.test.ts` filename. Describe the source file, class/model, and method in nested suites; move or remove its tests with the owning source.
