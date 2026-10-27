@@ -23,6 +23,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
 
 ### Changed
 
+- API model test factories now use Factory Shark for declarative related-record setup, with Sequelize core and the SQL Server dialect aligned to its supported release. Plain JSON and frontend fixtures remain on Fishery.
 - Agent guidance now resolves shared authoring, review, and testing standards directly while retaining ELCC's financial, security, API, and development/test requirements locally.
 - Preserved four-decimal currency entry and exact financial calculations when reconciling money amounts.
 - Unified authentication for legacy and modern API endpoints behind one shared boundary,
