@@ -27,17 +27,14 @@ describe("api/src/models/administration-cost.ts", () => {
           .create({
             monthlyAmount: "10.0000",
           })
-        const administrationCost = administrationCostFactory
-          .associations({
-            centre,
-            fiscalPeriod,
-            category,
-          })
-          .build({
-            monthlyAmount: "10.0000",
-            estimatedChildOccupancyRate: "0.1234",
-            actualChildOccupancyRate: "0.4000",
-          })
+        const administrationCost = administrationCostFactory.build({
+          centreId: centre.id,
+          fiscalPeriodId: fiscalPeriod.id,
+          categoryId: category.id,
+          monthlyAmount: "10.0000",
+          estimatedChildOccupancyRate: "0.1234",
+          actualChildOccupancyRate: "0.4000",
+        })
 
         // Act
         await administrationCost.save()
