@@ -1,57 +1,54 @@
-import { Factory } from "fishery"
 import { faker } from "@faker-js/faker"
+import FactoryShark from "factory-shark"
 
-import QualityEnhancement from "@/models/quality-enhancement"
-import { nestedSaveAndAssociateIfNew } from "@/factories/helpers"
+import { QualityEnhancement } from "@/models"
+
 import centreFactory from "@/factories/centre-factory"
 import fiscalPeriodFactory from "@/factories/fiscal-period-factory"
-import fundingPeriodFactory from "@/factories/funding-period-factory"
 import qualityEnhancementCategoryFactory from "@/factories/quality-enhancement-category-factory"
 
-export const qualityEnhancementFactory = Factory.define<QualityEnhancement>(
-  ({ associations, params, onCreate }) => {
-    onCreate(async (enhancement) => {
-      await nestedSaveAndAssociateIfNew(enhancement)
-      return enhancement
+export const qualityEnhancementFactory = FactoryShark.define<QualityEnhancement>(
+  QualityEnhancement,
+  ({ associate, params, beforeCreate }) => {
+    associate("centre", centreFactory)
+    const fiscalPeriod = associate("fiscalPeriod", fiscalPeriodFactory)
+    const category = associate("category", qualityEnhancementCategoryFactory, (resolvedParams) => ({
+      fundingPeriodId: resolvedParams.fiscalPeriod?.fundingPeriodId ?? fiscalPeriod.fundingPeriodId,
+    }))
+    const categoryDefaults = params.category ?? category
+    const estimatedChildOccupancyRate = faker.finance.amount({ min: 0, max: 1, dec: 4 })
+    const actualChildOccupancyRate = faker.finance.amount({ min: 0, max: 1, dec: 4 })
+
+    // Category overrides resolve after generation; copy snapshots from the persisted parent.
+    beforeCreate(async (enhancement) => {
+      const resolvedCategory = enhancement.category
+      if (resolvedCategory === undefined) return
+
+      if (params.lineName === undefined) {
+        enhancement.lineName = resolvedCategory.categoryName
+      }
+
+      if (params.baseMonthlyAmount === undefined) {
+        enhancement.baseMonthlyAmount = resolvedCategory.monthlyAmount
+      }
+
+      if (params.childCareSpaceCategoryId === undefined) {
+        enhancement.childCareSpaceCategoryId = resolvedCategory.childCareSpaceCategoryId
+      }
     })
 
-    const centre = associations.centre ?? centreFactory.build({ id: params.centreId })
-    const fiscalPeriod =
-      associations.fiscalPeriod ?? fiscalPeriodFactory.build({ id: params.fiscalPeriodId })
-    const fundingPeriod =
-      fiscalPeriod.fundingPeriod ?? fundingPeriodFactory.build({ id: fiscalPeriod.fundingPeriodId })
-    fiscalPeriod.fundingPeriod = fundingPeriod
-    const category =
-      associations.category ??
-      qualityEnhancementCategoryFactory
-        .associations({ fundingPeriod })
-        .build({ id: params.categoryId })
-    const baseMonthlyAmount = params.baseMonthlyAmount ?? category.monthlyAmount
-    const hotMealIncrementAmount = params.hotMealIncrementAmount ?? "0.0000"
-    const estimatedChildOccupancyRate =
-      params.estimatedChildOccupancyRate ?? faker.finance.amount({ min: 0, max: 1, dec: 4 })
-    const actualChildOccupancyRate =
-      params.actualChildOccupancyRate ?? faker.finance.amount({ min: 0, max: 1, dec: 4 })
-    const enhancement = QualityEnhancement.build({
-      centreId: centre.id,
-      fiscalPeriodId: fiscalPeriod.id,
-      categoryId: category.id,
-      childCareSpaceCategoryId:
-        params.childCareSpaceCategoryId ?? category.childCareSpaceCategoryId,
-      lineName: params.lineName ?? category.categoryName,
-      baseMonthlyAmount,
-      hotMealIncrementAmount,
-      hotMealAppliedAt: params.hotMealAppliedAt ?? null,
-      monthlyAmount: baseMonthlyAmount,
+    return {
+      childCareSpaceCategoryId: categoryDefaults.childCareSpaceCategoryId,
+      lineName: categoryDefaults.categoryName,
+      baseMonthlyAmount: categoryDefaults.monthlyAmount,
+      hotMealIncrementAmount: "0.0000",
+      hotMealAppliedAt: null,
+      monthlyAmount: categoryDefaults.monthlyAmount,
       estimatedChildOccupancyRate,
       actualChildOccupancyRate,
       estimatedComputedTotal: "0.0000",
       actualComputedTotal: "0.0000",
-    })
-    enhancement.centre = centre
-    enhancement.fiscalPeriod = fiscalPeriod
-    enhancement.category = category
-    return enhancement
+    }
   }
 )
 

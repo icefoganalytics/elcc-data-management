@@ -13,7 +13,7 @@ describe("api/src/services/centres/funding-periods/quality-enhancements/bulk-cre
     describe("#perform", () => {
       test("when initially provisioning a hot meal centre, snapshots configuration and the regional increment", async () => {
         // Arrange
-        const centre = await centreFactory.create({}, { transient: { include: ["fundingRegion"] } })
+        const centre = await centreFactory.transient({ include: ["fundingRegion"] }).create()
         await centre.update({ hotMeal: true })
         await centre.fundingRegion?.update({ hotMealIncrementAmount: "32.0600" })
         const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2026-2027" })

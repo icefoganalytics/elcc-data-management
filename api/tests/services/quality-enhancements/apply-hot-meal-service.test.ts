@@ -72,7 +72,7 @@ describe("api/src/services/quality-enhancements/apply-hot-meal-service.ts", () =
         await ApplyHotMealService.perform(centre)
 
         // Assert
-        const enhancements = await QualityEnhancement.findAll()
+        const enhancements = await QualityEnhancement.findAll({ order: [["id", "ASC"]] })
         expect(enhancements).toEqual([
           expect.objectContaining({
             id: past.id,

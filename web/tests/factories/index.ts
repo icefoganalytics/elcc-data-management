@@ -1,3 +1,6 @@
+export { childCareSpaceFactory } from "./child-care-space-factory"
 export { employeeBenefitFactory } from "./employee-benefit-factory"
 export { employeeWageTierFactory } from "./employee-wage-tier-factory"
+export { fundingSubmissionLineJsonFactory } from "./funding-submission-line-json-factory"
+export { qualityEnhancementFactory } from "./quality-enhancement-factory"
 export { wageEnhancementFactory } from "./wage-enhancement-factory"
