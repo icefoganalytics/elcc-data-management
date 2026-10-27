@@ -45,11 +45,11 @@ Initial provisioning creates the configured monthly records. Afterward, workshee
 - Occupancy edits propagate to **Administration (10% of Spaces)** and **Quality Enhancement Program** through the stable category ID stored on their configuration and worksheet lines, not through editable labels or section position. Both estimated and actual occupancy are copied and dependent totals refreshed. Missing or ambiguous matches are errors.
 - **Replicate Estimates** copies estimates to matching lines in later months of the same funding period and centre. It clears those months' actual occupancy and actual totals; earlier months and other centres are unaffected.
 - **Latest Enrollment** uses the latest month with positive actual occupancy in the selected centre and fiscal year, including every category from that month. Empty future months must not hide earlier enrollment. Without positive actual occupancy, there is no enrollment chart.
-- Eligible expenses combine remaining worksheet JSON actual totals, Child Care Spaces ledger actual totals, and Building Expenses for the requested centre and fiscal period. Child Care Spaces must not also be stored in worksheet JSON.
+- Eligible expenses combine remaining worksheet JSON actual totals, Child Care Spaces and Quality Enhancement ledger actual totals, and Building Expenses for the requested centre and fiscal period. Neither ledger-owned section may also be stored in worksheet JSON.
 - Removing a funding period removes its Child Care Spaces records without removing another period's records.
 - The worksheet mounts only after its centre, fiscal year, month, worksheet, and fiscal period agree. Delayed responses from earlier navigation cannot restore another month's editor.
 - Occupancy inputs remain read only throughout **Save** and **Replicate Estimates**, including until every dispatched write settles after a sibling fails. A failed ledger batch does not trigger the dependent worksheet JSON save.
-- The worksheet withholds editing when either its ledger or JSON source fails to load. **Reload Worksheet** reloads both sources before restoring editing.
+- The worksheet withholds editing when either ledger or its JSON source fails to load. **Reload Worksheet** reloads all sources before restoring editing.
 
 ## Sources
 

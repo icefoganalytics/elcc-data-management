@@ -1,7 +1,7 @@
 import db, { Centre, Log, User } from "@/models"
 import BaseService from "@/services/base-service"
 import LogServices from "@/services/log-services"
-import { FundingSubmissionLineJsons } from "@/services/centres/funding-periods"
+import { ApplyHotMealService, RemoveHotMealService } from "@/services/quality-enhancements"
 
 export class UpdateService extends BaseService {
   constructor(
@@ -32,9 +32,9 @@ export class UpdateService extends BaseService {
     hotMealNew: boolean
   ): Promise<void> {
     if (hotMealOld === false && hotMealNew === true) {
-      await FundingSubmissionLineJsons.ApplyHotMealEnhancementService.perform(centre)
+      await ApplyHotMealService.perform(centre)
     } else if (hotMealOld === true && hotMealNew === false) {
-      await FundingSubmissionLineJsons.RemoveHotMealEnhancementService.perform(centre)
+      await RemoveHotMealService.perform(centre)
     }
   }
 

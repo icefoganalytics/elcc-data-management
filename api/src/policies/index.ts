@@ -9,5 +9,7 @@ export { FundingReconciliationAdjustmentPolicy } from "./funding-reconciliation-
 export { FundingReconciliationPolicy } from "./funding-reconciliation-policy"
 export { FundingSubmissionLinePolicy } from "./funding-submission-line-policy"
 export { PaymentPolicy } from "./payment-policy"
+export { QualityEnhancementCategoryPolicy } from "./quality-enhancement-category-policy"
+export { QualityEnhancementPolicy } from "./quality-enhancement-policy"
 export { UserPolicy } from "./user-policy"
 export { WageEnhancementPolicy } from "./wage-enhancement-policy"

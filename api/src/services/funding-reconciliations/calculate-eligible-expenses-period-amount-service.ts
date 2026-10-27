@@ -19,10 +19,12 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
       this.centreId,
       this.fiscalPeriodId
     )
+    const qualityEnhancementsTotalAmount = await this.calculateQualityEnhancements()
     const buildingExpensesTotalAmount = await this.calculateBuildingExpenses()
 
     const totalEligibleExpenses = Big(fundingSubmissionExpensesAmount)
       .plus(childCareSpacesTotalAmount)
+      .plus(qualityEnhancementsTotalAmount)
       .plus(buildingExpensesTotalAmount)
 
     return totalEligibleExpenses.toFixed(4)
@@ -109,6 +111,35 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
     const { childCareSpacesTotalAmount } = childCareSpacesResult
 
     return Big(childCareSpacesTotalAmount).toFixed(4)
+  }
+
+  private async calculateQualityEnhancements(): Promise<string> {
+    const [qualityEnhancementsResult] = await db.query<{
+      qualityEnhancementsTotalAmount: string
+    }>(
+      /* sql */ `
+        SELECT
+          CONVERT(
+            VARCHAR(50),
+            COALESCE(SUM(actual_computed_total), 0)
+          ) AS qualityEnhancementsTotalAmount
+        FROM
+          quality_enhancements
+        WHERE
+          centre_id = :centreId
+          AND fiscal_period_id = :fiscalPeriodId
+          AND deleted_at IS NULL
+      `,
+      {
+        type: QueryTypes.SELECT,
+        replacements: {
+          centreId: this.centreId,
+          fiscalPeriodId: this.fiscalPeriodId,
+        },
+      }
+    )
+
+    return Big(qualityEnhancementsResult.qualityEnhancementsTotalAmount).toFixed(4)
   }
 
   private async calculateBuildingExpenses(): Promise<string> {

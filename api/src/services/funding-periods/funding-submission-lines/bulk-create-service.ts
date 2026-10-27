@@ -3,6 +3,7 @@ import { isEmpty, isNil, isUndefined } from "lodash"
 
 import { ChildCareSpaceCategory, FundingPeriod, FundingSubmissionLine } from "@/models"
 import doesNotUseChildCareSpacesSection from "@/models/validators/does-not-use-child-care-spaces-section"
+import doesNotUseQualityEnhancementSection from "@/models/validators/does-not-use-quality-enhancement-section"
 
 import BaseService from "@/services/base-service"
 
@@ -50,6 +51,7 @@ export class BulkCreateService extends BaseService {
     )
     for (const { sectionName } of fundingSubmissionLinesAttributes) {
       doesNotUseChildCareSpacesSection(sectionName)
+      doesNotUseQualityEnhancementSection(sectionName)
     }
 
     return FundingSubmissionLine.bulkCreate(fundingSubmissionLinesAttributes)
@@ -67,10 +69,7 @@ export class BulkCreateService extends BaseService {
   }
 
   private isCategoryLinkableSection(sectionName: string) {
-    return (
-      sectionName === "Administration (10% of Spaces)" ||
-      sectionName === FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM
-    )
+    return sectionName === "Administration (10% of Spaces)"
   }
 
   private async categoryIdsByName(fundingPeriodId: number) {

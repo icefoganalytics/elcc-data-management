@@ -1,77 +1,79 @@
 <template>
-  <v-skeleton-loader
-    v-if="isLoading"
-    type="table"
-  />
-  <v-alert
-    v-else-if="isErrored"
-    type="error"
-    variant="tonal"
-  >
-    Worksheet data could not be loaded. Reload both sources before editing.
-    <v-btn
-      class="ml-3"
-      variant="outlined"
-      @click="reloadWorksheet"
+  <v-sheet>
+    <v-skeleton-loader
+      v-if="isLoading"
+      type="table"
+    />
+    <v-alert
+      v-else-if="isErrored"
+      type="error"
+      variant="tonal"
     >
-      Reload Worksheet
-    </v-btn>
-  </v-alert>
-  <v-sheet
-    v-else
-    @keydown="activateKeyboardShortcutsModalIfCorrectEvent($event)"
-  >
-    <v-btn
-      color="primary"
-      class="float-right"
-      :loading="isSaving"
-      :disabled="isReplicatingEstimates"
-      @click="saveFundingSubmissionLineJson"
-    >
-      Save
-    </v-btn>
-
-    <h2 class="mb-3">{{ dateName }} {{ calendarYear }}</h2>
-    <div class="d-flex justify-end">
+      Worksheet data could not be loaded. Reload all sources before editing.
       <v-btn
-        v-if="dateName == FIRST_FISCAL_MONTH_NAME"
-        :loading="isReplicatingEstimates"
-        :disabled="isSaving"
-        color="yg-sun"
-        size="small"
-        @click="replicateEstimatesForward"
+        class="ml-3"
+        variant="outlined"
+        @click="reloadWorksheet"
       >
-        <v-icon>mdi-content-copy</v-icon> Replicate Estimates
+        Reload Worksheet
       </v-btn>
-    </div>
-
-    <section
-      v-for="({ sectionName, lines }, sectionIndex) in sections"
-      :key="`${sectionName}-${sectionIndex}`"
+    </v-alert>
+    <v-sheet
+      v-else
+      @keydown="activateKeyboardShortcutsModalIfCorrectEvent($event)"
     >
-      <h3
-        class="d-flex justify-space-between align-center mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2"
+      <v-btn
+        color="primary"
+        class="float-right"
+        :loading="isSaving"
+        :disabled="isReplicatingEstimates"
+        @click="saveFundingSubmissionLineJson"
       >
-        {{ sectionName }}
+        Save
+      </v-btn>
 
-        <v-icon
-          title="Show keyboard shortcuts"
-          @click="showKeyboardShortcutsModal"
+      <h2 class="mb-3">{{ dateName }} {{ calendarYear }}</h2>
+      <div class="d-flex justify-end">
+        <v-btn
+          v-if="dateName == FIRST_FISCAL_MONTH_NAME"
+          :loading="isReplicatingEstimates"
+          :disabled="isSaving"
+          color="yg-sun"
+          size="small"
+          @click="replicateEstimatesForward"
         >
-          mdi-keyboard
-        </v-icon>
-      </h3>
+          <v-icon>mdi-content-copy</v-icon> Replicate Estimates
+        </v-btn>
+      </div>
 
-      <FundingSubmissionLineJsonSectionTable
-        ref="fundingSubmissionLineJsonSectionTables"
-        :lines="lines"
-        :readonly="isWorkflowRunning"
-        @focus-beyond-last-in-column="goToNextSection(sectionIndex, $event)"
-        @focus-beyond-first-in-column="goToPreviousSection(sectionIndex, $event)"
-        @line-changed="propagateUpdatesAsNeeded($event)"
-      />
-    </section>
-    <KeyboardShortcutsModal ref="keyboardShortcutsModal" />
+      <section
+        v-for="({ sectionName, lines }, sectionIndex) in sections"
+        :key="`${sectionName}-${sectionIndex}`"
+      >
+        <h3
+          class="d-flex justify-space-between align-center mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2"
+        >
+          {{ sectionName }}
+
+          <v-icon
+            title="Show keyboard shortcuts"
+            @click="showKeyboardShortcutsModal"
+          >
+            mdi-keyboard
+          </v-icon>
+        </h3>
+
+        <FundingSubmissionLineJsonSectionTable
+          ref="fundingSubmissionLineJsonSectionTables"
+          :lines="lines"
+          :readonly="isWorkflowRunning"
+          @focus-beyond-last-in-column="goToNextSection(sectionIndex, $event)"
+          @focus-beyond-first-in-column="goToPreviousSection(sectionIndex, $event)"
+          @line-changed="propagateUpdatesAsNeeded($event)"
+        />
+      </section>
+      <KeyboardShortcutsModal ref="keyboardShortcutsModal" />
+    </v-sheet>
   </v-sheet>
 </template>
 
@@ -84,9 +86,13 @@ import childCareSpacesApi, { CHILD_CARE_SPACES_SECTION_NAME } from "@/api/child-
 import fundingSubmissionLineJsonsApi, {
   type FundingLineValue,
 } from "@/api/funding-submission-line-jsons-api"
+import qualityEnhancementsApi, {
+  QUALITY_ENHANCEMENTS_SECTION_NAME,
+} from "@/api/quality-enhancements-api"
 import { useNotificationStore } from "@/store/NotificationStore"
 import useChildCareSpaces from "@/use/use-child-care-spaces"
 import useFundingSubmissionLineJson from "@/use/use-funding-submission-line-json"
+import useQualityEnhancements from "@/use/use-quality-enhancements"
 
 import KeyboardShortcutsModal from "@/components/common/KeyboardShortcutsModal.vue"
 import FundingSubmissionLineJsonSectionTable, {
@@ -127,13 +133,31 @@ const {
   refresh: refreshChildCareSpaces,
 } = useChildCareSpaces(childCareSpacesQuery)
 
+const qualityEnhancementsQuery = computed(() => ({
+  where: {
+    centreId: props.centreId,
+    fiscalPeriodId: props.fiscalPeriodId,
+  },
+  perPage: -1,
+}))
+const {
+  qualityEnhancements,
+  isLoading: isLoadingQualityEnhancements,
+  isErrored: isErroredQualityEnhancements,
+  refresh: refreshQualityEnhancements,
+} = useQualityEnhancements(qualityEnhancementsQuery)
+
 const isLoading = computed(
-  () => isLoadingFundingSubmissionLineJson.value || isLoadingChildCareSpaces.value
+  () =>
+    isLoadingFundingSubmissionLineJson.value ||
+    isLoadingChildCareSpaces.value ||
+    isLoadingQualityEnhancements.value
 )
 const isErrored = computed(
   () =>
     isErroredFundingSubmissionLineJson.value ||
     isErroredChildCareSpaces.value ||
+    isErroredQualityEnhancements.value ||
     isNil(fundingSubmissionLineJson.value)
 )
 const isSaving = ref(false)
@@ -165,6 +189,21 @@ const childCareSpacesAsFundingLineValues = computed<FundingLineValue[]>(() => {
     })
   })
 })
+const qualityEnhancementsAsFundingLineValues = computed<FundingLineValue[]>(() =>
+  qualityEnhancements.value.map((qualityEnhancement) =>
+    reactive({
+      submissionLineId: qualityEnhancement.categoryId,
+      childCareSpaceCategoryId: qualityEnhancement.childCareSpaceCategoryId ?? undefined,
+      sectionName: QUALITY_ENHANCEMENTS_SECTION_NAME,
+      lineName: qualityEnhancement.lineName,
+      monthlyAmount: qualityEnhancement.monthlyAmount,
+      estimatedChildOccupancyRate: qualityEnhancement.estimatedChildOccupancyRate,
+      actualChildOccupancyRate: qualityEnhancement.actualChildOccupancyRate,
+      estimatedComputedTotal: qualityEnhancement.estimatedComputedTotal,
+      actualComputedTotal: qualityEnhancement.actualComputedTotal,
+    })
+  )
+)
 const sections = computed<{ sectionName: string; lines: FundingLineValue[] }[]>(() => {
   if (isNil(fundingSubmissionLineJson.value)) {
     return []
@@ -175,9 +214,22 @@ const sections = computed<{ sectionName: string; lines: FundingLineValue[] }[]>(
     ...fundingSubmissionLineJson.value.lines,
   ]
   const sectionGroups = groupBy(lines, "sectionName")
-  return Object.entries(sectionGroups).map(([sectionName, lines]) => {
-    return { sectionName, lines }
-  })
+  const worksheetSections = Object.entries(sectionGroups).map(([sectionName, lines]) => ({
+    sectionName,
+    lines,
+  }))
+  if (qualityEnhancementsAsFundingLineValues.value.length > 0) {
+    const administrationSectionIndex = worksheetSections.findIndex(
+      ({ sectionName }) => sectionName === "Administration (10% of Spaces)"
+    )
+    const qualityEnhancementSectionIndex = Math.max(administrationSectionIndex + 1, 1)
+    worksheetSections.splice(qualityEnhancementSectionIndex, 0, {
+      sectionName: QUALITY_ENHANCEMENTS_SECTION_NAME,
+      lines: qualityEnhancementsAsFundingLineValues.value,
+    })
+  }
+
+  return worksheetSections
 })
 const fundingSubmissionLineJsonSectionTables = ref<
   InstanceType<typeof FundingSubmissionLineJsonSectionTable>[]
@@ -186,7 +238,11 @@ const notificationStore = useNotificationStore()
 
 async function reloadWorksheet() {
   try {
-    await Promise.all([refreshChildCareSpaces(), refreshFundingSubmissionLineJson()])
+    await Promise.all([
+      refreshChildCareSpaces(),
+      refreshQualityEnhancements(),
+      refreshFundingSubmissionLineJson(),
+    ])
   } catch (error) {
     notificationStore.notify({
       text: `Failed to load worksheet: ${error}`,
@@ -196,7 +252,7 @@ async function reloadWorksheet() {
 }
 
 async function saveFundingSubmissionLineJson(): Promise<boolean> {
-  if (isLoading.value || isErrored.value) {
+  if (isSaving.value || isLoading.value || isErrored.value) {
     return false
   }
 
@@ -237,19 +293,29 @@ async function saveFundingSubmissionLineJson(): Promise<boolean> {
       })
     }
 
-    const childCareSpaceUpdateRequests = childCareSpaceUpdates.map(({ id, update }) =>
-      childCareSpacesApi.update(id, update)
-    )
-    await awaitMutationSettlements(childCareSpaceUpdateRequests)
+    const qualityEnhancementUpdates = buildQualityEnhancementUpdates()
+    const ledgerUpdateRequests = [
+      ...childCareSpaceUpdates.map(({ id, update }) => childCareSpacesApi.update(id, update)),
+      ...qualityEnhancementUpdates.map(({ id, update }) =>
+        qualityEnhancementsApi.update(id, update)
+      ),
+    ]
+    await awaitMutationSettlements(ledgerUpdateRequests)
     const linesInOtherSections = sections.value.filter(
-      ({ sectionName }) => sectionName !== CHILD_CARE_SPACES_SECTION_NAME
+      ({ sectionName }) =>
+        sectionName !== CHILD_CARE_SPACES_SECTION_NAME &&
+        sectionName !== QUALITY_ENHANCEMENTS_SECTION_NAME
     )
     const fundingSubmissionLineJsonLines = linesInOtherSections.flatMap(({ lines }) => lines)
 
     await fundingSubmissionLineJsonsApi.update(fundingSubmissionLineJsonId.value, {
       lines: fundingSubmissionLineJsonLines,
     })
-    await Promise.all([refreshChildCareSpaces(), refreshFundingSubmissionLineJson()])
+    await Promise.all([
+      refreshChildCareSpaces(),
+      refreshQualityEnhancements(),
+      refreshFundingSubmissionLineJson(),
+    ])
 
     emit("update:fundingSubmissionLineJson", fundingSubmissionLineJsonId.value)
     return true
@@ -265,6 +331,40 @@ async function saveFundingSubmissionLineJson(): Promise<boolean> {
   }
 }
 
+function buildQualityEnhancementUpdates() {
+  const qualityEnhancementsByCategoryId = new Map(
+    qualityEnhancements.value.map((qualityEnhancement) => [
+      qualityEnhancement.categoryId,
+      qualityEnhancement,
+    ])
+  )
+  const updates = []
+
+  for (const line of qualityEnhancementsAsFundingLineValues.value) {
+    const qualityEnhancement = qualityEnhancementsByCategoryId.get(line.submissionLineId)
+    if (isNil(qualityEnhancement)) {
+      throw new Error(`Quality Enhancement for category ${line.submissionLineId} is missing`)
+    }
+
+    if (
+      qualityEnhancement.estimatedChildOccupancyRate === line.estimatedChildOccupancyRate &&
+      qualityEnhancement.actualChildOccupancyRate === line.actualChildOccupancyRate
+    ) {
+      continue
+    }
+
+    updates.push({
+      id: qualityEnhancement.id,
+      update: {
+        estimatedChildOccupancyRate: line.estimatedChildOccupancyRate,
+        actualChildOccupancyRate: line.actualChildOccupancyRate,
+      },
+    })
+  }
+
+  return updates
+}
+
 async function awaitMutationSettlements(mutations: Promise<unknown>[]) {
   const results = await Promise.allSettled(mutations)
   const failures = results.flatMap((result) =>
@@ -277,6 +377,10 @@ async function awaitMutationSettlements(mutations: Promise<unknown>[]) {
 }
 
 async function replicateEstimatesForward() {
+  if (isWorkflowRunning.value) {
+    return
+  }
+
   isReplicatingEstimates.value = true
   try {
     const wasSaved = await saveFundingSubmissionLineJson()
@@ -289,9 +393,16 @@ async function replicateEstimatesForward() {
       ...childCareSpaces.value.map((childCareSpace) =>
         childCareSpacesApi.replicateEstimates(childCareSpace.id)
       ),
+      ...qualityEnhancements.value.map((qualityEnhancement) =>
+        qualityEnhancementsApi.replicateEstimates(qualityEnhancement.id)
+      ),
     ]
     await awaitMutationSettlements(replicationRequests)
-    await Promise.all([refreshChildCareSpaces(), refreshFundingSubmissionLineJson()])
+    await Promise.all([
+      refreshChildCareSpaces(),
+      refreshQualityEnhancements(),
+      refreshFundingSubmissionLineJson(),
+    ])
 
     emit("update:fundingSubmissionLineJson", fundingSubmissionLineJsonId.value)
   } catch (error) {

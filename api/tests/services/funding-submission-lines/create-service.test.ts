@@ -23,12 +23,6 @@ describe("api/src/services/funding-submission-lines/create-service.ts", () => {
         })
         await CreateService.perform({
           fiscalYear: "2147/48",
-          sectionName: "Quality Enhancement Program",
-          lineName: "Infants",
-          monthlyAmount: "200.00",
-        })
-        await CreateService.perform({
-          fiscalYear: "2147/48",
           sectionName: "Other Section",
           lineName: "Infants",
           monthlyAmount: "300.00",
@@ -37,22 +31,16 @@ describe("api/src/services/funding-submission-lines/create-service.ts", () => {
 
         // Assert
         const persistedLines = await FundingSubmissionLine.findAll()
-        expect(persistedLines).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              sectionName: "Administration (10% of Spaces)",
-              childCareSpaceCategoryId: category.id,
-            }),
-            expect.objectContaining({
-              sectionName: "Quality Enhancement Program",
-              childCareSpaceCategoryId: category.id,
-            }),
-            expect.objectContaining({
-              sectionName: "Other Section",
-              childCareSpaceCategoryId: null,
-            }),
-          ])
-        )
+        expect(persistedLines).toEqual([
+          expect.objectContaining({
+            sectionName: "Administration (10% of Spaces)",
+            childCareSpaceCategoryId: category.id,
+          }),
+          expect.objectContaining({
+            sectionName: "Other Section",
+            childCareSpaceCategoryId: null,
+          }),
+        ])
       })
 
       test("when creating a retired Child Care Spaces section, rejects the configuration", async () => {

@@ -3,11 +3,9 @@ import { isUndefined, merge, omit } from "lodash"
 
 import { ChildCareSpaceCategory, FundingPeriod, FundingSubmissionLine } from "@/models"
 import doesNotUseChildCareSpacesSection from "@/models/validators/does-not-use-child-care-spaces-section"
+import doesNotUseQualityEnhancementSection from "@/models/validators/does-not-use-quality-enhancement-section"
 
-const LINKED_SECTIONS = [
-  "Administration (10% of Spaces)",
-  FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM,
-]
+const LINKED_SECTIONS = ["Administration (10% of Spaces)"]
 
 export class FundingSubmissionLineServices {
   static async bulkCreateFrom(
@@ -22,6 +20,7 @@ export class FundingSubmissionLineServices {
       const creationAttributes = omit(originalAttributes, ["id"])
       const lineAttributes = merge(creationAttributes, attributes)
       doesNotUseChildCareSpacesSection(lineAttributes.sectionName ?? line.sectionName)
+      doesNotUseQualityEnhancementSection(lineAttributes.sectionName ?? line.sectionName)
       return lineAttributes
     })
 
