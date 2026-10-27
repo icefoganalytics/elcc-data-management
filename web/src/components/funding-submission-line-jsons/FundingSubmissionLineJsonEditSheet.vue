@@ -79,6 +79,7 @@ import { DateTime } from "luxon"
 import { computed, reactive, ref, toRefs } from "vue"
 import { groupBy, isNil } from "lodash"
 
+import api from "@/api"
 import administrationCostsApi, { ADMINISTRATION_SECTION_NAME } from "@/api/administration-costs-api"
 import childCareSpacesApi, { CHILD_CARE_SPACES_SECTION_NAME } from "@/api/child-care-spaces-api"
 import fundingSubmissionLineJsonsApi, {
@@ -389,7 +390,7 @@ async function replicateChildCareSpaceEstimates() {
 
 async function replicateAdministrationCostEstimates() {
   for (const administrationCost of administrationCosts.value) {
-    await administrationCostsApi.replicateEstimates(administrationCost.id)
+    await api.administrationCosts.replicateEstimatesApi.create(administrationCost.id)
   }
 }
 
