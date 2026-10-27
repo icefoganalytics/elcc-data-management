@@ -4,13 +4,13 @@ Durable domain and architecture knowledge for ELCC maintainers. Enrich these pag
 
 ## Current scale and engineering tradeoffs
 
-As of October 2026, the maintainer expects roughly ten people to use ELCC Data Management. This is a small operational application, not a service designed for thousands of users. Favor straightforward code, established project patterns, and low maintenance cost for this audience.
+As of October 2026, the maintainer expects fewer than 10 simultaneously active users in ELCC Data Management. This is a concurrency assumption, not a limit on the total number of user accounts. Favor straightforward code, established project patterns, and low maintenance cost for this workload.
 
 - Solve observed user needs and documented requirements. Do not add custom isolation levels, locking, retry coordination, or scaling infrastructure solely for hypothetical high-volume or concurrent usage.
-- A small user base does not eliminate overlapping requests. At this stage, ordinary persistence behavior is the default; stricter same-record concurrency guarantees need a concrete workflow requirement or an observed failure that justifies their complexity.
+- Low concurrency does not eliminate overlapping requests. At this stage, ordinary persistence behavior is the default; stricter same-record concurrency guarantees need a concrete workflow requirement or an observed failure that justifies their complexity.
 - Preserve authorization, validation, financial precision, historical data integrity, and transactions needed to make multi-row operations atomic. These are correctness requirements even for one user, not high-scale optimizations.
 
-Revisit these tradeoffs when the audience, workload, or evidenced operational needs change; a future increase in user count is not a requirement to implement that complexity now.
+Revisit these tradeoffs when the workload or evidenced operational needs change; a hypothetical increase in concurrent activity is not a requirement to implement that complexity now.
 
 ## Domain
 
