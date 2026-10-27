@@ -32,12 +32,16 @@ export type AdministrationCostOccupancyAttributes = Partial<
 >
 
 export const administrationCostsApi = {
-  async list(params: AdministrationCostQueryOptions = {}): Promise<{
+  async list(
+    params: AdministrationCostQueryOptions = {},
+    { signal }: { signal?: AbortSignal } = {}
+  ): Promise<{
     administrationCosts: AdministrationCostAsIndex[]
     totalCount: number
   }> {
     const { data } = await http.get("/api/administration-costs", {
       params,
+      signal,
     })
     return data
   },

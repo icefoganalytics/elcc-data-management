@@ -1,5 +1,7 @@
-import { reactive, ref, toRefs, unref, watch } from "vue"
+import { isCancel } from "axios"
+import { onScopeDispose, reactive, ref, toRefs, unref, watch } from "vue"
 import type { Ref } from "vue"
+
 import administrationCostCategoriesApi from "@/api/administration-cost-categories-api"
 import type {
   AdministrationCostCategoryAsIndex,
@@ -15,30 +17,33 @@ export function useAdministrationCostCategories(
     isLoading: false,
     isErrored: false,
   })
-  let latestRequest = {}
+  let requestController: AbortController | undefined
 
-  async function fetch() {
-    const request = {}
-    latestRequest = request
+  async function fetch(): Promise<AdministrationCostCategoryAsIndex[]> {
+    requestController?.abort()
+    const controller = new AbortController()
+    requestController = controller
     state.isLoading = true
     try {
-      const response = await administrationCostCategoriesApi.list(unref(queryOptions))
-      if (latestRequest === request) {
-        state.administrationCostCategories = response.administrationCostCategories
-        state.totalCount = response.totalCount
-        state.isErrored = false
-      }
+      const response = await administrationCostCategoriesApi.list(unref(queryOptions), {
+        signal: controller.signal,
+      })
+      if (controller.signal.aborted) return state.administrationCostCategories
+
+      state.administrationCostCategories = response.administrationCostCategories
+      state.totalCount = response.totalCount
+      state.isErrored = false
       return response.administrationCostCategories
     } catch (error) {
+      if (controller.signal.aborted || isCancel(error)) return state.administrationCostCategories
+
       console.error(`Failed to fetch Administration categories: ${error}`, {
         error,
       })
-      if (latestRequest === request) {
-        state.isErrored = true
-      }
+      state.isErrored = true
       throw error
     } finally {
-      if (latestRequest === request) {
+      if (!controller.signal.aborted) {
         state.isLoading = false
       }
     }
@@ -47,17 +52,21 @@ export function useAdministrationCostCategories(
   watch(
     queryOptions,
     async () => {
-      try {
-        await fetch()
-      } catch {
-        // Fetch state exposes the error to the page.
-      }
+      state.administrationCostCategories = []
+      state.totalCount = 0
+      state.isErrored = false
+      await fetch()
     },
     {
       deep: true,
       immediate: true,
     }
   )
+
+  onScopeDispose(() => {
+    requestController?.abort()
+  })
+
   return {
     ...toRefs(state),
     fetch,

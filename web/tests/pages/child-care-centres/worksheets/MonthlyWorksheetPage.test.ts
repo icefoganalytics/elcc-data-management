@@ -382,6 +382,9 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             month: FiscalPeriodMonths.APRIL,
           },
           global: {
+            config: {
+              errorHandler: vi.fn(),
+            },
             plugins: [router, createPinia(), mockVuetify()],
             stubs: {
               BuildingExpenseCreateFormCard: true,

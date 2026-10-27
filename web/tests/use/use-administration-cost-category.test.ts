@@ -1,3 +1,4 @@
+import { type GenericAbortSignal } from "axios"
 import { effectScope, ref } from "vue"
 import { flushPromises } from "@vue/test-utils"
 
@@ -114,6 +115,31 @@ describe("web/src/use/use-administration-cost-category.ts", () => {
         } finally {
           scope.stop()
         }
+      })
+
+      test("when the selected category is cleared, aborts its pending read", async ({
+        onTestFinished,
+      }) => {
+        // Arrange
+        const pendingRequest = Promise.withResolvers<{
+          data: { administrationCostCategory: AdministrationCostCategoryAsShow; policy: object }
+        }>()
+        let requestSignal: GenericAbortSignal | undefined
+        vi.mocked(httpClient, true).get.mockImplementationOnce((_url, options) => {
+          requestSignal = options?.signal
+          return pendingRequest.promise
+        })
+        const categoryId = ref<number | null>(1)
+        const scope = effectScope()
+        onTestFinished(() => scope.stop())
+        scope.run(() => useAdministrationCostCategory(categoryId))
+
+        // Act
+        categoryId.value = null
+        await flushPromises()
+
+        // Assert
+        expect(requestSignal?.aborted).toEqual(true)
       })
     })
   })

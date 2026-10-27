@@ -46,21 +46,31 @@ export type AdministrationCostCategoryQueryOptions = QueryOptions<
 >
 
 export const administrationCostCategoriesApi = {
-  async list(params: AdministrationCostCategoryQueryOptions = {}): Promise<{
+  async list(
+    params: AdministrationCostCategoryQueryOptions = {},
+    { signal }: { signal?: AbortSignal } = {}
+  ): Promise<{
     administrationCostCategories: AdministrationCostCategoryAsIndex[]
     totalCount: number
   }> {
     const { data } = await http.get("/api/administration-cost-categories", {
       params,
+      signal,
     })
     return data
   },
-  async get(administrationCostCategoryId: number): Promise<{
+  async get(
+    administrationCostCategoryId: number,
+    { signal }: { signal?: AbortSignal } = {}
+  ): Promise<{
     administrationCostCategory: AdministrationCostCategoryAsShow
     policy: AdministrationCostCategoryPolicy
   }> {
     const { data } = await http.get(
-      `/api/administration-cost-categories/${administrationCostCategoryId}`
+      `/api/administration-cost-categories/${administrationCostCategoryId}`,
+      {
+        signal,
+      }
     )
     return data
   },

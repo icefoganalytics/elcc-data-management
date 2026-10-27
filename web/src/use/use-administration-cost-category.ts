@@ -1,4 +1,5 @@
-import { type Ref, reactive, toRefs, unref, watch } from "vue"
+import { isCancel } from "axios"
+import { type Ref, onScopeDispose, reactive, toRefs, unref, watch } from "vue"
 import { isNil } from "lodash"
 
 import administrationCostCategoriesApi, {
@@ -21,29 +22,37 @@ export function useAdministrationCostCategory(
     isLoading: false,
     isErrored: false,
   })
-  let latestRequest = {}
+  let requestController: AbortController | undefined
 
-  async function fetch() {
+  async function fetch(): Promise<AdministrationCostCategoryAsShow | null> {
     const id = unref(administrationCostCategoryId)
     if (isNil(id)) throw new Error("administrationCostCategoryId is required")
 
-    const request = {}
-    latestRequest = request
+    requestController?.abort()
+    const controller = new AbortController()
+    requestController = controller
     state.isLoading = true
     try {
-      const response = await administrationCostCategoriesApi.get(id)
-      if (latestRequest === request && unref(administrationCostCategoryId) === id) {
-        state.administrationCostCategory = response.administrationCostCategory
-        state.policy = response.policy
-        state.isErrored = false
+      const response = await administrationCostCategoriesApi.get(id, {
+        signal: controller.signal,
+      })
+      if (controller.signal.aborted || unref(administrationCostCategoryId) !== id) {
+        return state.administrationCostCategory
       }
+
+      state.administrationCostCategory = response.administrationCostCategory
+      state.policy = response.policy
+      state.isErrored = false
       return response.administrationCostCategory
     } catch (error) {
-      if (latestRequest === request) state.isErrored = true
+      if (controller.signal.aborted || isCancel(error)) return state.administrationCostCategory
 
+      state.isErrored = true
       throw error
     } finally {
-      if (latestRequest === request) state.isLoading = false
+      if (!controller.signal.aborted) {
+        state.isLoading = false
+      }
     }
   }
 
@@ -54,10 +63,12 @@ export function useAdministrationCostCategory(
       throw new Error("The requested Administration cost category is not loaded")
     }
 
-    const request = {}
-    latestRequest = request
+    requestController?.abort()
+    const controller = new AbortController()
+    requestController = controller
+    state.isLoading = false
     const response = await administrationCostCategoriesApi.update(id, attributes)
-    if (latestRequest === request && unref(administrationCostCategoryId) === id) {
+    if (!controller.signal.aborted && unref(administrationCostCategoryId) === id) {
       state.administrationCostCategory = response.administrationCostCategory
       state.policy = response.policy
     }
@@ -77,23 +88,24 @@ export function useAdministrationCostCategory(
   watch(
     () => unref(administrationCostCategoryId),
     async (id) => {
-      latestRequest = {}
+      requestController?.abort()
+      requestController = undefined
       state.administrationCostCategory = null
       state.policy = null
       state.isErrored = false
       state.isLoading = false
       if (isNil(id)) return
 
-      try {
-        await fetch()
-      } catch {
-        // Fetch state exposes the error to the page.
-      }
+      await fetch()
     },
     {
       immediate: true,
     }
   )
+
+  onScopeDispose(() => {
+    requestController?.abort()
+  })
 
   return {
     ...toRefs(state),

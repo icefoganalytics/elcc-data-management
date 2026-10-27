@@ -430,6 +430,9 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
             fiscalPeriodId: 1,
           },
           global: {
+            config: {
+              errorHandler: vi.fn(),
+            },
             plugins: [router, createPinia(), mockVuetify()],
           },
         })
@@ -482,7 +485,12 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           await router.isReady()
           const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
             props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
-            global: { plugins: [router, createPinia(), mockVuetify()] },
+            global: {
+              plugins: [router, createPinia(), mockVuetify()],
+              config: {
+                errorHandler: vi.fn(),
+              },
+            },
           })
           await flushPromises()
 
