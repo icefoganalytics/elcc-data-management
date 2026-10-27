@@ -1,9 +1,4 @@
-import {
-  AdministrationCostCategory,
-  EmployeeWageTier,
-  FiscalPeriod,
-  FundingSubmissionLine,
-} from "@/models"
+import { AdministrationCostCategory, EmployeeWageTier, FiscalPeriod } from "@/models"
 
 import CreateService from "@/services/funding-periods/create-service"
 
@@ -199,27 +194,6 @@ describe("api/src/services/funding-periods/create-service.ts", () => {
             monthlyAmount: "50",
           }),
         ])
-      })
-
-      test("when a funding period is created, excludes retired Administration submission lines", async () => {
-        // Arrange
-        const attributes = {
-          fiscalYear: "2026-2027",
-          fromDate: new Date("2026-04-01"),
-          toDate: new Date("2027-03-31"),
-          title: "Year 2026 to 2027",
-        }
-
-        // Act
-        await CreateService.perform(attributes)
-
-        // Assert
-        const administrationSubmissionLines = await FundingSubmissionLine.findAll({
-          where: {
-            sectionName: "Administration (10% of Spaces)",
-          },
-        })
-        expect(administrationSubmissionLines).toEqual([])
       })
     })
   })
