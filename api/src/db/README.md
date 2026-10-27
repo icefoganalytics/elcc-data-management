@@ -3,6 +3,10 @@
 Knex runs migrations and environment-specific seeds. Sequelize remains the application ORM.
 The Knex CLI hoists the migration client's configuration for each environment.
 
+## ORM Update Defaults
+
+Instance updates request the updated row by default through the database client's global `beforeUpdate` hook. SQL-generated timestamps and database-normalized values are available on the returned model without reloading. Explicit `returning` options are preserved; bulk updates and `BaseModel.touch` retain their affected-count responses.
+
 ## Migration Rules
 
 - Create migrations with `./bin/dev migrate make <description>` in `migrations/`.

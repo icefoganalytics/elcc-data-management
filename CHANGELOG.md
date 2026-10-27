@@ -29,6 +29,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
 - Administration worksheet rows now sort alphabetically by their saved category names, with a stable order when names match.
 - Administration backfill now skips and discards unusable legacy Administration data instead of blocking deployment. Restoring discarded data requires a backup.
 - Administration API responses omit internal soft-deletion timestamps.
+- Model updates now return SQL-generated timestamps and database-normalized values by default, without an extra reload query.
 - Preserved four-decimal currency entry and exact financial calculations when reconciling money amounts.
 - Unified authentication for legacy and modern API endpoints behind one shared boundary,
   preserving public status access and existing role restrictions.
