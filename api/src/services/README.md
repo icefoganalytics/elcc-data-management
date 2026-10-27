@@ -7,6 +7,7 @@ Use the [Express Light Rail workflow](skill://express-light-rail/workflow.md) fo
 ## ELCC conventions
 
 - Call services through their static `perform(...)` entry point; construct a service only inside that implementation. Action inputs belong to the constructor and instance `perform()` executes the operation, following ELCC's `BaseService` convention.
+- Import service namespaces by name from `@/services` and retain their domain path at call sites, such as `Centres.FundingPeriods.EmployeeBenefits.BulkEnsureService.perform(...)`. Reserve `import * as ...` for bundle exports in `index.ts`, not service implementations.
 - Keep authorization in policies and response formatting in serializers.
 - Use Sequelize model scopes and helpers for persistence. Prefer `findEach()` when results are only iterated and select only consumed attributes; use `findAll()` when the workflow needs a reusable collection or returns the complete result.
 - For array-backed JSON transformations, build a new array with `map()` and persist it through `update({ field: newValue })` rather than mutating the loaded array or calling `save()`.
