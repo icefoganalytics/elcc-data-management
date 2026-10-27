@@ -23,6 +23,8 @@ Use [Factory Shark](https://github.com/klondikemarlen/factory-shark#readme) for 
 
 Use persisted parents with `.associations({ parent }).create()` or pass their foreign keys to `.create({ parentId })`. Register dependent associations after their prerequisites and use lazy overrides when they share a funding period. Derive snapshots from resolved associations in `beforeCreate`, not from generated placeholders that can differ from the records ultimately saved. `build()` is database-free; unlike `create()`, it does not load existing parents by ID.
 
+When a generated sibling depends on a parent's fields, pass the resolved parent through `.associations()` rather than only its foreign key. For example, a generated Quality Enhancement category needs the fiscal period's `fundingPeriodId`; Factory Shark's lazy callback does not load that field from a supplied `fiscalPeriodId`.
+
 Keep Factory Shark and the application's ORM/dialect versions within the library's [qualified compatibility contract](https://github.com/klondikemarlen/factory-shark/blob/v1.1.0/docs/architecture/sequelize-compatibility.md). Refresh the isolated test image after dependency changes as well as the source-bound API dependencies.
 
 ## Local Suite and ORM Conventions
