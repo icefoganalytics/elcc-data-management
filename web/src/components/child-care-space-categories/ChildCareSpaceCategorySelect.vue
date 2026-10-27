@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from "vue"
+import { computed } from "vue"
 import { isNil } from "lodash"
 
 import useChildCareSpaceCategories from "@/use/use-child-care-space-categories"
@@ -33,14 +33,5 @@ const categoryQuery = computed(() => ({
 const { childCareSpaceCategories, isLoading, isErrored } = useChildCareSpaceCategories(
   categoryQuery,
   { skipWatchIf: () => isNil(props.fundingPeriodId) }
-)
-
-watch(
-  () => props.fundingPeriodId,
-  (_fundingPeriodId, previousFundingPeriodId) => {
-    if (!isNil(previousFundingPeriodId)) {
-      categoryId.value = null
-    }
-  }
 )
 </script>

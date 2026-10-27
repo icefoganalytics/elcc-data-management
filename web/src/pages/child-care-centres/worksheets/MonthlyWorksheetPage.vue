@@ -1,112 +1,114 @@
 <template>
-  <PageLoader
-    v-if="isLoading"
-    style="height: calc(100dvh - 14em) !important"
-    message="Loading worksheets"
-  />
-  <v-alert
-    v-else-if="loadError"
-    type="error"
-    variant="tonal"
-    class="ma-5"
-  >
-    Worksheet data could not be loaded.
-    <v-btn
-      class="ml-3"
-      variant="outlined"
-      @click="loadWorksheet"
-    >
-      Reload Worksheet
-    </v-btn>
-  </v-alert>
-  <v-empty-state
-    v-else-if="!isNil(fundingSubmissionLineJson) && isNil(fiscalPeriod)"
-    class="ma-5"
-    headline="Fiscal Period Not Found"
-    :title="`There is currently no fiscal period for ${monthAsDateName} ${fiscalYear}.`"
-    text="Contact support, explain the page you were on, and what you were trying to do."
-  >
-    <template #actions>
-      <v-btn
-        color="primary"
-        href="mailto:help+elcc@icefoganalytics.com"
-        >Contact Support</v-btn
-      >
-    </template>
-  </v-empty-state>
-  <v-empty-state
-    v-else-if="!isLoading && isNil(fundingSubmissionLineJson)"
-    class="ma-5"
-    headline="No Worksheets Found"
-    :title="`There are currently no worksheets for ${fiscalYear}.`"
-    text="Contact support, explain the page you were on, and what you were trying to do."
-  >
-    <template #actions>
-      <v-btn
-        color="primary"
-        href="mailto:help+elcc@icefoganalytics.com"
-        >Contact Support</v-btn
-      >
-    </template>
-  </v-empty-state>
-  <div v-else-if="!isNil(fundingSubmissionLineJson) && !isNil(fiscalPeriod)">
-    <FundingSubmissionLineJsonEditSheet
-      :key="`${centreId}-${fiscalYearSlug}-${month}-${fundingSubmissionLineJson.id}-${fiscalPeriod.id}`"
-      :funding-submission-line-json-id="fundingSubmissionLineJson.id"
-      :centre-id="centreId"
-      :fiscal-period-id="fiscalPeriod.id"
-      class="ma-4"
-      @update:funding-submission-line-json="emit('update:fundingSubmissionLineJson', $event)"
+  <div>
+    <PageLoader
+      v-if="isLoading"
+      style="height: calc(100dvh - 14em) !important"
+      message="Loading worksheets"
     />
-
-    <section class="ma-4 mt-8">
-      <h3
-        class="d-flex justify-space-between align-center mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2"
+    <v-alert
+      v-else-if="loadError"
+      type="error"
+      variant="tonal"
+      class="ma-5"
+    >
+      Worksheet data could not be loaded.
+      <v-btn
+        class="ml-3"
+        variant="outlined"
+        @click="loadWorksheet"
       >
-        Building Expenses
-
-        <v-icon
-          title="Show keyboard shortcuts"
-          class="included"
-          @click="showKeyboardShortcutsModal"
+        Reload Worksheet
+      </v-btn>
+    </v-alert>
+    <v-empty-state
+      v-else-if="!isNil(fundingSubmissionLineJson) && isNil(fiscalPeriod)"
+      class="ma-5"
+      headline="Fiscal Period Not Found"
+      :title="`There is currently no fiscal period for ${monthAsDateName} ${fiscalYear}.`"
+      text="Contact support, explain the page you were on, and what you were trying to do."
+    >
+      <template #actions>
+        <v-btn
+          color="primary"
+          href="mailto:help+elcc@icefoganalytics.com"
+          >Contact Support</v-btn
         >
-          mdi-keyboard
-        </v-icon>
-      </h3>
-
-      <BuildingExpensesEditTable
-        ref="buildingExpensesEditTable"
-        :where="buildingExpenseWhere"
+      </template>
+    </v-empty-state>
+    <v-empty-state
+      v-else-if="!isLoading && isNil(fundingSubmissionLineJson)"
+      class="ma-5"
+      headline="No Worksheets Found"
+      :title="`There are currently no worksheets for ${fiscalYear}.`"
+      text="Contact support, explain the page you were on, and what you were trying to do."
+    >
+      <template #actions>
+        <v-btn
+          color="primary"
+          href="mailto:help+elcc@icefoganalytics.com"
+          >Contact Support</v-btn
+        >
+      </template>
+    </v-empty-state>
+    <div v-else-if="!isNil(fundingSubmissionLineJson) && !isNil(fiscalPeriod)">
+      <FundingSubmissionLineJsonEditSheet
+        :key="`${centreId}-${fiscalYearSlug}-${month}-${fundingSubmissionLineJson.id}-${fiscalPeriod.id}`"
+        :funding-submission-line-json-id="fundingSubmissionLineJson.id"
+        :centre-id="centreId"
+        :fiscal-period-id="fiscalPeriod.id"
+        class="ma-4"
+        @update:funding-submission-line-json="emit('update:fundingSubmissionLineJson', $event)"
       />
 
-      <v-row class="mt-4">
-        <v-col
-          v-if="!showBuildingExpenseCreateForm"
-          cols="12"
-          class="d-flex justify-end"
+      <section class="ma-4 mt-8">
+        <h3
+          class="d-flex justify-space-between align-center mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2"
         >
-          <v-btn
-            color="primary"
-            @click="showBuildingExpenseCreateForm = true"
+          Building Expenses
+
+          <v-icon
+            title="Show keyboard shortcuts"
+            class="included"
+            @click="showKeyboardShortcutsModal"
           >
-            Add Building Expense
-          </v-btn>
-        </v-col>
-        <v-col
-          v-else
-          cols="12"
-        >
-          <BuildingExpenseCreateFormCard
-            id="building-expense-create-form-card"
-            :centre-id="centreId"
-            :fiscal-period-id="fiscalPeriod.id"
-            @created="closeCreateFormAndRefresh"
-            @cancel="showBuildingExpenseCreateForm = false"
-          />
-        </v-col>
-      </v-row>
-    </section>
-    <KeyboardShortcutsModal ref="keyboardShortcutsModal" />
+            mdi-keyboard
+          </v-icon>
+        </h3>
+
+        <BuildingExpensesEditTable
+          ref="buildingExpensesEditTable"
+          :where="buildingExpenseWhere"
+        />
+
+        <v-row class="mt-4">
+          <v-col
+            v-if="!showBuildingExpenseCreateForm"
+            cols="12"
+            class="d-flex justify-end"
+          >
+            <v-btn
+              color="primary"
+              @click="showBuildingExpenseCreateForm = true"
+            >
+              Add Building Expense
+            </v-btn>
+          </v-col>
+          <v-col
+            v-else
+            cols="12"
+          >
+            <BuildingExpenseCreateFormCard
+              id="building-expense-create-form-card"
+              :centre-id="centreId"
+              :fiscal-period-id="fiscalPeriod.id"
+              @created="closeCreateFormAndRefresh"
+              @cancel="showBuildingExpenseCreateForm = false"
+            />
+          </v-col>
+        </v-row>
+      </section>
+      <KeyboardShortcutsModal ref="keyboardShortcutsModal" />
+    </div>
   </div>
 </template>
 
@@ -203,7 +205,6 @@ async function loadWorksheet() {
 
 watch(() => [props.centreId, props.fiscalYearSlug, props.month], loadWorksheet, {
   immediate: true,
-  flush: "sync",
 })
 
 const buildingExpenseWhere = computed(() => ({

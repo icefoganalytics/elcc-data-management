@@ -252,7 +252,7 @@ async function reloadWorksheet() {
 }
 
 async function saveFundingSubmissionLineJson(): Promise<boolean> {
-  if (isLoading.value || isErrored.value) {
+  if (isSaving.value || isLoading.value || isErrored.value) {
     return false
   }
 
@@ -377,6 +377,10 @@ async function awaitMutationSettlements(mutations: Promise<unknown>[]) {
 }
 
 async function replicateEstimatesForward() {
+  if (isWorkflowRunning.value) {
+    return
+  }
+
   isReplicatingEstimates.value = true
   try {
     const wasSaved = await saveFundingSubmissionLineJson()
@@ -386,8 +390,12 @@ async function replicateEstimatesForward() {
 
     const replicationRequests = [
       fundingSubmissionLineJsonsApi.replicateEstimates(fundingSubmissionLineJsonId.value),
-      replicateChildCareSpaceEstimates(),
-      replicateQualityEnhancementEstimates(),
+      ...childCareSpaces.value.map((childCareSpace) =>
+        childCareSpacesApi.replicateEstimates(childCareSpace.id)
+      ),
+      ...qualityEnhancements.value.map((qualityEnhancement) =>
+        qualityEnhancementsApi.replicateEstimates(qualityEnhancement.id)
+      ),
     ]
     await awaitMutationSettlements(replicationRequests)
     await Promise.all([
@@ -404,18 +412,6 @@ async function replicateEstimatesForward() {
     })
   } finally {
     isReplicatingEstimates.value = false
-  }
-}
-
-async function replicateChildCareSpaceEstimates() {
-  for (const childCareSpace of childCareSpaces.value) {
-    await childCareSpacesApi.replicateEstimates(childCareSpace.id)
-  }
-}
-
-async function replicateQualityEnhancementEstimates() {
-  for (const qualityEnhancement of qualityEnhancements.value) {
-    await qualityEnhancementsApi.replicateEstimates(qualityEnhancement.id)
   }
 }
 

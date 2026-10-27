@@ -164,6 +164,15 @@ watch(
   }
 )
 
+watch(
+  () => categoryAttributes.value.fundingPeriodId,
+  (_fundingPeriodId, previousFundingPeriodId) => {
+    if (!isNil(previousFundingPeriodId)) {
+      categoryAttributes.value.childCareSpaceCategoryId = null
+    }
+  }
+)
+
 function updateAge(field: "fromAge" | "toAge", value: string | number | null) {
   categoryAttributes.value[field] = isNil(value) || value === "" ? null : Number(value)
 }
