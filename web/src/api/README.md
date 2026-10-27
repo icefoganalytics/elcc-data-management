@@ -25,4 +25,6 @@ This gives a single location to update if the backend naming convention changes.
 
 ## Nested Actions
 
-Keep a nested action client in the matching resource folder rather than adding a custom method to the parent CRUD client. Expose a POST action through `create(...)`, export it from the resource's `index.ts`, and bundle that resource in `api/index.ts`. For example, Administration estimate replication belongs in `administration-costs/replicate-estimates-api.ts` and is called as `api.administrationCosts.replicateEstimatesApi.create(administrationCostId)`. The client owns the endpoint call; worksheet save order and replication coordination remain with the caller.
+Administration estimate replication uses a nested action client in `administration-costs/replicate-estimates-api.ts`. It exposes the POST through `create(administrationCostId)`, is exported by the resource's `index.ts`, and is bundled in `api/index.ts` as `api.administrationCosts.replicateEstimatesApi.create(administrationCostId)`. This keeps the separately owned replication action distinct from the parent client's list, get, and update operations. The client owns the endpoint call; worksheet save order and replication coordination remain with the caller.
+
+Nested action clients are not the only existing POST-client shape: Child Care Spaces and Funding Submission Line JSONs expose estimate replication on their parent API clients. Preserve each resource's established contract unless migrating that resource and its callers is part of the requested work.
