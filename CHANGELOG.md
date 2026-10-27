@@ -51,6 +51,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
 
 ### Fixed
 
+- Long development checkout names now retain checkout-qualified database isolation without exceeding DNS's label limit. Existing short identities stay unchanged; invalid explicit project names fail before selecting another volume.
 - Child Care Space categories can optionally apply new or revised names and rates from a selected month onward, preserving earlier months, actual occupancy, and manual snapshot overrides.
 - Adding Child Care Space categories no longer blocks initialized worksheets or forces records into earlier months. Concurrent occupancy edits use current stored rates, failed parallel writes remain locked until settled, and category filters ignore outdated responses.
 - Restored the missing icon beside Child Care Space Categories in the administration navigation.
