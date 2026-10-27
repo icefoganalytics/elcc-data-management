@@ -1,6 +1,7 @@
 import { pick } from "lodash"
 
 import { FundingSubmissionLineJson } from "@/models"
+
 import {
   centreFactory,
   fundingLineValueFactory,

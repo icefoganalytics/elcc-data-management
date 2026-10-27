@@ -4,7 +4,6 @@ import { flushPromises, mount } from "@vue/test-utils"
 import httpClient from "@/api/http-client"
 import { type FiscalPeriod } from "@/api/fiscal-periods-api"
 import { type FundingSubmissionLineJsonAsIndex } from "@/api/funding-submission-line-jsons-api"
-import MonthlyWorksheetPage from "@/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue"
 import { FiscalPeriodMonths } from "@/use/use-fiscal-periods"
 
 import {
@@ -14,6 +13,8 @@ import {
   fundingSubmissionLineJsonFactory,
 } from "@/tests/factories"
 import { mockRouter, mockVuetify } from "@/tests/support"
+
+import MonthlyWorksheetPage from "@/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue"
 
 describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue", () => {
   describe("MonthlyWorksheetPage", () => {

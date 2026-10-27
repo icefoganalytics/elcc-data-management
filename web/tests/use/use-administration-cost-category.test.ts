@@ -3,7 +3,9 @@ import { flushPromises } from "@vue/test-utils"
 
 import httpClient from "@/api/http-client"
 import { type AdministrationCostCategoryAsShow } from "@/api/administration-cost-categories-api"
+
 import { administrationCostCategoryFactory } from "@/tests/factories"
+
 import useAdministrationCostCategory from "@/use/use-administration-cost-category"
 
 describe("web/src/use/use-administration-cost-category.ts", () => {

@@ -2,13 +2,15 @@ import { createPinia } from "pinia"
 import { flushPromises, mount } from "@vue/test-utils"
 
 import httpClient from "@/api/http-client"
-import FundingSubmissionLineJsonEditSheet from "@/components/funding-submission-line-jsons/FundingSubmissionLineJsonEditSheet.vue"
+
 import {
   administrationCostFactory,
   childCareSpaceFactory,
   fundingSubmissionLineJsonFactory,
 } from "@/tests/factories"
 import { mockRouter, mockVuetify } from "@/tests/support"
+
+import FundingSubmissionLineJsonEditSheet from "@/components/funding-submission-line-jsons/FundingSubmissionLineJsonEditSheet.vue"
 
 describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLineJsonEditSheet.vue", () => {
   describe("FundingSubmissionLineJsonEditSheet", () => {

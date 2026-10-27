@@ -4,8 +4,10 @@ import { VSelect } from "vuetify/components"
 
 import httpClient from "@/api/http-client"
 import type { ChildCareSpaceCategoryAsIndex } from "@/api/child-care-space-categories-api"
-import AdministrationCostCategoryNewPage from "@/pages/administration/administration-cost-categories/AdministrationCostCategoryNewPage.vue"
+
 import { mockRouter, mockVuetify } from "@/tests/support"
+
+import AdministrationCostCategoryNewPage from "@/pages/administration/administration-cost-categories/AdministrationCostCategoryNewPage.vue"
 
 describe("web/src/pages/administration/administration-cost-categories/AdministrationCostCategoryNewPage.vue", () => {
   describe("AdministrationCostCategoryNewPage", () => {
