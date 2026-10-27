@@ -1,8 +1,8 @@
-import { Factory } from "fishery"
+import FactoryShark from "factory-shark"
 import { faker } from "@faker-js/faker"
 
 import { EmployeeWageTier } from "@/models"
-import { nestedSaveAndAssociateIfNew } from "@/factories/helpers"
+
 import fiscalPeriodFactory from "@/factories/fiscal-period-factory"
 
 export const TIER_LABEL_EXAMPLES = Object.freeze([
@@ -36,39 +36,19 @@ export const TIER_LABEL_EXAMPLES = Object.freeze([
   },
 ])
 
-export const employeeWageTierFactory = Factory.define<EmployeeWageTier>(
-  ({ associations, params, onCreate }) => {
-    onCreate(async (employeeWageTier) => {
-      try {
-        await nestedSaveAndAssociateIfNew(employeeWageTier)
-        return employeeWageTier
-      } catch (error) {
-        console.error(error)
-        throw new Error(
-          `Could not create EmployeeWageTier with attributes: ${JSON.stringify(employeeWageTier.dataValues, null, 2)}`
-        )
-      }
-    })
-
-    const fiscalPeriod =
-      associations.fiscalPeriod ??
-      fiscalPeriodFactory.build({
-        id: params.fiscalPeriodId,
-      })
+export const employeeWageTierFactory = FactoryShark.define<EmployeeWageTier>(
+  EmployeeWageTier,
+  ({ associate }) => {
+    associate("fiscalPeriod", fiscalPeriodFactory)
 
     const tierLevel = faker.number.int({ min: 0, max: TIER_LABEL_EXAMPLES.length - 1 })
     const { tierLabel, wageRatePerHour } = TIER_LABEL_EXAMPLES[tierLevel]
 
-    const employeeWageTier = EmployeeWageTier.build({
-      fiscalPeriodId: fiscalPeriod.id,
+    return {
       tierLevel,
       tierLabel,
       wageRatePerHour,
-    })
-
-    employeeWageTier.fiscalPeriod = fiscalPeriod
-
-    return employeeWageTier
+    }
   }
 )
 
