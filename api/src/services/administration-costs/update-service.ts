@@ -17,9 +17,10 @@ export class UpdateService extends BaseService {
   }
 
   async perform(): Promise<AdministrationCost> {
-    await this.administrationCost.update(this.attributes)
-
-    return this.administrationCost.reload()
+    // Include SQL-generated timestamps in the update result.
+    return this.administrationCost.update(this.attributes, {
+      returning: true,
+    })
   }
 }
 
