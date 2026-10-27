@@ -75,42 +75,48 @@ export class BulkCreateService extends BaseService {
       )
     }
 
-    const sourceChildCareSpaceCategoryIds = newestCategories.flatMap(
-      ({ childCareSpaceCategoryId }) =>
-        isNil(childCareSpaceCategoryId) ? [] : [childCareSpaceCategoryId]
-    )
-    const sourceChildCareSpaceCategories = isEmpty(sourceChildCareSpaceCategoryIds)
-      ? []
-      : await ChildCareSpaceCategory.findAll({
-          attributes: ["id", "categoryName"],
-          where: {
-            id: {
-              [Op.in]: sourceChildCareSpaceCategoryIds,
-            },
+    const sourceChildCareSpaceCategoryIds: number[] = []
+    for (const { childCareSpaceCategoryId } of newestCategories) {
+      if (isNil(childCareSpaceCategoryId)) continue
+
+      sourceChildCareSpaceCategoryIds.push(childCareSpaceCategoryId)
+    }
+
+    const sourceChildCareSpaceCategoryNamesById = new Map<number, string>()
+    if (!isEmpty(sourceChildCareSpaceCategoryIds)) {
+      const sourceChildCareSpaceCategories = await ChildCareSpaceCategory.findAll({
+        attributes: ["id", "categoryName"],
+        where: {
+          id: {
+            [Op.in]: sourceChildCareSpaceCategoryIds,
           },
-        })
-    const sourceChildCareSpaceCategoryNamesById = new Map(
-      sourceChildCareSpaceCategories.map(({ id, categoryName }) => [id, categoryName])
-    )
+        },
+      })
+      for (const { id, categoryName } of sourceChildCareSpaceCategories) {
+        sourceChildCareSpaceCategoryNamesById.set(id, categoryName)
+      }
+    }
 
     return newestCategories.map((category) => {
-      const sourceChildCareSpaceCategoryId = category.childCareSpaceCategoryId
-      const sourceChildCareSpaceCategoryName = isNil(sourceChildCareSpaceCategoryId)
-        ? undefined
-        : sourceChildCareSpaceCategoryNamesById.get(sourceChildCareSpaceCategoryId)
-      let targetChildCareSpaceCategoryId: number | null = null
-      if (!isNil(sourceChildCareSpaceCategoryName)) {
-        targetChildCareSpaceCategoryId =
-          targetChildCareSpaceCategoryIdsByName.get(sourceChildCareSpaceCategoryName) ?? null
-      }
-
-      return {
-        childCareSpaceCategoryId: targetChildCareSpaceCategoryId,
+      const attributes: Omit<CreationAttributes<AdministrationCostCategory>, "fundingPeriodId"> = {
+        childCareSpaceCategoryId: null,
         categoryName: category.categoryName,
         fromAge: category.fromAge,
         toAge: category.toAge,
         monthlyAmount: category.monthlyAmount,
       }
+      const sourceChildCareSpaceCategoryId = category.childCareSpaceCategoryId
+      if (isNil(sourceChildCareSpaceCategoryId)) return attributes
+
+      const sourceChildCareSpaceCategoryName = sourceChildCareSpaceCategoryNamesById.get(
+        sourceChildCareSpaceCategoryId
+      )
+      if (isNil(sourceChildCareSpaceCategoryName)) return attributes
+
+      attributes.childCareSpaceCategoryId =
+        targetChildCareSpaceCategoryIdsByName.get(sourceChildCareSpaceCategoryName) ?? null
+
+      return attributes
     })
   }
 }
