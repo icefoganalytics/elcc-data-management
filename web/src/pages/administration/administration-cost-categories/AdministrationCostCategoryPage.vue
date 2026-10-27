@@ -72,6 +72,7 @@
     </v-card>
   </v-container>
 </template>
+
 <script setup lang="ts">
 import { computed, ref } from "vue"
 import { useRouter } from "vue-router"
