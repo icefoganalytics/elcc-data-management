@@ -1,5 +1,7 @@
 import { DateTime } from "luxon"
 
+import { BuildingExpense } from "@/models"
+
 import {
   buildingExpenseFactory,
   fiscalPeriodFactory,
@@ -12,7 +14,7 @@ import UpdateService from "@/services/building-expenses/update-service"
 describe("api/src/services/building-expenses/update-service.ts", () => {
   describe("UpdateService", () => {
     describe(".perform", () => {
-      test("when building expense is in a current or future fiscal period, updates it", async () => {
+      test("when estimated and actual costs are edited, persists the revised amounts and notes", async () => {
         // Arrange
         const fiscalPeriodStart = DateTime.fromISO("2099-04-01T00:00:00Z")
         const currentUser = await userFactory.create()
@@ -34,7 +36,7 @@ describe("api/src/services/building-expenses/update-service.ts", () => {
         })
 
         // Act
-        const result = await UpdateService.perform(
+        await UpdateService.perform(
           buildingExpense,
           {
             estimatedCost: "125.0000",
@@ -45,10 +47,14 @@ describe("api/src/services/building-expenses/update-service.ts", () => {
         )
 
         // Assert
-        expect(result).toEqual(
+        const persistedBuildingExpense = await BuildingExpense.findByPk(buildingExpense.id, {
+          rejectOnEmpty: true,
+        })
+        expect(persistedBuildingExpense).toEqual(
           expect.objectContaining({
-            estimatedCost: "125.0000",
-            actualCost: "110.0000",
+            id: buildingExpense.id,
+            estimatedCost: "125",
+            actualCost: "110",
             notes: "After update",
           })
         )
