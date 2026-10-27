@@ -28,6 +28,7 @@ Keep Factory Shark and the application's ORM/dialect versions within the library
 ## Local Suite and ORM Conventions
 
 - Mirror the source path under `api/tests` with a `.test.ts` filename. Describe the source file, class/model, and method in nested suites; move or remove its tests with the owning source.
+- Migration checks are disposable: verify migrations while implementing them, then delete their test files and dedicated fixtures before committing. Do not add migration tests to the permanent suite.
 - Keep scenario fixture names explicit; number equivalent records as `user1`, `user2` rather than naming them for incidental creation order.
 - Observe service persistence through Sequelize records unless the return value is itself the contract. Use virtual attributes such as `lines`, not manual parsing of the stored `values`; include record IDs when matching multiple persisted records.
 - For a negative spy contract, use `expect(spy).not.toHaveBeenCalled()` without arguments, not `not.toHaveBeenCalledWith(...)`.

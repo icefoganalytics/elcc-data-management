@@ -94,7 +94,6 @@ Historical migration fixtures keep schema setup, data, migration calls, assertio
 - [Migration preservation, idempotency, and complete rollback](../../api/tests/db/migrations/migrate-child-care-spaces-from-worksheet-json.test.ts)
 - [Category cutover preservation, moved-year configuration, and rollback](../../api/tests/db/migrations/backfill-child-care-space-categories.test.ts)
 - [Exact historical numeric-ID linkage and metadata preservation](../../api/tests/db/migrations/link-funding-submission-lines-to-child-care-space-categories.test.ts)
-- [Administration migration preservation and best-effort legacy-data cleanup](../../api/tests/db/migrations/migrate-administration-costs-from-worksheet-json.test.ts)
 - [Financial persistence and precision](../../api/tests/models/child-care-space.test.ts)
 - [Stale-client JSON rejection and accepted JSON-owned writes](../../api/tests/controllers/funding-submission-line-jsons-controller.test.ts)
 - [Historical initialization](../../api/tests/services/centres/funding-periods/is-initialized-service.test.ts)
