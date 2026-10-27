@@ -89,26 +89,5 @@ describe("api/src/models/administration-cost.ts", () => {
         await expect(updatePromise).rejects.toThrow("at most four decimal places")
       })
     })
-
-    describe("#update", () => {
-      test("when returning is omitted, returns the database-generated update timestamp", async () => {
-        // Arrange
-        const administrationCost = await administrationCostFactory.create()
-
-        // Act
-        const updatedAdministrationCost = await administrationCost.update({
-          estimatedChildOccupancyRate: "0.2500",
-        })
-
-        // Assert
-        const persistedAdministrationCost = await AdministrationCost.findByPk(
-          administrationCost.id,
-          {
-            rejectOnEmpty: true,
-          }
-        )
-        expect(updatedAdministrationCost.updatedAt).toEqual(persistedAdministrationCost.updatedAt)
-      })
-    })
   })
 })

@@ -12,7 +12,6 @@ import {
   AutoIncrement,
   BeforeSave,
   BelongsTo,
-  Default,
   NotNull,
   PrimaryKey,
   Table,
@@ -90,12 +89,10 @@ export class AdministrationCost extends BaseModel<
 
   @Attribute(DataTypes.DATE)
   @NotNull
-  @Default(sql.fn("getutcdate"))
   declare createdAt: CreationOptional<Date>
 
   @Attribute(DataTypes.DATE)
   @NotNull
-  @Default(sql.fn("getutcdate"))
   declare updatedAt: CreationOptional<Date>
 
   @Attribute(DataTypes.DATE)

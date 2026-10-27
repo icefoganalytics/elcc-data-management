@@ -41,11 +41,6 @@ export const SEQUELIZE_CONFIG: Options<MsSqlDialect> = {
   // Avoids need to have a signed certificate in development.
   trustServerCertificate: DB_TRUST_SERVER_CERTIFICATE,
   logging: NODE_ENV === "development" ? sqlLogger : false,
-  hooks: {
-    beforeUpdate(_instance, options) {
-      options.returning ??= true
-    },
-  },
   define: {
     underscored: true,
     timestamps: true, // default - explicit for clarity.
