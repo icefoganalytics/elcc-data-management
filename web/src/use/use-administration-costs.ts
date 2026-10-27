@@ -9,8 +9,13 @@ import type {
 } from "@/api/administration-costs-api"
 
 export function useAdministrationCosts(queryOptions: Ref<AdministrationCostQueryOptions>) {
-  const state = reactive({
-    administrationCosts: [] as AdministrationCostAsIndex[],
+  const state = reactive<{
+    administrationCosts: AdministrationCostAsIndex[]
+    totalCount: number
+    isLoading: boolean
+    isErrored: boolean
+  }>({
+    administrationCosts: [],
     totalCount: 0,
     isLoading: false,
     isErrored: false,

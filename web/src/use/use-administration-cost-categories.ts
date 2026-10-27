@@ -11,8 +11,13 @@ import type {
 export function useAdministrationCostCategories(
   queryOptions: Ref<AdministrationCostCategoryQueryOptions> = ref({})
 ) {
-  const state = reactive({
-    administrationCostCategories: [] as AdministrationCostCategoryAsIndex[],
+  const state = reactive<{
+    administrationCostCategories: AdministrationCostCategoryAsIndex[]
+    totalCount: number
+    isLoading: boolean
+    isErrored: boolean
+  }>({
+    administrationCostCategories: [],
     totalCount: 0,
     isLoading: false,
     isErrored: false,
