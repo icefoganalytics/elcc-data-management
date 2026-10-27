@@ -32,14 +32,21 @@ export class BulkCreateService extends BaseService {
 
     const fundingSubmissionLinesAttributes = fundingSubmissionLineDefaults.map(
       (fundingSubmissionLineDefault) => {
-        const categoryName =
+        let categoryName: string | undefined
+        if (
           fundingSubmissionLineDefault.sectionName ===
           FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM
-            ? this.categoryNameForDefault(fundingSubmissionLineDefault, sourceCategoryNames)
-            : undefined
-        const childCareSpaceCategoryId = isUndefined(categoryName)
-          ? null
-          : (categoryIdsByName.get(categoryName) ?? null)
+        ) {
+          categoryName = this.categoryNameForDefault(
+            fundingSubmissionLineDefault,
+            sourceCategoryNames
+          )
+        }
+
+        let childCareSpaceCategoryId: number | null = null
+        if (!isUndefined(categoryName)) {
+          childCareSpaceCategoryId = categoryIdsByName.get(categoryName) ?? null
+        }
 
         return {
           ...fundingSubmissionLineDefault,

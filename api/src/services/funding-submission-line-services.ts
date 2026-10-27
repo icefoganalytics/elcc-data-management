@@ -71,10 +71,13 @@ export class FundingSubmissionLineServices {
     const linesWithRemappedCategoryIds = newLinesCreationAttributes.map((attributes, index) => {
       const sourceLine = linesToCreateFrom[index]
       const sectionName = attributes.sectionName ?? sourceLine.sectionName
-      const categoryName =
-        sourceLine.childCareSpaceCategoryId === null
-          ? (attributes.lineName ?? sourceLine.lineName)
-          : sourceCategoryNamesById.get(sourceLine.childCareSpaceCategoryId)
+      let categoryName: string | undefined
+      if (sourceLine.childCareSpaceCategoryId === null) {
+        categoryName = attributes.lineName ?? sourceLine.lineName
+      } else {
+        categoryName = sourceCategoryNamesById.get(sourceLine.childCareSpaceCategoryId)
+      }
+
       if (
         sectionName !== FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM ||
         isUndefined(categoryName)
