@@ -22,3 +22,7 @@ export default formsApi
 The above code handles all access to the /api/forms endpoint, and since we are using axios it strips out the extra "data" attribute that axious wraps around the request.
 
 This gives a single location to update if the backend naming convention changes.
+
+## Nested Actions
+
+Keep a nested action client in the matching resource folder rather than adding a custom method to the parent CRUD client. Expose a POST action through `create(...)`, export it from the resource's `index.ts`, and bundle that resource in `api/index.ts`. For example, Administration estimate replication belongs in `administration-costs/replicate-estimates-api.ts` and is called as `api.administrationCosts.replicateEstimatesApi.create(administrationCostId)`. The client owns the endpoint call; worksheet save order and replication coordination remain with the caller.
