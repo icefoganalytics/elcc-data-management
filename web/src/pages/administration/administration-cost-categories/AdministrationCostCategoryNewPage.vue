@@ -63,7 +63,6 @@
     <CurrencyInput
       v-model="monthlyAmount"
       label="Monthly Amount *"
-      :options="monthlyAmountOptions"
       :rules="[required]"
     />
     <v-alert
@@ -120,10 +119,6 @@ import useSnack from "@/use/use-snack"
 
 import CurrencyInput from "@/components/CurrencyInput.vue"
 import HeaderActionsFormCard from "@/components/common/HeaderActionsFormCard.vue"
-
-const monthlyAmountOptions = {
-  precision: 4,
-}
 
 const router = useRouter()
 const snack = useSnack()

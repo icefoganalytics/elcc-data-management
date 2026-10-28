@@ -34,7 +34,7 @@
       readonly
     />
     <v-text-field
-      v-model="categoryName"
+      v-model="administrationCostCategory.categoryName"
       label="Category Name *"
       :rules="[required]"
     />
@@ -44,7 +44,7 @@
         md="6"
       >
         <v-text-field
-          v-model="fromAge"
+          v-model.number="administrationCostCategory.fromAge"
           label="From Age"
           type="number"
           min="0"
@@ -56,7 +56,7 @@
         md="6"
       >
         <v-text-field
-          v-model="toAge"
+          v-model.number="administrationCostCategory.toAge"
           label="To Age"
           type="number"
           min="0"
@@ -65,9 +65,8 @@
       </v-col>
     </v-row>
     <CurrencyInput
-      v-model="monthlyAmount"
+      v-model="administrationCostCategory.monthlyAmount"
       label="Monthly Amount *"
-      :options="monthlyAmountOptions"
       :rules="[required]"
     />
     <v-alert
@@ -79,7 +78,7 @@
       Linked Child Care Space categories could not be loaded. Reload the page to try again.
     </v-alert>
     <v-select
-      v-model="childCareSpaceCategoryId"
+      v-model="administrationCostCategory.childCareSpaceCategoryId"
       :items="availableChildCareSpaceCategories"
       item-title="categoryName"
       item-value="id"
@@ -113,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue"
+import { computed, ref } from "vue"
 import { isNil } from "lodash"
 
 import { required } from "@/utils/validators"
@@ -125,10 +124,6 @@ import useSnack from "@/use/use-snack"
 
 import CurrencyInput from "@/components/CurrencyInput.vue"
 import HeaderActionsFormCard from "@/components/common/HeaderActionsFormCard.vue"
-
-const monthlyAmountOptions = {
-  precision: 4,
-}
 
 const props = defineProps<{
   administrationCostCategoryId: string
@@ -171,45 +166,28 @@ const availableChildCareSpaceCategories = computed(() =>
 )
 
 const form = ref<InstanceType<typeof HeaderActionsFormCard> | null>(null)
-const categoryName = ref("")
-const fromAge = ref<string | number | null>(null)
-const toAge = ref<string | number | null>(null)
-const monthlyAmount = ref<string | null>(null)
-const childCareSpaceCategoryId = ref<number | null>(null)
 const isSaving = ref(false)
 
 const snack = useSnack()
-
-watch(
-  administrationCostCategory,
-  (category) => {
-    if (isNil(category)) return
-
-    categoryName.value = category.categoryName
-    fromAge.value = category.fromAge
-    toAge.value = category.toAge
-    monthlyAmount.value = category.monthlyAmount
-    childCareSpaceCategoryId.value = category.childCareSpaceCategoryId
-  },
-  {
-    immediate: true,
-  }
-)
 
 async function saveCategory() {
   if (isNil(form.value) || isSaving.value) return
 
   const { valid } = await form.value.validate()
-  if (!valid || isNil(monthlyAmount.value)) return
+  if (!valid || isNil(administrationCostCategory.value)) return
+
+  const { categoryName, fromAge, toAge, monthlyAmount, childCareSpaceCategoryId } =
+    administrationCostCategory.value
+  if (isNil(monthlyAmount)) return
 
   isSaving.value = true
   try {
     await save({
-      categoryName: categoryName.value,
-      fromAge: isNil(fromAge.value) || fromAge.value === "" ? null : Number(fromAge.value),
-      toAge: isNil(toAge.value) || toAge.value === "" ? null : Number(toAge.value),
-      monthlyAmount: monthlyAmount.value,
-      childCareSpaceCategoryId: childCareSpaceCategoryId.value,
+      categoryName,
+      fromAge: isNil(fromAge) || String(fromAge) === "" ? null : Number(fromAge),
+      toAge: isNil(toAge) || String(toAge) === "" ? null : Number(toAge),
+      monthlyAmount,
+      childCareSpaceCategoryId,
     })
     snack.success("Administration cost category updated successfully!")
   } catch (error) {
