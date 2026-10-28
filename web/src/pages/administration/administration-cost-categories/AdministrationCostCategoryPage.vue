@@ -91,9 +91,9 @@
     </v-row>
     <v-row>
       <v-col cols="12">
-        <DescriptionElement
-          label="Linked Child Care Space Category ID"
-          :model-value="administrationCostCategory.childCareSpaceCategoryId ?? '—'"
+        <ChildCareSpaceCategoryDescriptionElement
+          :child-care-space-category-id="administrationCostCategory.childCareSpaceCategoryId"
+          label="Linked Child Care Space Category"
           vertical
         />
       </v-col>
@@ -117,6 +117,7 @@ import useFundingPeriods from "@/use/use-funding-periods"
 
 import DescriptionElement from "@/components/common/DescriptionElement.vue"
 import HeaderActionsCard from "@/components/common/HeaderActionsCard.vue"
+import ChildCareSpaceCategoryDescriptionElement from "@/components/child-care-space-categories/ChildCareSpaceCategoryDescriptionElement.vue"
 
 const props = defineProps<{
   administrationCostCategoryId: string
