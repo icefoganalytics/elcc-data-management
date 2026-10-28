@@ -64,6 +64,7 @@ const amountFormatOptions = {
 }
 
 const router = useRouter()
+
 const fundingPeriodsQuery = ref<FundingPeriodQueryOptions>({
   order: [["fiscalYear", "DESC"]],
   perPage: -1,
@@ -73,6 +74,7 @@ const {
   isLoading: isLoadingFundingPeriods,
   isErrored: isFundingPeriodsErrored,
 } = useFundingPeriods(fundingPeriodsQuery)
+
 const selectedFundingPeriodId = ref<number | null>(null)
 const query = computed(() => ({
   where: selectedFundingPeriodId.value
@@ -84,6 +86,7 @@ const query = computed(() => ({
 }))
 const { administrationCostCategories, isLoading, isErrored, fetch } =
   useAdministrationCostCategories(query)
+
 const headers = [
   {
     title: "Category Name",

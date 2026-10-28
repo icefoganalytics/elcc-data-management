@@ -131,20 +131,25 @@ import HeaderActionsFormCard from "@/components/common/HeaderActionsFormCard.vue
 const monthlyAmountOptions = {
   precision: 4,
 }
+
 const props = defineProps<{ administrationCostCategoryId: string }>()
+
 const administrationCostCategoryId = computed(() => Number(props.administrationCostCategoryId))
 const { administrationCostCategory, policy, isLoading, isErrored, fetch, save } =
   useAdministrationCostCategory(administrationCostCategoryId)
+
 const fundingPeriodId = computed(() => administrationCostCategory.value?.fundingPeriodId)
 const { fundingPeriods } = useFundingPeriods(
   ref({
     perPage: -1,
   })
 )
+
 const fundingPeriodDescription = computed(() => {
   const fundingPeriod = fundingPeriods.value.find(({ id }) => id === fundingPeriodId.value)
   return fundingPeriod?.fiscalYear ?? String(fundingPeriodId.value)
 })
+
 const spaceCategoriesQuery = computed(() => ({
   where: {
     fundingPeriodId: fundingPeriodId.value,
@@ -158,11 +163,13 @@ const {
 } = useChildCareSpaceCategories(spaceCategoriesQuery, {
   skipWatchIf: () => isNil(fundingPeriodId.value),
 })
+
 const availableChildCareSpaceCategories = computed(() =>
   childCareSpaceCategories.value.filter(
     (category) => category.fundingPeriodId === fundingPeriodId.value
   )
 )
+
 const form = ref<InstanceType<typeof HeaderActionsFormCard> | null>(null)
 const categoryName = ref("")
 const fromAge = ref<string | number | null>(null)
@@ -170,6 +177,7 @@ const toAge = ref<string | number | null>(null)
 const monthlyAmount = ref<string | null>(null)
 const childCareSpaceCategoryId = ref<number | null>(null)
 const isSaving = ref(false)
+
 const snack = useSnack()
 
 watch(

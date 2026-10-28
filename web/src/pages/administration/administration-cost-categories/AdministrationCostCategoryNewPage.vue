@@ -124,8 +124,10 @@ import HeaderActionsFormCard from "@/components/common/HeaderActionsFormCard.vue
 const monthlyAmountOptions = {
   precision: 4,
 }
+
 const router = useRouter()
 const snack = useSnack()
+
 const form = ref<InstanceType<typeof HeaderActionsFormCard> | null>(null)
 const fundingPeriodId = ref<number | null>(null)
 const categoryName = ref("")
@@ -144,6 +146,7 @@ const {
     perPage: -1,
   })
 )
+
 const spaceCategoriesQuery = computed(() => ({
   where: {
     fundingPeriodId: fundingPeriodId.value ?? undefined,
@@ -157,6 +160,7 @@ const {
 } = useChildCareSpaceCategories(spaceCategoriesQuery, {
   skipWatchIf: () => isNil(fundingPeriodId.value),
 })
+
 const availableChildCareSpaceCategories = computed(() =>
   childCareSpaceCategories.value.filter(
     (category) => category.fundingPeriodId === fundingPeriodId.value

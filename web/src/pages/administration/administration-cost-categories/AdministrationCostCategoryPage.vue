@@ -127,28 +127,35 @@ const amountFormatOptions = {
   minimumFractionDigits: 2,
   maximumFractionDigits: 4,
 }
+
 const props = defineProps<{ administrationCostCategoryId: string }>()
+
 const administrationCostCategoryId = computed(() => Number(props.administrationCostCategoryId))
 const { administrationCostCategory, policy, isLoading, isErrored, fetch, remove } =
   useAdministrationCostCategory(administrationCostCategoryId)
+
 const { fundingPeriods } = useFundingPeriods(
   ref({
     perPage: -1,
   })
 )
+
 const fundingPeriodDescription = computed(() => {
   const fundingPeriod = fundingPeriods.value.find(
     ({ id }) => id === administrationCostCategory.value?.fundingPeriodId
   )
   return fundingPeriod?.fiscalYear ?? String(administrationCostCategory.value?.fundingPeriodId)
 })
+
 const router = useRouter()
 const snack = useSnack()
+
 const isDeleting = ref(false)
 
 async function deleteCategory() {
   if (!blockedToTrueConfirm("Are you sure you want to remove this Administration cost category?"))
     return
+
   isDeleting.value = true
   try {
     await remove()
