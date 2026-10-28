@@ -6,8 +6,6 @@
     item-title="fiscalYear"
     item-value="id"
     :loading="isLoading"
-    :error="isErrored"
-    :error-messages="isErrored ? 'Funding periods could not be loaded.' : undefined"
     @update:model-value="emit('update:modelValue', $event)"
   />
 </template>
@@ -29,7 +27,7 @@ const fundingPeriodsQuery = ref<FundingPeriodQueryOptions>({
   order: [["fiscalYear", "DESC"]],
   perPage: -1,
 })
-const { fundingPeriods, isLoading, isErrored } = useFundingPeriods(fundingPeriodsQuery)
+const { fundingPeriods, isLoading } = useFundingPeriods(fundingPeriodsQuery)
 
 watch(fundingPeriods, (periods) => {
   if (props.modelValue === null && periods.length > 0) {
