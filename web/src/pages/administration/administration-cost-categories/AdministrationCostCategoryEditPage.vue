@@ -50,14 +50,6 @@
       label="Monthly Amount *"
       :rules="[required]"
     />
-    <v-alert
-      v-if="isSpaceCategoriesErrored"
-      type="error"
-      variant="tonal"
-      class="mb-4"
-    >
-      Linked Child Care Space categories could not be loaded. Reload the page to try again.
-    </v-alert>
     <v-select
       v-model="administrationCostCategory.childCareSpaceCategoryId"
       :items="availableChildCareSpaceCategories"
@@ -65,7 +57,6 @@
       item-value="id"
       label="Linked Child Care Space Category"
       :loading="isLoadingSpaceCategories"
-      :disabled="isSpaceCategoriesErrored"
       clearable
     />
     <template #actions>
@@ -134,13 +125,10 @@ const spaceCategoriesQuery = computed(() => ({
   },
   perPage: -1,
 }))
-const {
-  childCareSpaceCategories,
-  isLoading: isLoadingSpaceCategories,
-  isErrored: isSpaceCategoriesErrored,
-} = useChildCareSpaceCategories(spaceCategoriesQuery, {
-  skipWatchIf: () => isNil(fundingPeriodId.value),
-})
+const { childCareSpaceCategories, isLoading: isLoadingSpaceCategories } =
+  useChildCareSpaceCategories(spaceCategoriesQuery, {
+    skipWatchIf: () => isNil(fundingPeriodId.value),
+  })
 
 const availableChildCareSpaceCategories = computed(() =>
   childCareSpaceCategories.value.filter(

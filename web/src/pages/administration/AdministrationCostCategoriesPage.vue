@@ -15,20 +15,7 @@
       v-model="fundingPeriodId"
       clearable
     />
-    <v-alert
-      v-if="isErrored"
-      type="error"
-      variant="tonal"
-    >
-      Administration cost categories could not be loaded.
-      <v-btn
-        variant="outlined"
-        @click="fetch"
-        >Retry</v-btn
-      >
-    </v-alert>
     <v-data-table
-      v-else
       :headers="headers"
       :items="administrationCostCategories"
       :loading="isLoading"
@@ -68,8 +55,9 @@ const administrationCostCategoriesQuery = computed(() => ({
   where: administrationCostCategoriesWhere.value,
   perPage: -1,
 }))
-const { administrationCostCategories, isLoading, isErrored, fetch } =
-  useAdministrationCostCategories(administrationCostCategoriesQuery)
+const { administrationCostCategories, isLoading } = useAdministrationCostCategories(
+  administrationCostCategoriesQuery
+)
 
 const headers = [
   {
