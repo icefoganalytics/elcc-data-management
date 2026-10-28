@@ -5,7 +5,6 @@ require "local_development_gateway"
 require "open_in_editor_bridge"
 
 require "rdoc"
-require "digest"
 require "shellwords"
 
 require_relative "./jira_api"
@@ -27,7 +26,6 @@ class DevHelper
 
   REPLACE_PROCESS = "replace_process"
   WAIT_FOR_PROCESS = "wait_for_process"
-  MAX_COMPOSE_PROJECT_NAME_LENGTH = 63 - "-db".length
 
   # External Interface
   def self.call(*args)
@@ -322,7 +320,6 @@ class DevHelper
 
   def compose_command(*args, **kwargs)
     pipe_input = kwargs.delete(:pipe_input)
-    validate_explicit_project_names!(*args.flatten)
 
     go_to_project_root = "cd #{project_root}"
     compose_file_arguments = compose_file_options(**kwargs)
@@ -370,7 +367,7 @@ class DevHelper
 
   def dynamic_environment_variables
     variables = {
-      "COMPOSE_PROJECT_NAME" => checkout_name,
+      "ELCC_CHECKOUT_NAME" => checkout_name,
       "GATEWAY_HOSTNAME" => gateway_hostname
     }
 
@@ -389,43 +386,7 @@ class DevHelper
 
   def checkout_name
     @checkout_name ||=
-      begin
-        directory_name = File.basename(project_root)
-        name = directory_name.downcase.gsub(/[^a-z0-9]+/, "-")
-        if name.length > MAX_COMPOSE_PROJECT_NAME_LENGTH
-          digest = Digest::SHA256.hexdigest(directory_name)[0, 12]
-          prefix = name[0, MAX_COMPOSE_PROJECT_NAME_LENGTH - digest.length - 1]
-          name = "#{prefix.sub(/-+\z/, "")}-#{digest}"
-        end
-
-        name
-      end
-  end
-
-  def validate_explicit_project_names!(*args)
-    while (argument = args.shift)
-      break unless argument.start_with?("-")
-
-      name =
-        case argument
-        when "-p", "--project-name"
-          args.shift
-        when /\A--project-name=(.*)\z/, /\A-p=?(.+)\z/
-          Regexp.last_match(1)
-        when "-f", "--file", "--env-file", "--profile", "--parallel",
-             "--progress", "--ansi", "--project-directory"
-          args.shift
-          next
-        else
-          next
-        end
-
-      unless name && /\A[a-z0-9][a-z0-9-]*\z/.match?(name) &&
-               name.length <= MAX_COMPOSE_PROJECT_NAME_LENGTH
-        raise ArgumentError,
-              "Compose project names must be DNS labels of at most #{MAX_COMPOSE_PROJECT_NAME_LENGTH} characters for the -db alias; explicit names are never shortened."
-      end
-    end
+      File.basename(project_root).downcase.gsub(/[^a-z0-9]+/, "-")
   end
 
   def gateway_hostname
