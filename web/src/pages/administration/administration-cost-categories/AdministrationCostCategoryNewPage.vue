@@ -110,8 +110,10 @@ import { computed, ref, useTemplateRef, watch } from "vue"
 import { useRouter } from "vue-router"
 import { isNil } from "lodash"
 
-import administrationCostCategoriesApi from "@/api/administration-cost-categories-api"
 import { required } from "@/utils/validators"
+
+import administrationCostCategoriesApi from "@/api/administration-cost-categories-api"
+
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useChildCareSpaceCategories from "@/use/use-child-care-space-categories"
 import useFundingPeriods from "@/use/use-funding-periods"
