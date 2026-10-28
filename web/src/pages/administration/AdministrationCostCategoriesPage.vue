@@ -2,6 +2,7 @@
   <HeaderActionsCard title="Administration Cost Categories">
     <template #header-actions>
       <v-btn
+        v-if="fundingPeriodsCount > 0"
         color="primary"
         :to="{
           name: 'administration/administration-cost-categories/AdministrationCostCategoryNewPage',
@@ -40,11 +41,18 @@ import { formatMoney } from "@/utils/formatters"
 
 import useAdministrationCostCategories from "@/use/use-administration-cost-categories"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
+import useFundingPeriods from "@/use/use-funding-periods"
 
 import HeaderActionsCard from "@/components/common/HeaderActionsCard.vue"
 import FundingPeriodSearchableAutocomplete from "@/components/funding-periods/FundingPeriodSearchableAutocomplete.vue"
 
 const router = useRouter()
+
+const { totalCount: fundingPeriodsCount } = useFundingPeriods(
+  ref({
+    perPage: 1,
+  })
+)
 
 const fundingPeriodId = ref<number | null>(null)
 

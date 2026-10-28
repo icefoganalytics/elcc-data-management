@@ -4,14 +4,6 @@
     title="New Administration Cost Category"
     @submit.prevent="createCategory"
   >
-    <v-alert
-      v-if="!isLoadingFundingPeriods && fundingPeriods.length === 0"
-      type="warning"
-      variant="tonal"
-      class="mb-4"
-    >
-      Create a funding period before adding an Administration cost category.
-    </v-alert>
     <v-select
       v-model="fundingPeriodId"
       :items="fundingPeriods"
