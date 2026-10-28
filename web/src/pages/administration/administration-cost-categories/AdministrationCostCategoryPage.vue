@@ -137,7 +137,7 @@ const fundingPeriodDescription = computed(() => {
   const fundingPeriod = fundingPeriods.value.find(
     ({ id }) => id === administrationCostCategory.value?.fundingPeriodId
   )
-  return fundingPeriod?.fiscalYear ?? String(administrationCostCategory.value?.fundingPeriodId)
+  return fundingPeriod?.fiscalYear ?? "Unknown"
 })
 
 const router = useRouter()

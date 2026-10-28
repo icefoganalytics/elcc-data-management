@@ -125,7 +125,7 @@ const { fundingPeriods } = useFundingPeriods(
 
 const fundingPeriodDescription = computed(() => {
   const fundingPeriod = fundingPeriods.value.find(({ id }) => id === fundingPeriodId.value)
-  return fundingPeriod?.fiscalYear ?? String(fundingPeriodId.value)
+  return fundingPeriod?.fiscalYear ?? "Unknown"
 })
 
 const spaceCategoriesQuery = computed(() => ({
