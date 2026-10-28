@@ -54,9 +54,10 @@ describe("web/src/use/use-administration-cost-category.ts", () => {
 
         try {
           await flushPromises()
-          const save = category.save({
-            monthlyAmount: "90.0000",
-          })
+          const loadedCategory = category.administrationCostCategory.value
+          if (loadedCategory === null) throw new Error("Category did not load")
+          loadedCategory.monthlyAmount = "90.0000"
+          const save = category.save()
 
           // Act
           categoryId.value = 2
@@ -106,9 +107,7 @@ describe("web/src/use/use-administration-cost-category.ts", () => {
           await flushPromises()
 
           // Act
-          const save = category.save({
-            categoryName: "Previous category",
-          })
+          const save = category.save()
 
           // Assert
           await expect(save).rejects.toThrow()

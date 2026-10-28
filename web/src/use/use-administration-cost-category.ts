@@ -65,7 +65,7 @@ export function useAdministrationCostCategory(
     }
   }
 
-  async function save(attributes: AdministrationCostCategoryUpdateAttributes) {
+  async function save(attributesOverrides: AdministrationCostCategoryUpdateAttributes = {}) {
     const id = unref(administrationCostCategoryId)
     if (isNil(id)) throw new Error("administrationCostCategoryId is required")
     if (state.administrationCostCategory?.id !== id) {
@@ -76,7 +76,10 @@ export function useAdministrationCostCategory(
     const controller = new AbortController()
     requestController = controller
     state.isLoading = false
-    const response = await administrationCostCategoriesApi.update(id, attributes)
+    const response = await administrationCostCategoriesApi.update(id, {
+      ...state.administrationCostCategory,
+      ...attributesOverrides,
+    })
     if (!controller.signal.aborted && unref(administrationCostCategoryId) === id) {
       state.administrationCostCategory = response.administrationCostCategory
       state.policy = response.policy

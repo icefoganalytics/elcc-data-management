@@ -159,19 +159,9 @@ async function saveCategory() {
   const { valid } = await form.value.validate()
   if (!valid || isNil(administrationCostCategory.value)) return
 
-  const { categoryName, fromAge, toAge, monthlyAmount, childCareSpaceCategoryId } =
-    administrationCostCategory.value
-  if (isNil(monthlyAmount)) return
-
   isSaving.value = true
   try {
-    await save({
-      categoryName,
-      fromAge: isNil(fromAge) || String(fromAge) === "" ? null : Number(fromAge),
-      toAge: isNil(toAge) || String(toAge) === "" ? null : Number(toAge),
-      monthlyAmount,
-      childCareSpaceCategoryId,
-    })
+    await save()
     snack.success("Administration cost category updated successfully!")
   } catch (error) {
     snack.error(`Failed to update Administration cost category: ${error}`)
