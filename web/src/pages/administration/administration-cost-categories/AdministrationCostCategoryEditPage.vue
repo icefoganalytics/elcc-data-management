@@ -130,7 +130,9 @@ const monthlyAmountOptions = {
   precision: 4,
 }
 
-const props = defineProps<{ administrationCostCategoryId: string }>()
+const props = defineProps<{
+  administrationCostCategoryId: string
+}>()
 
 const administrationCostCategoryId = computed(() => Number(props.administrationCostCategoryId))
 const { administrationCostCategory, policy, isLoading, isErrored, fetch, save } =

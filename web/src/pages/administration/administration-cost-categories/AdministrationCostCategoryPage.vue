@@ -129,7 +129,9 @@ import useFundingPeriods from "@/use/use-funding-periods"
 import DescriptionElement from "@/components/common/DescriptionElement.vue"
 import HeaderActionsCard from "@/components/common/HeaderActionsCard.vue"
 
-const props = defineProps<{ administrationCostCategoryId: string }>()
+const props = defineProps<{
+  administrationCostCategoryId: string
+}>()
 
 const administrationCostCategoryId = computed(() => Number(props.administrationCostCategoryId))
 const { administrationCostCategory, policy, isLoading, isErrored, fetch } =
