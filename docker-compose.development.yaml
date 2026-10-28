@@ -1,3 +1,5 @@
+name: "${ELCC_CHECKOUT_NAME:-elcc-data-management}"
+
 x-default-environment: &default-environment
   NODE_ENV: development
   TZ: "UTC"
