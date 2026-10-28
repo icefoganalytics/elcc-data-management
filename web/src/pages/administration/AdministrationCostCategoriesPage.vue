@@ -41,9 +41,13 @@
       :loading="isLoading"
       @click:row="openCategory"
     >
-      <template #item.monthlyAmount="{ item }">{{
-        formatMoney(item.monthlyAmount, amountFormatOptions)
-      }}</template>
+      <template #item.monthlyAmount="{ item }">
+        {{
+          formatMoney(item.monthlyAmount, {
+            maximumFractionDigits: 4,
+          })
+        }}
+      </template>
     </v-data-table>
   </HeaderActionsCard>
 </template>
@@ -57,11 +61,6 @@ import useFundingPeriods, { type FundingPeriodQueryOptions } from "@/use/use-fun
 import useAdministrationCostCategories from "@/use/use-administration-cost-categories"
 import HeaderActionsCard from "@/components/common/HeaderActionsCard.vue"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
-
-const amountFormatOptions = {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 4,
-}
 
 const router = useRouter()
 

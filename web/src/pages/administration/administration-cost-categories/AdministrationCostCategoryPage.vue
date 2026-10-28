@@ -92,7 +92,11 @@
       >
         <DescriptionElement
           label="Monthly Amount"
-          :model-value="formatMoney(administrationCostCategory.monthlyAmount, amountFormatOptions)"
+          :model-value="
+            formatMoney(administrationCostCategory.monthlyAmount, {
+              maximumFractionDigits: 4,
+            })
+          "
           vertical
         />
       </v-col>
@@ -122,11 +126,6 @@ import { blockedToTrueConfirm } from "@/utils/blocked-to-true-confirm"
 
 import DescriptionElement from "@/components/common/DescriptionElement.vue"
 import HeaderActionsCard from "@/components/common/HeaderActionsCard.vue"
-
-const amountFormatOptions = {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 4,
-}
 
 const props = defineProps<{ administrationCostCategoryId: string }>()
 
