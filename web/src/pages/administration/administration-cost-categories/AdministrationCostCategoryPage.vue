@@ -1,76 +1,112 @@
 <template>
-  <v-container>
-    <v-skeleton-loader
-      v-if="isLoading && !administrationCostCategory"
-      type="card"
-    />
-    <v-alert
-      v-else-if="isErrored && !administrationCostCategory"
-      type="error"
-      variant="tonal"
+  <v-skeleton-loader
+    v-if="isLoading && !administrationCostCategory"
+    type="card"
+  />
+  <v-alert
+    v-else-if="isErrored && !administrationCostCategory"
+    type="error"
+    variant="tonal"
+  >
+    Administration category could not be loaded.
+    <v-btn
+      variant="outlined"
+      @click="fetch"
+      >Retry</v-btn
     >
-      Administration category could not be loaded.
+  </v-alert>
+  <HeaderActionsCard
+    v-else-if="administrationCostCategory"
+    title="Administration Cost Category Details"
+  >
+    <template #header-actions>
       <v-btn
-        variant="outlined"
-        @click="fetch"
-        >Retry</v-btn
+        v-if="policy?.update"
+        color="primary"
+        :to="{
+          name: 'administration/administration-cost-categories/AdministrationCostCategoryEditPage',
+          params: {
+            administrationCostCategoryId,
+          },
+        }"
       >
-    </v-alert>
-    <v-card
-      v-else-if="administrationCostCategory"
-      title="Administration Cost Category Details"
-    >
-      <template #append>
-        <v-btn
-          v-if="policy?.update"
-          color="primary"
-          :to="{
-            name: 'administration/administration-cost-categories/AdministrationCostCategoryEditPage',
-            params: {
-              administrationCostCategoryId,
-            },
-          }"
-          >Edit</v-btn
-        >
-        <v-btn
-          v-if="policy?.destroy"
-          class="ml-2"
-          color="error"
-          :loading="isDeleting"
-          @click="deleteCategory"
-          >Delete</v-btn
-        >
-      </template>
-      <v-card-text>
-        <v-list>
-          <v-list-item
-            title="Funding Period"
-            :subtitle="fundingPeriodDescription"
-          />
-          <v-list-item
-            title="Category Name"
-            :subtitle="administrationCostCategory.categoryName"
-          />
-          <v-list-item
-            title="From Age"
-            :subtitle="administrationCostCategory.fromAge ?? '—'"
-          />
-          <v-list-item
-            title="To Age"
-            :subtitle="administrationCostCategory.toAge ?? '—'"
-          />
-          <v-list-item
-            title="Monthly Amount"
-            :subtitle="formatMoney(administrationCostCategory.monthlyAmount, amountFormatOptions)"
-          />
-          <v-list-item
-            title="Linked Child Care Space Category ID"
-            :subtitle="administrationCostCategory.childCareSpaceCategoryId ?? '—'"
-          />
-        </v-list>
-      </v-card-text>
-    </v-card>
-  </v-container>
+        Edit
+      </v-btn>
+      <v-btn
+        v-if="policy?.destroy"
+        class="mt-2 mt-md-0 ml-md-2"
+        color="error"
+        :loading="isDeleting"
+        @click="deleteCategory"
+      >
+        Delete
+      </v-btn>
+    </template>
+
+    <v-row>
+      <v-col
+        cols="12"
+        md="6"
+      >
+        <DescriptionElement
+          label="Funding Period"
+          :model-value="fundingPeriodDescription"
+          vertical
+        />
+      </v-col>
+      <v-col
+        cols="12"
+        md="6"
+      >
+        <DescriptionElement
+          label="Category Name"
+          :model-value="administrationCostCategory.categoryName"
+          vertical
+        />
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col
+        cols="12"
+        md="4"
+      >
+        <DescriptionElement
+          label="From Age"
+          :model-value="administrationCostCategory.fromAge ?? '—'"
+          vertical
+        />
+      </v-col>
+      <v-col
+        cols="12"
+        md="4"
+      >
+        <DescriptionElement
+          label="To Age"
+          :model-value="administrationCostCategory.toAge ?? '—'"
+          vertical
+        />
+      </v-col>
+      <v-col
+        cols="12"
+        md="4"
+      >
+        <DescriptionElement
+          label="Monthly Amount"
+          :model-value="formatMoney(administrationCostCategory.monthlyAmount, amountFormatOptions)"
+          vertical
+        />
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col cols="12">
+        <DescriptionElement
+          label="Linked Child Care Space Category ID"
+          :model-value="administrationCostCategory.childCareSpaceCategoryId ?? '—'"
+          vertical
+        />
+      </v-col>
+    </v-row>
+  </HeaderActionsCard>
 </template>
 
 <script setup lang="ts">
@@ -83,6 +119,9 @@ import useSnack from "@/use/use-snack"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useFundingPeriods from "@/use/use-funding-periods"
 import { blockedToTrueConfirm } from "@/utils/blocked-to-true-confirm"
+
+import DescriptionElement from "@/components/common/DescriptionElement.vue"
+import HeaderActionsCard from "@/components/common/HeaderActionsCard.vue"
 
 const amountFormatOptions = {
   minimumFractionDigits: 2,
