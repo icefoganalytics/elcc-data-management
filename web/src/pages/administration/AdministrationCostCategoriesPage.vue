@@ -11,16 +11,9 @@
         New Administration Cost Category
       </v-btn>
     </template>
-    <v-select
+    <FundingPeriodSelect
       v-model="fundingPeriodId"
-      label="Funding Period"
-      :items="fundingPeriods"
-      item-title="fiscalYear"
-      item-value="id"
       clearable
-      :loading="isLoadingFundingPeriods"
-      :error="isFundingPeriodsErrored"
-      :error-messages="isFundingPeriodsErrored ? 'Funding periods could not be loaded.' : undefined"
     />
     <v-alert
       v-if="isErrored"
@@ -53,28 +46,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue"
+import { computed, ref } from "vue"
 import { useRouter } from "vue-router"
 
 import { formatMoney } from "@/utils/formatters"
 
-import useFundingPeriods, { type FundingPeriodQueryOptions } from "@/use/use-funding-periods"
 import useAdministrationCostCategories from "@/use/use-administration-cost-categories"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 
 import HeaderActionsCard from "@/components/common/HeaderActionsCard.vue"
+import FundingPeriodSelect from "@/components/funding-periods/FundingPeriodSelect.vue"
 
 const router = useRouter()
-
-const fundingPeriodsQuery = ref<FundingPeriodQueryOptions>({
-  order: [["fiscalYear", "DESC"]],
-  perPage: -1,
-})
-const {
-  fundingPeriods,
-  isLoading: isLoadingFundingPeriods,
-  isErrored: isFundingPeriodsErrored,
-} = useFundingPeriods(fundingPeriodsQuery)
 
 const fundingPeriodId = ref<number | null>(null)
 
@@ -106,12 +89,6 @@ const headers = [
     key: "monthlyAmount",
   },
 ]
-
-watch(fundingPeriods, (periods) => {
-  if (fundingPeriodId.value === null && periods.length > 0) {
-    fundingPeriodId.value = periods[0].id
-  }
-})
 
 function openCategory(_event: Event, { item }: { item: { id: number } }) {
   router.push({
