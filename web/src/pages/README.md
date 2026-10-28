@@ -20,6 +20,16 @@ The current naming conventions for pages is pretty random, but over time it will
 4. It should be easy to find a component given the vue-router route name.
 5. It should be easy to find the page component for a given URL.
 
+## Record Page Responsibilities
+
+Choose the presentation by the user's task and the number of records, not merely by which component can render the fields:
+
+- Collection pages use tables for browsing and comparing records.
+- Read-only single-record pages use `HeaderActionsCard` with labelled `DescriptionElement` fields in responsive `v-row`/`v-col` layouts.
+- Single-record editing pages use forms such as `HeaderActionsFormCard`. Editable tables belong to workflows that actually edit multiple rows.
+
+Inspect the closest existing page for the same task before composing raw Vuetify primitives. Reuse its shared components while preserving the page's authorization, loading, error, and action behavior.
+
 ## Route Naming
 
 Use `{domain}/{resource}/{PageName}` route names so the route name mirrors the file path under `pages/`.
