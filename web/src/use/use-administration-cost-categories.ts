@@ -57,9 +57,6 @@ export function useAdministrationCostCategories(
   watch(
     queryOptions,
     async () => {
-      state.administrationCostCategories = []
-      state.totalCount = 0
-      state.isErrored = false
       await fetch()
     },
     {

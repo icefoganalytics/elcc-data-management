@@ -24,6 +24,15 @@ export function useAdministrationCostCategory(
   })
   let requestController: AbortController | undefined
 
+  function clearRecord() {
+    requestController?.abort()
+    requestController = undefined
+    state.administrationCostCategory = null
+    state.policy = null
+    state.isErrored = false
+    state.isLoading = false
+  }
+
   async function fetch(): Promise<AdministrationCostCategoryAsShow | null> {
     const id = unref(administrationCostCategoryId)
     if (isNil(id)) throw new Error("administrationCostCategoryId is required")
@@ -75,25 +84,10 @@ export function useAdministrationCostCategory(
     return response.administrationCostCategory
   }
 
-  async function remove() {
-    const id = unref(administrationCostCategoryId)
-    if (isNil(id)) throw new Error("administrationCostCategoryId is required")
-    if (state.administrationCostCategory?.id !== id) {
-      throw new Error("The requested Administration cost category is not loaded")
-    }
-
-    await administrationCostCategoriesApi.delete(id)
-  }
-
   watch(
     () => unref(administrationCostCategoryId),
     async (id) => {
-      requestController?.abort()
-      requestController = undefined
-      state.administrationCostCategory = null
-      state.policy = null
-      state.isErrored = false
-      state.isLoading = false
+      clearRecord()
       if (isNil(id)) return
 
       await fetch()
@@ -111,7 +105,6 @@ export function useAdministrationCostCategory(
     ...toRefs(state),
     fetch,
     save,
-    remove,
   }
 }
 

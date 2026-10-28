@@ -55,9 +55,6 @@ export function useAdministrationCosts(queryOptions: Ref<AdministrationCostQuery
   watch(
     queryOptions,
     async () => {
-      state.administrationCosts = []
-      state.totalCount = 0
-      state.isErrored = false
       await fetch()
     },
     {

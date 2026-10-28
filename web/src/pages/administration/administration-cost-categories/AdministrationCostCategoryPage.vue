@@ -37,7 +37,7 @@
         class="mt-2 mt-md-0 ml-md-2"
         color="error"
         :loading="isDeleting"
-        @click="deleteCategory"
+        @click="deleteCategory(administrationCostCategory.id)"
       >
         Delete
       </v-btn>
@@ -118,11 +118,13 @@ import { computed, ref } from "vue"
 import { useRouter } from "vue-router"
 
 import { formatMoney } from "@/utils/formatters"
+import { blockedToTrueConfirm } from "@/utils/blocked-to-true-confirm"
+
+import administrationCostCategoriesApi from "@/api/administration-cost-categories-api"
 import useAdministrationCostCategory from "@/use/use-administration-cost-category"
 import useSnack from "@/use/use-snack"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useFundingPeriods from "@/use/use-funding-periods"
-import { blockedToTrueConfirm } from "@/utils/blocked-to-true-confirm"
 
 import DescriptionElement from "@/components/common/DescriptionElement.vue"
 import HeaderActionsCard from "@/components/common/HeaderActionsCard.vue"
@@ -130,7 +132,7 @@ import HeaderActionsCard from "@/components/common/HeaderActionsCard.vue"
 const props = defineProps<{ administrationCostCategoryId: string }>()
 
 const administrationCostCategoryId = computed(() => Number(props.administrationCostCategoryId))
-const { administrationCostCategory, policy, isLoading, isErrored, fetch, remove } =
+const { administrationCostCategory, policy, isLoading, isErrored, fetch } =
   useAdministrationCostCategory(administrationCostCategoryId)
 
 const { fundingPeriods } = useFundingPeriods(
@@ -151,13 +153,13 @@ const snack = useSnack()
 
 const isDeleting = ref(false)
 
-async function deleteCategory() {
+async function deleteCategory(administrationCostCategoryId: number) {
   if (!blockedToTrueConfirm("Are you sure you want to remove this Administration cost category?"))
     return
 
   isDeleting.value = true
   try {
-    await remove()
+    await administrationCostCategoriesApi.delete(administrationCostCategoryId)
     snack.success("Administration cost category deleted.")
     await router.push({
       name: "administration/AdministrationCostCategoriesPage",
