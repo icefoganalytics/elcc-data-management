@@ -11,7 +11,7 @@
         New Administration Cost Category
       </v-btn>
     </template>
-    <FundingPeriodSelect
+    <FundingPeriodSearchableAutocomplete
       v-model="fundingPeriodId"
       clearable
     />
@@ -42,7 +42,7 @@ import useAdministrationCostCategories from "@/use/use-administration-cost-categ
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 
 import HeaderActionsCard from "@/components/common/HeaderActionsCard.vue"
-import FundingPeriodSelect from "@/components/funding-periods/FundingPeriodSelect.vue"
+import FundingPeriodSearchableAutocomplete from "@/components/funding-periods/FundingPeriodSearchableAutocomplete.vue"
 
 const router = useRouter()
 
