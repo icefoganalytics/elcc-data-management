@@ -1,22 +1,10 @@
 <template>
   <v-skeleton-loader
-    v-if="isLoading && !administrationCostCategory"
+    v-if="!administrationCostCategory"
     type="card"
   />
-  <v-alert
-    v-else-if="isErrored && !administrationCostCategory"
-    type="error"
-    variant="tonal"
-  >
-    Administration category could not be loaded.
-    <v-btn
-      variant="outlined"
-      @click="fetch"
-      >Retry</v-btn
-    >
-  </v-alert>
   <HeaderActionsCard
-    v-else-if="administrationCostCategory"
+    v-else
     title="Administration Cost Category Details"
   >
     <template #header-actions>
@@ -135,8 +123,9 @@ const props = defineProps<{
 }>()
 
 const administrationCostCategoryId = computed(() => Number(props.administrationCostCategoryId))
-const { administrationCostCategory, policy, isLoading, isErrored, fetch } =
-  useAdministrationCostCategory(administrationCostCategoryId)
+const { administrationCostCategory, policy } = useAdministrationCostCategory(
+  administrationCostCategoryId
+)
 
 const { fundingPeriods } = useFundingPeriods(
   ref({

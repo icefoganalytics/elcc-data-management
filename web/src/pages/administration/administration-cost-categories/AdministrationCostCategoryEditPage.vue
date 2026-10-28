@@ -1,20 +1,8 @@
 <template>
   <v-skeleton-loader
-    v-if="isLoading && isNil(administrationCostCategory)"
+    v-if="isNil(administrationCostCategory)"
     type="card"
   />
-  <v-alert
-    v-else-if="isNil(administrationCostCategory)"
-    type="error"
-    variant="tonal"
-  >
-    Administration cost category could not be loaded.
-    <v-btn
-      variant="outlined"
-      @click="fetch"
-      >Retry</v-btn
-    >
-  </v-alert>
   <HeaderActionsFormCard
     v-else
     ref="form"
@@ -124,7 +112,7 @@ const props = defineProps<{
 }>()
 
 const administrationCostCategoryId = computed(() => Number(props.administrationCostCategoryId))
-const { administrationCostCategory, isLoading, fetch, save } = useAdministrationCostCategory(
+const { administrationCostCategory, save } = useAdministrationCostCategory(
   administrationCostCategoryId
 )
 
