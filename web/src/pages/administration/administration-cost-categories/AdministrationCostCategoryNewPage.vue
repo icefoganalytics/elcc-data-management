@@ -106,7 +106,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue"
+import { computed, ref, useTemplateRef, watch } from "vue"
 import { useRouter } from "vue-router"
 import { isNil } from "lodash"
 
@@ -123,7 +123,7 @@ import HeaderActionsFormCard from "@/components/common/HeaderActionsFormCard.vue
 const router = useRouter()
 const snack = useSnack()
 
-const form = ref<InstanceType<typeof HeaderActionsFormCard> | null>(null)
+const form = useTemplateRef("form")
 const fundingPeriodId = ref<number | null>(null)
 const categoryName = ref("")
 const fromAge = ref<string | number | null>(null)

@@ -112,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue"
+import { computed, ref, useTemplateRef } from "vue"
 import { isNil } from "lodash"
 
 import { required } from "@/utils/validators"
@@ -165,7 +165,7 @@ const availableChildCareSpaceCategories = computed(() =>
   )
 )
 
-const form = ref<InstanceType<typeof HeaderActionsFormCard> | null>(null)
+const form = useTemplateRef("form")
 const isSaving = ref(false)
 
 const snack = useSnack()
