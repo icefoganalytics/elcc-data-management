@@ -29,6 +29,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
 - Administration worksheet rows now sort alphabetically by their saved category names, with a stable order when names match.
 - Administration backfill now skips and discards unusable legacy Administration data instead of blocking deployment. Restoring discarded data requires a backup.
 - Administration API responses omit internal soft-deletion timestamps.
+- Administration category details show linked Child Care Space category names instead of internal IDs.
 - Administration category and worksheet reads now cancel when superseded or abandoned, without treating cancellation as a load failure or cancelling committed saves.
 - Preserved four-decimal currency entry and exact financial calculations when reconciling money amounts.
 - Unified authentication for legacy and modern API endpoints behind one shared boundary,
