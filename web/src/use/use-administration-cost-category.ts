@@ -72,6 +72,14 @@ export function useAdministrationCostCategory(
       throw new Error("The requested Administration cost category is not loaded")
     }
 
+    // Numeric inputs emit an empty string when cleared.
+    if (String(state.administrationCostCategory.fromAge) === "") {
+      state.administrationCostCategory.fromAge = null
+    }
+    if (String(state.administrationCostCategory.toAge) === "") {
+      state.administrationCostCategory.toAge = null
+    }
+
     requestController?.abort()
     const controller = new AbortController()
     requestController = controller
