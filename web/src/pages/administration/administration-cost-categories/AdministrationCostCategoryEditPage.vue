@@ -4,7 +4,7 @@
     type="card"
   />
   <v-alert
-    v-else-if="isErrored && isNil(administrationCostCategory)"
+    v-else-if="isNil(administrationCostCategory)"
     type="error"
     variant="tonal"
   >
@@ -16,7 +16,7 @@
     >
   </v-alert>
   <HeaderActionsFormCard
-    v-else-if="administrationCostCategory && policy?.update"
+    v-else
     ref="form"
     title="Edit Administration Cost Category"
     @submit.prevent="saveCategory"
@@ -123,8 +123,9 @@ const props = defineProps<{
 }>()
 
 const administrationCostCategoryId = computed(() => Number(props.administrationCostCategoryId))
-const { administrationCostCategory, policy, isLoading, isErrored, fetch, save } =
-  useAdministrationCostCategory(administrationCostCategoryId)
+const { administrationCostCategory, isLoading, fetch, save } = useAdministrationCostCategory(
+  administrationCostCategoryId
+)
 
 const fundingPeriodId = computed(() => administrationCostCategory.value?.fundingPeriodId)
 const { fundingPeriods } = useFundingPeriods(
