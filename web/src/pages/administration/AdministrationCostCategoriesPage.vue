@@ -12,7 +12,7 @@
       </v-btn>
     </template>
     <v-select
-      v-model="selectedFundingPeriodId"
+      v-model="fundingPeriodId"
       label="Funding Period"
       :items="fundingPeriods"
       item-title="fiscalYear"
@@ -76,17 +76,17 @@ const {
   isErrored: isFundingPeriodsErrored,
 } = useFundingPeriods(fundingPeriodsQuery)
 
-const selectedFundingPeriodId = ref<number | null>(null)
-const query = computed(() => ({
-  where: selectedFundingPeriodId.value
-    ? {
-        fundingPeriodId: selectedFundingPeriodId.value,
-      }
-    : {},
+const fundingPeriodId = ref<number | null>(null)
+
+const administrationCostCategoriesWhere = computed(() => ({
+  fundingPeriodId: fundingPeriodId.value ?? undefined,
+}))
+const administrationCostCategoriesQuery = computed(() => ({
+  where: administrationCostCategoriesWhere.value,
   perPage: -1,
 }))
 const { administrationCostCategories, isLoading, isErrored, fetch } =
-  useAdministrationCostCategories(query)
+  useAdministrationCostCategories(administrationCostCategoriesQuery)
 
 const headers = [
   {
@@ -108,8 +108,8 @@ const headers = [
 ]
 
 watch(fundingPeriods, (periods) => {
-  if (selectedFundingPeriodId.value === null && periods.length > 0) {
-    selectedFundingPeriodId.value = periods[0].id
+  if (fundingPeriodId.value === null && periods.length > 0) {
+    fundingPeriodId.value = periods[0].id
   }
 })
 
