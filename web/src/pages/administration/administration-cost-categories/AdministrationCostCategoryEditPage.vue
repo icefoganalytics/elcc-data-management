@@ -15,15 +15,8 @@
       >Retry</v-btn
     >
   </v-alert>
-  <v-alert
-    v-else-if="administrationCostCategory && !policy?.update"
-    type="warning"
-    variant="tonal"
-  >
-    You do not have permission to edit this Administration cost category.
-  </v-alert>
   <HeaderActionsFormCard
-    v-else-if="administrationCostCategory"
+    v-else-if="administrationCostCategory && policy?.update"
     ref="form"
     title="Edit Administration Cost Category"
     @submit.prevent="saveCategory"
