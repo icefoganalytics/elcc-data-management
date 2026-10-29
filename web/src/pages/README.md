@@ -30,6 +30,10 @@ Choose the presentation by the user's task and the number of records, not merely
 
 Inspect the closest existing page for the same task before composing raw Vuetify primitives. Reuse its shared components while preserving the page's authorization, loading, error, and action behavior.
 
+## Creation Form State
+
+Follow the WRAP new-page pattern: keep editable fields together in one `ref<Partial<Model>>` named for the resource's attributes, reusing the owning API model or creation-attribute type. Bind inputs and dependent lookup filters to that draft rather than maintaining one ref per field and rebuilding the payload. Keep form/loading state separate; validate and normalize input-specific values before passing the attributes object to the create API. Financial draft values remain decimal strings, and cleared optional numeric fields must retain their API null semantics.
+
 ## Route Naming
 
 Use `{domain}/{resource}/{PageName}` route names so the route name mirrors the file path under `pages/`.
