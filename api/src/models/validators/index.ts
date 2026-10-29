@@ -1,3 +1,5 @@
+export { doesNotContainLedgerSections } from "./does-not-contain-ledger-sections"
+export { doesNotUseLedgerSection } from "./does-not-use-ledger-section"
 export { isValidFiscalYear, type FiscalYearFormat } from "./is-valid-fiscal-year"
 export { isValidFiscalYearLegacy } from "./is-valid-fiscal-year-legacy"
 export { isValidFiscalYearLong } from "./is-valid-fiscal-year-long"

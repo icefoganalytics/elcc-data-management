@@ -3,6 +3,7 @@ export { InitializeService } from "./initialize-service"
 export { IsInitializedService, type InitializationStatus } from "./is-initialized-service"
 
 // Bundled exports
+export * as AdministrationCosts from "./administration-costs"
 export * as BuildingExpenses from "./building-expenses"
 export * as ChildCareSpaces from "./child-care-spaces"
 export * as EmployeeBenefits from "./employee-benefits"

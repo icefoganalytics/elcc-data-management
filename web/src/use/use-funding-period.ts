@@ -1,4 +1,5 @@
-import { type Ref, reactive, toRefs, unref, watch } from "vue"
+import { isCancel } from "axios"
+import { type Ref, onScopeDispose, reactive, toRefs, unref, watch } from "vue"
 import { isNil } from "lodash"
 
 import fundingPeriodsApi, {
@@ -20,27 +21,51 @@ export function useFundingPeriod(fundingPeriodId: Ref<number | null | undefined>
     isLoading: false,
     isErrored: false,
   })
+  let requestController: AbortController | undefined
 
-  async function fetch(): Promise<FundingPeriodAsShow> {
+  function clearRecord() {
+    requestController?.abort()
+    requestController = undefined
+    state.fundingPeriod = null
+    state.policy = null
+    state.isLoading = false
+    state.isErrored = false
+  }
+
+  async function fetch(): Promise<FundingPeriodAsShow | null> {
     const staticFundingPeriodId = unref(fundingPeriodId)
 
     if (isNil(staticFundingPeriodId)) {
       throw new Error("fundingPeriodId is required")
     }
 
+    requestController?.abort()
+    const controller = new AbortController()
+    requestController = controller
+
     state.isLoading = true
     try {
-      const { fundingPeriod, policy } = await fundingPeriodsApi.get(staticFundingPeriodId)
+      const { fundingPeriod, policy } = await fundingPeriodsApi.get(staticFundingPeriodId, {
+        signal: controller.signal,
+      })
+      if (controller.signal.aborted || unref(fundingPeriodId) !== staticFundingPeriodId) {
+        return state.fundingPeriod
+      }
+
       state.isErrored = false
       state.fundingPeriod = fundingPeriod
       state.policy = policy
       return fundingPeriod
     } catch (error) {
+      if (controller.signal.aborted || isCancel(error)) return state.fundingPeriod
+
       console.error(`Failed to fetch funding period: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {
-      state.isLoading = false
+      if (!controller.signal.aborted) {
+        state.isLoading = false
+      }
     }
   }
 
@@ -77,12 +102,17 @@ export function useFundingPeriod(fundingPeriodId: Ref<number | null | undefined>
   watch(
     () => unref(fundingPeriodId),
     async (newFundingPeriodId) => {
+      clearRecord()
       if (isNil(newFundingPeriodId)) return
 
       await fetch()
     },
     { immediate: true }
   )
+
+  onScopeDispose(() => {
+    requestController?.abort()
+  })
 
   return {
     ...toRefs(state),

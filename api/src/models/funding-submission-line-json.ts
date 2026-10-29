@@ -17,11 +17,10 @@ import {
   Table,
   ValidateAttribute,
 } from "@sequelize/core/decorators-legacy"
-import { DateTime } from "luxon"
 import { upperFirst } from "lodash"
+import { DateTime } from "luxon"
 
-import { isValidFiscalYearLegacy } from "@/models/validators"
-import { doesNotContainChildCareSpaces } from "@/models/validators/does-not-contain-child-care-spaces"
+import { doesNotContainLedgerSections, isValidFiscalYearLegacy } from "@/models/validators"
 
 import BaseModel from "@/models/base-model"
 import Centre from "@/models/centre"
@@ -93,7 +92,7 @@ export class FundingSubmissionLineJson extends BaseModel<
   @Attribute(DataTypes.TEXT)
   @NotNull
   @ValidateAttribute({
-    doesNotContainChildCareSpaces,
+    doesNotContainLedgerSections,
   })
   declare values: string
 

@@ -22,11 +22,11 @@ Use `use-model.ts` for one record identified by an id.
 
 Keep these composables focused on reactive model access and straightforward model actions. Screen-specific drafts, queued edits, autosave, and Retry feedback belong in the consuming component; see [component responsibilities](../components/README.md#model-access-and-editing).
 
+Keep record deletion in the consuming page or component: call the model API's `delete(id)` directly and own confirmation, pending state, feedback, and navigation there.
+
 Consume those returned refs directly. A component should not mirror the composable's records in another map and reconcile each fetch into that map; preserve the editor's lifetime when its pending work must survive navigation.
 
-Clear the previous record when its id changes and ignore outdated responses. Loading state
-belongs to the latest request; an earlier request must not end the current loader or restore
-an old record. In-flight saves must not update a different record's local state.
+Clear the previous record when its id changes and ignore outdated responses. Group cancellation and record-state resets in a local `clearRecord()` helper, as in `useEmployeeBenefit`, and call it from the id watcher before fetching. Loading state belongs to the latest request; an earlier request must not end the current loader or restore an old record. In-flight saves must not update a different record's local state.
 
 ## Plural Composables
 
@@ -38,7 +38,7 @@ Use `use-models.ts` for list and query operations.
 - Support reactive filters, pagination, and optional fetch-skipping logic
 - Re-fetch automatically when query options change
 
-Clear previous results while a new query context loads and ignore older responses. Mutation workflows belong in the consuming component, not in the collection composable.
+Keep query watchers focused on awaiting `fetch()`. Let `fetch()` publish the collection and count together when the response arrives; consumers use loading and error state to decide when records are ready for interaction. Ignore outdated responses. Mutation workflows belong in the consuming component, not in the collection composable.
 
 ## Naming
 

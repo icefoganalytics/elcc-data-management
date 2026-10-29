@@ -52,6 +52,16 @@
       </v-list-item>
       <v-list-item
         :to="{
+          name: 'administration/AdministrationCostCategoriesPage',
+        }"
+        prepend-icon="mdi-percent"
+        exact
+        :active="isActiveByRoutePathStartsWith('/administration/administration-cost-categories')"
+      >
+        Administration Cost Categories
+      </v-list-item>
+      <v-list-item
+        :to="{
           name: 'administration/CentresPage',
         }"
         prepend-icon="mdi-office-building-marker"

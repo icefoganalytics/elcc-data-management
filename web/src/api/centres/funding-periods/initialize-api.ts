@@ -5,6 +5,7 @@ export type InitializationStatus = {
   hasBuildingExpenses: boolean
   hasFundingSubmissionLineJsons: boolean
   hasFundingReconciliation: boolean
+  hasAdministrationCosts: boolean
   isInitialized: boolean
 }
 

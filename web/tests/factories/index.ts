@@ -1,3 +1,8 @@
+export { administrationCostCategoryFactory } from "./administration-cost-category-factory"
+export { administrationCostFactory } from "./administration-cost-factory"
+export { childCareSpaceFactory } from "./child-care-space-factory"
 export { employeeBenefitFactory } from "./employee-benefit-factory"
 export { employeeWageTierFactory } from "./employee-wage-tier-factory"
+export { fiscalPeriodFactory } from "./fiscal-period-factory"
+export { fundingSubmissionLineJsonFactory } from "./funding-submission-line-json-factory"
 export { wageEnhancementFactory } from "./wage-enhancement-factory"

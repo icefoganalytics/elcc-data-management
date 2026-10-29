@@ -15,7 +15,11 @@ Use [the canonical PR template](/.github/pull_request_template.md), preserving i
 
 ## Screenshots
 
-For UI component/page behavior changes, retain the existing project handoff: use `TODO` for the user to add screenshots. Use `N/A` with the actual reason when no UI behavior changes, including documentation-only PRs. Screenshot routing, capture/login prerequisites, and replacing this human-only handoff are separately owned by [#136](https://github.com/icefoganalytics/elcc-data-management/issues/136); this cutover does not implement or verify capture/upload.
+Screenshots remain optional supporting evidence for UI component/page behavior changes unless explicitly requested. A `TODO` handoff is permitted when screenshots are not required; use `N/A` with the actual reason when no UI behavior changes, including documentation-only PRs. A placeholder is not an uploaded image or proof of authenticated coverage.
+
+For requested capture or upload, use the [shared capture/upload workflow](https://github.com/klondikemarlen/marlens-skills-rules-and-tools/blob/main/docs/workflows/upload-pr-screenshots-workflow.md) from the release selected under [root guidance](/AGENTS.md#shared-standards-and-local-authority), even when no local screenshot workflow exists. Keep generic browser discovery, staging, GitHub sign-in, upload, saved-body/rendered-image verification, and cleanup there rather than copying the procedure locally.
+
+Establish [ELCC application capture prerequisites](testing-instructions.md#application-capture-prerequisites) first. In the template's **Screenshots** section, put each image beneath a caption and its reviewer-facing app route; include the relevant centre/month context without exposing private child-care or account data. Keep capture/authentication blockers distinct from GitHub upload blockers, and retain valid captures separately from disposable browser profiles as the shared procedure requires.
 
 ## Local Verification Sources
 

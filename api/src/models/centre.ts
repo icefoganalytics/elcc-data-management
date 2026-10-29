@@ -17,6 +17,7 @@ import {
   ValidateAttribute,
 } from "@sequelize/core/decorators-legacy"
 
+import AdministrationCost from "@/models/administration-cost"
 import BaseModel from "@/models/base-model"
 import BuildingExpense from "@/models/building-expense"
 import ChildCareSpace from "@/models/child-care-space"
@@ -162,6 +163,14 @@ export class Centre extends BaseModel<InferAttributes<Centre>, InferCreationAttr
     },
   })
   declare childCareSpaces?: NonAttribute<ChildCareSpace[]>
+
+  @HasMany(() => AdministrationCost, {
+    foreignKey: "centreId",
+    inverse: {
+      as: "centre",
+    },
+  })
+  declare administrationCosts?: NonAttribute<AdministrationCost[]>
 
   @HasMany(() => EmployeeBenefit, {
     foreignKey: "centreId",
