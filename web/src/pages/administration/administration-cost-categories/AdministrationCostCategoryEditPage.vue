@@ -1,10 +1,26 @@
 <template>
   <v-skeleton-loader
-    v-if="isNil(administrationCostCategory)"
+    v-if="isLoading"
     type="card"
   />
+  <v-empty-state
+    v-else-if="isErrored"
+    class="ma-5"
+    icon="mdi-alert-circle-outline"
+    headline="Unable to Load Category"
+    title="Administration category could not be loaded."
+  >
+    <template #actions>
+      <v-btn
+        color="primary"
+        @click="refreshCategory"
+      >
+        Retry
+      </v-btn>
+    </template>
+  </v-empty-state>
   <HeaderActionsFormCard
-    v-else
+    v-else-if="!isNil(administrationCostCategory)"
     ref="form"
     title="Edit Administration Cost Category"
     @submit.prevent="saveCategory"
@@ -99,9 +115,13 @@ const props = defineProps<{
 }>()
 
 const administrationCostCategoryId = computed(() => Number(props.administrationCostCategoryId))
-const { administrationCostCategory, save } = useAdministrationCostCategory(
-  administrationCostCategoryId
-)
+const {
+  administrationCostCategory,
+  isLoading,
+  isErrored,
+  fetch: refreshCategory,
+  save,
+} = useAdministrationCostCategory(administrationCostCategoryId)
 
 const fundingPeriodId = computed(() => administrationCostCategory.value?.fundingPeriodId)
 const fundingPeriodsQuery = ref({
