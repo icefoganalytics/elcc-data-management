@@ -117,7 +117,7 @@ async function deleteFundingPeriod(fundingPeriodId: number) {
     })
   } catch (error) {
     console.error(`Failed to delete funding period: ${error}`, { error })
-    snack.error(`Failed to delete funding period: ${error}`)
+    snack.error(`Failed to delete funding period: ${error}`, { cause: error })
   } finally {
     isDeleting.value = false
   }

@@ -137,7 +137,7 @@ async function deleteUser(userId: number) {
     })
   } catch (error) {
     console.error(`Failed to delete user: ${error}`, { error })
-    snack.error(`Failed to delete user: ${error}`)
+    snack.error(`Failed to delete user: ${error}`, { cause: error })
   } finally {
     isDeleting.value = false
   }

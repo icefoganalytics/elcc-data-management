@@ -110,7 +110,7 @@ async function saveAndNotify() {
     snack.success("User updated successfully!")
   } catch (error) {
     console.error(`Failed to update user: ${error}`, { error })
-    snack.error(`Failed to update user: ${error}`)
+    snack.error(`Failed to update user: ${error}`, { cause: error })
   } finally {
     isSaving.value = false
   }

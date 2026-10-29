@@ -176,7 +176,7 @@ async function validateSaveAndClose() {
     snack.success("Centre created!")
   } catch (error) {
     console.error(`Failed to create centre ${error}`, { error })
-    snack.error(`Failed to create centre ${error}`)
+    snack.error(`Failed to create centre ${error}`, { cause: error })
   } finally {
     isLoading.value = false
   }

@@ -58,6 +58,7 @@ import { isNil, upperFirst } from "lodash"
 
 import { MAX_PER_PAGE } from "@/api/base-api"
 import fiscalPeriodsApi, { type FiscalPeriod } from "@/api/fiscal-periods-api"
+import { UnexpectedApiResponseError } from "@/api/errors/unexpected-api-response-error"
 
 const props = defineProps<{
   fundingPeriodId: number | null | undefined
@@ -113,7 +114,7 @@ let latestFiscalPeriodsRequest = 0
 
 watch(
   [() => props.fundingPeriodId, () => props.applyToFutureMonths],
-  ([fundingPeriodId, applyToFutureMonths]) => {
+  async ([fundingPeriodId, applyToFutureMonths]) => {
     const requestId = ++latestFiscalPeriodsRequest
 
     if (!applyToFutureMonths || isNil(fundingPeriodId)) {
@@ -123,7 +124,7 @@ watch(
       return
     }
 
-    void loadFiscalPeriods(fundingPeriodId, requestId)
+    await loadFiscalPeriods(fundingPeriodId, requestId)
   },
   { immediate: true }
 )
@@ -152,6 +153,7 @@ async function loadFiscalPeriods(fundingPeriodId: number, requestId: number) {
     fiscalPeriods.value = loadedFiscalPeriods
   } catch (error) {
     if (requestId !== latestFiscalPeriodsRequest) {
+      if (error instanceof UnexpectedApiResponseError) throw error
       return
     }
 
@@ -159,6 +161,7 @@ async function loadFiscalPeriods(fundingPeriodId: number, requestId: number) {
       error,
     })
     isFiscalPeriodsErrored.value = true
+    if (error instanceof UnexpectedApiResponseError) throw error
   } finally {
     if (requestId === latestFiscalPeriodsRequest) {
       isLoadingFiscalPeriods.value = false

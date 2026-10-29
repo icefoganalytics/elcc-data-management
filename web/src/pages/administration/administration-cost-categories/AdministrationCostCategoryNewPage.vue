@@ -137,7 +137,7 @@ async function createCategory() {
       },
     })
   } catch (error) {
-    snack.error(`Failed to create Administration cost category: ${error}`)
+    snack.error(`Failed to create Administration cost category: ${error}`, { cause: error })
   } finally {
     isSaving.value = false
   }

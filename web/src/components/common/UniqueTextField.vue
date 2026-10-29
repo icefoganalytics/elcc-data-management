@@ -41,6 +41,8 @@ import { debounce, isEmpty, isNil } from "lodash"
 
 import { type VTextField } from "vuetify/components"
 
+import useSnack from "@/use/use-snack"
+
 const props = withDefaults(
   defineProps<{
     modelValue: string | null | undefined
@@ -84,6 +86,7 @@ async function checkValueIsUnique(value: string | null | undefined) {
     return result
   } catch (error) {
     console.error(error)
+    useSnack().error(`Failed to check availability: ${error}`, { cause: error })
     return false
   } finally {
     isCheckingUniqueness.value = false

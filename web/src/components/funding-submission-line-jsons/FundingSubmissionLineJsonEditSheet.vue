@@ -231,6 +231,7 @@ async function reloadWorksheet() {
     notificationStore.notify({
       text: `Failed to load worksheet: ${error}`,
       variant: "error",
+      cause: error,
     })
   }
 }
@@ -333,6 +334,7 @@ async function saveFundingSubmissionLineJson(): Promise<boolean> {
     notificationStore.notify({
       text: `Failed to save worksheet: ${error}`,
       variant: "error",
+      cause: error,
     })
     return false
   } finally {
@@ -376,6 +378,7 @@ async function replicateEstimatesForward() {
     notificationStore.notify({
       text: `Failed to replicate estimates: ${error}`,
       variant: "error",
+      cause: error,
     })
   } finally {
     isReplicatingEstimates.value = false
@@ -431,6 +434,7 @@ function propagateUpdatesAsNeeded({ line }: { line: FundingLineValue }) {
     notificationStore.notify({
       text: `Failed to propagate Child Care Spaces values: ${error}`,
       variant: "error",
+      cause: error,
     })
     throw error
   }

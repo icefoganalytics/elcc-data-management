@@ -60,6 +60,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
 
 ### Fixed
 
+- Interrupted API requests now show safe recovery guidance instead of accepting HTML as data or misreporting permission failures. Loaded edits remain available, account startup offers recovery, and interrupted writes are never automatically replayed.
 - Funding-period selections retain their fiscal-year labels when earlier lookup requests finish late.
 - Failed Administration category loads now show a dedicated error state instead of an empty table or indefinite skeleton. Category details and edit pages offer Retry.
 - Administration category forms now use searchable funding-period and linked Child Care Space category inputs, retaining selected labels across result pages and excluding previous-period options during loading.

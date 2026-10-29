@@ -264,7 +264,7 @@ async function validateSaveAndNotify() {
     snack.success("Child Care Space category saved!")
   } catch (error) {
     console.error(`Failed to update Child Care Space category: ${error}`, { error })
-    snack.error(`Failed to update Child Care Space category: ${error}`)
+    snack.error(`Failed to update Child Care Space category: ${error}`, { cause: error })
   } finally {
     isSaving.value = false
   }

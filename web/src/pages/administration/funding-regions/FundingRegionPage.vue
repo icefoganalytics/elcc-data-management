@@ -128,7 +128,7 @@ async function deleteFundingRegion(fundingRegionId: number) {
     })
   } catch (error) {
     console.error(`Failed to delete funding region: ${error}`, { error })
-    snack.error(`Failed to delete funding region: ${error}`)
+    snack.error(`Failed to delete funding region: ${error}`, { cause: error })
   } finally {
     isDeleting.value = false
   }

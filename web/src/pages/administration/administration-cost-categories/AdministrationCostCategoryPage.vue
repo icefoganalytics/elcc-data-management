@@ -177,7 +177,7 @@ async function deleteCategory(administrationCostCategoryId: number) {
       name: "administration/AdministrationCostCategoriesPage",
     })
   } catch (error) {
-    snack.error(`Failed to delete Administration cost category: ${error}`)
+    snack.error(`Failed to delete Administration cost category: ${error}`, { cause: error })
   } finally {
     isDeleting.value = false
   }

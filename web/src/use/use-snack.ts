@@ -1,14 +1,19 @@
-import { reactive, toRef, ToRef } from "vue"
+import { shallowReactive, toRef, type ToRef } from "vue"
 import { type VSnackbar } from "vuetify/components"
 
-type VSnackbarProps = VSnackbar["$props"]
+import { UnexpectedApiResponseError } from "@/api/errors/unexpected-api-response-error"
 
-const state = reactive<{
+type VSnackbarProps = VSnackbar["$props"]
+type SnackOptions = VSnackbarProps & { cause?: unknown }
+
+const state = shallowReactive<{
   message: string
   options: VSnackbarProps
+  apiResponseError: UnexpectedApiResponseError | null
 }>({
   message: "",
   options: {},
+  apiResponseError: null,
 })
 
 /**
@@ -21,36 +26,52 @@ const state = reactive<{
  * snack.success("Hello world")
  */
 export function useSnack(defaultOptions: VSnackbarProps = {}): {
-  (message: string, options?: VSnackbarProps): void
+  (message: string, options?: SnackOptions): void
   message: ToRef<string>
   options: ToRef<VSnackbarProps>
-  notify: (message: string, options?: VSnackbarProps) => void
+  apiResponseError: ToRef<UnexpectedApiResponseError | null>
+  notify: (message: string, options?: SnackOptions) => void
   reset: () => void
   success: (message: string, options?: VSnackbarProps) => void
-  error: (message: string, options?: VSnackbarProps) => void
+  error: (message: string, options?: SnackOptions) => void
   info: (message: string, options?: VSnackbarProps) => void
   warning: (message: string, options?: VSnackbarProps) => void
 } {
-  const notify = (message: string, options: VSnackbarProps = {}) => {
+  const notify = (message: string, options: SnackOptions = {}) => {
+    const { cause, ...snackbarOptions } = options
+
+    const apiResponseError = findUnexpectedApiResponseError(cause)
+
+    if (apiResponseError !== null) {
+      state.apiResponseError = apiResponseError
+      state.message = message
+      state.options = { ...defaultOptions, ...snackbarOptions, color: "error", timeout: -1 }
+      return
+    }
+
+    if (state.apiResponseError !== null) return
+
     state.message = message
-    state.options = { ...defaultOptions, ...options }
+    state.options = { ...defaultOptions, ...snackbarOptions }
   }
 
   notify.message = toRef(state, "message")
   notify.options = toRef(state, "options")
+  notify.apiResponseError = toRef(state, "apiResponseError")
 
   notify.notify = notify
 
   notify.reset = () => {
     state.message = ""
     state.options = {}
+    state.apiResponseError = null
   }
 
   notify.success = (message: string, options: VSnackbarProps = {}) => {
     notify(message, { color: "success", ...options })
   }
 
-  notify.error = (message: string, options: VSnackbarProps = {}) => {
+  notify.error = (message: string, options: SnackOptions = {}) => {
     notify(message, { color: "error", ...options })
   }
 
@@ -62,8 +83,19 @@ export function useSnack(defaultOptions: VSnackbarProps = {}): {
     notify(message, { color: "warning", ...options })
   }
 
-  // @ts-expect-error - VSnackbarProps definition is probably not infinte
   return notify
+}
+
+function findUnexpectedApiResponseError(cause: unknown): UnexpectedApiResponseError | null {
+  if (cause instanceof UnexpectedApiResponseError) return cause
+  if (!(cause instanceof AggregateError)) return null
+
+  for (const error of cause.errors) {
+    const apiResponseError = findUnexpectedApiResponseError(error)
+    if (apiResponseError !== null) return apiResponseError
+  }
+
+  return null
 }
 
 export default useSnack

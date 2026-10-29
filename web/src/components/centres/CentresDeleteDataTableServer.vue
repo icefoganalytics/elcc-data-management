@@ -178,7 +178,7 @@ async function confirmAndDeleteCentre(centreId: number) {
   } catch (error) {
     console.error(`Failed to delete centre: ${error}`, { error })
 
-    snack.error(`Failed to delete centre: ${error}`)
+    snack.error(`Failed to delete centre: ${error}`, { cause: error })
   } finally {
     isDeleting.value = false
     deletingCentreId.value = null

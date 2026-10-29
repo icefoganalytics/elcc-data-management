@@ -135,7 +135,7 @@ async function deleteBuildingExpenseCategory(buildingExpenseCategoryId: number) 
     })
   } catch (error) {
     console.error(`Failed to delete building expense category: ${error}`, { error })
-    snack.error(`Failed to delete building expense category: ${error}`)
+    snack.error(`Failed to delete building expense category: ${error}`, { cause: error })
   } finally {
     isDeleting.value = false
   }

@@ -96,7 +96,6 @@ const paymentAttributes = ref<Partial<Payment>>({
   paidOn: undefined,
 })
 
-
 const paymentsQueryOptions = computed(() => ({
   where: {
     centreId: props.centreId,
@@ -144,7 +143,6 @@ const paidOnDateRangeValidator = computed(() =>
   })
 )
 
-
 const isCreating = ref(false)
 const snack = useSnack()
 const headerActionsFormCard = useTemplateRef("headerActionsFormCard")
@@ -162,7 +160,7 @@ async function createPayment() {
     snack.success("Payment created successfully")
   } catch (error) {
     console.error(`Failed to create payment: ${error}`, { error })
-    snack.error(`Failed to create payment: ${error}`)
+    snack.error(`Failed to create payment: ${error}`, { cause: error })
   } finally {
     isCreating.value = false
   }
