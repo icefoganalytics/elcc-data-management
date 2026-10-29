@@ -100,6 +100,7 @@ import buildingExpensesApi, {
   BuildingExpenseAsIndex,
   type BuildingExpense,
 } from "@/api/building-expenses-api"
+import { UnexpectedApiResponseError } from "@/api/errors/unexpected-api-response-error"
 import useBuildingExpenses, {
   type BuildingExpenseFiltersOptions,
   type BuildingExpenseWhereOptions,
@@ -241,10 +242,12 @@ async function saveBuildingExpenseIfDirty(buildingExpense: BuildingExpense) {
 
     snack.success("Building expense saved!")
   } catch (error) {
-    await refresh()
+    if (!(error instanceof UnexpectedApiResponseError)) {
+      await refresh()
+    }
 
     console.error(`Failed to save building expense: ${error}`, { error })
-    snack.error(`Failed to save building expense: ${error}`)
+    snack.error(`Failed to save building expense: ${error}`, { cause: error })
   } finally {
     isSaving.value = false
   }
@@ -265,7 +268,7 @@ async function deleteBuildingExpense(buildingExpense: BuildingExpense) {
     snack.success("Building expense deleted!")
   } catch (error) {
     console.error(`Failed to delete building expense: ${error}`, { error })
-    snack.error(`Failed to delete building expense: ${error}`)
+    snack.error(`Failed to delete building expense: ${error}`, { cause: error })
   } finally {
     isDeletingBuildingExpenseId.value = null
   }

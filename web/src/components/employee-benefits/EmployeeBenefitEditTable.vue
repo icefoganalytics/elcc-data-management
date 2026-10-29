@@ -301,6 +301,7 @@ import minDecimal from "@/utils/min-decimal"
 
 import employeeBenefitsApi, { type EmployeeBenefitAsShow } from "@/api/employee-benefits-api"
 import useEmployeeBenefit from "@/use/use-employee-benefit"
+import useSnack from "@/use/use-snack"
 
 import CurrencyInput from "@/components/CurrencyInput.vue"
 
@@ -401,6 +402,7 @@ async function persistAttribute(
   } catch (error) {
     editor.saveErrors[attribute] = `Failed to save employee benefit: ${error}`
     console.error(`Failed to save employee benefit: ${error}`, { error })
+    useSnack().error(editor.saveErrors[attribute], { cause: error })
   }
 }
 

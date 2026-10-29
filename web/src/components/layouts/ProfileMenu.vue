@@ -80,6 +80,7 @@ import { onMounted, ref } from "vue"
 import { useAuth0 } from "@auth0/auth0-vue"
 
 import http from "@/api/http-client"
+import { UnexpectedApiResponseError } from "@/api/errors/unexpected-api-response-error"
 
 import useCurrentUser from "@/use/use-current-user"
 
@@ -114,6 +115,7 @@ async function fetchVersion() {
     releaseTag.value = data.RELEASE_TAG
   } catch (error: unknown) {
     console.error(`Error fetching version: ${error}`, { error })
+    if (error instanceof UnexpectedApiResponseError) throw error
   }
 }
 </script>

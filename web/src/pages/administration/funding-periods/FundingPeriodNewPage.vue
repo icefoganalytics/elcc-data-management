@@ -124,7 +124,7 @@ async function createFundingPeriod() {
     })
   } catch (error) {
     console.error(error)
-    snack(`Failed to create funding period: ${error}`, { color: "error" })
+    snack.error(`Failed to create funding period: ${error}`, { cause: error })
   } finally {
     isLoading.value = false
   }

@@ -154,7 +154,7 @@ async function saveAndNotify() {
     snack.success("Submission line updated successfully!")
   } catch (error) {
     console.error(`Failed to update submission line: ${error}`, { error })
-    snack.error(`Failed to update submission line: ${error}`)
+    snack.error(`Failed to update submission line: ${error}`, { cause: error })
   } finally {
     isSaving.value = false
   }

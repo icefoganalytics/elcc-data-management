@@ -119,7 +119,7 @@ async function createBuildingExpenseCategory() {
     })
   } catch (error) {
     console.error(`Failed to create building expense category: ${error}`, { error })
-    snack.error(`Failed to create building expense category: ${error}`)
+    snack.error(`Failed to create building expense category: ${error}`, { cause: error })
   } finally {
     isLoading.value = false
   }

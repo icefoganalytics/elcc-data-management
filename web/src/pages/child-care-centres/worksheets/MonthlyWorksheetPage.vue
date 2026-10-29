@@ -242,6 +242,7 @@ import fiscalPeriodsApi, { type FiscalPeriod } from "@/api/fiscal-periods-api"
 import fundingSubmissionLineJsonsApi, {
   type FundingSubmissionLineJsonAsIndex,
 } from "@/api/funding-submission-line-jsons-api"
+import { UnexpectedApiResponseError } from "@/api/errors/unexpected-api-response-error"
 import sleepMs from "@/utils/sleep-ms"
 import { FiscalPeriodMonths } from "@/use/use-fiscal-periods"
 
@@ -327,6 +328,7 @@ async function loadWorksheet() {
       console.error("Failed to load worksheet:", error)
       loadError.value = true
     }
+    if (error instanceof UnexpectedApiResponseError) throw error
   } finally {
     if (requestId === activeRequest) {
       isLoading.value = false

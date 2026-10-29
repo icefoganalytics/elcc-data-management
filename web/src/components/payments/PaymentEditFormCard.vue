@@ -130,7 +130,7 @@ async function updatePayment() {
     snack.success("Payment updated successfully")
   } catch (error) {
     console.error(`Failed to update payment: ${error}`, { error })
-    snack.error(`Failed to update payment: ${error}`)
+    snack.error(`Failed to update payment: ${error}`, { cause: error })
   } finally {
     isUpdating.value = false
   }

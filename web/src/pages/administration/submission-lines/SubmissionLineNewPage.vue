@@ -220,7 +220,7 @@ async function createFundingSubmissionLine() {
     })
   } catch (error) {
     console.error(error)
-    snack.error(`Failed to create submission line: ${error}`)
+    snack.error(`Failed to create submission line: ${error}`, { cause: error })
   } finally {
     isLoading.value = false
   }

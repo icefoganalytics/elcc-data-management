@@ -116,7 +116,7 @@ async function saveAndNotify() {
     snack.success("Funding period updated successfully!")
   } catch (error) {
     console.error(`Failed to update funding period: ${error}`, { error })
-    snack.error(`Failed to update funding period: ${error}`)
+    snack.error(`Failed to update funding period: ${error}`, { cause: error })
   } finally {
     isSaving.value = false
   }

@@ -116,7 +116,7 @@ async function deletePayment(payment: PaymentAsIndex) {
     snack.success("Payment deleted successfully")
   } catch (error) {
     console.error(`Failed to delete payment: ${error}`, { error })
-    snack.error("Failed to delete payment")
+    snack.error("Failed to delete payment", { cause: error })
   } finally {
     isDeletingPaymentId.value = null
   }

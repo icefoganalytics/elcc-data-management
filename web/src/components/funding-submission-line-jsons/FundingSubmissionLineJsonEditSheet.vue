@@ -188,6 +188,7 @@ async function reloadWorksheet() {
     notificationStore.notify({
       text: `Failed to load worksheet: ${error}`,
       variant: "error",
+      cause: error,
     })
   }
 }
@@ -246,6 +247,7 @@ async function saveFundingSubmissionLineJson(): Promise<boolean> {
     notificationStore.notify({
       text: `Failed to save worksheet: ${error}`,
       variant: "error",
+      cause: error,
     })
     return false
   } finally {
@@ -279,6 +281,7 @@ async function replicateChildCareSpaceEstimates(): Promise<void> {
     await childCareSpacesApi.replicateEstimates(childCareSpace.id)
   }
 }
+
 
 function goToNextSection(sectionIndex: number, columnName: ColumnNames) {
   if (sectionIndex < sections.value.length - 1) {

@@ -154,7 +154,7 @@ async function saveCategory() {
     await save()
     snack.success("Administration cost category updated successfully!")
   } catch (error) {
-    snack.error(`Failed to update Administration cost category: ${error}`)
+    snack.error(`Failed to update Administration cost category: ${error}`, { cause: error })
   } finally {
     isSaving.value = false
   }

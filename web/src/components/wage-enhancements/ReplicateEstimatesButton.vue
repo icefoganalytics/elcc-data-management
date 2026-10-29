@@ -33,7 +33,7 @@ async function replicateEstimatesForward() {
     snack.success("Wage enhancement estimates replicated forward.")
   } catch (error) {
     console.error(`Failed to replicate wage enhancement estimates: ${error}`, { error })
-    snack.error(`Failed to replicate wage enhancement estimates: ${error}`)
+    snack.error(`Failed to replicate wage enhancement estimates: ${error}`, { cause: error })
   } finally {
     isReplicatingEstimates.value = false
   }

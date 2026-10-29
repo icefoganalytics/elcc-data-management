@@ -2,6 +2,8 @@
 
 import axios from "axios"
 
+import { parseJsonResponse } from "@/api/parse-json-response"
+
 export function SecureAPICall(method: string, token: string) {
   const headers = {
     "Content-Type": "application/json",
@@ -11,6 +13,7 @@ export function SecureAPICall(method: string, token: string) {
   }
   return axios.create({
     method: method,
+    transformResponse: [parseJsonResponse],
     headers: headers,
   })
 }

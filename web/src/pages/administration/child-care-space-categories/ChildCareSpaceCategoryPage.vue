@@ -197,7 +197,7 @@ async function deleteChildCareSpaceCategory(childCareSpaceCategoryId: number) {
     })
   } catch (error) {
     console.error(`Failed to delete Child Care Space category: ${error}`, { error })
-    snack.error(`Failed to delete Child Care Space category: ${error}`)
+    snack.error(`Failed to delete Child Care Space category: ${error}`, { cause: error })
   } finally {
     isDeleting.value = false
   }

@@ -124,7 +124,7 @@ async function deleteFundingSubmissionLine(userId: number) {
     })
   } catch (error) {
     console.error(`Failed to delete submission line: ${error}`, { error })
-    snack.error(`Failed to delete submission line: ${error}`)
+    snack.error(`Failed to delete submission line: ${error}`, { cause: error })
   } finally {
     isDeleting.value = false
   }

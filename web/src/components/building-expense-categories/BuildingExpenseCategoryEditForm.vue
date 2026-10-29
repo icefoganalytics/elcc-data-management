@@ -98,7 +98,7 @@ async function validateSaveAndNotify() {
     snack.success("Building expense category saved!")
   } catch (error) {
     console.error(`Failed to update building expense category: ${error}`, { error })
-    snack.error(`Failed to update building expense category: ${error}`)
+    snack.error(`Failed to update building expense category: ${error}`, { cause: error })
   } finally {
     isSaving.value = false
   }

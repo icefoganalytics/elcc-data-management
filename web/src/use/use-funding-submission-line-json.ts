@@ -4,6 +4,7 @@ import { isNil } from "lodash"
 import fundingSubmissionLineJsonsApi, {
   type FundingSubmissionLineJsonAsDetailed,
 } from "@/api/funding-submission-line-jsons-api"
+import { UnexpectedApiResponseError } from "@/api/errors/unexpected-api-response-error"
 
 export { type FundingSubmissionLineJsonAsDetailed }
 
@@ -45,6 +46,7 @@ export function useFundingSubmissionLineJsonAsDetailed(id: Ref<number | null | u
 
       await fetch().catch((error) => {
         console.error("Failed to fetch funding submission line json:", error)
+        if (error instanceof UnexpectedApiResponseError) throw error
       })
     },
     { immediate: true }
