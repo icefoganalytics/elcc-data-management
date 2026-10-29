@@ -24,10 +24,9 @@
         cols="12"
         md="6"
       >
-        <v-text-field
-          v-model.number="administrationCostCategory.fromAge"
+        <NumberTextField
+          v-model="administrationCostCategory.fromAge"
           label="From Age"
-          type="number"
           min="0"
           step="1"
         />
@@ -36,10 +35,9 @@
         cols="12"
         md="6"
       >
-        <v-text-field
-          v-model.number="administrationCostCategory.toAge"
+        <NumberTextField
+          v-model="administrationCostCategory.toAge"
           label="To Age"
-          type="number"
           min="0"
           step="1"
         />
@@ -93,6 +91,7 @@ import useSnack from "@/use/use-snack"
 
 import CurrencyInput from "@/components/CurrencyInput.vue"
 import HeaderActionsFormCard from "@/components/common/HeaderActionsFormCard.vue"
+import NumberTextField from "@/components/common/NumberTextField.vue"
 import ChildCareSpaceCategorySearchableAutocomplete from "@/components/child-care-space-categories/ChildCareSpaceCategorySearchableAutocomplete.vue"
 
 const props = defineProps<{

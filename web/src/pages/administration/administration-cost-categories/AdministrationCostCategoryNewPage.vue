@@ -20,10 +20,9 @@
         cols="12"
         md="6"
       >
-        <v-text-field
-          v-model.number="administrationCostCategoryAttributes.fromAge"
+        <NumberTextField
+          v-model="administrationCostCategoryAttributes.fromAge"
           label="From Age"
-          type="number"
           min="0"
           step="1"
         />
@@ -32,10 +31,9 @@
         cols="12"
         md="6"
       >
-        <v-text-field
-          v-model.number="administrationCostCategoryAttributes.toAge"
+        <NumberTextField
+          v-model="administrationCostCategoryAttributes.toAge"
           label="To Age"
-          type="number"
           min="0"
           step="1"
         />
@@ -91,6 +89,7 @@ import useSnack from "@/use/use-snack"
 
 import CurrencyInput from "@/components/CurrencyInput.vue"
 import HeaderActionsFormCard from "@/components/common/HeaderActionsFormCard.vue"
+import NumberTextField from "@/components/common/NumberTextField.vue"
 import ChildCareSpaceCategorySearchableAutocomplete from "@/components/child-care-space-categories/ChildCareSpaceCategorySearchableAutocomplete.vue"
 import FundingPeriodSearchableAutocomplete from "@/components/funding-periods/FundingPeriodSearchableAutocomplete.vue"
 
@@ -124,13 +123,6 @@ async function createCategory() {
 
   const { valid } = await headerActionsFormCard.value.validate()
   if (!valid) return
-
-  if (String(administrationCostCategoryAttributes.value.fromAge) === "") {
-    administrationCostCategoryAttributes.value.fromAge = null
-  }
-  if (String(administrationCostCategoryAttributes.value.toAge) === "") {
-    administrationCostCategoryAttributes.value.toAge = null
-  }
 
   isSaving.value = true
   try {
