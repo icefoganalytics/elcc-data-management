@@ -60,6 +60,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
 
 ### Fixed
 
+- Failed Administration category loads now show a dedicated error state instead of an empty table.
 - Administration category forms now use searchable funding-period and linked Child Care Space category inputs, retaining selected labels across result pages and excluding previous-period options during loading.
 - Child Care Space categories can optionally apply new or revised names and rates from a selected month onward, preserving earlier months, actual occupancy, and manual snapshot overrides.
 - Adding Child Care Space categories no longer blocks initialized worksheets or forces records into earlier months. Concurrent occupancy edits use current stored rates, failed parallel writes remain locked until settled, and category filters ignore outdated responses.

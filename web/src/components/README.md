@@ -10,7 +10,7 @@ For generic Vue structure and authoring, use the [shared Vue Component Authoring
 - Parent components should discover records. Child components should edit or display a specific record.
 - When lookups are complex, the parent absorbs that complexity and passes stable identifiers or already-resolved state to the child.
 - When action visibility depends on page context, compute that state in the parent page and pass a simple boolean prop down to the child component.
-- Handle loading, empty, error, and success states explicitly.
+- Handle loading, empty, error, and success states explicitly. Render a load failure in a dedicated `v-if` branch with a standard Vuetify component such as `v-empty-state` or `v-alert`, and put the normal content in `v-else`; do not disguise errors with inline fallback bindings such as `:items="isErrored ? [] : records"`.
 
 ## Resource Inputs
 
