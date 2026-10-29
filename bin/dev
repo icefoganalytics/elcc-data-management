@@ -367,7 +367,8 @@ class DevHelper
 
   def dynamic_environment_variables
     variables = {
-      "ELCC_CHECKOUT_NAME" => checkout_name,
+      "COMPOSE_PROJECT_NAME" =>
+        ENV.fetch("COMPOSE_PROJECT_NAME", checkout_name),
       "GATEWAY_HOSTNAME" => gateway_hostname
     }
 
