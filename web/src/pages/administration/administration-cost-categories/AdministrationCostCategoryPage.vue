@@ -128,11 +128,10 @@ const { administrationCostCategory, policy } = useAdministrationCostCategory(
   administrationCostCategoryId
 )
 
-const { fundingPeriods } = useFundingPeriods(
-  ref({
-    perPage: -1,
-  })
-)
+const fundingPeriodsQuery = ref({
+  perPage: -1,
+})
+const { fundingPeriods } = useFundingPeriods(fundingPeriodsQuery)
 
 const fundingPeriodDescription = computed(() => {
   const fundingPeriod = fundingPeriods.value.find(

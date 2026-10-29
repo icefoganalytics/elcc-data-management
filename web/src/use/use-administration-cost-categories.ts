@@ -5,8 +5,17 @@ import type { Ref } from "vue"
 import administrationCostCategoriesApi from "@/api/administration-cost-categories-api"
 import type {
   AdministrationCostCategoryAsIndex,
+  AdministrationCostCategoryFiltersOptions,
   AdministrationCostCategoryQueryOptions,
+  AdministrationCostCategoryWhereOptions,
 } from "@/api/administration-cost-categories-api"
+
+export {
+  type AdministrationCostCategoryAsIndex,
+  type AdministrationCostCategoryFiltersOptions,
+  type AdministrationCostCategoryQueryOptions,
+  type AdministrationCostCategoryWhereOptions,
+}
 
 export function useAdministrationCostCategories(
   queryOptions: Ref<AdministrationCostCategoryQueryOptions> = ref({})
