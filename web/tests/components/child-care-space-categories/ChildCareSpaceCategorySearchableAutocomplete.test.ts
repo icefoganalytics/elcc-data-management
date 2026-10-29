@@ -42,13 +42,20 @@ describe("web/src/components/child-care-space-categories/ChildCareSpaceCategoryS
           updatedAt: "2024-04-01T00:00:00Z",
           deletedAt: null,
         }
-        vi.mocked(httpClient, true).get.mockImplementation(async (_url, config) => ({
-          data: {
-            childCareSpaceCategories:
-              config?.params?.where?.id === 10 ? [selectedCategory] : [matchingCategory],
-            totalCount: 1,
-          },
-        }))
+        vi.mocked(httpClient, true).get.mockImplementation(async (url) => {
+          if (url === "/api/child-care-space-categories/10") {
+            return {
+              data: { childCareSpaceCategory: selectedCategory, policy: {} },
+            }
+          }
+
+          return {
+            data: {
+              childCareSpaceCategories: [matchingCategory],
+              totalCount: 1,
+            },
+          }
+        })
         const wrapper = mount(ChildCareSpaceCategorySearchableAutocomplete, {
           props: { modelValue: 10, where: { fundingPeriodId: [1] } },
           attachTo: document.body,

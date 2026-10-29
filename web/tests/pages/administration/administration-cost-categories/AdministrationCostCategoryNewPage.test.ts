@@ -64,6 +64,11 @@ describe("web/src/pages/administration/administration-cost-categories/Administra
               },
             }
           }
+          if (url === "/api/child-care-space-categories/10") {
+            return {
+              data: { childCareSpaceCategory: previousCategory, policy: {} },
+            }
+          }
           if (
             url === "/api/child-care-space-categories" &&
             config?.params?.where?.fundingPeriodId === 1
