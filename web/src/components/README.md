@@ -12,6 +12,12 @@ For generic Vue structure and authoring, use the [shared Vue Component Authoring
 - When action visibility depends on page context, compute that state in the parent page and pass a simple boolean prop down to the child component.
 - Handle loading, empty, error, and success states explicitly.
 
+## Resource Inputs
+
+Use a model-specific `SearchableAutocomplete` component for selecting persisted records instead of an inline page/form `v-select`. Reuse an existing model input before adding another. Plain selects are appropriate for small, fixed option sets such as roles.
+
+Follow the searchable autocomplete pattern in [FundingPeriodSearchableAutocomplete](funding-periods/FundingPeriodSearchableAutocomplete.vue): debounced server-side search, bounded pagination, `no-filter`, and a separate selected-record lookup merged into the results so its label survives search and page changes. The input owns fetching/loading/error presentation through its model composables; the parent provides contextual filters and owns form-specific dependent-field resets.
+
 ## Model Access and Editing
 
 Use model-mirror `use-*` composables for reactive fetching, record or collection state, loading/errors, and straightforward single-record saves. Components own their editing workflows: draft values, dirty tracking, autosave queues, mutation handlers, Retry state, and user feedback.
