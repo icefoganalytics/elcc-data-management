@@ -34,7 +34,7 @@ Assign reactive query options to a descriptively named `const` before passing th
 
 ## Creation Form State
 
-Follow the WRAP new-page pattern: keep editable fields together in one `ref<Partial<Model>>` named for the resource's attributes, reusing the owning API model or creation-attribute type. Bind inputs and dependent lookup filters to that draft rather than maintaining one ref per field and rebuilding the payload. Keep form/loading state separate; validate and normalize input-specific values before passing the attributes object to the create API. Financial draft values remain decimal strings, and cleared optional numeric fields must retain their API null semantics.
+Follow the WRAP new-page pattern: keep editable fields together in one `ref<Partial<Model>>` named for the resource's attributes, reusing the owning API model or creation-attribute type. Bind inputs and dependent lookup filters to that draft rather than maintaining one ref per field and rebuilding the payload. Keep form/loading state separate; input components normalize their values, and the page validates the form before passing the attributes object to the create API. Financial draft values remain decimal strings, and cleared optional numeric fields must retain their API null semantics.
 
 ## Route Naming
 

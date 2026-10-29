@@ -20,6 +20,8 @@ Follow the searchable autocomplete pattern in [ChildCareSpaceCategorySearchableA
 
 When following WRAP's searchable-autocomplete convention, start from `WorkflowCategorySearchableAutocomplete.vue` rather than recreating it. Preserve its resource-specific names, section order, expanded query objects, chip and attributes-list-item slots, `reset` method, whitespace, and line wrapping. Adapt the model's fields and API contracts, retaining required context scoping and error states; do not copy unrelated organization-specific popup content.
 
+Use [NumberTextField](common/NumberTextField.vue) for non-financial numeric fields such as ages. It emits `number | null`, preserving zero and converting a cleared input to `null` before updating the parent. Vue's `.number` modifier alone retains an empty string. Keep this input normalization out of pages and model composables; financial values remain decimal strings through `CurrencyInput`.
+
 ## Model Access and Editing
 
 Use model-mirror `use-*` composables for reactive fetching, record or collection state, loading/errors, and straightforward single-record saves. Components own their editing workflows: draft values, dirty tracking, autosave queues, mutation handlers, Retry state, and user feedback.
