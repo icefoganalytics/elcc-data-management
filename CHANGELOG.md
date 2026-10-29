@@ -14,6 +14,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
 - Child Care Space categories now have dedicated administration pages and funding-period configuration. Existing names, age ranges, and rates move out of shared submission lines without changing historical monthly records.
 - Employee benefits and wage enhancement edits now save when committed, without routine Save buttons. Failed edits retain their input and show Retry controls; wage errors remain visible until the retry succeeds. Both editors preserve queued changes across month navigation and cancel superseded loads without showing a load error. Saving indicators no longer shift the tables or resize wage columns.
 - Replicated wage estimates appear when returning to a previously visited month, while pending and failed edits remain available for saving or Retry. Committed wage hours use the database's two-decimal precision so displayed totals match stored values. Deletion waits for existing saves and prevents new edits to the row being deleted.
+- Administration (10% of Spaces) now has annual category configuration and per-centre, per-month records. Historical rates, occupancy, totals, and optional Spaces links are preserved even when configuration moves funding years. Initial Administration setup works independently of pre-existing Spaces records; worksheets, estimate replication, and reconciliations use the dedicated records. Stale clients cannot restore either retired Administration label to shared configuration or worksheet JSON.
 
 - Funding reconciliation feature to calculate and display monthly funding reconciliation amounts based on adjustment records for each funding period.
   Why? To provide a clear, authoritative view of how funding amounts are reconciled over time.
@@ -24,7 +25,15 @@ Changes since v2025.11.24.1 that will be included in the next release.
 ### Changed
 
 - API model test factories now use Factory Shark for declarative related-record setup, with Sequelize core and the SQL Server dialect aligned to its supported release. Plain JSON and frontend fixtures remain on Fishery.
+- Administration category browsing now uses server-side pagination and sorting, with explicit View actions and funding-period filtering.
 - Agent guidance now resolves shared authoring, review, and testing standards directly while retaining ELCC's financial, security, API, and development/test requirements locally.
+- Administration worksheet rows now sort alphabetically by their saved category names, with a stable order when names match.
+- Administration backfill now skips and discards unusable legacy Administration data instead of blocking deployment. Restoring discarded data requires a backup.
+- Administration API responses omit internal soft-deletion timestamps.
+- Administration category funding-period lookup now searches on the server and pages results instead of loading every period.
+- Administration category creation is now offered only when a funding period exists, instead of warning after opening the creation form.
+- Administration category details show linked Child Care Space category names instead of internal IDs.
+- Administration category and worksheet reads now cancel when superseded or abandoned, without treating cancellation as a load failure or cancelling committed saves.
 - Preserved four-decimal currency entry and exact financial calculations when reconciling money amounts.
 - Unified authentication for legacy and modern API endpoints behind one shared boundary,
   preserving public status access and existing role restrictions.
@@ -51,6 +60,9 @@ Changes since v2025.11.24.1 that will be included in the next release.
 
 ### Fixed
 
+- Funding-period selections retain their fiscal-year labels when earlier lookup requests finish late.
+- Failed Administration category loads now show a dedicated error state instead of an empty table or indefinite skeleton. Category details and edit pages offer Retry.
+- Administration category forms now use searchable funding-period and linked Child Care Space category inputs, retaining selected labels across result pages and excluding previous-period options during loading.
 - Child Care Space categories can optionally apply new or revised names and rates from a selected month onward, preserving earlier months, actual occupancy, and manual snapshot overrides.
 - Adding Child Care Space categories no longer blocks initialized worksheets or forces records into earlier months. Concurrent occupancy edits use current stored rates, failed parallel writes remain locked until settled, and category filters ignore outdated responses.
 - Restored the missing icon beside Child Care Space Categories in the administration navigation.

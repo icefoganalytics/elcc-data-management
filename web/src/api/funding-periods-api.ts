@@ -46,11 +46,14 @@ export const fundingPeriodsApi = {
     })
     return data
   },
-  async get(fundingPeriodId: number): Promise<{
+  async get(
+    fundingPeriodId: number,
+    { signal }: { signal?: AbortSignal } = {}
+  ): Promise<{
     fundingPeriod: FundingPeriodAsShow
     policy: FundingPeriodPolicy
   }> {
-    const { data } = await http.get(`/api/funding-periods/${fundingPeriodId}`)
+    const { data } = await http.get(`/api/funding-periods/${fundingPeriodId}`, { signal })
     return data
   },
   async create(attributes: Partial<FundingPeriod>): Promise<{

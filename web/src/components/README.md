@@ -10,7 +10,17 @@ For generic Vue structure and authoring, use the [shared Vue Component Authoring
 - Parent components should discover records. Child components should edit or display a specific record.
 - When lookups are complex, the parent absorbs that complexity and passes stable identifiers or already-resolved state to the child.
 - When action visibility depends on page context, compute that state in the parent page and pass a simple boolean prop down to the child component.
-- Handle loading, empty, error, and success states explicitly.
+- Handle loading, empty, error, and success states explicitly. Render a load failure in a dedicated `v-if` branch with a standard Vuetify component such as `v-empty-state` or `v-alert`, and put the normal content in `v-else`; do not disguise errors with inline fallback bindings such as `:items="isErrored ? [] : records"`.
+
+## Resource Inputs
+
+Use a model-specific `SearchableAutocomplete` component for selecting persisted records instead of an inline page/form `v-select`. Reuse an existing model input before adding another. Plain selects are appropriate for small, fixed option sets such as roles.
+
+Follow the searchable autocomplete pattern in [ChildCareSpaceCategorySearchableAutocomplete](child-care-space-categories/ChildCareSpaceCategorySearchableAutocomplete.vue): debounced server-side search, bounded pagination, `no-filter`, and a separate selected-record lookup merged into the results so its label survives search and page changes. The input owns fetching/loading/error presentation through its model composables; the parent provides contextual filters and owns form-specific dependent-field resets.
+
+When following WRAP's searchable-autocomplete convention, start from `WorkflowCategorySearchableAutocomplete.vue` rather than recreating it. Preserve its resource-specific names, section order, expanded query objects, chip and attributes-list-item slots, `reset` method, whitespace, and line wrapping. Adapt the model's fields and API contracts, retaining required context scoping and error states; do not copy unrelated organization-specific popup content.
+
+Use [NumberTextField](common/NumberTextField.vue) for non-financial numeric fields such as ages. It emits `number | null`, preserving zero and converting a cleared input to `null` before updating the parent. Vue's `.number` modifier alone retains an empty string. Keep this input normalization out of pages and model composables; financial values remain decimal strings through `CurrencyInput`.
 
 ## Model Access and Editing
 
@@ -48,6 +58,8 @@ components/{model-plural}/{ModelSingularOrPlural}[Modifier]{VuetifyComponent}.vu
 - Call action functions directly from the template when the event wrapper adds no value.
 
 ## Tables
+
+Use a model-specific `DataTableServer` for API-backed administration listings, following WRAP's `WorkflowCategoriesDataTableServer.vue` and the local [Administration categories table](administration-cost-categories/AdministrationCostCategoriesDataTableServer.vue). The page owns contextual filters; the table owns route-backed pagination/sorting, bounded server queries, record navigation, and display formatting. Reset pagination when the filter context changes.
 
 - When hiding an optional actions column, remove it from the `headers` list instead of rendering an empty column and then hiding the button inside the cell template.
 - Keep row-level action gating separate from page-level action-column gating. For example, the page may hide the entire actions column while a row still checks `item.policy.destroy`.

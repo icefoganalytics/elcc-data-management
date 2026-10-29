@@ -1,5 +1,8 @@
-import { FundingSubmissionLine } from "@/models"
+import { ValidationError } from "@sequelize/core"
+
 import { fundingPeriodFactory, fundingSubmissionLineFactory } from "@/factories"
+
+import FundingSubmissionLine from "@/models/funding-submission-line"
 
 describe("api/src/models/funding-submission-line.ts", () => {
   describe("FundingSubmissionLine", () => {
@@ -47,13 +50,13 @@ describe("api/src/models/funding-submission-line.ts", () => {
           })
           const fundingSubmissionLine1 = await fundingSubmissionLineFactory.create({
             fiscalYear: "2023/24",
-            sectionName: "Administration (10% of Spaces)",
+            sectionName: "Children with Diverse Needs",
             lineName: "Infant Spaces",
             monthlyAmount: "100.0000",
           })
           await fundingSubmissionLineFactory.create({
             fiscalYear: "2024/25", // Different fiscal year
-            sectionName: "Administration (10% of Spaces)",
+            sectionName: "Children with Diverse Needs",
             lineName: "Infant Spaces",
             monthlyAmount: "200.0000",
           })
@@ -72,7 +75,7 @@ describe("api/src/models/funding-submission-line.ts", () => {
           // Arrange
           await fundingSubmissionLineFactory.create({
             fiscalYear: "2023/24",
-            sectionName: "Administration (10% of Spaces)",
+            sectionName: "Children with Diverse Needs",
             lineName: "Infant Spaces",
             monthlyAmount: "100.0000",
           })
@@ -94,20 +97,20 @@ describe("api/src/models/funding-submission-line.ts", () => {
           })
           const fundingSubmissionLine1 = await fundingSubmissionLineFactory.create({
             fiscalYear: "2023/24",
-            sectionName: "Administration (10% of Spaces)",
+            sectionName: "Children with Diverse Needs",
             lineName: "Infant Spaces",
             monthlyAmount: "100.0000",
           })
           const fundingSubmissionLine2 = await fundingSubmissionLineFactory.create({
             fiscalYear: "2023/24",
-            sectionName: "Administration (10% of Spaces)",
+            sectionName: "Children with Diverse Needs",
             lineName: "Toddler Spaces",
             monthlyAmount: "150.0000",
           })
 
           await fundingSubmissionLineFactory.create({
             fiscalYear: "2024/25", // Different fiscal year
-            sectionName: "Administration (10% of Spaces)",
+            sectionName: "Children with Diverse Needs",
             lineName: "Preschool Spaces",
             monthlyAmount: "200.0000",
           })
@@ -133,7 +136,7 @@ describe("api/src/models/funding-submission-line.ts", () => {
 
           const fundingSubmissionLine1 = await fundingSubmissionLineFactory.create({
             fiscalYear: "1999/00",
-            sectionName: "Administration (10% of Spaces)",
+            sectionName: "Children with Diverse Needs",
             lineName: "Infant Spaces",
             monthlyAmount: "100.0000",
           })
@@ -155,7 +158,7 @@ describe("api/src/models/funding-submission-line.ts", () => {
           })
           await fundingSubmissionLineFactory.create({
             fiscalYear: "2023/24",
-            sectionName: "Administration (10% of Spaces)",
+            sectionName: "Children with Diverse Needs",
             lineName: "Infant Spaces",
             monthlyAmount: "100.0000",
           })
@@ -165,7 +168,7 @@ describe("api/src/models/funding-submission-line.ts", () => {
           })
           const fundingSubmissionLine2 = await fundingSubmissionLineFactory.create({
             fiscalYear: "2024/25",
-            sectionName: "Administration (10% of Spaces)",
+            sectionName: "Children with Diverse Needs",
             lineName: "Infant Spaces",
             monthlyAmount: "200.0000",
           })
@@ -191,7 +194,7 @@ describe("api/src/models/funding-submission-line.ts", () => {
           })
           const softDeletedFundingSubmissionLine = await fundingSubmissionLineFactory.create({
             fiscalYear: "2023/24",
-            sectionName: "Administration (10% of Spaces)",
+            sectionName: "Children with Diverse Needs",
             lineName: "Infant Spaces",
             monthlyAmount: "100.0000",
           })
@@ -219,7 +222,7 @@ describe("api/src/models/funding-submission-line.ts", () => {
             monthlyAmount: "206.1000",
           })
 
-          fundingSubmissionLine.set("sectionName", "Administration")
+          fundingSubmissionLine.set("sectionName", "Changed Quality Enhancement Program")
 
           // Act
           const validation = fundingSubmissionLine.validate()
@@ -255,6 +258,40 @@ describe("api/src/models/funding-submission-line.ts", () => {
               monthlyAmount: "250",
             })
           )
+        })
+      })
+
+      describe("#doesNotUseLedgerSection", () => {
+        test("when Administration configuration is written to the shared table, rejects it", async () => {
+          // Arrange
+          const fundingSubmissionLine = FundingSubmissionLine.build({
+            fiscalYear: "2023/24",
+            sectionName: "Administration (10% of Spaces)",
+            lineName: "Infants",
+            monthlyAmount: "70.0000",
+          })
+
+          // Act
+          const validation = fundingSubmissionLine.validate()
+
+          // Assert
+          await expect(validation).rejects.toThrow(ValidationError)
+        })
+
+        test("when a stale client uses the legacy Administration name, rejects shared configuration", async () => {
+          // Arrange
+          const fundingSubmissionLine = FundingSubmissionLine.build({
+            fiscalYear: "2023/24",
+            sectionName: "Administration",
+            lineName: "Infants",
+            monthlyAmount: "70.0000",
+          })
+
+          // Act
+          const validation = fundingSubmissionLine.validate()
+
+          // Assert
+          await expect(validation).rejects.toThrow(ValidationError)
         })
       })
     })

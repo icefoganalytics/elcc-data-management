@@ -1,4 +1,4 @@
-import { Attributes, Op } from "@sequelize/core"
+import { Op, type Attributes } from "@sequelize/core"
 import { isUndefined } from "lodash"
 
 import { ChildCareSpaceCategory, FundingPeriod, FundingSubmissionLine } from "@/models"
@@ -40,10 +40,9 @@ export class UpdateService extends BaseService {
     originalCategoryId: number | null,
     originalFiscalYear: string
   ) {
-    if (!this.isChildCareSpaceSection(sectionName)) {
+    if (sectionName !== FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM) {
       return null
     }
-
     const periodIsUnchanged = fiscalYear === originalFiscalYear
     if (originalCategoryId !== null && periodIsUnchanged) {
       return originalCategoryId
@@ -87,13 +86,6 @@ export class UpdateService extends BaseService {
   private async existingCategoryName(categoryId: number) {
     const category = await ChildCareSpaceCategory.findByPk(categoryId, { paranoid: false })
     return category?.categoryName
-  }
-
-  private isChildCareSpaceSection(sectionName: string) {
-    return (
-      sectionName === "Administration (10% of Spaces)" ||
-      sectionName === FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM
-    )
   }
 }
 

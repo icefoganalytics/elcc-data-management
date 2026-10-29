@@ -68,6 +68,8 @@ Useful local documentation:
 
 Use the shared authoring and review bases above with nearby live ELCC implementations. Keep project-specific architecture and operator knowledge in the linked local documentation rather than copying shared checklists.
 
+Apply the project's [current scale and engineering tradeoffs](/docs/README.md#current-scale-and-engineering-tradeoffs) when choosing implementation complexity.
+
 ## Development Environment
 
 For initial environment setup, see [README.md](./README.md).

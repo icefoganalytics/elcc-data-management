@@ -17,6 +17,7 @@ Serializers control API response shape. Use them to decide what leaves the serve
 ## Guidelines
 
 - Name output types to match the response shape, such as `UserAsIndex` and `UserAsShow`
+- Omit `deletedAt` from active-record UI response types and serialized fields; soft-deleted records are not returned by these endpoints. Keep deletion state in models and historical migration handling.
 - Validate association assumptions before serializing nested data
 - Keep serializers declarative and focused on transformation, not authorization or persistence
 - When index rows need policy data, serialize it as `PolicyAsReference` using a small `serializePolicy(record, currentUser)` helper that returns `new SomePolicy(currentUser, record).toJSON()`.

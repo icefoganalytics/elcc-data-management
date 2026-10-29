@@ -1,13 +1,8 @@
-import { CreationAttributes, Op } from "@sequelize/core"
+import { Op, type CreationAttributes } from "@sequelize/core"
 import { isUndefined, merge, omit } from "lodash"
 
 import { ChildCareSpaceCategory, FundingPeriod, FundingSubmissionLine } from "@/models"
-import doesNotUseChildCareSpacesSection from "@/models/validators/does-not-use-child-care-spaces-section"
-
-const LINKED_SECTIONS = [
-  "Administration (10% of Spaces)",
-  FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM,
-]
+import { doesNotUseLedgerSection } from "@/models/validators"
 
 export class FundingSubmissionLineServices {
   static async bulkCreateFrom(
@@ -21,7 +16,7 @@ export class FundingSubmissionLineServices {
       const originalAttributes = line.get()
       const creationAttributes = omit(originalAttributes, ["id"])
       const lineAttributes = merge(creationAttributes, attributes)
-      doesNotUseChildCareSpacesSection(lineAttributes.sectionName ?? line.sectionName)
+      doesNotUseLedgerSection(lineAttributes.sectionName ?? line.sectionName)
       return lineAttributes
     })
 
@@ -76,11 +71,17 @@ export class FundingSubmissionLineServices {
     const linesWithRemappedCategoryIds = newLinesCreationAttributes.map((attributes, index) => {
       const sourceLine = linesToCreateFrom[index]
       const sectionName = attributes.sectionName ?? sourceLine.sectionName
-      const categoryName =
-        sourceLine.childCareSpaceCategoryId === null
-          ? (attributes.lineName ?? sourceLine.lineName)
-          : sourceCategoryNamesById.get(sourceLine.childCareSpaceCategoryId)
-      if (!LINKED_SECTIONS.includes(sectionName) || isUndefined(categoryName)) {
+      let categoryName: string | undefined
+      if (sourceLine.childCareSpaceCategoryId === null) {
+        categoryName = attributes.lineName ?? sourceLine.lineName
+      } else {
+        categoryName = sourceCategoryNamesById.get(sourceLine.childCareSpaceCategoryId)
+      }
+
+      if (
+        sectionName !== FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM ||
+        isUndefined(categoryName)
+      ) {
         return { ...attributes, childCareSpaceCategoryId: null }
       }
 

@@ -37,7 +37,7 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
         })
         const fundingSubmissionLine2 = await fundingSubmissionLineFactory.create({
           fiscalYear: "2024/25",
-          sectionName: "Administration (10% of Spaces)",
+          sectionName: "Children with Diverse Needs",
           lineName: "Toddlers",
           monthlyAmount: "200",
         })
@@ -66,7 +66,7 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
               },
               {
                 submissionLineId: fundingSubmissionLine2.id,
-                sectionName: "Administration (10% of Spaces)",
+                sectionName: "Children with Diverse Needs",
                 lineName: "Toddlers",
                 monthlyAmount: "200",
                 estimatedChildOccupancyRate: "0",
@@ -95,7 +95,7 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
               },
               {
                 submissionLineId: fundingSubmissionLine2.id,
-                sectionName: "Administration (10% of Spaces)",
+                sectionName: "Children with Diverse Needs",
                 lineName: "Toddlers",
                 monthlyAmount: "200",
                 estimatedChildOccupancyRate: "0",
@@ -124,7 +124,7 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
         })
         await fundingSubmissionLineFactory.create({
           fiscalYear: "2024/25",
-          sectionName: "Administration (10% of Spaces)",
+          sectionName: "Children with Diverse Needs",
           lineName: "Toddlers",
           monthlyAmount: "200",
         })

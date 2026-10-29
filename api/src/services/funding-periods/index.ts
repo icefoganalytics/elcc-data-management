@@ -7,6 +7,7 @@ export { EnsureCurrentService } from "./ensure-current-service"
 export { EnsureChildrenService } from "./ensure-children-service"
 
 // Bundled exports
+export * as AdministrationCostCategories from "./administration-cost-categories"
 export * as ChildCareSpaceCategories from "./child-care-space-categories"
 export * as EmployeeWageTiers from "./employee-wage-tiers"
 export * as FiscalPeriods from "./fiscal-periods"

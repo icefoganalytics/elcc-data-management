@@ -22,6 +22,7 @@ import { DateTime } from "luxon"
 import { FiscalPeriodsFundingPeriodIdFiscalYearMonthUniqueIndex } from "@/models/indexes"
 import { isValidFiscalYearShort } from "@/models/validators"
 
+import AdministrationCost from "@/models/administration-cost"
 import BaseModel from "@/models/base-model"
 import BuildingExpense from "@/models/building-expense"
 import ChildCareSpace from "@/models/child-care-space"
@@ -173,6 +174,14 @@ export class FiscalPeriod extends BaseModel<
     },
   })
   declare childCareSpaces?: NonAttribute<ChildCareSpace[]>
+
+  @HasMany(() => AdministrationCost, {
+    foreignKey: "fiscalPeriodId",
+    inverse: {
+      as: "fiscalPeriod",
+    },
+  })
+  declare administrationCosts?: NonAttribute<AdministrationCost[]>
 
   @HasMany(() => EmployeeBenefit, {
     foreignKey: "fiscalPeriodId",

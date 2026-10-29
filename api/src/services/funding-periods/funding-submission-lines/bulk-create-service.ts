@@ -2,7 +2,7 @@ import { Op, sql } from "@sequelize/core"
 import { isEmpty, isNil, isUndefined } from "lodash"
 
 import { ChildCareSpaceCategory, FundingPeriod, FundingSubmissionLine } from "@/models"
-import doesNotUseChildCareSpacesSection from "@/models/validators/does-not-use-child-care-spaces-section"
+import { doesNotUseLedgerSection } from "@/models/validators"
 
 import BaseService from "@/services/base-service"
 
@@ -32,14 +32,21 @@ export class BulkCreateService extends BaseService {
 
     const fundingSubmissionLinesAttributes = fundingSubmissionLineDefaults.map(
       (fundingSubmissionLineDefault) => {
-        const categoryName = this.isCategoryLinkableSection(
-          fundingSubmissionLineDefault.sectionName
-        )
-          ? this.categoryNameForDefault(fundingSubmissionLineDefault, sourceCategoryNames)
-          : undefined
-        const childCareSpaceCategoryId = isUndefined(categoryName)
-          ? null
-          : (categoryIdsByName.get(categoryName) ?? null)
+        let categoryName: string | undefined
+        if (
+          fundingSubmissionLineDefault.sectionName ===
+          FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM
+        ) {
+          categoryName = this.categoryNameForDefault(
+            fundingSubmissionLineDefault,
+            sourceCategoryNames
+          )
+        }
+
+        let childCareSpaceCategoryId: number | null = null
+        if (!isUndefined(categoryName)) {
+          childCareSpaceCategoryId = categoryIdsByName.get(categoryName) ?? null
+        }
 
         return {
           ...fundingSubmissionLineDefault,
@@ -49,7 +56,7 @@ export class BulkCreateService extends BaseService {
       }
     )
     for (const { sectionName } of fundingSubmissionLinesAttributes) {
-      doesNotUseChildCareSpacesSection(sectionName)
+      doesNotUseLedgerSection(sectionName)
     }
 
     return FundingSubmissionLine.bulkCreate(fundingSubmissionLinesAttributes)
@@ -64,13 +71,6 @@ export class BulkCreateService extends BaseService {
     }
 
     return sourceCategoryNames.get(line.childCareSpaceCategoryId)
-  }
-
-  private isCategoryLinkableSection(sectionName: string) {
-    return (
-      sectionName === "Administration (10% of Spaces)" ||
-      sectionName === FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM
-    )
   }
 
   private async categoryIdsByName(fundingPeriodId: number) {

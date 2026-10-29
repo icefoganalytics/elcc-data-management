@@ -2,6 +2,16 @@
 
 Durable domain and architecture knowledge for ELCC maintainers. Enrich these pages when implementation establishes or changes a project fact; do not retain completed implementation plans as reference material.
 
+## Current scale and engineering tradeoffs
+
+As of October 2026, the maintainer expects fewer than 10 simultaneously active users in ELCC Data Management. This is a concurrency assumption, not a limit on the total number of user accounts. Favor straightforward code, established project patterns, and low maintenance cost for this workload.
+
+- Solve observed user needs and documented requirements. Do not add custom isolation levels, locking, retry coordination, or scaling infrastructure solely for hypothetical high-volume or concurrent usage.
+- Low concurrency does not eliminate overlapping requests. At this stage, ordinary persistence behavior is the default; stricter same-record concurrency guarantees need a concrete workflow requirement or an observed failure that justifies their complexity.
+- Preserve authorization, validation, financial precision, historical data integrity, and transactions needed to make multi-row operations atomic. These are correctness requirements even for one user, not high-scale optimizations.
+
+Revisit these tradeoffs when the workload or evidenced operational needs change; a hypothetical increase in concurrent activity is not a requirement to implement that complexity now.
+
 ## Domain
 
 - [Child Care Spaces](domain/child-care-spaces.md): monthly identity, historical snapshots, occupancy calculations, initialization, and worksheet/reporting rules.
