@@ -1,10 +1,19 @@
 <template>
+  <v-empty-state
+    v-if="isErrored"
+    class="ma-5"
+    icon="mdi-alert-circle-outline"
+    headline="Unable to Load Categories"
+    title="Administration categories could not be loaded."
+    text="Try changing a filter or reloading the page."
+  />
   <v-data-table-server
+    v-else
     v-model:items-per-page="perPage"
     v-model:sort-by="sortBy"
     :page="page"
     :headers="headers"
-    :items="isErrored ? [] : administrationCostCategories"
+    :items="administrationCostCategories"
     :items-length="totalCount"
     :loading="isLoading"
     density="comfortable"
@@ -16,15 +25,6 @@
     @update:page="updatePage"
   >
     <template #top="slotProps">
-      <v-alert
-        v-if="isErrored"
-        type="error"
-        variant="tonal"
-        class="mb-4"
-      >
-        Administration categories could not be loaded. Try again by changing a filter or reloading
-        the page.
-      </v-alert>
       <slot
         name="top"
         v-bind="slotProps"
