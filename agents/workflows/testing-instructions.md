@@ -12,6 +12,12 @@ For an application scenario, include the relevant test command, startup with `./
 
 For documentation-only work, replace the template's application setup examples with the relevant source/link audit and a representative consumption exercise. No application boot or login proves a documentation-discovery change.
 
+## Application Capture Prerequisites
+
+Use the [PR screenshot policy](pull-request-management.md#screenshots) and its shared capture/upload procedure. Reach the checkout's gateway URL through real Auth0 login with an authorized account and the role/data needed for the target route. For worksheets, select the intended centre, funding period, fiscal year, and month; for administration, confirm the required role. An Auth0 redirect or a missing record blocks the application capture, not GitHub attachment authentication.
+
+For automated Firefox QA, follow `skill://browser-qa/workflow.md` and its installed-control discovery and owned-profile procedures; ELCC does not supply a separate Firefox driver or automation endpoint. A request merely to open the app for user-led review uses ordinary Firefox and is not capture evidence. Existing-personal-session reuse requires an explicit request and supported control/capture; otherwise name the missing user action or seek an authorized alternative without switching engines, restarting the personal browser, or copying profiles/cookies.
+
 ## ELCC Scenario Context and Formatting
 
 - Identify the centre, funding period, fiscal year, and month when a worksheet scenario depends on them. Include user-role requirements for administration actions and verify past-period history remains unchanged when that is the invariant under test.
@@ -19,4 +25,4 @@ For documentation-only work, replace the template's application setup examples w
 - Use bold for UI elements, inline code for exact values/URLs/errors, and arrows for navigation paths. For complex flows, use `## Test Case N: Description` and continue step numbering across cases.
 - When the scenario changes financial data, use string amounts and the precision rules in [root guidance](/AGENTS.md#financial-precision).
 
-Screenshot discovery remains [#136](https://github.com/icefoganalytics/elcc-data-management/issues/136); do not treat a placeholder as uploaded or authenticated evidence.
+When screenshot work is requested, verify the [application capture prerequisites](#application-capture-prerequisites) separately from the shared procedure's GitHub sign-in and upload checks.
