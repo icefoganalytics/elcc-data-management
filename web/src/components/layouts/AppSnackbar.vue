@@ -79,7 +79,10 @@ const constrastingColor = computed(() => getContrastingColor(options.value.color
 watch(
   () => [message.value, options.value],
   () => {
-    if (isEmpty(message.value)) return
+    if (isEmpty(message.value)) {
+      showSnackbar.value = false
+      return
+    }
 
     show()
   },

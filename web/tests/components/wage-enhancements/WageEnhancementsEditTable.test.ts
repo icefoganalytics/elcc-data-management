@@ -1,6 +1,8 @@
 import { flushPromises, mount } from "@vue/test-utils"
+import { AxiosHeaders } from "axios"
 
 import employeeWageTiersApi from "@/api/employee-wage-tiers-api"
+import { UnexpectedApiResponseError } from "@/api/errors/unexpected-api-response-error"
 import wageEnhancementsApi, {
   type WageEnhancementAsShow,
   type WageEnhancementPolicy,
@@ -17,6 +19,102 @@ vi.mock("@/use/use-snack", () => ({
 
 describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", () => {
   describe("WageEnhancementsEditTable", () => {
+    describe("interrupted saves", () => {
+      test("when Enter is followed by blur after an uncertain response, sends only one write", async () => {
+        // Arrange
+        const employeeWageTier = employeeWageTierFactory.build({ id: 2, fiscalPeriodId: 1 })
+        const wageEnhancement = wageEnhancementFactory.build({
+          id: 3,
+          centreId: 1,
+          employeeWageTierId: 2,
+          employeeName: "Alex",
+        })
+        vi.spyOn(employeeWageTiersApi, "list").mockResolvedValue({
+          employeeWageTiers: [employeeWageTier],
+          totalCount: 1,
+        })
+        vi.spyOn(wageEnhancementsApi, "list").mockResolvedValue({
+          wageEnhancements: [wageEnhancement],
+          totalCount: 1,
+        })
+        const update = vi
+          .spyOn(wageEnhancementsApi, "update")
+          .mockRejectedValue(
+            new UnexpectedApiResponseError(
+              { method: "put", url: "/api/wage-enhancements/3" },
+              502,
+              new AxiosHeaders()
+            )
+          )
+        const wrapper = mount(WageEnhancementsEditTable, {
+          props: { centreId: 1, fiscalPeriodId: 1 },
+          global: { plugins: [mockVuetify()] },
+        })
+        await flushPromises()
+        const employeeName = wrapper.get<HTMLInputElement>('input[aria-label="Employee Name"]')
+
+        // Act
+        await employeeName.setValue("Alexandra")
+        await employeeName.trigger("keydown", { key: "Enter" })
+        await flushPromises()
+        await employeeName.trigger("blur")
+        await flushPromises()
+
+        // Assert
+        expect(update).toHaveBeenCalledTimes(1)
+      })
+
+      test("when the user explicitly retries an interrupted save, submits the retained draft", async () => {
+        // Arrange
+        const employeeWageTier = employeeWageTierFactory.build({ id: 2, fiscalPeriodId: 1 })
+        const wageEnhancement = wageEnhancementFactory.build({
+          id: 3,
+          centreId: 1,
+          employeeWageTierId: 2,
+          employeeName: "Alex",
+        })
+        const policy = { show: true, create: true, update: true, destroy: true }
+        vi.spyOn(employeeWageTiersApi, "list").mockResolvedValue({
+          employeeWageTiers: [employeeWageTier],
+          totalCount: 1,
+        })
+        vi.spyOn(wageEnhancementsApi, "list").mockResolvedValue({
+          wageEnhancements: [wageEnhancement],
+          totalCount: 1,
+        })
+        const update = vi
+          .spyOn(wageEnhancementsApi, "update")
+          .mockRejectedValueOnce(
+            new UnexpectedApiResponseError(
+              { method: "put", url: "/api/wage-enhancements/3" },
+              502,
+              new AxiosHeaders()
+            )
+          )
+          .mockResolvedValue({ wageEnhancement, policy })
+        const wrapper = mount(WageEnhancementsEditTable, {
+          props: { centreId: 1, fiscalPeriodId: 1 },
+          global: { plugins: [mockVuetify()] },
+        })
+        await flushPromises()
+        const employeeName = wrapper.get<HTMLInputElement>('input[aria-label="Employee Name"]')
+        await employeeName.setValue("Alexandra")
+        await employeeName.trigger("keydown", { key: "Enter" })
+        await flushPromises()
+
+        // Act
+        await wrapper.get('[aria-label="Retry saving employee"]').trigger("click")
+        await flushPromises()
+
+        // Assert
+        expect(update).toHaveBeenNthCalledWith(2, 3, {
+          employeeName: "Alexandra",
+          hoursEstimated: "0.00",
+          hoursActual: "0.00",
+        })
+      })
+    })
+
     describe("employee editing", () => {
       test("when hours are committed, saves both hour fields at database precision", async () => {
         // Arrange

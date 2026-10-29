@@ -10,6 +10,17 @@
     disable-sort
     @update:cell="saveBuildingExpenseIfDirty"
   >
+    <template #top>
+      <v-alert
+        v-if="hasInterruptedExpense"
+        type="warning"
+        variant="tonal"
+      >
+        Automatic saving is paused because a save result is uncertain. Keep a copy of your edits,
+        check the current server state in another window, then reload this page to resume editing.
+      </v-alert>
+    </template>
+
     <template #item.categoryId="{ item }">
       <BuildingExpenseCategoryAttributesChip :building-expense-category="item.category" />
     </template>
@@ -65,6 +76,7 @@
         variant="outlined"
         size="small"
         :loading="isDeletingBuildingExpenseId === item.id"
+        :disabled="hasInterruptedExpense"
         @click.stop="deleteBuildingExpense(item)"
       >
         Delete
@@ -181,7 +193,11 @@ const headers = computed(() => {
 })
 
 const { isSystemAdmin } = useCurrentUser()
+const interruptedBuildingExpenseIds = ref(new Set<number>())
+const hasInterruptedExpense = computed(() => interruptedBuildingExpenseIds.value.size > 0)
 const editableColumns = computed(() => {
+  if (hasInterruptedExpense.value) return []
+
   const columns = ["estimatedCost", "actualCost", "notes"]
 
   if (isSystemAdmin.value) {
@@ -216,6 +232,8 @@ const isSaving = ref(false)
 const snack = useSnack()
 
 async function saveBuildingExpenseIfDirty(buildingExpense: BuildingExpense) {
+  if (interruptedBuildingExpenseIds.value.has(buildingExpense.id)) return
+
   const currentBuildingExpense = buildingExpensesById.value[buildingExpense.id]
   if (JSON.stringify(currentBuildingExpense) === JSON.stringify(buildingExpense)) return
 
@@ -242,7 +260,9 @@ async function saveBuildingExpenseIfDirty(buildingExpense: BuildingExpense) {
 
     snack.success("Building expense saved!")
   } catch (error) {
-    if (!(error instanceof UnexpectedApiResponseError)) {
+    if (error instanceof UnexpectedApiResponseError) {
+      interruptedBuildingExpenseIds.value.add(buildingExpense.id)
+    } else {
       await refresh()
     }
 
