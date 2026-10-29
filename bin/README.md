@@ -71,17 +71,18 @@ initializers to finish; Compose's running state alone does not prove SQL Server 
 If a base-only command recreates `db`, run `./bin/dev up -d --wait` again to restore gateway
 attachments. Keep existing database volumes; no reset or database replacement is needed.
 
-Compose selects project identities using its native precedence: global `-p` / `--project-name`, then `COMPOSE_PROJECT_NAME`, then the top-level `name:`. The base Compose file supplies the existing normalized checkout name as its default, preserving current short identities and volumes. Gateway hostnames remain checkout-derived, independent of an explicit Compose project name.
+The wrapper honors an exported `COMPOSE_PROJECT_NAME`, defaulting to the existing normalized checkout name when unset. Compose's global `-p` / `--project-name` option takes precedence. Gateway hostnames stay checkout-derived.
 
-The complete `${COMPOSE_PROJECT_NAME}-db` alias is one DNS label, so choose a unique project name of at most 60 lowercase letters, digits, and hyphens before creating a new stack. The wrapper does not hash or shorten names, and configuration rendering can accept an alias longer than 63 characters. The gateway gem does not enforce this budget either; see its [native selection and data-preservation guidance](https://github.com/icefoganalytics/local-development-gateway/blob/v0.2.4/README.md#private-database-alias-length). Use the same chosen identity for startup, tests, and shutdown. For example:
+For a new stack, choose a unique project name of at most 60 lowercase letters, digits, and hyphens so `${COMPOSE_PROJECT_NAME}-db` fits DNS's 63-character label limit. Use the same identity for every command, for example by exporting it in your shell or ignored local direnv configuration:
 
 ```bash
-COMPOSE_PROJECT_NAME=elcc-141 ./bin/dev config --format json
-COMPOSE_PROJECT_NAME=elcc-141 ./bin/dev up --build
-COMPOSE_PROJECT_NAME=elcc-141 ./bin/dev down
+export COMPOSE_PROJECT_NAME=elcc-141
+./bin/dev config --format json
+./bin/dev up --build
+./bin/dev down
 ```
 
-For an existing stack, first record its current project identity and exact database volume name, take and verify a database backup, and stop services using that same identity. Selecting another project name can select a new empty volume; it does not migrate or rename existing data. Any identity change needs an explicit data-preserving migration or a local Compose override that retains the original volume through `volumes.db_data.external: true` and its recorded `volumes.db_data.name`. Keep using that override on subsequent commands. Verify the rendered volume before startup and database identity and contents afterward. Do not run `down --volumes`; retain the original volume and verified backup until recovery is no longer needed. Existing encrypted desktop routes remain unchanged.
+Keep an existing stack's identity: changing `COMPOSE_PROJECT_NAME` selects different project-scoped volumes, not a data migration. Before a deliberate change, record the original volume, verify a database backup, and stop services using the original identity. Either migrate the data or retain the original volume with a local Compose override (`volumes.db_data.external: true` and its recorded `name`). Keep using that override, verify the rendered volume before startup and database contents afterward, and retain the original volume and backup; do not run `down --volumes`. The wrapper does not hash, shorten, or validate DNS length; a successful `config` render is not connectivity proof. See the gateway's [alias-length and data-preservation guidance](https://github.com/icefoganalytics/local-development-gateway/blob/v0.2.4/README.md#private-database-alias-length).
 
 Verify actual connection identity, not only DNS resolution:
 
