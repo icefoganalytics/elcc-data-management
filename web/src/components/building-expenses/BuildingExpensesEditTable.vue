@@ -16,8 +16,8 @@
         type="warning"
         variant="tonal"
       >
-        Automatic saving is paused because a save result is uncertain. Keep a copy of your edits,
-        check the current server state in another window, then reload this page to resume editing.
+        Automatic saving is paused for interrupted expenses. Keep a copy of your edits, check the
+        current server state in another window, then reload this page to resume saving them.
       </v-alert>
     </template>
 
@@ -76,7 +76,6 @@
         variant="outlined"
         size="small"
         :loading="isDeletingBuildingExpenseId === item.id"
-        :disabled="hasInterruptedExpense"
         @click.stop="deleteBuildingExpense(item)"
       >
         Delete
@@ -193,11 +192,22 @@ const headers = computed(() => {
 })
 
 const { isSystemAdmin } = useCurrentUser()
-const interruptedBuildingExpenseIds = ref(new Set<number>())
-const hasInterruptedExpense = computed(() => interruptedBuildingExpenseIds.value.size > 0)
-const editableColumns = computed(() => {
-  if (hasInterruptedExpense.value) return []
+type BuildingExpenseEdits = Pick<
+  BuildingExpense,
+  "subsidyRate" | "estimatedCost" | "actualCost" | "notes"
+>
 
+const interruptedEditsById = ref(new Map<number, BuildingExpenseEdits>())
+const hasInterruptedExpense = computed(() => interruptedEditsById.value.size > 0)
+const displayedBuildingExpenses = computed(() =>
+  buildingExpenses.value.map((buildingExpense) => {
+    const interruptedEdits = interruptedEditsById.value.get(buildingExpense.id)
+    if (isNil(interruptedEdits)) return buildingExpense
+
+    return { ...buildingExpense, ...interruptedEdits }
+  })
+)
+const editableColumns = computed(() => {
   const columns = ["estimatedCost", "actualCost", "notes"]
 
   if (isSystemAdmin.value) {
@@ -232,19 +242,25 @@ const isSaving = ref(false)
 const snack = useSnack()
 
 async function saveBuildingExpenseIfDirty(buildingExpense: BuildingExpense) {
-  if (interruptedBuildingExpenseIds.value.has(buildingExpense.id)) return
+  if (interruptedEditsById.value.has(buildingExpense.id)) {
+    interruptedEditsById.value.set(
+      buildingExpense.id,
+      pick(buildingExpense, ["subsidyRate", "estimatedCost", "actualCost", "notes"])
+    )
+    return
+  }
 
   const currentBuildingExpense = buildingExpensesById.value[buildingExpense.id]
   if (JSON.stringify(currentBuildingExpense) === JSON.stringify(buildingExpense)) return
 
+  const buildingExpenseAttributes = pick(buildingExpense, [
+    "subsidyRate",
+    "estimatedCost",
+    "actualCost",
+    "notes",
+  ])
   isSaving.value = true
   try {
-    const buildingExpenseAttributes = pick(buildingExpense, [
-      "subsidyRate",
-      "estimatedCost",
-      "actualCost",
-      "notes",
-    ])
     const { buildingExpense: updatedBuildingExpense } = await buildingExpensesApi.update(
       buildingExpense.id,
       buildingExpenseAttributes
@@ -261,7 +277,7 @@ async function saveBuildingExpenseIfDirty(buildingExpense: BuildingExpense) {
     snack.success("Building expense saved!")
   } catch (error) {
     if (error instanceof UnexpectedApiResponseError) {
-      interruptedBuildingExpenseIds.value.add(buildingExpense.id)
+      interruptedEditsById.value.set(buildingExpense.id, buildingExpenseAttributes)
     } else {
       await refresh()
     }
@@ -284,6 +300,7 @@ async function deleteBuildingExpense(buildingExpense: BuildingExpense) {
   isDeletingBuildingExpenseId.value = buildingExpense.id
   try {
     await buildingExpensesApi.delete(buildingExpense.id)
+    interruptedEditsById.value.delete(buildingExpense.id)
     await refresh()
     snack.success("Building expense deleted!")
   } catch (error) {
