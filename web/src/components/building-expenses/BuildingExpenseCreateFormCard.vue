@@ -146,7 +146,7 @@ async function createBuildingExpense() {
     snack.success("Building expense created successfully")
   } catch (error) {
     console.error(`Failed to create building expense: ${error}`, { error })
-    snack.error(`Failed to create building expense: ${error}`)
+    snack.error(`Failed to create building expense: ${error}`, { cause: error })
   } finally {
     isCreating.value = false
   }

@@ -231,7 +231,7 @@ async function updateAndClose() {
     close()
   } catch (error) {
     console.error(`Failed to save centre ${error}`, { error })
-    snack.error(`Failed to save centre ${error}`)
+    snack.error(`Failed to save centre ${error}`, { cause: error })
   } finally {
     isLoading.value = false
   }

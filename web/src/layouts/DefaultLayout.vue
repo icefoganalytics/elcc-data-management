@@ -41,12 +41,11 @@ const submissionLinesStore = useSubmissionLinesStore()
 const isLoading = ref(true)
 
 onMounted(async () => {
-  await Promise.all([
-    centreStore.initialize(),
-    submissionLinesStore.initialize(),
-  ])
-
-  isLoading.value = false
+  try {
+    await Promise.all([centreStore.initialize(), submissionLinesStore.initialize()])
+  } finally {
+    isLoading.value = false
+  }
 })
 
 const { title, breadcrumbs } = useBreadcrumbs()

@@ -6,6 +6,7 @@ import childCareSpacesApi, {
   type ChildCareSpaceQueryOptions,
   type ChildCareSpaceWhereOptions,
 } from "@/api/child-care-spaces-api"
+import { UnexpectedApiResponseError } from "@/api/errors/unexpected-api-response-error"
 
 export {
   type ChildCareSpaceAsIndex,
@@ -55,6 +56,7 @@ export function useChildCareSpaces(
 
       await fetch().catch((error) => {
         console.error(`Failed to fetch Child Care Spaces: ${error}`, { error })
+        if (error instanceof UnexpectedApiResponseError) throw error
       })
     },
     { deep: true, immediate: true }

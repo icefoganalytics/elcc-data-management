@@ -7,6 +7,7 @@ import childCareSpaceCategoriesApi, {
   type ChildCareSpaceCategoryPropagationOptions,
 } from "@/api/child-care-space-categories-api"
 
+import { UnexpectedApiResponseError } from "@/api/errors/unexpected-api-response-error"
 export { type ChildCareSpaceCategoryAsShow }
 
 export function useChildCareSpaceCategory(
@@ -124,7 +125,8 @@ export function useChildCareSpaceCategory(
 
       try {
         await fetch()
-      } catch {
+      } catch (error) {
+        if (error instanceof UnexpectedApiResponseError) throw error
         // fetch() records failures; explicit refresh callers still receive the rejection.
       }
     },

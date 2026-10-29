@@ -315,7 +315,7 @@ async function persist(id: number) {
       if (!pendingChanges.has(id)) pendingChanges.set(id, attributes)
       errorsById.set(id, String(error))
       console.error(`Failed to save wage enhancement: ${error}`, { error })
-      snack.error(`Failed to save wage enhancement: ${error}`)
+      snack.error(`Failed to save wage enhancement: ${error}`, { cause: error })
       return
     }
   }
@@ -340,7 +340,7 @@ async function create(employeeWageTierId: number) {
     snack.success("Wage enhancement created")
   } catch (error) {
     console.error(`Failed to create wage enhancement: ${error}`, { error })
-    snack.error(`Failed to create wage enhancement: ${error}`)
+    snack.error(`Failed to create wage enhancement: ${error}`, { cause: error })
   } finally {
     isCreating.value = false
   }
@@ -360,7 +360,7 @@ async function remove(id: number) {
     snack.success("Wage enhancement deleted.")
   } catch (error) {
     console.error(`Failed to delete wage enhancement: ${error}`, { error })
-    snack.error(`Failed to delete wage enhancement: ${error}`)
+    snack.error(`Failed to delete wage enhancement: ${error}`, { cause: error })
   } finally {
     deletingIds.delete(id)
   }

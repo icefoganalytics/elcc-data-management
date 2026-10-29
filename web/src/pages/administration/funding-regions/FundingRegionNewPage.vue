@@ -106,7 +106,7 @@ async function createFundingRegion() {
     })
   } catch (error) {
     console.error(`Failed to create funding region: ${error}`, { error })
-    snack.error(`Failed to create funding region: ${error}`)
+    snack.error(`Failed to create funding region: ${error}`, { cause: error })
   } finally {
     isLoading.value = false
   }

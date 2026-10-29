@@ -96,7 +96,7 @@ async function saveAndNotify() {
     snack.success("User created successfully!")
   } catch (error) {
     console.error(`Failed to create user: ${error}`, { error })
-    snack.error(`Failed to create user: ${error}`)
+    snack.error(`Failed to create user: ${error}`, { cause: error })
   } finally {
     isSaving.value = false
   }

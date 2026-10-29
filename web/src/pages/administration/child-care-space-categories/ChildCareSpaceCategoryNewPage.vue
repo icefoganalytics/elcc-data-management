@@ -270,7 +270,7 @@ async function createChildCareSpaceCategory() {
     })
   } catch (error) {
     console.error(`Failed to create Child Care Space category: ${error}`, { error })
-    snack.error(`Failed to create Child Care Space category: ${error}`)
+    snack.error(`Failed to create Child Care Space category: ${error}`, { cause: error })
   } finally {
     isCreating.value = false
   }

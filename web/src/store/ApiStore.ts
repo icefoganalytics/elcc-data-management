@@ -1,7 +1,10 @@
 import { defineStore, acceptHMRUpdate } from "pinia"
-import { useNotificationStore } from "@/store/NotificationStore"
 import { useAuth0 } from "@auth0/auth0-vue"
-import { SecureAPICall } from "./helpers/axiosAPIConfig"
+import { isAxiosError } from "axios"
+
+import { useNotificationStore } from "@/store/NotificationStore"
+import { SecureAPICall } from "@/store/helpers/axiosAPIConfig"
+import { UnexpectedApiResponseError } from "@/api/errors/unexpected-api-response-error"
 
 // refs are reactive variables
 // computed are reactive variables that are derived from other reactive variables
@@ -12,13 +15,13 @@ export const useApiStore = defineStore("api", () => {
 
   const m = useNotificationStore()
 
-  function doApiErrorMessage(err: any) {
+  function doApiErrorMessage(err: unknown) {
     let status_code = 500
-    let text = err.message
+    let text = err instanceof Error ? err.message : "An unknown error occurred"
 
-    if (err.response) {
+    if (isAxiosError<{ message?: string }>(err) && err.response) {
       status_code = err.response.status || 500
-      if (err.response.data && err.response.data.message) text = err.response.data.message
+      if (err.response.data?.message) text = err.response.data.message
     }
 
     const message = {
@@ -26,11 +29,12 @@ export const useApiStore = defineStore("api", () => {
       text,
       icon: "mdi-error",
       variant: "error",
+      cause: err,
     }
     m.notify(message)
   }
 
-  async function secureCall(method: string, url: string, data?: any) {
+  async function secureCall(method: string, url: string, data?: unknown) {
     let response
     /* if (!auth.isAuthenticated.value) {
       console.log("Not Authenticated");
@@ -45,6 +49,7 @@ export const useApiStore = defineStore("api", () => {
         })
         .catch((err) => {
           doApiErrorMessage(err)
+          if (err instanceof UnexpectedApiResponseError) throw err
           return { error: err }
         })
     })
