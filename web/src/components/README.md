@@ -16,7 +16,9 @@ For generic Vue structure and authoring, use the [shared Vue Component Authoring
 
 Use a model-specific `SearchableAutocomplete` component for selecting persisted records instead of an inline page/form `v-select`. Reuse an existing model input before adding another. Plain selects are appropriate for small, fixed option sets such as roles.
 
-Follow the searchable autocomplete pattern in [FundingPeriodSearchableAutocomplete](funding-periods/FundingPeriodSearchableAutocomplete.vue): debounced server-side search, bounded pagination, `no-filter`, and a separate selected-record lookup merged into the results so its label survives search and page changes. The input owns fetching/loading/error presentation through its model composables; the parent provides contextual filters and owns form-specific dependent-field resets.
+Follow the searchable autocomplete pattern in [ChildCareSpaceCategorySearchableAutocomplete](child-care-space-categories/ChildCareSpaceCategorySearchableAutocomplete.vue): debounced server-side search, bounded pagination, `no-filter`, and a separate selected-record lookup merged into the results so its label survives search and page changes. The input owns fetching/loading/error presentation through its model composables; the parent provides contextual filters and owns form-specific dependent-field resets.
+
+When following WRAP's searchable-autocomplete convention, start from `WorkflowCategorySearchableAutocomplete.vue` rather than recreating it. Preserve its resource-specific names, section order, expanded query objects, chip and attributes-list-item slots, `reset` method, whitespace, and line wrapping. Adapt the model's fields and API contracts, retaining required context scoping and error states; do not copy unrelated organization-specific popup content.
 
 ## Model Access and Editing
 
