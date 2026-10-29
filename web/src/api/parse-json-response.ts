@@ -21,8 +21,9 @@ export const parseJsonResponse: AxiosResponseTransformer = function (
   }
 
   if (typeof data !== "string") return data
-  if (data.trim() === "" && (status === 204 || status === 205 || this.method === "head"))
+  if (data.trim() === "" && (status === 204 || status === 205 || this.method === "head")) {
     return data
+  }
 
   try {
     return JSON.parse(data)

@@ -64,6 +64,55 @@ describe("web/src/components/layouts/AppSnackbar.vue", () => {
         expect(wrapper.text()).not.toContain("secret")
       })
 
+      test("when a nested aggregate contains an API response error, shows persistent recovery details", async () => {
+        // Arrange
+        const wrapper = mount(AppSnackbar, {
+          global: { plugins: [mockVuetify()] },
+          attachTo: document.body,
+          attrs: { attach: true },
+        })
+        const apiError = new UnexpectedApiResponseError(
+          { method: "post", url: "/api/workbook?secret=hidden" },
+          502,
+          new AxiosHeaders({ "cf-ray": "ray-123" }),
+          true
+        )
+        const cause = new AggregateError([
+          new Error("An ordinary failure"),
+          new AggregateError([new Error("Another ordinary failure"), apiError]),
+        ])
+
+        // Act
+        useSnack().error("The write failed", { cause })
+        await wrapper.vm.$nextTick()
+
+        // Assert
+        expect(wrapper.text()).toContain("The browser verification challenge interrupted")
+        expect(wrapper.text()).toContain("POST /api/workbook")
+        expect(wrapper.text()).toContain("502")
+        expect(wrapper.text()).toContain("ray-123")
+        expect(wrapper.text()).not.toContain("secret")
+      })
+
+      test("when an aggregate has no API response error, shows normal feedback", async () => {
+        // Arrange
+        const wrapper = mount(AppSnackbar, {
+          global: { plugins: [mockVuetify()] },
+          attachTo: document.body,
+          attrs: { attach: true },
+        })
+
+        // Act
+        useSnack().error("The write failed", {
+          cause: new AggregateError([new Error("First failure"), new Error("Second failure")]),
+        })
+        await wrapper.vm.$nextTick()
+
+        // Assert
+        expect(wrapper.text()).toContain("The write failed")
+        expect(wrapper.text()).not.toContain("The server response was unavailable")
+      })
+
       test("when a normal notification arrives during recovery, preserves the recovery state", async () => {
         // Arrange
         const apiError = new UnexpectedApiResponseError(

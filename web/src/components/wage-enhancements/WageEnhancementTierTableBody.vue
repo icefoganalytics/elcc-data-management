@@ -117,7 +117,7 @@
             aria-label="Retry saving employee"
             :loading="pendingIds.has(wageEnhancement.id)"
             :disabled="deletingIds.has(wageEnhancement.id)"
-            @click="emit('save', wageEnhancement.id)"
+            @click="emit('retry', wageEnhancement.id)"
             >Retry</v-btn
           >
         </td>
@@ -143,6 +143,7 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{
   save: [wageEnhancementId: number]
+  retry: [wageEnhancementId: number]
   create: [employeeWageTierId: number]
   remove: [wageEnhancementId: number]
 }>()

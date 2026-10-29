@@ -40,8 +40,10 @@ export function useSnack(defaultOptions: VSnackbarProps = {}): {
   const notify = (message: string, options: SnackOptions = {}) => {
     const { cause, ...snackbarOptions } = options
 
-    if (cause instanceof UnexpectedApiResponseError) {
-      state.apiResponseError = cause
+    const apiResponseError = findUnexpectedApiResponseError(cause)
+
+    if (apiResponseError !== null) {
+      state.apiResponseError = apiResponseError
       state.message = message
       state.options = { ...defaultOptions, ...snackbarOptions, color: "error", timeout: -1 }
       return
@@ -82,6 +84,18 @@ export function useSnack(defaultOptions: VSnackbarProps = {}): {
   }
 
   return notify
+}
+
+function findUnexpectedApiResponseError(cause: unknown): UnexpectedApiResponseError | null {
+  if (cause instanceof UnexpectedApiResponseError) return cause
+  if (!(cause instanceof AggregateError)) return null
+
+  for (const error of cause.errors) {
+    const apiResponseError = findUnexpectedApiResponseError(error)
+    if (apiResponseError !== null) return apiResponseError
+  }
+
+  return null
 }
 
 export default useSnack
