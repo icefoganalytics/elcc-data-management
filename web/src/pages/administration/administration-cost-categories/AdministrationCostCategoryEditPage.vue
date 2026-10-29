@@ -50,13 +50,10 @@
       label="Monthly Amount *"
       :rules="[required]"
     />
-    <v-select
+    <ChildCareSpaceCategorySearchableAutocomplete
       v-model="administrationCostCategory.childCareSpaceCategoryId"
-      :items="availableChildCareSpaceCategories"
-      item-title="categoryName"
-      item-value="id"
+      :where="childCareSpaceCategoriesWhere"
       label="Linked Child Care Space Category"
-      :loading="isLoadingSpaceCategories"
       clearable
     />
     <template #actions>
@@ -91,12 +88,12 @@ import { required } from "@/utils/validators"
 
 import useAdministrationCostCategory from "@/use/use-administration-cost-category"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
-import useChildCareSpaceCategories from "@/use/use-child-care-space-categories"
 import useFundingPeriods from "@/use/use-funding-periods"
 import useSnack from "@/use/use-snack"
 
 import CurrencyInput from "@/components/CurrencyInput.vue"
 import HeaderActionsFormCard from "@/components/common/HeaderActionsFormCard.vue"
+import ChildCareSpaceCategorySearchableAutocomplete from "@/components/child-care-space-categories/ChildCareSpaceCategorySearchableAutocomplete.vue"
 
 const props = defineProps<{
   administrationCostCategoryId: string
@@ -119,22 +116,9 @@ const fundingPeriodDescription = computed(() => {
   return fundingPeriod?.fiscalYear ?? "Unknown"
 })
 
-const spaceCategoriesQuery = computed(() => ({
-  where: {
-    fundingPeriodId: fundingPeriodId.value,
-  },
-  perPage: -1,
+const childCareSpaceCategoriesWhere = computed(() => ({
+  fundingPeriodId: fundingPeriodId.value,
 }))
-const { childCareSpaceCategories, isLoading: isLoadingSpaceCategories } =
-  useChildCareSpaceCategories(spaceCategoriesQuery, {
-    skipWatchIf: () => isNil(fundingPeriodId.value),
-  })
-
-const availableChildCareSpaceCategories = computed(() =>
-  childCareSpaceCategories.value.filter(
-    (category) => category.fundingPeriodId === fundingPeriodId.value
-  )
-)
 
 const form = useTemplateRef("form")
 const isSaving = ref(false)

@@ -1,12 +1,13 @@
 import { createPinia } from "pinia"
 import { flushPromises, mount } from "@vue/test-utils"
-import { VSelect } from "vuetify/components"
 
 import httpClient from "@/api/http-client"
 import type { ChildCareSpaceCategoryAsIndex } from "@/api/child-care-space-categories-api"
 
 import { mockRouter, mockVuetify } from "@/tests/support"
 
+import ChildCareSpaceCategorySearchableAutocomplete from "@/components/child-care-space-categories/ChildCareSpaceCategorySearchableAutocomplete.vue"
+import FundingPeriodSearchableAutocomplete from "@/components/funding-periods/FundingPeriodSearchableAutocomplete.vue"
 import AdministrationCostCategoryNewPage from "@/pages/administration/administration-cost-categories/AdministrationCostCategoryNewPage.vue"
 
 describe("web/src/pages/administration/administration-cost-categories/AdministrationCostCategoryNewPage.vue", () => {
@@ -52,6 +53,15 @@ describe("web/src/pages/administration/administration-cost-categories/Administra
               },
             }
           }
+          if (url === "/api/funding-periods/1" || url === "/api/funding-periods/2") {
+            const id = Number(url.split("/").at(-1))
+            return {
+              data: {
+                fundingPeriod: { id, fiscalYear: id === 1 ? "2024-2025" : "2025-2026" },
+                policy: {},
+              },
+            }
+          }
           if (
             url === "/api/child-care-space-categories" &&
             config?.params?.where?.fundingPeriodId === 1
@@ -87,9 +97,13 @@ describe("web/src/pages/administration/administration-cost-categories/Administra
           },
         })
         await flushPromises()
-        const fundingPeriodSelect = wrapper.findAllComponents(VSelect)[0]
-        const linkedCategorySelect = wrapper.findAllComponents(VSelect)[1]
+        const fundingPeriodSelect = wrapper.getComponent(FundingPeriodSearchableAutocomplete)
+        const linkedCategorySelect = wrapper.getComponent(
+          ChildCareSpaceCategorySearchableAutocomplete
+        )
         await fundingPeriodSelect.setValue(1)
+        await flushPromises()
+        await linkedCategorySelect.setValue(10)
         await flushPromises()
 
         // Act

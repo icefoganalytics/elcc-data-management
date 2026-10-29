@@ -49,9 +49,15 @@ import useFundingPeriods, {
   type FundingPeriodQueryOptions,
 } from "@/use/use-funding-periods"
 
-const props = defineProps<{
-  modelValue: number | null
-}>()
+const props = withDefaults(
+  defineProps<{
+    modelValue: number | null
+    selectFirstOnLoad?: boolean
+  }>(),
+  {
+    selectFirstOnLoad: true,
+  }
+)
 
 const emit = defineEmits<{
   "update:modelValue": [fundingPeriodId: number | null]
@@ -103,7 +109,7 @@ const allFundingPeriods = computed<FundingPeriodAsIndex[]>(() => {
 watch(
   fundingPeriods,
   (periods) => {
-    if (isNil(props.modelValue) && periods.length > 0) {
+    if (props.selectFirstOnLoad && isNil(props.modelValue) && periods.length > 0) {
       emit("update:modelValue", periods[0].id)
     }
   },

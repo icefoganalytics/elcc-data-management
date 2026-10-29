@@ -4,13 +4,10 @@
     title="New Administration Cost Category"
     @submit.prevent="createCategory"
   >
-    <v-select
+    <FundingPeriodSearchableAutocomplete
       v-model="fundingPeriodId"
-      :items="fundingPeriods"
-      item-title="fiscalYear"
-      item-value="id"
       label="Funding Period *"
-      :loading="isLoadingFundingPeriods"
+      :select-first-on-load="false"
       :rules="[required]"
     />
     <v-text-field
@@ -49,14 +46,12 @@
       label="Monthly Amount *"
       :rules="[required]"
     />
-    <v-select
+    <ChildCareSpaceCategorySearchableAutocomplete
       v-model="childCareSpaceCategoryId"
-      :items="availableChildCareSpaceCategories"
-      item-title="categoryName"
-      item-value="id"
+      :where="childCareSpaceCategoriesWhere"
       label="Linked Child Care Space Category"
-      :loading="isLoadingSpaceCategories"
       :disabled="isNil(fundingPeriodId)"
+      clearable
     />
     <template #actions>
       <v-btn
@@ -90,12 +85,12 @@ import { required } from "@/utils/validators"
 import administrationCostCategoriesApi from "@/api/administration-cost-categories-api"
 
 import useBreadcrumbs from "@/use/use-breadcrumbs"
-import useChildCareSpaceCategories from "@/use/use-child-care-space-categories"
-import useFundingPeriods from "@/use/use-funding-periods"
 import useSnack from "@/use/use-snack"
 
 import CurrencyInput from "@/components/CurrencyInput.vue"
 import HeaderActionsFormCard from "@/components/common/HeaderActionsFormCard.vue"
+import ChildCareSpaceCategorySearchableAutocomplete from "@/components/child-care-space-categories/ChildCareSpaceCategorySearchableAutocomplete.vue"
+import FundingPeriodSearchableAutocomplete from "@/components/funding-periods/FundingPeriodSearchableAutocomplete.vue"
 
 const router = useRouter()
 const snack = useSnack()
@@ -109,28 +104,9 @@ const monthlyAmount = ref<string | null>(null)
 const childCareSpaceCategoryId = ref<number | null>(null)
 const isSaving = ref(false)
 
-const { fundingPeriods, isLoading: isLoadingFundingPeriods } = useFundingPeriods(
-  ref({
-    perPage: -1,
-  })
-)
-
-const spaceCategoriesQuery = computed(() => ({
-  where: {
-    fundingPeriodId: fundingPeriodId.value ?? undefined,
-  },
-  perPage: -1,
+const childCareSpaceCategoriesWhere = computed(() => ({
+  fundingPeriodId: fundingPeriodId.value ?? undefined,
 }))
-const { childCareSpaceCategories, isLoading: isLoadingSpaceCategories } =
-  useChildCareSpaceCategories(spaceCategoriesQuery, {
-    skipWatchIf: () => isNil(fundingPeriodId.value),
-  })
-
-const availableChildCareSpaceCategories = computed(() =>
-  childCareSpaceCategories.value.filter(
-    (category) => category.fundingPeriodId === fundingPeriodId.value
-  )
-)
 
 watch(fundingPeriodId, () => {
   childCareSpaceCategoryId.value = null
