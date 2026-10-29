@@ -57,5 +57,7 @@ components/{model-plural}/{ModelSingularOrPlural}[Modifier]{VuetifyComponent}.vu
 
 ## Tables
 
+Use a model-specific `DataTableServer` for API-backed administration listings, following WRAP's `WorkflowCategoriesDataTableServer.vue` and the local [Administration categories table](administration-cost-categories/AdministrationCostCategoriesDataTableServer.vue). The page owns contextual filters; the table owns route-backed pagination/sorting, bounded server queries, record navigation, and display formatting. Reset pagination when the filter context changes.
+
 - When hiding an optional actions column, remove it from the `headers` list instead of rendering an empty column and then hiding the button inside the cell template.
 - Keep row-level action gating separate from page-level action-column gating. For example, the page may hide the entire actions column while a row still checks `item.policy.destroy`.

@@ -25,6 +25,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
 ### Changed
 
 - API model test factories now use Factory Shark for declarative related-record setup, with Sequelize core and the SQL Server dialect aligned to its supported release. Plain JSON and frontend fixtures remain on Fishery.
+- Administration category browsing now uses server-side pagination and sorting, with explicit View actions and funding-period filtering.
 - Agent guidance now resolves shared authoring, review, and testing standards directly while retaining ELCC's financial, security, API, and development/test requirements locally.
 - Administration worksheet rows now sort alphabetically by their saved category names, with a stable order when names match.
 - Administration backfill now skips and discards unusable legacy Administration data instead of blocking deployment. Restoring discarded data requires a backup.
