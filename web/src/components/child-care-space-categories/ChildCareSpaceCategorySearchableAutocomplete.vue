@@ -62,7 +62,7 @@ import useChildCareSpaceCategories, {
 } from "@/use/use-child-care-space-categories"
 
 const props = defineProps<{
-  modelValue: number | null
+  modelValue: number | null | undefined
   where?: ChildCareSpaceCategoryWhereOptions
   filters?: Omit<ChildCareSpaceCategoryFiltersOptions, "search">
   disabled?: boolean

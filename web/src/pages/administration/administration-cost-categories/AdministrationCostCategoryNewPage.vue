@@ -1,17 +1,17 @@
 <template>
   <HeaderActionsFormCard
-    ref="form"
+    ref="headerActionsFormCard"
     title="New Administration Cost Category"
     @submit.prevent="createCategory"
   >
     <FundingPeriodSearchableAutocomplete
-      v-model="fundingPeriodId"
+      v-model="administrationCostCategoryAttributes.fundingPeriodId"
       label="Funding Period *"
       :select-first-on-load="false"
       :rules="[required]"
     />
     <v-text-field
-      v-model="categoryName"
+      v-model="administrationCostCategoryAttributes.categoryName"
       label="Category Name *"
       :rules="[required]"
     />
@@ -21,7 +21,7 @@
         md="6"
       >
         <v-text-field
-          v-model="fromAge"
+          v-model.number="administrationCostCategoryAttributes.fromAge"
           label="From Age"
           type="number"
           min="0"
@@ -33,7 +33,7 @@
         md="6"
       >
         <v-text-field
-          v-model="toAge"
+          v-model.number="administrationCostCategoryAttributes.toAge"
           label="To Age"
           type="number"
           min="0"
@@ -42,15 +42,15 @@
       </v-col>
     </v-row>
     <CurrencyInput
-      v-model="monthlyAmount"
+      v-model="administrationCostCategoryAttributes.monthlyAmount"
       label="Monthly Amount *"
       :rules="[required]"
     />
     <ChildCareSpaceCategorySearchableAutocomplete
-      v-model="childCareSpaceCategoryId"
+      v-model="administrationCostCategoryAttributes.childCareSpaceCategoryId"
       :where="childCareSpaceCategoriesWhere"
       label="Linked Child Care Space Category"
-      :disabled="isNil(fundingPeriodId)"
+      :disabled="isNil(administrationCostCategoryAttributes.fundingPeriodId)"
       clearable
     />
     <template #actions>
@@ -82,7 +82,9 @@ import { isNil } from "lodash"
 
 import { required } from "@/utils/validators"
 
-import administrationCostCategoriesApi from "@/api/administration-cost-categories-api"
+import administrationCostCategoriesApi, {
+  type AdministrationCostCategory,
+} from "@/api/administration-cost-categories-api"
 
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useSnack from "@/use/use-snack"
@@ -92,42 +94,49 @@ import HeaderActionsFormCard from "@/components/common/HeaderActionsFormCard.vue
 import ChildCareSpaceCategorySearchableAutocomplete from "@/components/child-care-space-categories/ChildCareSpaceCategorySearchableAutocomplete.vue"
 import FundingPeriodSearchableAutocomplete from "@/components/funding-periods/FundingPeriodSearchableAutocomplete.vue"
 
-const router = useRouter()
-const snack = useSnack()
-
-const form = useTemplateRef("form")
-const fundingPeriodId = ref<number | null>(null)
-const categoryName = ref("")
-const fromAge = ref<string | number | null>(null)
-const toAge = ref<string | number | null>(null)
-const monthlyAmount = ref<string | null>(null)
-const childCareSpaceCategoryId = ref<number | null>(null)
-const isSaving = ref(false)
-
-const childCareSpaceCategoriesWhere = computed(() => ({
-  fundingPeriodId: fundingPeriodId.value ?? undefined,
-}))
-
-watch(fundingPeriodId, () => {
-  childCareSpaceCategoryId.value = null
+const administrationCostCategoryAttributes = ref<Partial<AdministrationCostCategory>>({
+  fundingPeriodId: undefined,
+  childCareSpaceCategoryId: null,
+  categoryName: "",
+  fromAge: null,
+  toAge: null,
+  monthlyAmount: undefined,
 })
 
-async function createCategory() {
-  if (isNil(form.value) || isSaving.value) return
+const childCareSpaceCategoriesWhere = computed(() => ({
+  fundingPeriodId: administrationCostCategoryAttributes.value.fundingPeriodId,
+}))
 
-  const { valid } = await form.value.validate()
-  if (!valid || isNil(fundingPeriodId.value) || isNil(monthlyAmount.value)) return
+watch(
+  () => administrationCostCategoryAttributes.value.fundingPeriodId,
+  () => {
+    administrationCostCategoryAttributes.value.childCareSpaceCategoryId = null
+  }
+)
+
+const headerActionsFormCard = useTemplateRef("headerActionsFormCard")
+const isSaving = ref(false)
+const snack = useSnack()
+const router = useRouter()
+
+async function createCategory() {
+  if (isNil(headerActionsFormCard.value) || isSaving.value) return
+
+  const { valid } = await headerActionsFormCard.value.validate()
+  if (!valid) return
+
+  if (String(administrationCostCategoryAttributes.value.fromAge) === "") {
+    administrationCostCategoryAttributes.value.fromAge = null
+  }
+  if (String(administrationCostCategoryAttributes.value.toAge) === "") {
+    administrationCostCategoryAttributes.value.toAge = null
+  }
 
   isSaving.value = true
   try {
-    const { administrationCostCategory } = await administrationCostCategoriesApi.create({
-      fundingPeriodId: fundingPeriodId.value,
-      childCareSpaceCategoryId: childCareSpaceCategoryId.value,
-      categoryName: categoryName.value,
-      fromAge: isNil(fromAge.value) || fromAge.value === "" ? null : Number(fromAge.value),
-      toAge: isNil(toAge.value) || toAge.value === "" ? null : Number(toAge.value),
-      monthlyAmount: monthlyAmount.value,
-    })
+    const { administrationCostCategory } = await administrationCostCategoriesApi.create(
+      administrationCostCategoryAttributes.value
+    )
     snack.success("Administration cost category created successfully!")
     await router.push({
       name: "administration/administration-cost-categories/AdministrationCostCategoryPage",

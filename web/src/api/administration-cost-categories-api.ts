@@ -74,7 +74,7 @@ export const administrationCostCategoriesApi = {
     )
     return data
   },
-  async create(attributes: AdministrationCostCategoryCreationAttributes): Promise<{
+  async create(attributes: Partial<AdministrationCostCategoryCreationAttributes>): Promise<{
     administrationCostCategory: AdministrationCostCategoryAsShow
     policy: AdministrationCostCategoryPolicy
   }> {

@@ -51,7 +51,7 @@ import useFundingPeriods, {
 
 const props = withDefaults(
   defineProps<{
-    modelValue: number | null
+    modelValue: number | null | undefined
     selectFirstOnLoad?: boolean
   }>(),
   {
