@@ -1,22 +1,25 @@
 <template>
   <v-sheet @keydown="activateKeyboardShortcutsModalIfCorrectEvent($event)">
-    <slot
-      name="actions"
-      :is-saving="isSaving"
-      :workflow-busy="workflowBusy"
-    >
-      <v-btn
-        color="primary"
-        class="float-right"
-        :loading="isSaving"
-        :disabled="isSaving || workflowBusy || isLoading || isErrored"
-        @click="saveFundingSubmissionLineJson"
-      >
-        Save
-      </v-btn>
-    </slot>
+    <div class="d-flex flex-wrap align-center ga-2 mb-3">
+      <h2>{{ dateName }} {{ calendarYear }}</h2>
 
-    <h2 class="mb-3">{{ dateName }} {{ calendarYear }}</h2>
+      <div class="ml-auto">
+        <slot
+          name="actions"
+          :is-saving="isSaving"
+          :workflow-busy="workflowBusy"
+        >
+          <v-btn
+            color="primary"
+            :loading="isSaving"
+            :disabled="isSaving || workflowBusy || isLoading || isErrored"
+            @click="saveFundingSubmissionLineJson"
+          >
+            Save
+          </v-btn>
+        </slot>
+      </div>
+    </div>
 
     <v-skeleton-loader
       v-if="isLoading"

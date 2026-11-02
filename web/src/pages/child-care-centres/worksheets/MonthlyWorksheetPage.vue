@@ -65,7 +65,7 @@
         @saving="isWorksheetSaving = $event"
       >
         <template #actions>
-          <div class="d-flex ga-2">
+          <div class="d-flex flex-wrap justify-end ga-2">
             <v-btn
               color="primary"
               :loading="isWorksheetSaving"
@@ -94,10 +94,12 @@
         <AdministrationCostEditTable
           ref="administrationCostTable"
           :where="worksheetWhere"
-          :is-replicating="isReplicating || isWorksheetSaving || isRefreshingLinked"
+          :is-replicating="
+            isReplicating || isWorksheetSaving || isRefreshingLinked || isCreatingAdministrationCost
+          "
           @updated="refreshLinkedResources"
         />
-        <v-row class="mt-4">
+        <v-row class="mt-0">
           <v-col
             v-if="!showAdministrationCostCreateForm"
             cols="12"
@@ -152,7 +154,7 @@
           :where="worksheetWhere"
         />
 
-        <v-row class="mt-4">
+        <v-row class="mt-0">
           <v-col
             v-if="!showBuildingExpenseCreateForm"
             cols="12"
