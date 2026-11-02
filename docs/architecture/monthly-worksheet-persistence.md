@@ -14,9 +14,9 @@ The [JSON model](../../api/src/models/funding-submission-line-json.ts) attaches 
 
 Both retired Administration labels, `Administration` and `Administration (10% of Spaces)`, are rejected by worksheet JSON and shared configuration writes. The worksheet displays the latter label for its ledger-backed section.
 
-The [worksheet editor](../../web/src/components/funding-submission-line-jsons/FundingSubmissionLineJsonEditSheet.vue) composes the two ledgers and JSON for display, persists changed ledger rows before saving JSON-owned lines, and refreshes all three resources after success. **Replicate Estimates** first saves, then invokes each store's replication operation. Occupancy inputs remain read only until the entire save or replication workflow finishes, preventing edits between persistence requests.
+The [monthly page](../../web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue) keeps Child Care Spaces and the remaining JSON sections together, followed by an independent Administration table and Building Expenses. Administration uses the Building Expenses interaction: committing an occupancy edit saves immediately, **Escape** cancels it, and category-based creation can fill later months without changing existing records. Authenticated users can create monthly rows; only system administrators can delete them.
 
-The editor recalculates dependent totals from each section's own snapshotted rate when occupancy changes. If any source fails to load, it withholds editing and reloads all sources through **Reload Worksheet**.
+**Save** commits any active Administration edit before persisting Spaces and JSON-owned lines. It refreshes Administration even after a partially successful Spaces save. **Replicate Estimates** first saves, then invokes the independent replication operations and waits for every dispatched write to settle. A failed Administration load disables these cross-section actions until its **Retry** succeeds; **Reload Worksheet** reloads the JSON and Spaces sources.
 
 The monthly page loads the worksheet and fiscal period together before mounting a centre/year/month-specific editor. It discards responses from superseded requests instead of pairing a newly selected worksheet with the previous month's fiscal period.
 
