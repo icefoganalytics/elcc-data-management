@@ -42,11 +42,7 @@ export class ReplicateEstimatesService extends BaseService {
               },
               transaction,
             })
-            if (isNil(futureEnhancement)) {
-              throw new Error(
-                `Expected Quality Enhancement for fiscal period ${futurePeriod.id} and category ${source.categoryId}`
-              )
-            }
+            if (isNil(futureEnhancement)) return
             await futureEnhancement.update(
               {
                 estimatedChildOccupancyRate: source.estimatedChildOccupancyRate,
