@@ -836,18 +836,19 @@ function findSourceConfiguration(
 }
 
 function parseInteger(value: string | null, label: string, line: WorksheetEnhancement): number {
-  if (value === null || !/^(0|[1-9][0-9]*)$/.test(value)) {
+  if (value === null || !/^(0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?$/.test(value)) {
     throw new Error(
       `Quality Enhancement Program worksheet ${line.worksheetId} line ${line.lineIndex} has an invalid ${label}.`
     )
   }
-  const parsedValue = Number(value)
-  if (!Number.isSafeInteger(parsedValue)) {
+
+  const parsedValue = Big(value)
+  if (parsedValue.gt("2147483647") || !parsedValue.eq(parsedValue.round(0, Big.roundDown))) {
     throw new Error(
       `Quality Enhancement Program worksheet ${line.worksheetId} line ${line.lineIndex} has an out-of-range ${label}.`
     )
   }
-  return parsedValue
+  return parsedValue.toNumber()
 }
 
 function ledgerAttributesFor(
