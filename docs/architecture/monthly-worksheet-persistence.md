@@ -69,6 +69,8 @@ Worksheet and category lookups abort superseded reads and release them when thei
 
 The [Quality Enhancement cutover](../../api/src/db/migrations/20261020220002_migrate-quality-enhancements-from-worksheet-json.ts) moves active and archived configuration and worksheet values into the two new stores, preserving supplied historical totals rather than recalculating them. Hot-meal metadata separates base from increment. Conflicting mappings, unknown enhancement metadata, or lossy decimal conversion abort the migration. Only successfully migrated source sections are removed; unrelated JSON numeric tokens remain intact. Reversal requires original source data and a backup.
 
+Historical submission-line and Spaces category identifiers are normalized exactly from integral JSON decimal or exponent tokens before checking the non-negative SQL `INT` range. Fractional identifiers are rejected rather than rounded, including fractions beyond JavaScript number precision.
+
 ## Administration configuration and historical cutover
 
 **Administration → Administration Cost Categories** manages names, age ranges, rates, and optional links to Child Care Space categories within the same funding period. Its funding period is immutable after creation. Normal edits and retirement affect future provisioning, not existing monthly name, rate, or linkage snapshots. Existing configured rates are preserved; the section title does not derive a live percentage from Child Care Spaces.
