@@ -225,6 +225,61 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
       })
     })
 
+    describe("#deleteRecord", () => {
+      test.each([
+        ["succeeds", false, 1],
+        ["fails", true, 0],
+      ] as const)(
+        "when deleting another row while an active edit %s, waits for its write and deletes only after success",
+        async (_outcome, failSave, expectedDeletes) => {
+          // Arrange
+          const first = administrationCostFactory.build({ id: 1 })
+          const second = administrationCostFactory.build({
+            id: 2,
+            policy: { show: true, create: true, update: true, destroy: true },
+          })
+          vi.spyOn(window, "confirm").mockReturnValue(true)
+          vi.spyOn(administrationCostsApi, "list").mockResolvedValue({
+            administrationCosts: [first, second],
+            totalCount: 2,
+          })
+          const write = Promise.withResolvers<{
+            administrationCost: typeof first
+            policy: typeof first.policy
+          }>()
+          vi.spyOn(administrationCostsApi, "update").mockReturnValue(write.promise)
+          const remove = vi.spyOn(administrationCostsApi, "delete").mockResolvedValue(undefined)
+          const wrapper = mount(AdministrationCostEditTable, {
+            props: { where: { centreId: first.centreId, fiscalPeriodId: first.fiscalPeriodId } },
+            global: { plugins: [createPinia(), mockVuetify()] },
+          })
+          await flushPromises()
+          const rows = wrapper.findAll("tr.cursor-pointer")
+          const firstRow = rows[0]
+          const secondRow = rows[1]
+          if (!firstRow || !secondRow) throw new Error("Expected two monthly rows")
+          await firstRow.trigger("click")
+          await wrapper.get('input[inputmode="decimal"]').setValue("0.25")
+
+          // Act & Assert
+          await secondRow.get("button").trigger("click")
+          await flushPromises()
+          expect(remove).not.toHaveBeenCalled()
+
+          if (failSave) {
+            write.reject(new Error("Write unavailable"))
+          } else {
+            write.resolve({
+              administrationCost: { ...first, estimatedChildOccupancyRate: "0.25" },
+              policy: first.policy,
+            })
+          }
+          await flushPromises()
+          expect(remove).toHaveBeenCalledTimes(expectedDeletes)
+        }
+      )
+    })
+
     describe("#replicateEstimates", () => {
       test("when the first category replication is pending, does not dispatch the next category", async () => {
         // Arrange

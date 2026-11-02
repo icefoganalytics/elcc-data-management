@@ -231,6 +231,9 @@ async function deleteRecord(record: AdministrationCostAsIndex) {
     !blockedToTrueConfirm("Are you sure you want to remove this administration cost?")
   )
     return
+
+  if (!(await commitEdit())) return
+
   isDeleting.value = true
   deletingId.value = record.id
   try {
