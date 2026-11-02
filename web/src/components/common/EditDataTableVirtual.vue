@@ -3,6 +3,8 @@
     v-click-outside="emitInputAndCancel"
     :items="itemClones"
     :headers="headers"
+    :inert="busy"
+    :aria-busy="busy"
   >
     <template #item="{ index, item, itemRef }">
       <tr
@@ -97,7 +99,7 @@
     ColumnKey extends string
   "
 >
-import { nextTick, ref, watchEffect } from "vue"
+import { nextTick, ref, shallowRef, watch, watchEffect } from "vue"
 import { cloneDeep, isNil } from "lodash"
 
 type InputComponents = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -108,6 +110,7 @@ const props = defineProps<{
   headers: Header[]
   items: Item[]
   editableColumns: ColumnKey[]
+  busy?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -126,6 +129,14 @@ watchEffect(() => {
 })
 
 const activeRowIndex = ref<number | null>(null)
+const pendingFocus = shallowRef<{ columnKey: ColumnKey; rowIndex: number } | null>(null)
+
+watch(
+  () => props.busy,
+  (busy) => {
+    if (!busy) void resumePendingFocus()
+  }
+)
 
 const inputElementRefsByAlphaNumericIndex = ref<Record<string, InputComponents | null>>({})
 
@@ -183,14 +194,24 @@ function registerInputElement(columnKey: ColumnKey, rowIndex: number, element: u
 }
 
 function focusOnField(columnKey: ColumnKey, rowIndex: number): void {
-  const inputElement = getInputElementBy(columnKey, rowIndex)
+  pendingFocus.value = { columnKey, rowIndex }
+  void resumePendingFocus()
+}
+
+async function resumePendingFocus(): Promise<void> {
+  const target = pendingFocus.value
+  if (isNil(target)) return
+
+  await nextTick()
+  if (props.busy || pendingFocus.value !== target || activeRowIndex.value !== target.rowIndex)
+    return
+
+  const inputElement = getInputElementBy(target.columnKey, target.rowIndex)
   if (isNil(inputElement)) return
 
   inputElement.focus()
-
-  if (inputElement instanceof HTMLSelectElement) return
-
-  inputElement.select()
+  pendingFocus.value = null
+  if (!(inputElement instanceof HTMLSelectElement)) inputElement.select()
 }
 
 function navigateOnKeydown(event: KeyboardEvent, columnKey: ColumnKey, rowIndex: number): void {
@@ -303,5 +324,6 @@ function emitUpdateCell(rowIndex: number): void {
 
 function resetActiveRow() {
   activeRowIndex.value = null
+  pendingFocus.value = null
 }
 </script>

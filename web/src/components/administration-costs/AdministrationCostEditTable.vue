@@ -28,8 +28,7 @@
     >
     <EditDataTableVirtual
       ref="editTable"
-      :inert="isBusy"
-      :aria-busy="isBusy"
+      :busy="isBusy"
       :headers="headers"
       :items="administrationCosts"
       :loading="isLoading || isSaving || isDeleting"
