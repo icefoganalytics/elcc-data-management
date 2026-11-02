@@ -26,6 +26,8 @@ Occupancy edits and estimate replication use the standard `update()` authorizati
 
 Estimate replication updates only matching active later-month rows. It skips absent or retired monthly rows without recreating them, so current-month-only creation and later-month deletion remain intentional.
 
+Deleting a monthly row first commits and awaits any active occupancy edit. If that save fails, deletion stops instead of discarding another row's uncommitted values.
+
 ## Category configuration ownership
 
 `child_care_space_categories` owns category names, age ranges, and rates for each funding period. The category CRUD API and administration pages edit this configuration; monthly ledger rows retain their own historical name/rate snapshots. Both the API policy and edit form keep the category's funding period immutable after creation.
