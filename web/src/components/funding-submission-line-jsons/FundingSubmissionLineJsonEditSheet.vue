@@ -8,16 +8,7 @@
           name="actions"
           :is-saving="isSaving"
           :workflow-busy="workflowBusy"
-        >
-          <v-btn
-            color="primary"
-            :loading="isSaving"
-            :disabled="isSaving || workflowBusy || isLoading || isErrored"
-            @click="saveFundingSubmissionLineJson"
-          >
-            Save
-          </v-btn>
-        </slot>
+        />
       </div>
     </div>
 
@@ -66,6 +57,18 @@
           @focus-beyond-first-in-column="goToPreviousSection(sectionIndex, $event)"
           @line-changed="propagateUpdatesAsNeeded($event)"
         />
+        <div class="d-flex justify-end mt-3">
+          <slot name="section-actions">
+            <v-btn
+              color="primary"
+              :loading="isSaving"
+              :disabled="isSaving || workflowBusy || isLoading || isErrored"
+              @click="saveFundingSubmissionLineJson"
+            >
+              Save
+            </v-btn>
+          </slot>
+        </div>
       </section>
     </template>
     <KeyboardShortcutsModal ref="keyboardShortcutsModal" />

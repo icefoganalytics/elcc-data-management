@@ -67,14 +67,6 @@
         <template #actions>
           <div class="d-flex flex-wrap justify-end ga-2">
             <v-btn
-              color="primary"
-              :loading="isWorksheetSaving"
-              :disabled="isWorkflowBusy || isReplicationUnavailable"
-              @click="saveWorksheet"
-            >
-              Save
-            </v-btn>
-            <v-btn
               v-if="month === FiscalPeriodMonths.APRIL"
               color="yg-sun"
               :loading="isReplicating"
@@ -85,6 +77,16 @@
               Replicate Estimates
             </v-btn>
           </div>
+        </template>
+        <template #section-actions>
+          <v-btn
+            color="primary"
+            :loading="isWorksheetSaving"
+            :disabled="isWorkflowBusy || isReplicationUnavailable"
+            @click="saveWorksheet"
+          >
+            Save
+          </v-btn>
         </template>
       </FundingSubmissionLineJsonEditSheet>
       <section class="ma-4 mt-8">
