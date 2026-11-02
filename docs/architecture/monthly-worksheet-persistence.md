@@ -59,7 +59,7 @@ Missing funding-period mappings or conflicting category references abort the bac
 
 ## Quality Enhancement ownership
 
-`quality_enhancement_categories` owns annual names, age ranges, base amounts, and optional Child Care Space category links through its dedicated category API. Only system administrators can mutate configuration; its funding period is immutable after creation. Editing or retiring a category does not rewrite existing monthly snapshots.
+`quality_enhancement_categories` owns annual names, age ranges, base amounts, and optional Child Care Space category links through its dedicated category API. **Administration → Quality Enhancement Categories** provides annual browsing and dedicated create, read, edit, and retire pages. Only system administrators can mutate configuration; its funding period is immutable after creation. Editing or retiring a category does not rewrite existing monthly snapshots.
 
 New annual configuration copies the latest configured earlier fiscal year, never a future year. Source-period selection includes retired category history so an intentionally emptied year stays empty instead of reviving older categories or defaults.
 
