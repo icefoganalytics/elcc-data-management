@@ -7,10 +7,10 @@ export const childCareSpaceFactory = Factory.define<ChildCareSpaceAsShow>(({ seq
 
   return {
     id: sequence,
-    centreId: 1,
-    fiscalPeriodId: 1,
-    categoryId: 9,
-    lineName: "Renamed Infant Cohort",
+    centreId: sequence,
+    fiscalPeriodId: sequence,
+    categoryId: sequence,
+    lineName: `Child Care Space ${sequence}`,
     monthlyAmount: "100.0000",
     estimatedChildOccupancyRate: "0.0000",
     actualChildOccupancyRate: "0.0000",

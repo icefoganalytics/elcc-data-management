@@ -1,7 +1,7 @@
 import { Op, sql } from "@sequelize/core"
-import { isEmpty, isNil, isUndefined } from "lodash"
+import { isEmpty } from "lodash"
 
-import { ChildCareSpaceCategory, FundingPeriod, FundingSubmissionLine } from "@/models"
+import { FundingPeriod, FundingSubmissionLine } from "@/models"
 import { doesNotUseLedgerSection } from "@/models/validators"
 
 import BaseService from "@/services/base-service"
@@ -27,77 +27,17 @@ export class BulkCreateService extends BaseService {
       FundingSubmissionLine.toLegacyFiscalYearFormat(fundingPeriodFiscalYear)
 
     const fundingSubmissionLineDefaults = await this.buildFundingSubmissionLineDefaults()
-    const categoryIdsByName = await this.categoryIdsByName(this.fundingPeriod.id)
-    const sourceCategoryNames = await this.sourceCategoryNames(fundingSubmissionLineDefaults)
 
-    const fundingSubmissionLinesAttributes = fundingSubmissionLineDefaults.map(
-      (fundingSubmissionLineDefault) => {
-        let categoryName: string | undefined
-        if (
-          fundingSubmissionLineDefault.sectionName ===
-          FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM
-        ) {
-          categoryName = this.categoryNameForDefault(
-            fundingSubmissionLineDefault,
-            sourceCategoryNames
-          )
-        }
-
-        let childCareSpaceCategoryId: number | null = null
-        if (!isUndefined(categoryName)) {
-          childCareSpaceCategoryId = categoryIdsByName.get(categoryName) ?? null
-        }
-
-        return {
-          ...fundingSubmissionLineDefault,
-          childCareSpaceCategoryId,
-          fiscalYear: currentFiscalYearLegacy,
-        }
-      }
-    )
+    const fundingSubmissionLinesAttributes = fundingSubmissionLineDefaults.map((line) => ({
+      ...line,
+      childCareSpaceCategoryId: null,
+      fiscalYear: currentFiscalYearLegacy,
+    }))
     for (const { sectionName } of fundingSubmissionLinesAttributes) {
       doesNotUseLedgerSection(sectionName)
     }
 
     return FundingSubmissionLine.bulkCreate(fundingSubmissionLinesAttributes)
-  }
-
-  private categoryNameForDefault(
-    line: FundingSubmissionLineDefaultWithCategory,
-    sourceCategoryNames: Map<number, string>
-  ) {
-    if (line.childCareSpaceCategoryId === null) {
-      return line.lineName
-    }
-
-    return sourceCategoryNames.get(line.childCareSpaceCategoryId)
-  }
-
-  private async categoryIdsByName(fundingPeriodId: number) {
-    const categories = await ChildCareSpaceCategory.findAll({
-      where: { fundingPeriodId },
-      attributes: ["id", "categoryName"],
-    })
-    return new Map(categories.map(({ id, categoryName }) => [categoryName, id]))
-  }
-
-  private async sourceCategoryNames(lines: FundingSubmissionLineDefaultWithCategory[]) {
-    const categoryIdsIncludingNull = lines.map(
-      ({ childCareSpaceCategoryId }) => childCareSpaceCategoryId
-    )
-    const categoryIds = categoryIdsIncludingNull.filter(
-      (categoryId): categoryId is number => !isNil(categoryId)
-    )
-    if (categoryIds.length === 0) {
-      return new Map<number, string>()
-    }
-
-    const categories = await ChildCareSpaceCategory.findAll({
-      where: { id: { [Op.in]: categoryIds } },
-      attributes: ["id", "categoryName"],
-      paranoid: false,
-    })
-    return new Map(categories.map(({ id, categoryName }) => [id, categoryName]))
   }
 
   private async buildFundingSubmissionLineDefaults(): Promise<

@@ -9,7 +9,7 @@ import CreateService from "@/services/funding-submission-lines/create-service"
 describe("api/src/services/funding-submission-lines/create-service.ts", () => {
   describe("CreateService", () => {
     describe("#perform", () => {
-      test("when creating linked and unrelated sections, links only QEP lines to their period's category", async () => {
+      test("when creating unrelated sections, does not retain ledger category links", async () => {
         // Arrange
         const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2147-2148" })
         const category = await childCareSpaceCategoryFactory.create({
@@ -27,12 +27,6 @@ describe("api/src/services/funding-submission-lines/create-service.ts", () => {
         })
         await CreateService.perform({
           fiscalYear: "2147/48",
-          sectionName: "Quality Enhancement Program",
-          lineName: "Infants",
-          monthlyAmount: "200.00",
-        })
-        await CreateService.perform({
-          fiscalYear: "2147/48",
           sectionName: "Other Section",
           lineName: "Infants",
           monthlyAmount: "300.00",
@@ -41,29 +35,28 @@ describe("api/src/services/funding-submission-lines/create-service.ts", () => {
 
         // Assert
         const persistedLines = await FundingSubmissionLine.findAll()
-        expect(persistedLines).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              sectionName: "Children with Diverse Needs",
-              childCareSpaceCategoryId: null,
-            }),
-            expect.objectContaining({
-              sectionName: "Quality Enhancement Program",
-              childCareSpaceCategoryId: category.id,
-            }),
-            expect.objectContaining({
-              sectionName: "Other Section",
-              childCareSpaceCategoryId: null,
-            }),
-          ])
-        )
+        expect(persistedLines).toEqual([
+          expect.objectContaining({
+            sectionName: "Children with Diverse Needs",
+            childCareSpaceCategoryId: null,
+          }),
+          expect.objectContaining({
+            sectionName: "Other Section",
+            childCareSpaceCategoryId: null,
+          }),
+        ])
       })
 
-      test("when creating a retired Child Care Spaces section, rejects the configuration", async () => {
+      test.each([
+        "Child Care Spaces",
+        "Administration",
+        "Administration (10% of Spaces)",
+        "Quality Enhancement Program",
+      ])("when creating retired %s, rejects the configuration", async (sectionName) => {
         // Arrange
         const attributes = {
           fiscalYear: "2025/26",
-          sectionName: "Child Care Spaces",
+          sectionName,
           lineName: "Infants",
           monthlyAmount: "100.00",
         }

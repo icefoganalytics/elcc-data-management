@@ -1,7 +1,7 @@
 import { IsolationLevel, type Attributes, type Transaction } from "@sequelize/core"
 import Big from "big.js"
 
-import db, { AdministrationCost, ChildCareSpace } from "@/models"
+import db, { AdministrationCost, ChildCareSpace, QualityEnhancement } from "@/models"
 import BaseService from "@/services/base-service"
 
 export type ChildCareSpaceUpdateAttributes = Pick<
@@ -52,6 +52,9 @@ export class UpdateService extends BaseService {
 
     await AdministrationCost.findEach({ where, transaction }, async (administrationCost) => {
       await administrationCost.update(occupancy, { transaction })
+    })
+    await QualityEnhancement.findEach({ where, transaction }, async (qualityEnhancement) => {
+      await qualityEnhancement.update(occupancy, { transaction })
     })
   }
 }

@@ -62,7 +62,6 @@
           isWorksheetSaving || isReplicating || isLedgerMutating || isRefreshingLinked
         "
         @update:funding-submission-line-json="onJsonUpdated"
-        @saving="isWorksheetSaving = $event"
       >
         <template #actions>
           <div class="d-flex flex-wrap justify-end ga-2">
@@ -99,7 +98,6 @@
           :is-replicating="
             isReplicating || isWorksheetSaving || isRefreshingLinked || isCreatingAdministrationCost
           "
-          @updated="refreshLinkedResources"
         />
         <v-row class="mt-0">
           <v-col
@@ -115,8 +113,9 @@
                 administrationCostTable?.isErrored
               "
               @click="showAdministrationCostCreateForm = true"
-              >Add Administration Cost</v-btn
             >
+              Add Administration Cost
+            </v-btn>
           </v-col>
           <v-col
             v-else
@@ -127,10 +126,56 @@
               :fiscal-period-id="fiscalPeriod.id"
               :funding-period-id="fiscalPeriod.fundingPeriodId"
               :existing-category-ids="administrationCostTable?.categoryIds ?? []"
-              :is-workflow-busy="isWorkflowBusy"
+              :is-workflow-busy="isReplicating || isWorksheetSaving || isRefreshingLinked"
               @saving="isCreatingAdministrationCost = $event"
               @created="onAdministrationCostCreated"
               @cancel="showAdministrationCostCreateForm = false"
+            />
+          </v-col>
+        </v-row>
+      </section>
+      <section class="ma-4 mt-8">
+        <h3 class="mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2">
+          Quality Enhancement Program
+        </h3>
+        <QualityEnhancementEditTable
+          ref="qualityEnhancementTable"
+          :where="worksheetWhere"
+          :is-replicating="
+            isReplicating || isWorksheetSaving || isRefreshingLinked || isCreatingQualityEnhancement
+          "
+        />
+        <v-row class="mt-0">
+          <v-col
+            v-if="!showQualityEnhancementCreateForm"
+            cols="12"
+            class="d-flex justify-end"
+          >
+            <v-btn
+              color="primary"
+              :disabled="
+                isWorkflowBusy ||
+                qualityEnhancementTable?.isLoading ||
+                qualityEnhancementTable?.isErrored
+              "
+              @click="showQualityEnhancementCreateForm = true"
+            >
+              Add Quality Enhancement
+            </v-btn>
+          </v-col>
+          <v-col
+            v-else
+            cols="12"
+          >
+            <QualityEnhancementCreateFormCard
+              :centre-id="centreId"
+              :fiscal-period-id="fiscalPeriod.id"
+              :funding-period-id="fiscalPeriod.fundingPeriodId"
+              :existing-category-ids="qualityEnhancementTable?.categoryIds ?? []"
+              :workflow-busy="isReplicating || isWorksheetSaving || isRefreshingLinked"
+              @saving="isCreatingQualityEnhancement = $event"
+              @created="onQualityEnhancementCreated"
+              @cancel="showQualityEnhancementCreateForm = false"
             />
           </v-col>
         </v-row>
@@ -207,6 +252,8 @@ import BuildingExpenseCreateFormCard from "@/components/building-expenses/Buildi
 import BuildingExpensesEditTable from "@/components/building-expenses/BuildingExpensesEditTable.vue"
 import AdministrationCostEditTable from "@/components/administration-costs/AdministrationCostEditTable.vue"
 import AdministrationCostCreateFormCard from "@/components/administration-costs/AdministrationCostCreateFormCard.vue"
+import QualityEnhancementEditTable from "@/components/quality-enhancements/QualityEnhancementEditTable.vue"
+import QualityEnhancementCreateFormCard from "@/components/quality-enhancements/QualityEnhancementCreateFormCard.vue"
 import useSnack from "@/use/use-snack"
 const props = defineProps<{
   centreId: number
@@ -226,11 +273,15 @@ const isLoading = ref(true)
 const loadError = ref(false)
 let activeRequest = 0
 const showAdministrationCostCreateForm = ref(false)
+const showQualityEnhancementCreateForm = ref(false)
 const isCreatingAdministrationCost = ref(false)
+const isCreatingQualityEnhancement = ref(false)
 
 async function loadWorksheet() {
   showAdministrationCostCreateForm.value = false
+  showQualityEnhancementCreateForm.value = false
   isCreatingAdministrationCost.value = false
+  isCreatingQualityEnhancement.value = false
   const requestId = ++activeRequest
   isLoading.value = true
   loadError.value = false
@@ -293,6 +344,8 @@ const worksheetWhere = computed(() => ({
 }))
 const administrationCostTable =
   useTemplateRef<InstanceType<typeof AdministrationCostEditTable>>("administrationCostTable")
+const qualityEnhancementTable =
+  useTemplateRef<InstanceType<typeof QualityEnhancementEditTable>>("qualityEnhancementTable")
 const jsonSheet =
   useTemplateRef<InstanceType<typeof FundingSubmissionLineJsonEditSheet>>("jsonSheet")
 const buildingExpensesEditTable = useTemplateRef("buildingExpensesEditTable")
@@ -306,7 +359,10 @@ const isLedgerMutating = computed(() =>
   Boolean(
     administrationCostTable.value?.isSaving ||
       administrationCostTable.value?.isDeleting ||
-      isCreatingAdministrationCost.value
+      qualityEnhancementTable.value?.isSaving ||
+      qualityEnhancementTable.value?.isDeleting ||
+      isCreatingAdministrationCost.value ||
+      isCreatingQualityEnhancement.value
   )
 )
 const isWorkflowBusy = computed(
@@ -319,13 +375,17 @@ const isWorkflowBusy = computed(
 const isReplicationUnavailable = computed(() => {
   const sheet = jsonSheet.value
   const administration = administrationCostTable.value
+  const quality = qualityEnhancementTable.value
   return (
     !sheet ||
     sheet.isLoading ||
     sheet.isErrored ||
     !administration ||
     administration.isLoading ||
-    administration.isErrored
+    administration.isErrored ||
+    !quality ||
+    quality.isLoading ||
+    quality.isErrored
   )
 })
 
@@ -352,7 +412,10 @@ async function closeCreateFormAndRefresh() {
 }
 
 async function refreshLinkedResources() {
-  const results = await Promise.allSettled([administrationCostTable.value?.refresh()])
+  const results = await Promise.allSettled([
+    administrationCostTable.value?.refresh(),
+    qualityEnhancementTable.value?.refresh(),
+  ])
   const failures = results.flatMap((result) =>
     result.status === "rejected" ? [result.reason] : []
   )
@@ -370,12 +433,15 @@ async function saveWorksheet(): Promise<boolean> {
 
   const sheet = jsonSheet.value
   const administration = administrationCostTable.value
-  if (!sheet || !administration) return false
+  const quality = qualityEnhancementTable.value
+  if (!sheet || !administration || !quality) return false
 
   try {
-    const committedEdit = administration.commitEdit()
+    const committedEdits = Promise.all([administration.commitEdit(), quality.commitEdit()])
     isWorksheetSaving.value = true
-    if (!(await committedEdit)) return false
+    const [administrationCommitted, qualityCommitted] = await committedEdits
+    if (!administrationCommitted || !qualityCommitted) return false
+
     let wasSaved = false
     try {
       wasSaved = await sheet.saveFundingSubmissionLineJson()
@@ -405,12 +471,22 @@ async function onAdministrationCostCreated() {
   }
 }
 
+async function onQualityEnhancementCreated() {
+  showQualityEnhancementCreateForm.value = false
+  try {
+    await qualityEnhancementTable.value?.refresh()
+  } catch (error) {
+    snack.error(`Failed to refresh Quality Enhancements: ${error}`)
+  }
+}
+
 async function replicateEstimatesForward() {
   if (isWorkflowBusy.value || isReplicationUnavailable.value) return
 
   const sheet = jsonSheet.value
   const administration = administrationCostTable.value
-  if (!sheet || !administration) return
+  const quality = qualityEnhancementTable.value
+  if (!sheet || !administration || !quality) return
 
   const savedWorksheet = saveWorksheet()
   isReplicating.value = true
@@ -420,6 +496,7 @@ async function replicateEstimatesForward() {
     const results = await Promise.allSettled([
       sheet.replicateOwnEstimates(),
       administration.replicateEstimates(),
+      quality.replicateEstimates(),
     ])
     const failures = results.flatMap((result) =>
       result.status === "rejected" ? [result.reason] : []

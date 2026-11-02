@@ -1,22 +1,14 @@
 import { type CreationAttributes } from "@sequelize/core"
-import { DateTime } from "luxon"
 import { isEmpty } from "lodash"
-import Big from "big.js"
-
-import sumByDecimal from "@/utils/sum-by-decimal"
 
 import {
   Centre,
   FiscalPeriod,
   FundingPeriod,
-  FundingRegion,
   FundingSubmissionLine,
   FundingSubmissionLineJson,
 } from "@/models"
-import {
-  type FundingLineValue,
-  type FundingLineValueProgramQualityEnhancements,
-} from "@/models/funding-line-value"
+import { type FundingLineValue } from "@/models/funding-line-value"
 import BaseService from "@/services/base-service"
 
 export class BulkCreateService extends BaseService {
@@ -49,20 +41,13 @@ export class BulkCreateService extends BaseService {
       throw new Error("No funding submission lines found for the funding period.")
     }
 
-    const { fundingRegionId, hotMeal } = this.centre
-    const fundingRegion = await FundingRegion.findByPk(fundingRegionId, {
-      rejectOnEmpty: true,
-    })
-
-    const { hotMealIncrementAmount } = fundingRegion
-
     const fundingSubmissionLineJsonsDefaults = fundingSubmissionLines.map(
       (fundingSubmissionLine) => {
         const {
           id: submissionLineId,
           sectionName,
           lineName,
-          monthlyAmount: originalMonthlyAmount,
+          monthlyAmount,
           childCareSpaceCategoryId,
         } = fundingSubmissionLine
 
@@ -70,19 +55,12 @@ export class BulkCreateService extends BaseService {
           submissionLineId,
           sectionName,
           lineName,
-          monthlyAmount: originalMonthlyAmount,
+          monthlyAmount,
           estimatedChildOccupancyRate: "0",
           actualChildOccupancyRate: "0",
           estimatedComputedTotal: "0",
           actualComputedTotal: "0",
           ...(childCareSpaceCategoryId === null ? {} : { childCareSpaceCategoryId }),
-        }
-
-        if (
-          hotMeal &&
-          sectionName === FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM
-        ) {
-          return this.applyHotMealEnhancement(line, originalMonthlyAmount, hotMealIncrementAmount)
         }
 
         return line
@@ -105,41 +83,6 @@ export class BulkCreateService extends BaseService {
       })
 
     return FundingSubmissionLineJson.bulkCreate(fundingSubmissionLineJsonsAttributes)
-  }
-
-  private applyHotMealEnhancement(
-    line: FundingLineValue,
-    originalMonthlyAmount: string,
-    hotMealIncrementAmount: string
-  ) {
-    const programQualityEnhancements = {
-      preEnhancementAmount: originalMonthlyAmount,
-      [FundingSubmissionLine.EnhancementTypes.HOT_MEAL]: {
-        amount: hotMealIncrementAmount,
-        appliedAt: DateTime.utc().toISO(),
-      },
-    }
-
-    const monthlyAmount = this.calculateMonthlyAmountFromEnhancements(
-      originalMonthlyAmount,
-      programQualityEnhancements
-    )
-
-    return {
-      ...line,
-      monthlyAmount,
-      programQualityEnhancements,
-    }
-  }
-
-  private calculateMonthlyAmountFromEnhancements(
-    preEnhancementAmount: string,
-    programQualityEnhancements: FundingLineValueProgramQualityEnhancements
-  ): string {
-    const preEnhancementAmountAsBig = Big(preEnhancementAmount)
-    const enhancementValues = Object.values(programQualityEnhancements)
-    const totalEnhancementAsBig = sumByDecimal(enhancementValues, "amount")
-    return preEnhancementAmountAsBig.plus(totalEnhancementAsBig).toFixed(4)
   }
 }
 

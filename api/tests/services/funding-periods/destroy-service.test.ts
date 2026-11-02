@@ -1,4 +1,9 @@
-import { AdministrationCost, AdministrationCostCategory, ChildCareSpace } from "@/models"
+import {
+  AdministrationCost,
+  AdministrationCostCategory,
+  ChildCareSpace,
+  QualityEnhancement,
+} from "@/models"
 
 import {
   administrationCostCategoryFactory,
@@ -8,6 +13,8 @@ import {
   childCareSpaceFactory,
   fiscalPeriodFactory,
   fundingPeriodFactory,
+  qualityEnhancementCategoryFactory,
+  qualityEnhancementFactory,
 } from "@/factories"
 
 import { DestroyService } from "@/services/funding-periods/destroy-service"
@@ -58,14 +65,53 @@ describe("api/src/services/funding-periods/destroy-service.ts", () => {
         // Act
         await DestroyService.perform(selectedFundingPeriod)
 
-        // Act
-        const remainingChildCareSpaces = await ChildCareSpace.findAll()
-
         // Assert
+        const remainingChildCareSpaces = await ChildCareSpace.findAll()
         expect(remainingChildCareSpaces).toEqual([
           expect.objectContaining({
             id: unrelatedChildCareSpace.id,
             deletedAt: null,
+          }),
+        ])
+      })
+
+      test("when deleting a funding period, preserves Quality Enhancements from another period", async () => {
+        // Arrange
+        const centre = await centreFactory.create()
+        const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2026-2027" })
+        const otherFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2027-2028" })
+        const fiscalPeriod = await fiscalPeriodFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          fiscalYear: "2026-27",
+        })
+        const otherFiscalPeriod = await fiscalPeriodFactory.create({
+          fundingPeriodId: otherFundingPeriod.id,
+          fiscalYear: "2027-28",
+        })
+        const category = await qualityEnhancementCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+        })
+        const otherCategory = await qualityEnhancementCategoryFactory.create({
+          fundingPeriodId: otherFundingPeriod.id,
+        })
+        await qualityEnhancementFactory.associations({ centre, category, fiscalPeriod }).create()
+        const otherQualityEnhancement = await qualityEnhancementFactory
+          .associations({
+            centre,
+            category: otherCategory,
+            fiscalPeriod: otherFiscalPeriod,
+          })
+          .create()
+
+        // Act
+        await DestroyService.perform(fundingPeriod)
+
+        // Assert
+        const qualityEnhancements = await QualityEnhancement.findAll()
+        expect(qualityEnhancements).toEqual([
+          expect.objectContaining({
+            id: otherQualityEnhancement.id,
+            fiscalPeriodId: otherFiscalPeriod.id,
           }),
         ])
       })
@@ -88,21 +134,13 @@ describe("api/src/services/funding-periods/destroy-service.ts", () => {
           fiscalYear: "2025-26",
         })
         const selectedCategory = await administrationCostCategoryFactory
-          .associations({
-            fundingPeriod: selectedFundingPeriod,
-          })
+          .associations({ fundingPeriod: selectedFundingPeriod })
           .create()
         const unrelatedCategory = await administrationCostCategoryFactory
-          .associations({
-            fundingPeriod: unrelatedFundingPeriod,
-          })
+          .associations({ fundingPeriod: unrelatedFundingPeriod })
           .create()
         await administrationCostFactory
-          .associations({
-            centre,
-            fiscalPeriod: selectedFiscalPeriod,
-            category: selectedCategory,
-          })
+          .associations({ centre, fiscalPeriod: selectedFiscalPeriod, category: selectedCategory })
           .create()
         await administrationCostFactory
           .associations({
@@ -144,21 +182,13 @@ describe("api/src/services/funding-periods/destroy-service.ts", () => {
           fiscalYear: "2025-26",
         })
         const selectedCategory = await administrationCostCategoryFactory
-          .associations({
-            fundingPeriod: selectedFundingPeriod,
-          })
+          .associations({ fundingPeriod: selectedFundingPeriod })
           .create()
         const unrelatedCategory = await administrationCostCategoryFactory
-          .associations({
-            fundingPeriod: unrelatedFundingPeriod,
-          })
+          .associations({ fundingPeriod: unrelatedFundingPeriod })
           .create()
         await administrationCostFactory
-          .associations({
-            centre,
-            fiscalPeriod: selectedFiscalPeriod,
-            category: selectedCategory,
-          })
+          .associations({ centre, fiscalPeriod: selectedFiscalPeriod, category: selectedCategory })
           .create()
         await administrationCostFactory
           .associations({

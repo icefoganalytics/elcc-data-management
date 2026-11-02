@@ -55,7 +55,6 @@
           :readonly="isWorkflowRunning"
           @focus-beyond-last-in-column="goToNextSection(sectionIndex, $event)"
           @focus-beyond-first-in-column="goToPreviousSection(sectionIndex, $event)"
-          @line-changed="propagateUpdatesAsNeeded($event)"
         />
         <div class="d-flex justify-end mt-3">
           <slot name="section-actions">
@@ -278,27 +277,6 @@ async function replicateOwnEstimates(): Promise<void> {
 async function replicateChildCareSpaceEstimates(): Promise<void> {
   for (const childCareSpace of childCareSpaces.value) {
     await childCareSpacesApi.replicateEstimates(childCareSpace.id)
-  }
-}
-
-function propagateUpdatesAsNeeded({ line }: { line: FundingLineValue }) {
-  if (line.sectionName !== CHILD_CARE_SPACES_SECTION_NAME) return
-
-  const sectionIndex = sections.value.findIndex(
-    ({ sectionName }) => sectionName === "Quality Enhancement Program"
-  )
-  if (sectionIndex === -1) return
-
-  const linkedSection = sections.value[sectionIndex]
-  const linkedTable = fundingSubmissionLineJsonSectionTables.value[sectionIndex]
-  if (isNil(linkedTable)) return
-
-  for (const linkedLine of linkedSection.lines) {
-    if (linkedLine.childCareSpaceCategoryId !== line.submissionLineId) continue
-
-    linkedLine.estimatedChildOccupancyRate = line.estimatedChildOccupancyRate
-    linkedLine.actualChildOccupancyRate = line.actualChildOccupancyRate
-    linkedTable.refreshLineTotals(linkedLine)
   }
 }
 
