@@ -134,6 +134,7 @@ async function deleteFundingRegion(fundingRegionId: number) {
       snack.error(`Failed to delete funding region: ${error}`)
       return
     }
+
     throw error
   } finally {
     isDeleting.value = false

@@ -160,6 +160,7 @@ async function saveCategory() {
       snack.error(`Failed to update Administration cost category: ${error}`)
       return
     }
+
     throw error
   } finally {
     isSaving.value = false

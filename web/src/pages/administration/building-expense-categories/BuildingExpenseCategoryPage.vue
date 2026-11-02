@@ -140,6 +140,7 @@ async function deleteBuildingExpenseCategory(buildingExpenseCategoryId: number) 
       snack.error(`Failed to delete building expense category: ${error}`)
       return
     }
+
     throw error
   } finally {
     isDeleting.value = false

@@ -143,6 +143,7 @@ async function deleteUser(userId: number) {
       snack.error(`Failed to delete user: ${error}`)
       return
     }
+
     throw error
   } finally {
     isDeleting.value = false

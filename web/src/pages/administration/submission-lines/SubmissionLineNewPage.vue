@@ -226,6 +226,7 @@ async function createFundingSubmissionLine() {
       snack.error(`Failed to create submission line: ${error}`)
       return
     }
+
     throw error
   } finally {
     isLoading.value = false

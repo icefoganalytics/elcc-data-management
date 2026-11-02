@@ -23,6 +23,7 @@ export const useApiStore = defineStore("api", () => {
       ) {
         throw new AuthenticationRequiredError()
       }
+
       throw error
     }
     const response = await SecureAPICall(method, token).request({ url, data })

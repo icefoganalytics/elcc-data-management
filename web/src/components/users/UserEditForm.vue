@@ -116,6 +116,7 @@ async function saveAndNotify() {
       snack.error(`Failed to update user: ${error}`)
       return
     }
+
     throw error
   } finally {
     isSaving.value = false

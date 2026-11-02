@@ -160,6 +160,7 @@ async function saveAndNotify() {
       snack.error(`Failed to update submission line: ${error}`)
       return
     }
+
     throw error
   } finally {
     isSaving.value = false

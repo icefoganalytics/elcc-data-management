@@ -130,6 +130,7 @@ async function deleteFundingSubmissionLine(userId: number) {
       snack.error(`Failed to delete submission line: ${error}`)
       return
     }
+
     throw error
   } finally {
     isDeleting.value = false

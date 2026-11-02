@@ -237,6 +237,7 @@ async function updateAndClose() {
       snack.error(`Failed to save centre ${error}`)
       return
     }
+
     throw error
   } finally {
     isLoading.value = false

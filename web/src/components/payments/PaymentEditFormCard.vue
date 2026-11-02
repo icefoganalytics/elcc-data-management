@@ -136,6 +136,7 @@ async function updatePayment() {
       snack.error(`Failed to update payment: ${error}`)
       return
     }
+
     throw error
   } finally {
     isUpdating.value = false

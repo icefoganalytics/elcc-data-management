@@ -115,6 +115,7 @@ async function validateSaveAndNotify() {
       snack.error(`Failed to update funding region: ${error}`)
       return
     }
+
     throw error
   } finally {
     isSaving.value = false

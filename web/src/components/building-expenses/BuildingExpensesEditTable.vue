@@ -242,12 +242,15 @@ async function saveBuildingExpenseIfDirty(buildingExpense: BuildingExpense) {
 
     snack.success("Building expense saved!")
   } catch (error) {
-    if (!(error instanceof ApiOperationError)) throw error
+    if (error instanceof ApiOperationError) {
+      await refresh()
 
-    await refresh()
+      console.error(`Failed to save building expense: ${error}`, { error })
+      snack.error(`Failed to save building expense: ${error}`)
+      return
+    }
 
-    console.error(`Failed to save building expense: ${error}`, { error })
-    snack.error(`Failed to save building expense: ${error}`)
+    throw error
   } finally {
     isSaving.value = false
   }

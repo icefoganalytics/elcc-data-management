@@ -130,6 +130,7 @@ async function createFundingPeriod() {
       snack.error(`Failed to create funding period: ${error}`)
       return
     }
+
     throw error
   } finally {
     isLoading.value = false

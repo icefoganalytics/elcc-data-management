@@ -183,6 +183,7 @@ async function confirmAndDeleteCentre(centreId: number) {
       snack.error(`Failed to delete centre: ${error}`)
       return
     }
+
     throw error
   } finally {
     isDeleting.value = false

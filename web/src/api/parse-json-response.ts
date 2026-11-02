@@ -23,6 +23,7 @@ export const parseJsonResponse: AxiosResponseTransformer = function (
   }
 
   if (typeof data !== "string") return data
+
   if (data.trim() === "" && (status === 204 || status === 205 || this.method === "head")) {
     return data
   }
@@ -38,6 +39,7 @@ export function classifyApiResponse(response: AxiosResponse): Error | undefined 
   if (AuthenticationRequiredError.isAuthenticationRequiredResponse(response)) {
     return new AuthenticationRequiredError(response.data.message)
   }
+
   if (ApiOperationError.isOperationErrorResponse(response)) {
     return new ApiOperationError(response.data.message, response.status)
   }

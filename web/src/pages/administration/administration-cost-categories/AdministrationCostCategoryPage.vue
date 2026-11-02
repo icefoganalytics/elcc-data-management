@@ -183,6 +183,7 @@ async function deleteCategory(administrationCostCategoryId: number) {
       snack.error(`Failed to delete Administration cost category: ${error}`)
       return
     }
+
     throw error
   } finally {
     isDeleting.value = false

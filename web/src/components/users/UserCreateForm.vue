@@ -102,6 +102,7 @@ async function saveAndNotify() {
       snack.error(`Failed to create user: ${error}`)
       return
     }
+
     throw error
   } finally {
     isSaving.value = false

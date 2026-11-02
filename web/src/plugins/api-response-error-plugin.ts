@@ -41,6 +41,7 @@ export function apiResponseErrorPlugin(application: App): void {
 
 function findUnexpectedApiResponseError(error: unknown): UnexpectedApiResponseError | null {
   if (error instanceof UnexpectedApiResponseError) return error
+
   if (!(error instanceof AggregateError)) return null
 
   for (const cause of error.errors) {

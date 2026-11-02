@@ -143,6 +143,7 @@ async function createCategory() {
       snack.error(`Failed to create Administration cost category: ${error}`)
       return
     }
+
     throw error
   } finally {
     isSaving.value = false

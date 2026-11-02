@@ -203,6 +203,7 @@ async function deleteChildCareSpaceCategory(childCareSpaceCategoryId: number) {
       snack.error(`Failed to delete Child Care Space category: ${error}`)
       return
     }
+
     throw error
   } finally {
     isDeleting.value = false

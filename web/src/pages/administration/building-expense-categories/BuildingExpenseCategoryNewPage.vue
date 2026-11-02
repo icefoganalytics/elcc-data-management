@@ -125,6 +125,7 @@ async function createBuildingExpenseCategory() {
       snack.error(`Failed to create building expense category: ${error}`)
       return
     }
+
     throw error
   } finally {
     isLoading.value = false

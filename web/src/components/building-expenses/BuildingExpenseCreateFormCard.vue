@@ -152,6 +152,7 @@ async function createBuildingExpense() {
       snack.error(`Failed to create building expense: ${error}`)
       return
     }
+
     throw error
   } finally {
     isCreating.value = false

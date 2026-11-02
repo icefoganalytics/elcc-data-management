@@ -112,6 +112,7 @@ async function createFundingRegion() {
       snack.error(`Failed to create funding region: ${error}`)
       return
     }
+
     throw error
   } finally {
     isLoading.value = false

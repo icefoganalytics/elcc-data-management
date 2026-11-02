@@ -122,6 +122,7 @@ async function deletePayment(payment: PaymentAsIndex) {
       snack.error("Failed to delete payment")
       return
     }
+
     throw error
   } finally {
     isDeletingPaymentId.value = null

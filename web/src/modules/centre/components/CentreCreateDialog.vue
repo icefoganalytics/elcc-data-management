@@ -182,6 +182,7 @@ async function validateSaveAndClose() {
       snack.error(`Failed to create centre ${error}`)
       return
     }
+
     throw error
   } finally {
     isLoading.value = false

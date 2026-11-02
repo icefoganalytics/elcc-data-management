@@ -36,6 +36,7 @@ httpClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error instanceof UnexpectedApiResponseError || axios.isCancel(error)) throw error
+
     if (error?.error === "login_required") throw new AuthenticationRequiredError()
 
     const response = error?.response
@@ -43,6 +44,7 @@ httpClient.interceptors.response.use(
       const classified = classifyApiResponse(response)
       if (classified) throw classified
     }
+
     throw error
   }
 )

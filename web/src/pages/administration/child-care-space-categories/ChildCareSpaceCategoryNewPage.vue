@@ -276,6 +276,7 @@ async function createChildCareSpaceCategory() {
       snack.error(`Failed to create Child Care Space category: ${error}`)
       return
     }
+
     throw error
   } finally {
     isCreating.value = false

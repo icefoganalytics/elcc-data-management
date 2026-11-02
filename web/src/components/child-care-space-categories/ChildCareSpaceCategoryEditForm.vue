@@ -270,6 +270,7 @@ async function validateSaveAndNotify() {
       snack.error(`Failed to update Child Care Space category: ${error}`)
       return
     }
+
     throw error
   } finally {
     isSaving.value = false

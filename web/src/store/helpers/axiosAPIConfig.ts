@@ -22,7 +22,9 @@ export function SecureAPICall(method: string, token: string) {
     (response) => response,
     (error) => {
       if (error instanceof UnexpectedApiResponseError || axios.isCancel(error)) throw error
+
       if (error?.error === "login_required") throw new AuthenticationRequiredError()
+
       const classified = error?.response ? classifyApiResponse(error.response) : undefined
       throw classified || error
     }

@@ -122,6 +122,7 @@ async function saveAndNotify() {
       snack.error(`Failed to update funding period: ${error}`)
       return
     }
+
     throw error
   } finally {
     isSaving.value = false

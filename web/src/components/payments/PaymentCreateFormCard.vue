@@ -166,6 +166,7 @@ async function createPayment() {
       snack.error(`Failed to create payment: ${error}`)
       return
     }
+
     throw error
   } finally {
     isCreating.value = false

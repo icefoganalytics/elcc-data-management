@@ -277,6 +277,7 @@ async function awaitMutationSettlements(mutations: Promise<unknown>[]) {
 
 function isExpectedApiFailure(error: unknown): boolean {
   if (error instanceof ApiOperationError) return true
+
   if (!(error instanceof AggregateError)) return false
 
   return error.errors.length > 0 && error.errors.every(isExpectedApiFailure)

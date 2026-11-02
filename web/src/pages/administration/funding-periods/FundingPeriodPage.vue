@@ -123,6 +123,7 @@ async function deleteFundingPeriod(fundingPeriodId: number) {
       snack.error(`Failed to delete funding period: ${error}`)
       return
     }
+
     throw error
   } finally {
     isDeleting.value = false
