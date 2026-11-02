@@ -115,6 +115,10 @@ const emit = defineEmits<{
   cancel: [void]
 }>()
 
+defineExpose({
+  commitEdit: emitInputAndCancel,
+})
+
 const itemClones = ref<Item[]>([])
 
 watchEffect(() => {
@@ -144,6 +148,7 @@ function getInputElementBy(columnKey: ColumnKey, rowIndex: number): InputCompone
 async function startEditingRow(rowIndex: number, columnKey: ColumnKey): Promise<void> {
   if (isEditingRow(rowIndex)) return
 
+  emitInputAndCancel()
   activeRowIndex.value = rowIndex
 
   await nextTick()

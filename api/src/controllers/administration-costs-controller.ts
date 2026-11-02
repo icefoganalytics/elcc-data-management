@@ -3,7 +3,7 @@ import { isNil } from "lodash"
 import logger from "@/utils/logger"
 import { AdministrationCost } from "@/models"
 import { AdministrationCostPolicy } from "@/policies"
-import { UpdateService } from "@/services/administration-costs"
+import { CreateService, DestroyService, UpdateService } from "@/services/administration-costs"
 import { IndexSerializer, ShowSerializer } from "@/serializers/administration-costs"
 import BaseController from "@/controllers/base-controller"
 
@@ -80,6 +80,30 @@ export class AdministrationCostsController extends BaseController<Administration
     }
   }
 
+  async create() {
+    try {
+      const policy = this.buildPolicy()
+      if (!policy.create()) {
+        return this.response.status(403).json({
+          message: "You are not authorized to create administration costs",
+        })
+      }
+
+      const permittedAttributes = policy.permitAttributesForCreate(this.request.body)
+      const administrationCost = await CreateService.perform(permittedAttributes)
+      const serializedAdministrationCost = ShowSerializer.perform(administrationCost)
+      return this.response.status(201).json({
+        administrationCost: serializedAdministrationCost,
+        policy,
+      })
+    } catch (error) {
+      logger.error(`Error creating administration cost: ${error}`, { error })
+      return this.response.status(422).json({
+        message: `Error creating administration cost: ${error}`,
+      })
+    }
+  }
+
   async update() {
     try {
       const administrationCost = await this.loadAdministrationCost()
@@ -112,6 +136,32 @@ export class AdministrationCostsController extends BaseController<Administration
       })
       return this.response.status(422).json({
         message: `Error updating administration cost: ${error}`,
+      })
+    }
+  }
+
+  async destroy() {
+    try {
+      const administrationCost = await this.loadAdministrationCost()
+      if (isNil(administrationCost)) {
+        return this.response.status(404).json({
+          message: "Administration cost not found",
+        })
+      }
+
+      const policy = this.buildPolicy(administrationCost)
+      if (!policy.destroy()) {
+        return this.response.status(403).json({
+          message: "You are not authorized to delete this administration cost",
+        })
+      }
+
+      await DestroyService.perform(administrationCost)
+      return this.response.status(204).send()
+    } catch (error) {
+      logger.error(`Error deleting administration cost: ${error}`, { error })
+      return this.response.status(422).json({
+        message: `Error deleting administration cost: ${error}`,
       })
     }
   }

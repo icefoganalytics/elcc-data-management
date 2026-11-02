@@ -9,12 +9,30 @@ export class AdministrationCostPolicy extends PolicyFactory(AdministrationCost) 
     return true
   }
 
+  create(): boolean {
+    return true
+  }
+
   update(): boolean {
     return true
   }
 
+  destroy(): boolean {
+    return this.user.isSystemAdmin
+  }
+
   permittedAttributes(): Path[] {
     return ["estimatedChildOccupancyRate", "actualChildOccupancyRate"]
+  }
+
+  permittedAttributesForCreate(): Path[] {
+    return [
+      "centreId",
+      "fiscalPeriodId",
+      "categoryId",
+      ...this.permittedAttributes(),
+      "applyToCurrentAndFutureFiscalPeriods",
+    ]
   }
 
   static policyScope(_user: User): FindOptions<Attributes<AdministrationCost>> {

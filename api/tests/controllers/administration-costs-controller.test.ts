@@ -57,7 +57,7 @@ describe("api/src/controllers/administration-costs-controller.ts", () => {
               updatedAt: administrationCost.updatedAt.toISOString(),
               policy: {
                 show: true,
-                create: false,
+                create: true,
                 update: true,
                 destroy: false,
               },
@@ -181,6 +181,111 @@ describe("api/src/controllers/administration-costs-controller.ts", () => {
       })
     })
 
+    describe("#create -> POST /api/administration-costs", () => {
+      test("when an ordinary user adds a category, derives protected snapshots and returns the full record", async () => {
+        // Arrange
+        const currentUser = await userFactory.create({ roles: [User.Roles.USER] })
+        mockCurrentUser(currentUser)
+        const centre = await centreFactory.create()
+        const fundingPeriod = await fundingPeriodFactory.create()
+        const fiscalPeriod = await fiscalPeriodFactory.associations({ fundingPeriod }).create()
+        const category = await administrationCostCategoryFactory
+          .associations({ fundingPeriod })
+          .create({ categoryName: "Administration snapshot", monthlyAmount: "80.0000" })
+
+        // Act
+        const response = await request().post("/api/administration-costs").send({
+          centreId: centre.id,
+          fiscalPeriodId: fiscalPeriod.id,
+          categoryId: category.id,
+          estimatedChildOccupancyRate: "0.5000",
+          actualChildOccupancyRate: "0.2500",
+          monthlyAmount: "999.0000",
+          lineName: "Untrusted name",
+          childCareSpaceCategoryId: 999,
+          estimatedComputedTotal: "999.0000",
+        })
+
+        // Assert
+        expect(response.status).toEqual(201)
+        expect(response.body).toEqual({
+          administrationCost: {
+            id: expect.any(Number),
+            centreId: centre.id,
+            fiscalPeriodId: fiscalPeriod.id,
+            categoryId: category.id,
+            childCareSpaceCategoryId: null,
+            lineName: "Administration snapshot",
+            monthlyAmount: "80",
+            estimatedChildOccupancyRate: "0.5",
+            actualChildOccupancyRate: "0.25",
+            estimatedComputedTotal: "40",
+            actualComputedTotal: "20",
+            createdAt: expect.any(String),
+            updatedAt: expect.any(String),
+          },
+          policy: { show: true, create: true, update: true, destroy: false },
+        })
+      })
+
+      test("when the category belongs to another funding period, rejects creation", async () => {
+        // Arrange
+        const currentUser = await userFactory.create({ roles: [User.Roles.USER] })
+        mockCurrentUser(currentUser)
+        const centre = await centreFactory.create()
+        const fiscalPeriod = await fiscalPeriodFactory.create()
+        const category = await administrationCostCategoryFactory.create()
+
+        // Act
+        const response = await request().post("/api/administration-costs").send({
+          centreId: centre.id,
+          fiscalPeriodId: fiscalPeriod.id,
+          categoryId: category.id,
+          estimatedChildOccupancyRate: "0.5000",
+          actualChildOccupancyRate: "0.2500",
+        })
+
+        // Assert
+        expect(response.status).toEqual(422)
+        expect(response.body).toEqual({
+          message:
+            "Error creating administration cost: Error: Administration cost category must be active in the same funding period",
+        })
+      })
+    })
+
+    describe("#destroy -> DELETE /api/administration-costs/:administrationCostId", () => {
+      test("when an ordinary user requests deletion, denies access", async () => {
+        // Arrange
+        const currentUser = await userFactory.create({ roles: [User.Roles.USER] })
+        mockCurrentUser(currentUser)
+        const cost = await administrationCostFactory.create()
+
+        // Act
+        const response = await request().delete(`/api/administration-costs/${cost.id}`)
+
+        // Assert
+        expect(response.status).toEqual(403)
+        expect(response.body).toEqual({
+          message: "You are not authorized to delete this administration cost",
+        })
+      })
+
+      test("when a system administrator deletes a row, returns no content", async () => {
+        // Arrange
+        const currentUser = await userFactory.create({ roles: [User.Roles.SYSTEM_ADMINISTRATOR] })
+        mockCurrentUser(currentUser)
+        const cost = await administrationCostFactory.create()
+
+        // Act
+        const response = await request().delete(`/api/administration-costs/${cost.id}`)
+
+        // Assert
+        expect(response.status).toEqual(204)
+        expect(response.body).toEqual({})
+      })
+    })
+
     describe("#update -> PATCH /api/administration-costs/:administrationCostId", () => {
       test("when an ordinary user edits occupancy and protected snapshots, returns only the permitted update", async () => {
         // Arrange
@@ -262,7 +367,7 @@ describe("api/src/controllers/administration-costs-controller.ts", () => {
           },
           policy: {
             show: true,
-            create: false,
+            create: true,
             update: true,
             destroy: false,
           },
