@@ -13,7 +13,7 @@ import ReplicateEstimatesService from "@/services/quality-enhancements/replicate
 describe("api/src/services/quality-enhancements/replicate-estimates-service.ts", () => {
   describe("ReplicateEstimatesService", () => {
     describe("#perform", () => {
-      test("when a later month is absent, updates a subsequent active row without recreating the gap or repricing", async () => {
+      test("when a later month is absent, updates a subsequent active row without repricing", async () => {
         // Arrange
         const centre = await centreFactory.create()
         const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2025-2026" })
@@ -22,7 +22,7 @@ describe("api/src/services/quality-enhancements/replicate-estimates-service.ts",
           dateStart: new Date("2025-04-01T00:00:00.000Z"),
           dateEnd: new Date("2025-04-30T23:59:59.000Z"),
         })
-        const missingPeriod = await fiscalPeriodFactory.associations({ fundingPeriod }).create({
+        await fiscalPeriodFactory.associations({ fundingPeriod }).create({
           fiscalYear: "2025-26",
           dateStart: new Date("2025-05-01T00:00:00.000Z"),
           dateEnd: new Date("2025-05-31T23:59:59.000Z"),
@@ -60,15 +60,6 @@ describe("api/src/services/quality-enhancements/replicate-estimates-service.ts",
         await ReplicateEstimatesService.perform(source)
 
         // Assert
-        expect(
-          await QualityEnhancement.findOne({
-            where: {
-              centreId: centre.id,
-              fiscalPeriodId: missingPeriod.id,
-              categoryId: category.id,
-            },
-          })
-        ).toBeNull()
         await target.reload()
         expect(target).toMatchObject({
           estimatedChildOccupancyRate: "0.625",
@@ -79,6 +70,44 @@ describe("api/src/services/quality-enhancements/replicate-estimates-service.ts",
           monthlyAmount: "182.06",
           childCareSpaceCategoryId: spaceCategory.id,
         })
+      })
+
+      test("when a later month is absent, preserves the gap during estimate replication", async () => {
+        // Arrange
+        const centre = await centreFactory.create()
+        const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2025-2026" })
+        const sourcePeriod = await fiscalPeriodFactory.associations({ fundingPeriod }).create({
+          dateStart: new Date("2025-04-01T00:00:00Z"),
+        })
+        const missingPeriod = await fiscalPeriodFactory.associations({ fundingPeriod }).create({
+          dateStart: new Date("2025-05-01T00:00:00Z"),
+        })
+        const targetPeriod = await fiscalPeriodFactory.associations({ fundingPeriod }).create({
+          dateStart: new Date("2025-06-01T00:00:00Z"),
+        })
+        const category = await qualityEnhancementCategoryFactory
+          .associations({ fundingPeriod })
+          .create()
+        const source = await qualityEnhancementFactory
+          .associations({ centre, fiscalPeriod: sourcePeriod, category })
+          .create({ estimatedChildOccupancyRate: "0.6250" })
+        await qualityEnhancementFactory
+          .associations({ centre, fiscalPeriod: targetPeriod, category })
+          .create()
+
+        // Act
+        await ReplicateEstimatesService.perform(source)
+
+        // Assert
+        expect(
+          await QualityEnhancement.findOne({
+            where: {
+              centreId: centre.id,
+              fiscalPeriodId: missingPeriod.id,
+              categoryId: category.id,
+            },
+          })
+        ).toBeNull()
       })
     })
   })
