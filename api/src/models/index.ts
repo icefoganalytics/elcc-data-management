@@ -20,6 +20,8 @@ import FundingSubmissionLine from "@/models/funding-submission-line"
 import FundingSubmissionLineJson from "@/models/funding-submission-line-json"
 import Log from "@/models/log"
 import Payment from "@/models/payment"
+import QualityEnhancement from "@/models/quality-enhancement"
+import QualityEnhancementCategory from "@/models/quality-enhancement-category"
 import User from "@/models/user"
 import WageEnhancement from "@/models/wage-enhancement"
 
@@ -42,6 +44,8 @@ db.addModels([
   FundingSubmissionLineJson,
   Log,
   Payment,
+  QualityEnhancement,
+  QualityEnhancementCategory,
   User,
   WageEnhancement,
 ])
@@ -64,6 +68,8 @@ FundingSubmissionLine.establishScopes()
 FundingSubmissionLineJson.establishScopes()
 Log.establishScopes()
 Payment.establishScopes()
+QualityEnhancement.establishScopes()
+QualityEnhancementCategory.establishScopes()
 User.establishScopes()
 WageEnhancement.establishScopes()
 
@@ -86,6 +92,8 @@ export {
   FundingSubmissionLineJson,
   Log,
   Payment,
+  QualityEnhancement,
+  QualityEnhancementCategory,
   User,
   WageEnhancement,
 }
