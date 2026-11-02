@@ -16,7 +16,6 @@ export type QualityEnhancementCategory = {
   childCareSpaceCategoryId: number | null
   createdAt: string
   updatedAt: string
-  deletedAt: string | null
 }
 
 export type QualityEnhancementCategoryPolicy = Policy

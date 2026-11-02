@@ -59,7 +59,6 @@ describe("api/src/controllers/quality-enhancements-controller.ts", () => {
             actualComputedTotal: "51.525",
             createdAt: expect.any(String),
             updatedAt: expect.any(String),
-            deletedAt: null,
           },
           policy: { show: true, create: true, update: true, destroy: false },
         })
@@ -148,7 +147,6 @@ describe("api/src/controllers/quality-enhancements-controller.ts", () => {
             actualComputedTotal: "27.5",
             createdAt: qualityEnhancement.createdAt.toISOString(),
             updatedAt: expect.any(String),
-            deletedAt: null,
           },
           policy: { show: true, create: true, update: true, destroy: false },
         })
