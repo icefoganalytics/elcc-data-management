@@ -21,7 +21,6 @@ export type QualityEnhancementShowView = Pick<
   | "actualComputedTotal"
   | "createdAt"
   | "updatedAt"
-  | "deletedAt"
 >
 
 export class ShowSerializer extends BaseSerializer<QualityEnhancement> {
@@ -47,7 +46,6 @@ export class ShowSerializer extends BaseSerializer<QualityEnhancement> {
       "actualComputedTotal",
       "createdAt",
       "updatedAt",
-      "deletedAt",
     ])
   }
 }

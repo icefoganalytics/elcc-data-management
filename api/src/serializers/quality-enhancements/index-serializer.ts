@@ -24,7 +24,6 @@ export type QualityEnhancementIndexView = Pick<
   | "actualComputedTotal"
   | "createdAt"
   | "updatedAt"
-  | "deletedAt"
 > & { policy: PolicyAsReference }
 
 export class IndexSerializer extends BaseSerializer<QualityEnhancement> {
@@ -54,7 +53,6 @@ export class IndexSerializer extends BaseSerializer<QualityEnhancement> {
         "actualComputedTotal",
         "createdAt",
         "updatedAt",
-        "deletedAt",
       ]),
       policy: new QualityEnhancementPolicy(this.currentUser, this.record).toJSON(),
     }
