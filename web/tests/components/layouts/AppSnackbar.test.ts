@@ -12,7 +12,8 @@ describe("web/src/components/layouts/AppSnackbar.vue", () => {
   describe("AppSnackbar", () => {
     describe("API response recovery", () => {
       beforeEach(() => {
-        useSnack().reset()
+        const snack = useSnack()
+        snack.reset()
         vi.stubGlobal("visualViewport", undefined)
       })
 
