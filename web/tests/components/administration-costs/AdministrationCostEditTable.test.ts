@@ -200,6 +200,31 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
       })
     })
 
+    describe("#reload", () => {
+      test("when a failed write is reloaded, preserves its failure and permits the next worksheet save", async () => {
+        // Arrange
+        const record = administrationCostFactory.build()
+        vi.spyOn(administrationCostsApi, "list").mockResolvedValue({
+          administrationCosts: [record],
+          totalCount: 1,
+        })
+        vi.spyOn(administrationCostsApi, "update").mockRejectedValue(new Error("Write unavailable"))
+        const wrapper = mount(AdministrationCostEditTable, {
+          props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
+          global: { plugins: [createPinia(), mockVuetify()] },
+        })
+        await flushPromises()
+        await wrapper.get("tr.cursor-pointer").trigger("click")
+        await wrapper.get('input[inputmode="decimal"]').setValue("0.25")
+
+        // Act & Assert
+        await expect(wrapper.vm.commitEdit()).resolves.toEqual(false)
+        await wrapper.get(".v-alert button").trigger("click")
+        await flushPromises()
+        await expect(wrapper.vm.commitEdit()).resolves.toEqual(true)
+      })
+    })
+
     describe("#replicateEstimates", () => {
       test("when the first category replication is pending, does not dispatch the next category", async () => {
         // Arrange

@@ -5,8 +5,15 @@
       type="error"
       density="compact"
       role="alert"
-      >{{ saveError }}</v-alert
     >
+      {{ saveError }}
+      <v-btn
+        variant="text"
+        :disabled="isSaving || isDeleting"
+        @click="reload"
+        >Reload</v-btn
+      >
+    </v-alert>
     <v-alert
       v-if="isErrored"
       type="error"
@@ -143,7 +150,7 @@ const totalActualOccupancy = computed(() =>
 const byId = computed(() => keyBy(administrationCosts.value, "id"))
 const categoryIds = computed(() => administrationCosts.value.map(({ categoryId }) => categoryId))
 const editTable = useTemplateRef<{ commitEdit: () => void }>("editTable")
-let currentSave: Promise<void> | null = null
+let currentSave: Promise<boolean> | null = null
 const isSaving = ref(false)
 const isDeleting = ref(false)
 const deletingId = ref<number | null>(null)
@@ -162,11 +169,13 @@ function trackSave(record: AdministrationCostAsIndex) {
 
 async function commitEdit(): Promise<boolean> {
   editTable.value?.commitEdit()
+  const save = currentSave
   try {
-    await currentSave
-    return !isErrored.value && !saveError.value
+    return (save === null || (await save)) && !isErrored.value
   } catch {
     return false
+  } finally {
+    if (currentSave === save) currentSave = null
   }
 }
 
@@ -180,9 +189,9 @@ async function saveIfDirty(record: AdministrationCostAsIndex) {
     isLoading.value ||
     isErrored.value
   )
-    return
+    return false
   const changed = editableColumns.filter((field) => current[field] !== record[field])
-  if (!changed.length) return
+  if (!changed.length) return true
   isSaving.value = true
   saveError.value = ""
   try {
@@ -195,6 +204,7 @@ async function saveIfDirty(record: AdministrationCostAsIndex) {
       administrationCosts.value.splice(index, 1, { ...current, ...administrationCost })
     snack.success("Administration cost saved!")
     emit("updated")
+    return true
   } catch (error) {
     saveError.value = `Failed to save administration cost: ${String(error)}. Retry your edit after reloading.`
     try {
@@ -203,6 +213,7 @@ async function saveIfDirty(record: AdministrationCostAsIndex) {
       /* Preserve the save failure if reload also fails. */
     }
     snack.error(saveError.value)
+    return false
   } finally {
     isSaving.value = false
     emit("mutationSettled")
@@ -243,6 +254,8 @@ async function refresh() {
 async function reload() {
   try {
     await refresh()
+    saveError.value = ""
+    currentSave = null
   } catch (error) {
     snack.error(`Failed to load administration costs: ${error}`)
   }
