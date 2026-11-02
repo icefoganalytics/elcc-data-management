@@ -17,7 +17,6 @@ export type QualityEnhancementCategoryIndexView = Pick<
   | "childCareSpaceCategoryId"
   | "createdAt"
   | "updatedAt"
-  | "deletedAt"
 > & { policy: PolicyAsReference }
 
 export class IndexSerializer extends BaseSerializer<QualityEnhancementCategory> {
@@ -40,7 +39,6 @@ export class IndexSerializer extends BaseSerializer<QualityEnhancementCategory> 
         "childCareSpaceCategoryId",
         "createdAt",
         "updatedAt",
-        "deletedAt",
       ]),
       policy: new QualityEnhancementCategoryPolicy(this.currentUser, this.record).toJSON(),
     }

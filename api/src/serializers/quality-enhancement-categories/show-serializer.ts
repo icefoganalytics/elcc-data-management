@@ -14,7 +14,6 @@ export type QualityEnhancementCategoryShowView = Pick<
   | "childCareSpaceCategoryId"
   | "createdAt"
   | "updatedAt"
-  | "deletedAt"
 >
 
 export class ShowSerializer extends BaseSerializer<QualityEnhancementCategory> {
@@ -33,7 +32,6 @@ export class ShowSerializer extends BaseSerializer<QualityEnhancementCategory> {
       "childCareSpaceCategoryId",
       "createdAt",
       "updatedAt",
-      "deletedAt",
     ])
   }
 }
