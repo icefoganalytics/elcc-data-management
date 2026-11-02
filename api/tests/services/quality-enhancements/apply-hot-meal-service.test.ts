@@ -94,6 +94,57 @@ describe("api/src/services/quality-enhancements/apply-hot-meal-service.ts", () =
           }),
         ])
       })
+
+      test("when a later monthly update fails, rolls back every hot-meal amount", async () => {
+        // Arrange
+        vi.useFakeTimers({ toFake: ["Date"] })
+        vi.setSystemTime(new Date("2026-10-20T12:00:00Z"))
+        const fundingRegion = await fundingRegionFactory.create({
+          hotMealIncrementAmount: "32.0600",
+        })
+        const centre = await centreFactory.create({ fundingRegionId: fundingRegion.id })
+        const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2026-2027" })
+        const fiscalPeriod = await fiscalPeriodFactory.associations({ fundingPeriod }).create({
+          dateStart: new Date("2027-01-01T00:00:00Z"),
+          dateEnd: new Date("2027-01-31T23:59:59Z"),
+        })
+        const firstCategory = await qualityEnhancementCategoryFactory
+          .associations({ fundingPeriod })
+          .create({ categoryName: "Infants" })
+        const secondCategory = await qualityEnhancementCategoryFactory
+          .associations({ fundingPeriod })
+          .create({ categoryName: "Preschool" })
+        const first = await qualityEnhancementFactory
+          .associations({ centre, fiscalPeriod, category: firstCategory })
+          .create({ baseMonthlyAmount: "100.0000" })
+        const second = await qualityEnhancementFactory
+          .associations({ centre, fiscalPeriod, category: secondCategory })
+          .create({ baseMonthlyAmount: "200.0000" })
+        const update = QualityEnhancement.prototype.update
+        vi.spyOn(QualityEnhancement.prototype, "update")
+          .mockImplementationOnce(update)
+          .mockRejectedValueOnce(new Error("Later monthly write failed"))
+
+        // Act & Assert
+        await expect(ApplyHotMealService.perform(centre)).rejects.toThrow(
+          "Later monthly write failed"
+        )
+        const enhancements = await QualityEnhancement.findAll({ order: [["id", "ASC"]] })
+        expect(enhancements).toEqual([
+          expect.objectContaining({
+            id: first.id,
+            hotMealIncrementAmount: "0",
+            hotMealAppliedAt: null,
+            monthlyAmount: "100",
+          }),
+          expect.objectContaining({
+            id: second.id,
+            hotMealIncrementAmount: "0",
+            hotMealAppliedAt: null,
+            monthlyAmount: "200",
+          }),
+        ])
+      })
     })
   })
 })
