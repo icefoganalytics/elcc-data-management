@@ -706,6 +706,99 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           expect(wrapper.get<HTMLInputElement>("tbody input").element.readOnly).toEqual(true)
         }
       )
+
+      test("when a creation form unmounts during month navigation, releases its lock without unlocking a newer creation", async () => {
+        // Arrange
+        const aprilWorksheet = fundingSubmissionLineJsonFactory.build({
+          id: 44,
+          centreId: 1,
+          fiscalYear: "2024/25",
+          dateName: "April",
+          lines: [],
+        })
+        const mayWorksheet = fundingSubmissionLineJsonFactory.build({
+          id: 45,
+          centreId: 1,
+          fiscalYear: "2024/25",
+          dateName: "May",
+          lines: [],
+        })
+        const april = fiscalPeriodFactory.build({
+          id: 4,
+          fundingPeriodId: 1,
+          fiscalYear: "2024-25",
+          month: FiscalPeriodMonths.APRIL,
+        })
+        const may = fiscalPeriodFactory.build({
+          id: 5,
+          fundingPeriodId: 1,
+          fiscalYear: "2024-25",
+          month: FiscalPeriodMonths.MAY,
+        })
+        vi.mocked(httpClient, true).get.mockImplementation(async (url, config) => {
+          if (url === "/api/funding-submission-line-jsons") {
+            const worksheet =
+              config?.params?.where?.dateName === "April" ? aprilWorksheet : mayWorksheet
+            return { data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 } }
+          }
+          if (url === "/api/fiscal-periods") {
+            const period = config?.params?.where?.month === FiscalPeriodMonths.APRIL ? april : may
+            return { data: { fiscalPeriods: [period], totalCount: 1 } }
+          }
+          if (url === "/api/administration-costs") {
+            return { data: { administrationCosts: [], totalCount: 0 } }
+          }
+          if (url === "/api/child-care-spaces") {
+            return { data: { childCareSpaces: [], totalCount: 0 } }
+          }
+          if (url === "/api/administration-cost-categories") {
+            return { data: { administrationCostCategories: [], totalCount: 0 } }
+          }
+          return { data: { fundingSubmissionLineJson: mayWorksheet } }
+        })
+        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+        await router.push("/")
+        await router.isReady()
+        const wrapper = mount(MonthlyWorksheetPage, {
+          props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
+          global: {
+            plugins: [router, createPinia(), mockVuetify()],
+            stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
+          },
+        })
+        await flushPromises()
+        const firstAdd = wrapper
+          .findAll("button")
+          .find((button) => button.text() === "Add Administration Cost")
+        if (!firstAdd) throw new Error("Expected Add Administration Cost")
+        await firstAdd.trigger("click")
+        const previousForm = wrapper.getComponent({ name: "AdministrationCostCreateFormCard" })
+        previousForm.vm.$emit("saving", true)
+        await flushPromises()
+
+        // Act & Assert
+        await wrapper.setProps({ month: FiscalPeriodMonths.MAY })
+        await flushPromises()
+        const save = wrapper.findAll("button").find((button) => button.text() === "Save")
+        if (!save) throw new Error("Expected worksheet Save")
+        expect(save.attributes("disabled")).toEqual(undefined)
+
+        const nextAdd = wrapper
+          .findAll("button")
+          .find((button) => button.text() === "Add Administration Cost")
+        if (!nextAdd) throw new Error("Expected Add Administration Cost")
+        await nextAdd.trigger("click")
+
+        const currentForm = wrapper.getComponent({ name: "AdministrationCostCreateFormCard" })
+        currentForm.vm.$emit("saving", true)
+        previousForm.vm.$emit("saving", false)
+        await flushPromises()
+        expect(save.attributes("disabled")).toEqual("")
+
+        currentForm.vm.$emit("saving", false)
+        await flushPromises()
+        expect(save.attributes("disabled")).toEqual(undefined)
+      })
     })
   })
 })

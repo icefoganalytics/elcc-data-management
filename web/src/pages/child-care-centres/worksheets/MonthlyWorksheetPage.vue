@@ -221,8 +221,12 @@ const fiscalPeriod = ref<FiscalPeriod | null>(null)
 const isLoading = ref(true)
 const loadError = ref(false)
 let activeRequest = 0
+const showAdministrationCostCreateForm = ref(false)
+const isCreatingAdministrationCost = ref(false)
 
 async function loadWorksheet() {
+  showAdministrationCostCreateForm.value = false
+  isCreatingAdministrationCost.value = false
   const requestId = ++activeRequest
   isLoading.value = true
   loadError.value = false
@@ -290,8 +294,6 @@ const jsonSheet =
 const buildingExpensesEditTable = useTemplateRef("buildingExpensesEditTable")
 const keyboardShortcutsModal = useTemplateRef("keyboardShortcutsModal")
 const showBuildingExpenseCreateForm = ref(false)
-const showAdministrationCostCreateForm = ref(false)
-const isCreatingAdministrationCost = ref(false)
 const isReplicating = ref(false)
 const isWorksheetSaving = ref(false)
 const isRefreshingLinked = ref(false)
