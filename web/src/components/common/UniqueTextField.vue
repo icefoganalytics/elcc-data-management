@@ -36,10 +36,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
+import { callWithAsyncErrorHandling, ErrorCodes, getCurrentInstance, ref } from "vue"
 import { debounce, isEmpty, isNil } from "lodash"
 
 import { type VTextField } from "vuetify/components"
+
+import { ApiOperationError } from "@/api/errors/api-operation-error"
 
 import useSnack from "@/use/use-snack"
 
@@ -68,6 +70,7 @@ const emit = defineEmits<{
 const isUniqueValue = ref<boolean | null>(null)
 const isCheckingUniqueness = ref(false)
 const textField = ref<InstanceType<typeof VTextField> | null>(null)
+const instance = getCurrentInstance()
 
 async function updateModelValue(value: string) {
   emit("update:modelValue", value)
@@ -85,15 +88,25 @@ async function checkValueIsUnique(value: string | null | undefined) {
     await textField.value?.validate(false)
     return result
   } catch (error) {
-    console.error(error)
-    useSnack().error(`Failed to check availability: ${error}`, { cause: error })
-    return false
+    if (error instanceof ApiOperationError) {
+      console.error(error)
+      useSnack().error(`Failed to check availability: ${error}`)
+      return false
+    }
+    throw error
   } finally {
     isCheckingUniqueness.value = false
   }
 }
 
-const debouncedCheckValueIsUnique = debounce(checkValueIsUnique, 500)
+const debouncedCheckValueIsUnique = debounce((value: string | null | undefined) => {
+  void callWithAsyncErrorHandling(
+    checkValueIsUnique,
+    instance,
+    ErrorCodes.COMPONENT_EVENT_HANDLER,
+    [value]
+  )
+}, 500)
 
 function valueMustBeUnique() {
   if (isUniqueValue.value === true || isUniqueValue.value === null) return true

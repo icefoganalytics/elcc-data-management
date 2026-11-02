@@ -137,6 +137,8 @@ import blockedToTrueConfirm from "@/utils/blocked-to-true-confirm"
 import { formatDate, formatMoney } from "@/utils/formatters"
 
 import childCareSpaceCategoriesApi from "@/api/child-care-space-categories-api"
+import ApiOperationError from "@/api/errors/api-operation-error"
+
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useChildCareSpaceCategory from "@/use/use-child-care-space-category"
 import useFundingPeriod from "@/use/use-funding-period"
@@ -196,8 +198,12 @@ async function deleteChildCareSpaceCategory(childCareSpaceCategoryId: number) {
       name: "administration/ChildCareSpaceCategoriesPage",
     })
   } catch (error) {
-    console.error(`Failed to delete Child Care Space category: ${error}`, { error })
-    snack.error(`Failed to delete Child Care Space category: ${error}`, { cause: error })
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to delete Child Care Space category: ${error}`, { error })
+      snack.error(`Failed to delete Child Care Space category: ${error}`)
+      return
+    }
+    throw error
   } finally {
     isDeleting.value = false
   }

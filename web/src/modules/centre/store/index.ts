@@ -108,9 +108,8 @@ export const useCentreStore = defineStore("centre", {
       const api = useApiStore()
       await api
         .secureCall("put", `${CENTRE_URL}/${id}/worksheet/${worksheet.id}`, worksheet)
-        .then((resp) => {
-          // this.selectedCentre = resp.data;
-          if (reload) this.loadWorksheets(id)
+        .then(async () => {
+          if (reload) await this.loadWorksheets(id)
 
           m.notify({ text: "Worksheet saved", variant: "success" })
         })

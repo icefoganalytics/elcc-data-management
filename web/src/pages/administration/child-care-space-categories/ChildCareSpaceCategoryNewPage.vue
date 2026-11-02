@@ -128,6 +128,8 @@ import childCareSpaceCategoriesApi, {
   type ChildCareSpaceCategoryCreationAttributes,
   type ChildCareSpaceCategoryPropagationOptions,
 } from "@/api/child-care-space-categories-api"
+import ApiOperationError from "@/api/errors/api-operation-error"
+
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useFundingPeriods, { type FundingPeriodQueryOptions } from "@/use/use-funding-periods"
 import useSnack from "@/use/use-snack"
@@ -269,8 +271,12 @@ async function createChildCareSpaceCategory() {
       },
     })
   } catch (error) {
-    console.error(`Failed to create Child Care Space category: ${error}`, { error })
-    snack.error(`Failed to create Child Care Space category: ${error}`, { cause: error })
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to create Child Care Space category: ${error}`, { error })
+      snack.error(`Failed to create Child Care Space category: ${error}`)
+      return
+    }
+    throw error
   } finally {
     isCreating.value = false
   }

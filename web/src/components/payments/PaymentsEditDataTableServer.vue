@@ -45,6 +45,8 @@ import { formatMoney } from "@/utils/formatters"
 import useVuetifySortByToSafeRouteQuery from "@/use/vuetify/use-vuetify-sort-by-to-safe-route-query"
 import useVuetifySortByToSequelizeSafeOrder from "@/use/vuetify/use-vuetify-sort-by-to-sequelize-safe-order"
 
+import { ApiOperationError } from "@/api/errors/api-operation-error"
+
 import paymentsApi, { type PaymentAsIndex } from "@/api/payments-api"
 import usePayments, {
   type PaymentWhereOptions,
@@ -115,8 +117,12 @@ async function deletePayment(payment: PaymentAsIndex) {
     await refresh()
     snack.success("Payment deleted successfully")
   } catch (error) {
-    console.error(`Failed to delete payment: ${error}`, { error })
-    snack.error("Failed to delete payment", { cause: error })
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to delete payment: ${error}`, { error })
+      snack.error("Failed to delete payment")
+      return
+    }
+    throw error
   } finally {
     isDeletingPaymentId.value = null
   }

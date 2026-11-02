@@ -1,7 +1,5 @@
 import { defineStore } from "pinia"
 
-import { useSnack } from "@/use/use-snack"
-
 /**
  * @deprecated - prefer web/src/use/use-snack.ts
  */
@@ -17,13 +15,8 @@ export const useNotificationStore = defineStore("notifications", {
   }),
   actions: {
     async initialize() {},
-    notify(message: { text: string; variant: string; [key: string]: unknown }) {
-      if (message.variant === "error") {
-        useSnack().error(message.text, { cause: message.cause })
-        return
-      }
-
-      this.message = { ...this.message, ...message }
+    notify(message: any) {
+      this.message = message
       this.showNotification = true
     },
   },

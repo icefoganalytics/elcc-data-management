@@ -1,12 +1,11 @@
 <template>
   <v-app>
     <router-view v-if="isUnauthenticatedRoute"></router-view>
-    <v-container v-else-if="startupError">
+    <v-container v-else-if="isStartupFailed">
       <v-alert
         type="error"
         title="Unable to load your account"
       >
-        <p>{{ startupError.message }}</p>
         <p>Your account is not ready. Protected pages have not been opened.</p>
         <v-btn
           class="mt-3"
@@ -19,7 +18,7 @@
     <!--
         NOTE: current user will always be defined when the authenticated router view loads.
       -->
-    <router-view v-else-if="isReady || isErrored" />
+    <router-view v-else-if="isReady" />
     <PageLoader
       v-else-if="isReadyAuth0 && isLoadingCurrentUser"
       message="Fetching and syncing user"
@@ -40,12 +39,10 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue"
 import { useAuth0 } from "@auth0/auth0-vue"
-import { useRoute, useRouter } from "vue-router"
+import { useRoute } from "vue-router"
 
 import useCurrentUser from "@/use/use-current-user"
 import { useApiStore } from "@/store/ApiStore"
-import { UnexpectedApiResponseError } from "@/api/errors/unexpected-api-response-error"
-import useSnack from "@/use/use-snack"
 
 import PageLoader from "@/components/common/PageLoader.vue"
 import AppSnackbar from "@/components/layouts/AppSnackbar.vue"
@@ -63,10 +60,7 @@ const { isCached: isCachedCurrentUser, isLoading: isLoadingCurrentUser, fetch } 
 
 const isReady = computed(() => isReadyAuth0.value && isCachedCurrentUser.value)
 
-const isErrored = ref(false)
-const startupError = ref<UnexpectedApiResponseError | null>(null)
-const snack = useSnack()
-const router = useRouter()
+const isStartupFailed = ref(false)
 
 watch(
   () => isReadyAuth0.value,
@@ -82,22 +76,12 @@ watch(
 )
 
 async function loadCurrentUser() {
-  startupError.value = null
-  isErrored.value = false
+  isStartupFailed.value = false
   try {
     await fetch()
-    snack.reset()
   } catch (error) {
-    if (error instanceof UnexpectedApiResponseError) {
-      if (!isCachedCurrentUser.value) startupError.value = error
-      snack.error(error.message, { cause: error })
-      return
-    }
-
-    console.error(`Failed to load current user: ${error}`, { error })
-    await router.isReady()
-    await router.push({ name: "SignInPage" })
-    isErrored.value = true
+    isStartupFailed.value = !isCachedCurrentUser.value
+    throw error
   }
 }
 </script>

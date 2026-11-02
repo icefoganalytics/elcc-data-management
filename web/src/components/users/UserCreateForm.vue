@@ -69,6 +69,8 @@
 <script setup lang="ts">
 import { ref } from "vue"
 
+import { ApiOperationError } from "@/api/errors/api-operation-error"
+
 import usersApi, { type User } from "@/api/users-api"
 import useSnack from "@/use/use-snack"
 
@@ -95,8 +97,12 @@ async function saveAndNotify() {
     emit("created", user.id)
     snack.success("User created successfully!")
   } catch (error) {
-    console.error(`Failed to create user: ${error}`, { error })
-    snack.error(`Failed to create user: ${error}`, { cause: error })
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to create user: ${error}`, { error })
+      snack.error(`Failed to create user: ${error}`)
+      return
+    }
+    throw error
   } finally {
     isSaving.value = false
   }

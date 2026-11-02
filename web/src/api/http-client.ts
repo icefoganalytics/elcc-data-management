@@ -2,8 +2,9 @@ import qs from "qs"
 import axios from "axios"
 
 import { API_BASE_URL } from "@/config"
+import { parseJsonResponse, classifyApiResponse } from "@/api/parse-json-response"
 import { UnexpectedApiResponseError } from "@/api/errors/unexpected-api-response-error"
-import { parseJsonResponse } from "@/api/parse-json-response"
+import { AuthenticationRequiredError } from "@/api/errors/authentication-required-error"
 import auth0 from "@/plugins/auth0-plugin"
 
 export const httpClient = axios.create({
@@ -31,22 +32,19 @@ httpClient.interceptors.request.use(async (config) => {
   return config
 })
 
-// Any status codes that falls outside the range of 2xx causes this function to trigger
-httpClient.interceptors.response.use(null, async (error) => {
-  if (error instanceof UnexpectedApiResponseError || axios.isCancel(error)) throw error
+httpClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error instanceof UnexpectedApiResponseError || axios.isCancel(error)) throw error
+    if (error?.error === "login_required") throw new AuthenticationRequiredError()
 
-  // Auth0 error type is unknown but it sets the error.error property to "login_required"
-  // Bounce the user if they hit a login required error when trying to access a protected route
-  // It would probably be better to move this code to a route guard or something?
-  if (error?.error === "login_required") {
-    await auth0.loginWithRedirect({
-      appState: { targetUrl: window.location.pathname },
-    })
-  } else if (error?.response?.data?.message) {
-    throw new Error(error.response.data.message)
-  } else {
+    const response = error?.response
+    if (response) {
+      const classified = classifyApiResponse(response)
+      if (classified) throw classified
+    }
     throw error
   }
-})
+)
 
 export default httpClient

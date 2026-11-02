@@ -80,6 +80,7 @@ import { computed, reactive, ref, toRefs } from "vue"
 import { groupBy, isNil } from "lodash"
 
 import childCareSpacesApi, { CHILD_CARE_SPACES_SECTION_NAME } from "@/api/child-care-spaces-api"
+import ApiOperationError from "@/api/errors/api-operation-error"
 import fundingSubmissionLineJsonsApi, {
   type FundingLineValue,
 } from "@/api/funding-submission-line-jsons-api"
@@ -185,11 +186,15 @@ async function reloadWorksheet() {
   try {
     await Promise.all([refreshChildCareSpaces(), refreshFundingSubmissionLineJson()])
   } catch (error) {
-    notificationStore.notify({
-      text: `Failed to load worksheet: ${error}`,
-      variant: "error",
-      cause: error,
-    })
+    if (isExpectedApiFailure(error)) {
+      notificationStore.notify({
+        text: `Failed to load worksheet: ${error}`,
+        variant: "error",
+      })
+      return
+    }
+
+    throw error
   }
 }
 
@@ -243,13 +248,16 @@ async function saveFundingSubmissionLineJson(): Promise<boolean> {
     emit("update:fundingSubmissionLineJson", fundingSubmissionLineJsonId.value)
     return true
   } catch (error) {
-    console.error(error)
-    notificationStore.notify({
-      text: `Failed to save worksheet: ${error}`,
-      variant: "error",
-      cause: error,
-    })
-    return false
+    if (isExpectedApiFailure(error)) {
+      console.error(error)
+      notificationStore.notify({
+        text: `Failed to save worksheet: ${error}`,
+        variant: "error",
+      })
+      return false
+    }
+
+    throw error
   } finally {
     isSaving.value = false
     emit("saving", false)
@@ -267,6 +275,13 @@ async function awaitMutationSettlements(mutations: Promise<unknown>[]) {
   }
 }
 
+function isExpectedApiFailure(error: unknown): boolean {
+  if (error instanceof ApiOperationError) return true
+  if (!(error instanceof AggregateError)) return false
+
+  return error.errors.length > 0 && error.errors.every(isExpectedApiFailure)
+}
+
 async function replicateOwnEstimates(): Promise<void> {
   await awaitMutationSettlements([
     fundingSubmissionLineJsonsApi.replicateEstimates(fundingSubmissionLineJsonId.value),
@@ -281,6 +296,7 @@ async function replicateChildCareSpaceEstimates(): Promise<void> {
     await childCareSpacesApi.replicateEstimates(childCareSpace.id)
   }
 }
+
 
 
 function goToNextSection(sectionIndex: number, columnName: ColumnNames) {

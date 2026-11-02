@@ -81,6 +81,8 @@
 import { ref, toRefs } from "vue"
 import { isNil } from "lodash"
 
+import { ApiOperationError } from "@/api/errors/api-operation-error"
+
 import useUser from "@/use/use-user"
 import useSnack from "@/use/use-snack"
 
@@ -109,8 +111,12 @@ async function saveAndNotify() {
     emit("updated", updatedUser.id)
     snack.success("User updated successfully!")
   } catch (error) {
-    console.error(`Failed to update user: ${error}`, { error })
-    snack.error(`Failed to update user: ${error}`, { cause: error })
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to update user: ${error}`, { error })
+      snack.error(`Failed to update user: ${error}`)
+      return
+    }
+    throw error
   } finally {
     isSaving.value = false
   }

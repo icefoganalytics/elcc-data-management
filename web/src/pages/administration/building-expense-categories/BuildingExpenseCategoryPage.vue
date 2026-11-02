@@ -99,6 +99,7 @@ import { formatDate } from "@/utils/formatters"
 import blockedToTrueConfirm from "@/utils/blocked-to-true-confirm"
 
 import buildingExpenseCategoriesApi from "@/api/building-expense-categories-api"
+import ApiOperationError from "@/api/errors/api-operation-error"
 
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useBuildingExpenseCategory from "@/use/use-building-expense-category"
@@ -134,8 +135,12 @@ async function deleteBuildingExpenseCategory(buildingExpenseCategoryId: number) 
       name: "administration/BuildingExpenseCategoriesPage",
     })
   } catch (error) {
-    console.error(`Failed to delete building expense category: ${error}`, { error })
-    snack.error(`Failed to delete building expense category: ${error}`, { cause: error })
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to delete building expense category: ${error}`, { error })
+      snack.error(`Failed to delete building expense category: ${error}`)
+      return
+    }
+    throw error
   } finally {
     isDeleting.value = false
   }

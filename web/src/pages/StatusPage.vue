@@ -43,7 +43,7 @@
 import { onMounted, reactive, ref } from "vue"
 
 import http from "@/api/http-client"
-import { UnexpectedApiResponseError } from "@/api/errors/unexpected-api-response-error"
+import ApiOperationError from "@/api/errors/api-operation-error"
 
 const environment = reactive({
   releaseTag: "not-set",
@@ -68,8 +68,12 @@ async function refresh() {
   try {
     await fetchVersion()
   } catch (error) {
-    console.error(`Error fetching version: ${error}`)
-    if (error instanceof UnexpectedApiResponseError) throw error
+    if (error instanceof ApiOperationError) {
+      console.error(`Error fetching version: ${error}`)
+      return
+    }
+
+    throw error
   } finally {
     isLoading.value = false
   }

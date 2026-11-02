@@ -1,7 +1,10 @@
 import { AxiosHeaders, type AxiosRequestConfig } from "axios"
 
+import { ApiError } from "@/api/errors/api-error"
+
 /** Metadata only: never retain the response body, request config, or original error. */
-export class UnexpectedApiResponseError extends Error {
+export class UnexpectedApiResponseError extends ApiError {
+  readonly name = "UnexpectedApiResponseError"
   readonly isChallenge: boolean
   readonly method: string
   readonly path: string
@@ -19,7 +22,6 @@ export class UnexpectedApiResponseError extends Error {
         ? "The request was interrupted by a browser verification challenge."
         : "The server returned an unexpected response instead of JSON."
     )
-    this.name = "UnexpectedApiResponseError"
     this.isChallenge = isChallenge
     this.method = (config.method || "get").toUpperCase()
     this.path = sanitizedPath(config)

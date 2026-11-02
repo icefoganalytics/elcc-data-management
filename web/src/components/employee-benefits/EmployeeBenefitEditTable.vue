@@ -57,7 +57,7 @@
         <td class="text-right">
           <v-btn
             :loading="isSaving"
-            @click="save"
+            @click="retry"
           >
             Retry
           </v-btn>
@@ -299,11 +299,10 @@ import Big from "big.js"
 import { formatMoney } from "@/utils/formatters"
 import minDecimal from "@/utils/min-decimal"
 
+import { ApiOperationError } from "@/api/errors/api-operation-error"
 import employeeBenefitsApi, { type EmployeeBenefitAsShow } from "@/api/employee-benefits-api"
-import { UnexpectedApiResponseError } from "@/api/errors/unexpected-api-response-error"
 
 import useEmployeeBenefit from "@/use/use-employee-benefit"
-import useSnack from "@/use/use-snack"
 
 import CurrencyInput from "@/components/CurrencyInput.vue"
 
@@ -324,7 +323,6 @@ type RecordEditor = {
   saveErrors: Partial<Record<EmployeeBenefitEditableAttribute, string>>
   savingAttributes: Set<EmployeeBenefitEditableAttribute>
   writes: Map<EmployeeBenefitEditableAttribute, Promise<void>>
-  interruptedAttributes: Set<EmployeeBenefitEditableAttribute>
 }
 
 const props = defineProps<{ employeeBenefitId: number | undefined }>()
@@ -335,9 +333,7 @@ const editor = reactive<RecordEditor>({
   saveErrors: {},
   savingAttributes: new Set(),
   writes: new Map(),
-  interruptedAttributes: new Set(),
 })
-
 const { employeeBenefit, isLoading, isErrored, fetch } = useEmployeeBenefit(employeeBenefitId)
 const isSaving = computed(() => editor.savingAttributes.size > 0)
 const saveError = computed(() => Object.values(editor.saveErrors).find(Boolean) ?? "")
@@ -353,7 +349,10 @@ watch(employeeBenefitId, () => {
   costCapPercentageDraftAtEditStart.value = ""
 })
 
-function updateAttribute(attribute: EmployeeBenefitEditableAttribute, value: string) {
+function updateAttribute(
+  attribute: EmployeeBenefitEditableAttribute,
+  value: string
+): Promise<void> | undefined {
   const recordId = employeeBenefitId.value
   const record = employeeBenefit.value
   if (isNil(record) || isNil(recordId)) return
@@ -362,20 +361,14 @@ function updateAttribute(attribute: EmployeeBenefitEditableAttribute, value: str
     editor.persistedAttributes[attribute] = record[attribute]
   }
   record[attribute] = value
-  if (
-    value === editor.persistedAttributes[attribute] &&
-    !editor.writes.has(attribute) &&
-    !editor.interruptedAttributes.has(attribute)
-  ) {
+  if (value === editor.persistedAttributes[attribute] && !editor.writes.has(attribute)) {
     delete editor.pendingChanges[attribute]
     delete editor.saveErrors[attribute]
     return
   }
 
   editor.pendingChanges[attribute] = value
-  if (!editor.interruptedAttributes.has(attribute)) {
-    void saveAttribute(editor, recordId, attribute)
-  }
+  return saveAttribute(editor, recordId, attribute)
 }
 
 function saveAttribute(
@@ -401,26 +394,23 @@ async function persistAttribute(
   attribute: EmployeeBenefitEditableAttribute
 ) {
   try {
-    while (
-      editor.pendingChanges[attribute] !== editor.persistedAttributes[attribute] ||
-      editor.interruptedAttributes.has(attribute)
-    ) {
+    while (editor.pendingChanges[attribute] !== editor.persistedAttributes[attribute]) {
       const value = editor.pendingChanges[attribute]
       if (isUndefined(value)) return
 
       await employeeBenefitsApi.update(recordId, { [attribute]: value })
       editor.persistedAttributes[attribute] = value
-      editor.interruptedAttributes.delete(attribute)
     }
     delete editor.pendingChanges[attribute]
     delete editor.saveErrors[attribute]
   } catch (error) {
-    if (error instanceof UnexpectedApiResponseError) {
-      editor.interruptedAttributes.add(attribute)
-    }
     editor.saveErrors[attribute] = `Failed to save employee benefit: ${error}`
-    console.error(`Failed to save employee benefit: ${error}`, { error })
-    useSnack().error(editor.saveErrors[attribute], { cause: error })
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to save employee benefit: ${error}`, { error })
+      return
+    }
+
+    throw error
   }
 }
 
@@ -442,9 +432,9 @@ const costCapPercentage = computed(() => {
 
 function toggleEditingCostCapPercentage() {
   if (isEditingCostCapPercentage.value) {
-    commitCostCapPercentage()
+    const write = commitCostCapPercentage()
     isEditingCostCapPercentage.value = false
-    return
+    return write
   }
 
   costCapPercentageDraft.value = costCapPercentage.value
@@ -465,8 +455,8 @@ function commitCostCapPercentage() {
     costCapPercentageDraft.value = "0"
   }
 
-  updateAttribute("costCapPercentage", costCapPercentageValue)
   costCapPercentageDraftAtEditStart.value = costCapPercentageDraft.value
+  return updateAttribute("costCapPercentage", costCapPercentageValue)
 }
 
 const monthlyBenefitCostCapEstimated = computed(() => {
@@ -534,9 +524,13 @@ const minimumPaidAmountActual = computed(() => {
 function updateEmployeeBenefitCurrencyValue(
   attribute: Exclude<EmployeeBenefitEditableAttribute, "costCapPercentage">,
   newValue: string | null
-) {
+): Promise<void> | undefined {
   const value = newValue === "-" || newValue === "" || newValue === null ? "0" : newValue
-  updateAttribute(attribute, value)
+  return updateAttribute(attribute, value)
+}
+
+async function retry() {
+  await save()
 }
 
 async function reload() {

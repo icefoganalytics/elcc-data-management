@@ -97,6 +97,8 @@ import { formatDate, formatMoney } from "@/utils/formatters"
 
 import fundingRegionsApi from "@/api/funding-regions-api"
 
+import ApiOperationError from "@/api/errors/api-operation-error"
+
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useFundingRegion from "@/use/use-funding-region"
 import useSnack from "@/use/use-snack"
@@ -127,8 +129,12 @@ async function deleteFundingRegion(fundingRegionId: number) {
       name: "administration/FundingRegionsPage",
     })
   } catch (error) {
-    console.error(`Failed to delete funding region: ${error}`, { error })
-    snack.error(`Failed to delete funding region: ${error}`, { cause: error })
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to delete funding region: ${error}`, { error })
+      snack.error(`Failed to delete funding region: ${error}`)
+      return
+    }
+    throw error
   } finally {
     isDeleting.value = false
   }

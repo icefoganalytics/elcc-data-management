@@ -59,7 +59,7 @@ export const useFundingPeriodStore = defineStore("periodAdmin", {
           })
 
         m.notify({ text: "Funding Period saved", variant: "success" })
-        this.getAllFundingPeriods()
+        await this.getAllFundingPeriods()
       }
     },
   },

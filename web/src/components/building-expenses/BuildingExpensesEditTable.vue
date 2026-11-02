@@ -10,17 +10,6 @@
     disable-sort
     @update:cell="saveBuildingExpenseIfDirty"
   >
-    <template #top>
-      <v-alert
-        v-if="hasInterruptedExpense"
-        type="warning"
-        variant="tonal"
-      >
-        Automatic saving is paused for interrupted expenses. Keep a copy of your edits, check the
-        current server state in another window, then reload this page to resume saving them.
-      </v-alert>
-    </template>
-
     <template #item.categoryId="{ item }">
       <BuildingExpenseCategoryAttributesChip :building-expense-category="item.category" />
     </template>
@@ -106,12 +95,12 @@ import { formatMoney } from "@/utils/formatters"
 import blockedToTrueConfirm from "@/utils/blocked-to-true-confirm"
 import sumByDecimal from "@/utils/sum-by-decimal"
 
+import { ApiOperationError } from "@/api/errors/api-operation-error"
 import { MAX_PER_PAGE } from "@/api/base-api"
 import buildingExpensesApi, {
   BuildingExpenseAsIndex,
   type BuildingExpense,
 } from "@/api/building-expenses-api"
-import { UnexpectedApiResponseError } from "@/api/errors/unexpected-api-response-error"
 import useBuildingExpenses, {
   type BuildingExpenseFiltersOptions,
   type BuildingExpenseWhereOptions,
@@ -192,21 +181,6 @@ const headers = computed(() => {
 })
 
 const { isSystemAdmin } = useCurrentUser()
-type BuildingExpenseEdits = Pick<
-  BuildingExpense,
-  "subsidyRate" | "estimatedCost" | "actualCost" | "notes"
->
-
-const interruptedEditsById = ref(new Map<number, BuildingExpenseEdits>())
-const hasInterruptedExpense = computed(() => interruptedEditsById.value.size > 0)
-const displayedBuildingExpenses = computed(() =>
-  buildingExpenses.value.map((buildingExpense) => {
-    const interruptedEdits = interruptedEditsById.value.get(buildingExpense.id)
-    if (isNil(interruptedEdits)) return buildingExpense
-
-    return { ...buildingExpense, ...interruptedEdits }
-  })
-)
 const editableColumns = computed(() => {
   const columns = ["estimatedCost", "actualCost", "notes"]
 
@@ -242,25 +216,17 @@ const isSaving = ref(false)
 const snack = useSnack()
 
 async function saveBuildingExpenseIfDirty(buildingExpense: BuildingExpense) {
-  if (interruptedEditsById.value.has(buildingExpense.id)) {
-    interruptedEditsById.value.set(
-      buildingExpense.id,
-      pick(buildingExpense, ["subsidyRate", "estimatedCost", "actualCost", "notes"])
-    )
-    return
-  }
-
   const currentBuildingExpense = buildingExpensesById.value[buildingExpense.id]
   if (JSON.stringify(currentBuildingExpense) === JSON.stringify(buildingExpense)) return
 
-  const buildingExpenseAttributes = pick(buildingExpense, [
-    "subsidyRate",
-    "estimatedCost",
-    "actualCost",
-    "notes",
-  ])
   isSaving.value = true
   try {
+    const buildingExpenseAttributes = pick(buildingExpense, [
+      "subsidyRate",
+      "estimatedCost",
+      "actualCost",
+      "notes",
+    ])
     const { buildingExpense: updatedBuildingExpense } = await buildingExpensesApi.update(
       buildingExpense.id,
       buildingExpenseAttributes
@@ -276,14 +242,12 @@ async function saveBuildingExpenseIfDirty(buildingExpense: BuildingExpense) {
 
     snack.success("Building expense saved!")
   } catch (error) {
-    if (error instanceof UnexpectedApiResponseError) {
-      interruptedEditsById.value.set(buildingExpense.id, buildingExpenseAttributes)
-    } else {
-      await refresh()
-    }
+    if (!(error instanceof ApiOperationError)) throw error
+
+    await refresh()
 
     console.error(`Failed to save building expense: ${error}`, { error })
-    snack.error(`Failed to save building expense: ${error}`, { cause: error })
+    snack.error(`Failed to save building expense: ${error}`)
   } finally {
     isSaving.value = false
   }
@@ -300,12 +264,11 @@ async function deleteBuildingExpense(buildingExpense: BuildingExpense) {
   isDeletingBuildingExpenseId.value = buildingExpense.id
   try {
     await buildingExpensesApi.delete(buildingExpense.id)
-    interruptedEditsById.value.delete(buildingExpense.id)
     await refresh()
     snack.success("Building expense deleted!")
   } catch (error) {
     console.error(`Failed to delete building expense: ${error}`, { error })
-    snack.error(`Failed to delete building expense: ${error}`, { cause: error })
+    snack.error(`Failed to delete building expense: ${error}`)
   } finally {
     isDeletingBuildingExpenseId.value = null
   }

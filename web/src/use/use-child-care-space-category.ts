@@ -7,7 +7,7 @@ import childCareSpaceCategoriesApi, {
   type ChildCareSpaceCategoryPropagationOptions,
 } from "@/api/child-care-space-categories-api"
 
-import { UnexpectedApiResponseError } from "@/api/errors/unexpected-api-response-error"
+import { ApiOperationError } from "@/api/errors/api-operation-error"
 export { type ChildCareSpaceCategoryAsShow }
 
 export function useChildCareSpaceCategory(
@@ -126,8 +126,9 @@ export function useChildCareSpaceCategory(
       try {
         await fetch()
       } catch (error) {
-        if (error instanceof UnexpectedApiResponseError) throw error
-        // fetch() records failures; explicit refresh callers still receive the rejection.
+        if (error instanceof ApiOperationError) return
+
+        throw error
       }
     },
     { immediate: true }

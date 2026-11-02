@@ -125,6 +125,8 @@
 import { ref, toRefs } from "vue"
 import { isNil } from "lodash"
 
+import { ApiOperationError } from "@/api/errors/api-operation-error"
+
 import useFundingSubmissionLine from "@/use/use-funding-submission-line"
 import useSnack from "@/use/use-snack"
 
@@ -153,8 +155,12 @@ async function saveAndNotify() {
     emit("updated", updatedFundingSubmissionLine.id)
     snack.success("Submission line updated successfully!")
   } catch (error) {
-    console.error(`Failed to update submission line: ${error}`, { error })
-    snack.error(`Failed to update submission line: ${error}`, { cause: error })
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to update submission line: ${error}`, { error })
+      snack.error(`Failed to update submission line: ${error}`)
+      return
+    }
+    throw error
   } finally {
     isSaving.value = false
   }

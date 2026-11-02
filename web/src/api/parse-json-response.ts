@@ -1,5 +1,7 @@
-import { AxiosHeaders, type AxiosResponseTransformer } from "axios"
+import { AxiosHeaders, type AxiosResponse, type AxiosResponseTransformer } from "axios"
 
+import { ApiOperationError } from "@/api/errors/api-operation-error"
+import { AuthenticationRequiredError } from "@/api/errors/authentication-required-error"
 import { UnexpectedApiResponseError } from "@/api/errors/unexpected-api-response-error"
 
 /** Shared by both JSON clients, before fulfilled or rejected responses reach consumers. */
@@ -29,6 +31,15 @@ export const parseJsonResponse: AxiosResponseTransformer = function (
     return JSON.parse(data)
   } catch {
     throw new UnexpectedApiResponseError(this, status || 0, headers)
+  }
+}
+
+export function classifyApiResponse(response: AxiosResponse): Error | undefined {
+  if (AuthenticationRequiredError.isAuthenticationRequiredResponse(response)) {
+    return new AuthenticationRequiredError(response.data.message)
+  }
+  if (ApiOperationError.isOperationErrorResponse(response)) {
+    return new ApiOperationError(response.data.message, response.status)
   }
 }
 

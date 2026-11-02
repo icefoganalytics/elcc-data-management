@@ -61,6 +61,7 @@
 import { ref, toRefs, useTemplateRef } from "vue"
 import { isNil } from "lodash"
 
+import { ApiOperationError } from "@/api/errors/api-operation-error"
 import { required } from "@/utils/validators"
 
 import useBuildingExpenseCategory from "@/use/use-building-expense-category"
@@ -97,8 +98,13 @@ async function validateSaveAndNotify() {
     emit("saved", props.buildingExpenseCategoryId)
     snack.success("Building expense category saved!")
   } catch (error) {
-    console.error(`Failed to update building expense category: ${error}`, { error })
-    snack.error(`Failed to update building expense category: ${error}`, { cause: error })
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to update building expense category: ${error}`, { error })
+      snack.error(`Failed to update building expense category: ${error}`)
+      return
+    }
+
+    throw error
   } finally {
     isSaving.value = false
   }

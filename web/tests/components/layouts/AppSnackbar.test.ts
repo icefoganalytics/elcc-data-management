@@ -1,6 +1,5 @@
 import { mount } from "@vue/test-utils"
 import { AxiosHeaders } from "axios"
-import { vi } from "vitest"
 
 import { UnexpectedApiResponseError } from "@/api/errors/unexpected-api-response-error"
 
@@ -17,7 +16,7 @@ describe("web/src/components/layouts/AppSnackbar.vue", () => {
         vi.stubGlobal("visualViewport", undefined)
       })
 
-      test("when a server response is unavailable, shows the safe failure summary", async () => {
+      test("when response recovery is presented, excludes request secrets", async () => {
         // Arrange
         const wrapper = mount(AppSnackbar, {
           global: { plugins: [mockVuetify()] },
@@ -29,32 +28,11 @@ describe("web/src/components/layouts/AppSnackbar.vue", () => {
           502,
           new AxiosHeaders({ "cf-ray": "ray-123" })
         )
+        const snack = useSnack()
 
         // Act
-        useSnack().error("The write failed", { cause: apiError })
-        await wrapper.vm.$nextTick()
-
-        // Assert
-        expect(wrapper.text()).toContain("The server response was unavailable")
-        expect(wrapper.text()).not.toContain("The write failed")
-        expect(wrapper.text()).not.toContain("secret")
-      })
-
-      test("when recovery metadata is available, shows request details", async () => {
-        // Arrange
-        const wrapper = mount(AppSnackbar, {
-          global: { plugins: [mockVuetify()] },
-          attachTo: document.body,
-          attrs: { attach: true },
-        })
-        const apiError = new UnexpectedApiResponseError(
-          { method: "post", url: "/api/workbook?secret=hidden" },
-          502,
-          new AxiosHeaders({ "cf-ray": "ray-123" })
-        )
-
-        // Act
-        useSnack().error("The write failed", { cause: apiError })
+        snack.error(apiError.message, { timeout: -1 })
+        snack.apiResponseError.value = apiError
         await wrapper.vm.$nextTick()
 
         // Assert
@@ -64,7 +42,7 @@ describe("web/src/components/layouts/AppSnackbar.vue", () => {
         expect(wrapper.text()).not.toContain("secret")
       })
 
-      test("when a nested aggregate contains an API response error, shows persistent recovery details", async () => {
+      test("when a challenge is presented, offers verification and explicit reload", async () => {
         // Arrange
         const wrapper = mount(AppSnackbar, {
           global: { plugins: [mockVuetify()] },
@@ -72,48 +50,27 @@ describe("web/src/components/layouts/AppSnackbar.vue", () => {
           attrs: { attach: true },
         })
         const apiError = new UnexpectedApiResponseError(
-          { method: "post", url: "/api/workbook?secret=hidden" },
-          502,
-          new AxiosHeaders({ "cf-ray": "ray-123" }),
+          { method: "post", url: "/api/workbook" },
+          403,
+          new AxiosHeaders(),
           true
         )
-        const cause = new AggregateError([
-          new Error("An ordinary failure"),
-          new AggregateError([new Error("Another ordinary failure"), apiError]),
+        const snack = useSnack()
+
+        // Act
+        snack.error(apiError.message, { timeout: -1 })
+        snack.apiResponseError.value = apiError
+        await wrapper.vm.$nextTick()
+
+        // Assert
+        expect(wrapper.text()).toContain("Verify in a normal browser")
+        expect(wrapper.findAll("button").map((button) => button.text())).toEqual([
+          "Keep Editing",
+          "Reload App",
         ])
-
-        // Act
-        useSnack().error("The write failed", { cause })
-        await wrapper.vm.$nextTick()
-
-        // Assert
-        expect(wrapper.text()).toContain("The browser verification challenge interrupted")
-        expect(wrapper.text()).toContain("POST /api/workbook")
-        expect(wrapper.text()).toContain("502")
-        expect(wrapper.text()).toContain("ray-123")
-        expect(wrapper.text()).not.toContain("secret")
       })
 
-      test("when an aggregate has no API response error, shows normal feedback", async () => {
-        // Arrange
-        const wrapper = mount(AppSnackbar, {
-          global: { plugins: [mockVuetify()] },
-          attachTo: document.body,
-          attrs: { attach: true },
-        })
-
-        // Act
-        useSnack().error("The write failed", {
-          cause: new AggregateError([new Error("First failure"), new Error("Second failure")]),
-        })
-        await wrapper.vm.$nextTick()
-
-        // Assert
-        expect(wrapper.text()).toContain("The write failed")
-        expect(wrapper.text()).not.toContain("The server response was unavailable")
-      })
-
-      test("when a normal notification arrives during recovery, preserves the recovery state", async () => {
+      test("when a normal notification arrives during recovery, shows the notification", async () => {
         // Arrange
         const apiError = new UnexpectedApiResponseError(
           { method: "put", url: "/api/workbook" },
@@ -126,7 +83,8 @@ describe("web/src/components/layouts/AppSnackbar.vue", () => {
           attrs: { attach: true },
         })
         const snack = useSnack()
-        snack.error("Interrupted request", { cause: apiError })
+        snack.error(apiError.message, { timeout: -1 })
+        snack.apiResponseError.value = apiError
         await wrapper.vm.$nextTick()
 
         // Act
@@ -134,13 +92,12 @@ describe("web/src/components/layouts/AppSnackbar.vue", () => {
         await wrapper.vm.$nextTick()
 
         // Assert
-        expect(wrapper.text()).toContain("The server response was unavailable")
-        expect(wrapper.text()).not.toContain("Saved")
+        expect(wrapper.text()).toContain("Saved")
       })
 
-      test("when reload is cancelled, keeps the app and recovery state open", async () => {
+      test("when reload is cancelled, retains the recovery state", async () => {
         // Arrange
-        const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
+        vi.spyOn(window, "confirm").mockReturnValue(false)
         const wrapper = mount(AppSnackbar, {
           global: { plugins: [mockVuetify()] },
           attachTo: document.body,
@@ -152,25 +109,20 @@ describe("web/src/components/layouts/AppSnackbar.vue", () => {
           new AxiosHeaders(),
           true
         )
-
-        useSnack().error("Interrupted request", { cause: apiError })
+        const snack = useSnack()
+        snack.error(apiError.message, { timeout: -1 })
+        snack.apiResponseError.value = apiError
         await wrapper.vm.$nextTick()
+        const reloadButton = wrapper
+          .findAll("button")
+          .find((button) => button.text() === "Reload App")
+        if (reloadButton === undefined) throw new Error("Reload App button was not rendered")
 
         // Act
-        const buttons = wrapper.findAll("button")
-        const reloadButton = buttons.find((button) => button.text().includes("Reload App"))
-
-        if (reloadButton === undefined) {
-          throw new Error("Reload App button was not rendered")
-        }
-
         await reloadButton.trigger("click")
 
         // Assert
-        expect(wrapper.text()).toContain("The browser verification challenge interrupted")
-        expect(confirm).toHaveBeenCalledWith(
-          "Reloading discards unsaved changes in open forms. It does not guarantee that any interrupted write was not applied."
-        )
+        expect(snack.apiResponseError.value).toBe(apiError)
       })
     })
   })

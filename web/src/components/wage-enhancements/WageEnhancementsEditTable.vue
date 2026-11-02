@@ -46,7 +46,6 @@
         :deleting-ids="deletingIds"
         :errors-by-id="errorsById"
         @save="save"
-        @retry="retry"
         @create="create"
         @remove="remove"
       />
@@ -172,8 +171,8 @@ import { computed, onActivated, reactive, ref } from "vue"
 import { isNil, keyBy, mapValues } from "lodash"
 import Big from "big.js"
 
+import { ApiOperationError } from "@/api/errors/api-operation-error"
 import { MAX_PER_PAGE } from "@/api/base-api"
-import { UnexpectedApiResponseError } from "@/api/errors/unexpected-api-response-error"
 import wageEnhancementsApi, {
   EI_CPP_WCB_RATE,
   type WageEnhancement,
@@ -228,7 +227,6 @@ const activeWrites = new Map<number, Promise<void>>()
 const pendingIds = reactive(new Set<number>())
 const deletingIds = reactive(new Set<number>())
 const errorsById = reactive(new Map<number, string>())
-const interruptedIds = reactive(new Set<number>())
 const isCreating = ref(false)
 const snack = useSnack()
 
@@ -241,8 +239,7 @@ onActivated(async () => {
     pendingIds.size > 0 ||
     deletingIds.size > 0 ||
     pendingChanges.size > 0 ||
-    errorsById.size > 0 ||
-    interruptedIds.size > 0
+    errorsById.size > 0
   )
     return
 
@@ -282,9 +279,8 @@ const wageEnhancementsActualTotal = computed(() =>
 )
 const eiCppWcbRatePercentage = computed(() => Big(EI_CPP_WCB_RATE).mul(Big("100")).toFixed(2))
 
-function save(id: number, options: { isExplicitRetry?: boolean } = {}): Promise<void> {
+function save(id: number): Promise<void> {
   if (deletingIds.has(id)) return Promise.resolve()
-  if (interruptedIds.has(id) && !options.isExplicitRetry) return Promise.resolve()
 
   const wageEnhancement = wageEnhancements.value.find((record) => record.id === id)
   if (!wageEnhancement) return Promise.resolve()
@@ -307,10 +303,6 @@ function save(id: number, options: { isExplicitRetry?: boolean } = {}): Promise<
   return write
 }
 
-function retry(id: number): Promise<void> {
-  return save(id, { isExplicitRetry: true })
-}
-
 async function persist(id: number) {
   while (pendingChanges.has(id)) {
     const attributes = pendingChanges.get(id)
@@ -320,14 +312,16 @@ async function persist(id: number) {
     try {
       await wageEnhancementsApi.update(id, attributes)
       errorsById.delete(id)
-      interruptedIds.delete(id)
     } catch (error) {
-      if (error instanceof UnexpectedApiResponseError) interruptedIds.add(id)
       if (!pendingChanges.has(id)) pendingChanges.set(id, attributes)
       errorsById.set(id, String(error))
-      console.error(`Failed to save wage enhancement: ${error}`, { error })
-      snack.error(`Failed to save wage enhancement: ${error}`, { cause: error })
-      return
+      if (error instanceof ApiOperationError) {
+        console.error(`Failed to save wage enhancement: ${error}`, { error })
+        snack.error(`Failed to save wage enhancement: ${error}`)
+        return
+      }
+
+      throw error
     }
   }
 }
@@ -350,8 +344,13 @@ async function create(employeeWageTierId: number) {
     }
     snack.success("Wage enhancement created")
   } catch (error) {
-    console.error(`Failed to create wage enhancement: ${error}`, { error })
-    snack.error(`Failed to create wage enhancement: ${error}`, { cause: error })
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to create wage enhancement: ${error}`, { error })
+      snack.error(`Failed to create wage enhancement: ${error}`)
+      return
+    }
+
+    throw error
   } finally {
     isCreating.value = false
   }
@@ -368,11 +367,15 @@ async function remove(id: number) {
     if (index !== -1) wageEnhancements.value.splice(index, 1)
     pendingChanges.delete(id)
     errorsById.delete(id)
-    interruptedIds.delete(id)
     snack.success("Wage enhancement deleted.")
   } catch (error) {
-    console.error(`Failed to delete wage enhancement: ${error}`, { error })
-    snack.error(`Failed to delete wage enhancement: ${error}`, { cause: error })
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to delete wage enhancement: ${error}`, { error })
+      snack.error(`Failed to delete wage enhancement: ${error}`)
+      return
+    }
+
+    throw error
   } finally {
     deletingIds.delete(id)
   }
