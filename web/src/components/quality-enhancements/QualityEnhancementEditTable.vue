@@ -230,6 +230,9 @@ async function deleteRecord(record: QualityEnhancementAsIndex) {
     !blockedToTrueConfirm("Are you sure you want to remove this quality enhancement?")
   )
     return
+
+  if (!(await commitEdit())) return
+
   isDeleting.value = true
   deletingId.value = record.id
   try {
