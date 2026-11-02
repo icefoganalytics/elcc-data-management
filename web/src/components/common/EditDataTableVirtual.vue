@@ -236,7 +236,7 @@ function navigateOnKeydown(event: KeyboardEvent, columnKey: ColumnKey, rowIndex:
 }
 
 async function goToNextRow(rowIndex: number, columnKey: ColumnKey): Promise<void> {
-  emitUpdateCell(rowIndex)
+  emitInputAndCancel()
 
   const nextRowIndex = rowIndex + 1
   if (nextRowIndex >= props.items.length) {
@@ -248,7 +248,7 @@ async function goToNextRow(rowIndex: number, columnKey: ColumnKey): Promise<void
 }
 
 async function goToPreviousRow(rowIndex: number, columnKey: ColumnKey): Promise<void> {
-  emitUpdateCell(rowIndex)
+  emitInputAndCancel()
 
   if (rowIndex <= 0) {
     resetActiveRow()
@@ -259,8 +259,6 @@ async function goToPreviousRow(rowIndex: number, columnKey: ColumnKey): Promise<
 }
 
 function goToNextColumn(rowIndex: number, columnKey: ColumnKey): void {
-  emitUpdateCell(rowIndex)
-
   const columnIndex = props.editableColumns.indexOf(columnKey)
   const nextColumnIndex = columnIndex + 1
 
@@ -269,6 +267,8 @@ function goToNextColumn(rowIndex: number, columnKey: ColumnKey): void {
     return
   }
 
+  emitUpdateCell(rowIndex)
+
   const nextColumnKey = props.editableColumns[nextColumnIndex]
   if (nextColumnKey) {
     focusOnField(nextColumnKey, rowIndex)
@@ -276,8 +276,6 @@ function goToNextColumn(rowIndex: number, columnKey: ColumnKey): void {
 }
 
 function goToPreviousColumn(rowIndex: number, columnKey: ColumnKey): void {
-  emitUpdateCell(rowIndex)
-
   const columnIndex = props.editableColumns.indexOf(columnKey)
   const previousColumnIndex = columnIndex - 1
 
@@ -288,6 +286,7 @@ function goToPreviousColumn(rowIndex: number, columnKey: ColumnKey): void {
     }
     return
   }
+  emitUpdateCell(rowIndex)
 
   const previousColumnKey = props.editableColumns[previousColumnIndex]
   if (previousColumnKey) {
