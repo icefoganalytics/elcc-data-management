@@ -1,13 +1,13 @@
 import * as administrationCosts from "./administration-costs"
 import * as centres from "./centres"
 import * as fundingReconciliations from "./funding-reconciliations"
-import * as diverseNeeds from "./diverse-needs"
+import * as childrenWithDiverseNeedsFundingRecords from "./children-with-diverse-needs-funding-records"
 import * as fundingSubmissionLines from "./funding-submission-lines"
 
 export {
   administrationCosts,
   centres,
-  diverseNeeds,
+  childrenWithDiverseNeedsFundingRecords,
   fundingReconciliations,
   fundingSubmissionLines,
 }
@@ -15,7 +15,7 @@ export {
 export default {
   administrationCosts,
   centres,
-  diverseNeeds,
+  childrenWithDiverseNeedsFundingRecords,
   fundingReconciliations,
   fundingSubmissionLines,
 }

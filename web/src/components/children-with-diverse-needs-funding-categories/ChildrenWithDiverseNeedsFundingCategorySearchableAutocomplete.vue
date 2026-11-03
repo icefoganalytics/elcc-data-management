@@ -63,13 +63,13 @@
 import { computed, onScopeDispose, ref, watch } from "vue"
 import { debounce, isEmpty, isNil, uniqBy } from "lodash"
 
-import useDiverseNeedCategory from "@/use/use-diverse-need-category"
-import useDiverseNeedCategories from "@/use/use-diverse-need-categories"
+import useChildrenWithDiverseNeedsFundingCategory from "@/use/use-children-with-diverse-needs-funding-category"
+import useChildrenWithDiverseNeedsFundingCategories from "@/use/use-children-with-diverse-needs-funding-categories"
 import type {
-  DiverseNeedCategoryAsIndex,
-  DiverseNeedCategoryFiltersOptions,
-  DiverseNeedCategoryQueryOptions,
-} from "@/api/diverse-need-categories-api"
+  ChildrenWithDiverseNeedsFundingCategoryAsIndex,
+  ChildrenWithDiverseNeedsFundingCategoryFiltersOptions,
+  ChildrenWithDiverseNeedsFundingCategoryQueryOptions,
+} from "@/api/children-with-diverse-needs-funding-categories-api"
 
 defineOptions({ inheritAttrs: false })
 
@@ -88,20 +88,20 @@ const emit = defineEmits<{
 
 const selectedCategoryId = computed(() => (props.disabled ? undefined : props.modelValue))
 const {
-  diverseNeedCategory: selectedCategory,
+  childrenWithDiverseNeedsFundingCategory: selectedCategory,
   isLoading: isLoadingSelectedCategory,
   isErrored: isSelectedCategoryErrored,
   fetch: reloadSelectedCategory,
-} = useDiverseNeedCategory(selectedCategoryId)
+} = useChildrenWithDiverseNeedsFundingCategory(selectedCategoryId)
 const searchToken = ref("")
 const page = ref(1)
 const perPage = computed(() => (isEmpty(searchToken.value) ? 100 : 20))
-const searchFilters = computed<DiverseNeedCategoryFiltersOptions>(() => {
+const searchFilters = computed<ChildrenWithDiverseNeedsFundingCategoryFiltersOptions>(() => {
   if (isEmpty(searchToken.value)) return {}
 
   return { search: searchToken.value.trim().split(" ") }
 })
-const query = computed<DiverseNeedCategoryQueryOptions>(() => ({
+const query = computed<ChildrenWithDiverseNeedsFundingCategoryQueryOptions>(() => ({
   where: { fundingPeriodId: props.fundingPeriodId },
   filters: searchFilters.value,
   order: [["categoryName", "ASC"]],
@@ -109,16 +109,16 @@ const query = computed<DiverseNeedCategoryQueryOptions>(() => ({
   page: page.value,
 }))
 const {
-  diverseNeedCategories,
+  childrenWithDiverseNeedsFundingCategories,
   totalCount,
   isLoading,
   isErrored,
   fetch: reloadCategories,
-} = useDiverseNeedCategories(query)
-const allCategories = computed<DiverseNeedCategoryAsIndex[]>(() => {
+} = useChildrenWithDiverseNeedsFundingCategories(query)
+const allCategories = computed<ChildrenWithDiverseNeedsFundingCategoryAsIndex[]>(() => {
   if (props.disabled) return []
 
-  const availableCategories = diverseNeedCategories.value.filter(
+  const availableCategories = childrenWithDiverseNeedsFundingCategories.value.filter(
     ({ id }) => !props.excludingCategoryIds.includes(id)
   )
   if (

@@ -6,7 +6,7 @@
     <template #header><h4>Add Diverse Need</h4></template>
     <v-row>
       <v-col cols="12">
-        <DiverseNeedCategorySearchableAutocomplete
+        <ChildrenWithDiverseNeedsFundingCategorySearchableAutocomplete
           v-model="attributes.categoryId"
           :funding-period-id="fundingPeriodId"
           :excluding-category-ids="existingCategoryIds"
@@ -72,10 +72,10 @@
 <script setup lang="ts">
 import { ref, useTemplateRef } from "vue"
 
-import diverseNeedsApi from "@/api/diverse-needs-api"
+import childrenWithDiverseNeedsFundingRecordsApi from "@/api/children-with-diverse-needs-funding-records-api"
 import { greaterThanOrEqualTo, required } from "@/utils/validators"
 import useSnack from "@/use/use-snack"
-import DiverseNeedCategorySearchableAutocomplete from "@/components/diverse-need-categories/DiverseNeedCategorySearchableAutocomplete.vue"
+import ChildrenWithDiverseNeedsFundingCategorySearchableAutocomplete from "@/components/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategorySearchableAutocomplete.vue"
 import HeaderActionsFormCard from "@/components/common/HeaderActionsFormCard.vue"
 
 const props = withDefaults(
@@ -107,15 +107,16 @@ async function create() {
   try {
     const { valid } = await form.value.validate()
     if (!valid || attributes.value.categoryId === null) return
-    const { diverseNeed } = await diverseNeedsApi.create({
-      centreId: props.centreId,
-      fiscalPeriodId: props.fiscalPeriodId,
-      categoryId: attributes.value.categoryId,
-      estimatedChildOccupancyRate: attributes.value.estimatedChildOccupancyRate,
-      actualChildOccupancyRate: attributes.value.actualChildOccupancyRate,
-      applyToCurrentAndFutureFiscalPeriods: attributes.value.applyToCurrentAndFutureFiscalPeriods,
-    })
-    emit("created", diverseNeed.id)
+    const { childrenWithDiverseNeedsFundingRecord } =
+      await childrenWithDiverseNeedsFundingRecordsApi.create({
+        centreId: props.centreId,
+        fiscalPeriodId: props.fiscalPeriodId,
+        categoryId: attributes.value.categoryId,
+        estimatedChildOccupancyRate: attributes.value.estimatedChildOccupancyRate,
+        actualChildOccupancyRate: attributes.value.actualChildOccupancyRate,
+        applyToCurrentAndFutureFiscalPeriods: attributes.value.applyToCurrentAndFutureFiscalPeriods,
+      })
+    emit("created", childrenWithDiverseNeedsFundingRecord.id)
     snack.success("Diverse need created successfully")
   } catch (error) {
     snack.error(`Failed to create diverse need: ${error}`)
