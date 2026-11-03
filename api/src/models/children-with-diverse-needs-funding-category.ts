@@ -76,13 +76,18 @@ export class ChildrenWithDiverseNeedsFundingCategory extends BaseModel<
   // Associations
   @BelongsTo(() => FundingPeriod, {
     foreignKey: "fundingPeriodId",
-    inverse: { as: "childrenWithDiverseNeedsFundingCategories", type: "hasMany" },
+    inverse: {
+      as: "childrenWithDiverseNeedsFundingCategories",
+      type: "hasMany",
+    },
   })
   declare fundingPeriod?: NonAttribute<FundingPeriod>
 
   @HasMany(() => ChildrenWithDiverseNeedsFundingRecord, {
     foreignKey: "categoryId",
-    inverse: { as: "category" },
+    inverse: {
+      as: "category",
+    },
   })
   declare childrenWithDiverseNeedsFundingRecords?: NonAttribute<
     ChildrenWithDiverseNeedsFundingRecord[]
