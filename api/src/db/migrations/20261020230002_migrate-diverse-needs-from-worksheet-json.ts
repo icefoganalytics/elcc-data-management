@@ -117,7 +117,7 @@ export async function up(knex: Knex): Promise<void> {
   })
 
   await migrateLedger(knex, ledgerRows, existingRows)
-  await removeDiverseNeedsJson(knex)
+  await removeChildrenWithDiverseNeedsFundingRecordsJson(knex)
   await retireConfigurations(knex)
 }
 
@@ -303,7 +303,7 @@ async function migrateCategories(
             CONVERT(NVARCHAR(33), created_at, 126) AS createdAt,
             CONVERT(NVARCHAR(33), updated_at, 126) AS updatedAt,
             CONVERT(NVARCHAR(33), deleted_at, 126) AS deletedAt
-          FROM diverse_need_categories
+          FROM children_with_diverse_needs_funding_categories
           WHERE funding_period_id = :fundingPeriodId
             AND category_name COLLATE Latin1_General_100_BIN2 = :categoryName
             AND DATALENGTH(category_name) = DATALENGTH(:categoryName)
@@ -329,7 +329,7 @@ async function migrateCategories(
           candidate.updatedAt === configuration.updatedAt
       )
       if (category === undefined) {
-        const [inserted] = await knex("diverse_need_categories")
+        const [inserted] = await knex("children_with_diverse_needs_funding_categories")
           .insert({
             funding_period_id: fundingPeriodId,
             category_name: configuration.categoryName,
@@ -369,7 +369,7 @@ function categoryKey(configurationId: number, fundingPeriodId: number): string {
 
 async function findExistingLedger(knex: Knex): Promise<ExistingLedger[]> {
   return knex.raw<ExistingLedger[]>(
-    `SELECT id, centre_id AS centreId, fiscal_period_id AS fiscalPeriodId, category_id AS categoryId, line_name AS lineName, CONVERT(NVARCHAR(40), monthly_amount) AS monthlyAmount, CONVERT(NVARCHAR(40), estimated_child_occupancy_rate) AS estimatedRate, CONVERT(NVARCHAR(40), actual_child_occupancy_rate) AS actualRate, CONVERT(NVARCHAR(40), estimated_computed_total) AS estimatedTotal, CONVERT(NVARCHAR(40), actual_computed_total) AS actualTotal, CONVERT(NVARCHAR(33), created_at, 126) AS createdAt, CONVERT(NVARCHAR(33), updated_at, 126) AS updatedAt, CONVERT(NVARCHAR(33), deleted_at, 126) AS deletedAt FROM diverse_needs`
+    `SELECT id, centre_id AS centreId, fiscal_period_id AS fiscalPeriodId, category_id AS categoryId, line_name AS lineName, CONVERT(NVARCHAR(40), monthly_amount) AS monthlyAmount, CONVERT(NVARCHAR(40), estimated_child_occupancy_rate) AS estimatedRate, CONVERT(NVARCHAR(40), actual_child_occupancy_rate) AS actualRate, CONVERT(NVARCHAR(40), estimated_computed_total) AS estimatedTotal, CONVERT(NVARCHAR(40), actual_computed_total) AS actualTotal, CONVERT(NVARCHAR(33), created_at, 126) AS createdAt, CONVERT(NVARCHAR(33), updated_at, 126) AS updatedAt, CONVERT(NVARCHAR(33), deleted_at, 126) AS deletedAt FROM children_with_diverse_needs_funding_records`
   )
 }
 
@@ -651,7 +651,7 @@ async function migrateLedger(
       deleted_at: row.deletedAt,
     }
     if (existing === undefined) {
-      await knex("diverse_needs").insert(attributes)
+      await knex("children_with_diverse_needs_funding_records").insert(attributes)
       continue
     }
     if (
@@ -672,7 +672,7 @@ async function migrateLedger(
   }
 }
 
-async function removeDiverseNeedsJson(knex: Knex): Promise<void> {
+async function removeChildrenWithDiverseNeedsFundingRecordsJson(knex: Knex): Promise<void> {
   const invalid = await knex.raw<{ worksheetId: number }[]>(`
     SELECT worksheets.id AS worksheetId
     FROM funding_submission_line_jsons worksheets
