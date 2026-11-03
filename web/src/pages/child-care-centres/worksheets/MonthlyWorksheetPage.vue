@@ -172,7 +172,7 @@
               :fiscal-period-id="fiscalPeriod.id"
               :funding-period-id="fiscalPeriod.fundingPeriodId"
               :existing-category-ids="qualityEnhancementTable?.categoryIds ?? []"
-              :workflow-busy="isReplicating || isWorksheetSaving || isRefreshingLinked"
+              :is-workflow-busy="isReplicating || isWorksheetSaving || isRefreshingLinked"
               @saving="isCreatingQualityEnhancement = $event"
               @created="onQualityEnhancementCreated"
               @cancel="showQualityEnhancementCreateForm = false"
