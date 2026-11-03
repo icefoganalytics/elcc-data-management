@@ -30,8 +30,18 @@ export async function down(knex: Knex): Promise<void> {
 ```
 
 Use SQL `DECIMAL` types for financial values and snake_case for database names.
-Use `GETUTCDATE()` for timestamp defaults. Name unique indexes explicitly. Unique indexes on paranoid
-models must exclude soft-deleted rows, using `predicate: knex.whereNull("deleted_at")`.
+
+Use native Knex timestamps for UTC audit fields. On MSSQL, `timestamp` generates `DATETIME2(7)`; keep explicit UTC defaults rather than the local-time default from `table.timestamps(true, true)`:
+
+```typescript
+table.timestamp("created_at").notNullable().defaultTo(knex.raw("GETUTCDATE()"))
+table.timestamp("updated_at").notNullable().defaultTo(knex.raw("GETUTCDATE()"))
+table.timestamp("deleted_at").nullable()
+```
+
+Keep updates and soft deletion ORM-managed, without timestamp triggers. When converting `DATETIMEOFFSET`, normalize values with `SWITCHOFFSET(..., '+00:00')` before altering the type. This preserves UTC instants, all seven fractional digits, and nulls, but intentionally discards original offset metadata. A rollback to `DATETIMEOFFSET` assigns UTC offsets; it cannot reconstruct the original offsets. Domain dates are outside this audit convention.
+
+Name unique indexes explicitly. Unique indexes on paranoid models must exclude soft-deleted rows, using `predicate: knex.whereNull("deleted_at")`.
 
 Creation migrations and existing-database upgrades must converge on the same default policy:
 use unquoted SQL `0` for numeric zero defaults, retain the intended nonzero numeric literals,
