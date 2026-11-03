@@ -4,8 +4,9 @@ export const DiverseNeedsCentreIdFiscalPeriodIdCategoryIdUniqueIndex = createInd
   "diverse-needs-centre-id-fiscal-period-id-category-id-unique",
   {
     unique: true,
-    name: "unique_diverse_needs_on_centre_id_fiscal_period_id_and_category_id",
+    name: "unique_diverse_needs_on_centre_id_fiscal_period_id_category_id",
     where: { deletedAt: null },
+    msg: "A Diverse Need already exists for this category, centre, and fiscal period",
   }
 )
 
