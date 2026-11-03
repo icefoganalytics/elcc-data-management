@@ -36,8 +36,9 @@
 </template>
 
 <script setup lang="ts">
-import { callWithAsyncErrorHandling, ErrorCodes, getCurrentInstance, ref } from "vue"
-import { debounce, isEmpty, isNil } from "lodash"
+import { ref } from "vue"
+import { useDebounceFn } from "@vueuse/shared"
+import { isEmpty, isNil } from "lodash"
 
 import { type VTextField } from "vuetify/components"
 
@@ -65,15 +66,14 @@ const emit = defineEmits<{
   "update:modelValue": [value: string]
 }>()
 
-const instance = getCurrentInstance()
 const isUniqueValue = ref<boolean | null>(null)
 const isCheckingUniqueness = ref(false)
 const textField = ref<InstanceType<typeof VTextField> | null>(null)
 
-function updateModelValue(value: string) {
+async function updateModelValue(value: string) {
   emit("update:modelValue", value)
 
-  debouncedCheckValueIsUnique(value)
+  await debouncedCheckValueIsUnique(value)
 }
 
 async function checkValueIsUnique(value: string | null | undefined) {
@@ -97,11 +97,7 @@ async function checkValueIsUnique(value: string | null | undefined) {
   }
 }
 
-const debouncedCheckValueIsUnique = debounce((value: string | null | undefined): void => {
-  callWithAsyncErrorHandling(checkValueIsUnique, instance, ErrorCodes.COMPONENT_EVENT_HANDLER, [
-    value,
-  ])
-}, 500)
+const debouncedCheckValueIsUnique = useDebounceFn(checkValueIsUnique, 500)
 
 function valueMustBeUnique() {
   if (isUniqueValue.value === true || isUniqueValue.value === null) return true
