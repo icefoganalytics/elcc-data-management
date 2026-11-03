@@ -1,6 +1,6 @@
 import { pick } from "lodash"
 import { ChildrenWithDiverseNeedsFundingRecord, User } from "@/models"
-import { ChildrenWithDiverseNeedsFundingRecordPolicy } from "@/policies"
+import { ChildrenWithDiverseNeedsFundingRecordsPolicy } from "@/policies"
 import BaseSerializer from "@/serializers/base-serializer"
 export class IndexSerializer extends BaseSerializer<ChildrenWithDiverseNeedsFundingRecord> {
   constructor(
@@ -25,7 +25,7 @@ export class IndexSerializer extends BaseSerializer<ChildrenWithDiverseNeedsFund
         "createdAt",
         "updatedAt",
       ]),
-      policy: new ChildrenWithDiverseNeedsFundingRecordPolicy(this.user, this.record).toJSON(),
+      policy: new ChildrenWithDiverseNeedsFundingRecordsPolicy(this.user, this.record).toJSON(),
     }
   }
 }

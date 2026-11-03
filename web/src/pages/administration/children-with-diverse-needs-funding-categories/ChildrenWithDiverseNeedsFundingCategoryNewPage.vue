@@ -4,12 +4,12 @@
     class="ma-5"
     icon="mdi-lock-outline"
     headline="Editing Not Allowed"
-    title="Only system administrators can create diverse need categories."
+    title="Only system administrators can create Children with Diverse Needs categories."
   />
   <HeaderActionsFormCard
     v-else
     ref="form"
-    title="New Diverse Need Category"
+    title="New Children with Diverse Needs Category"
     @submit.prevent="createCategory"
   >
     <FundingPeriodSearchableAutocomplete
@@ -78,7 +78,7 @@
 import { reactive, ref, useTemplateRef } from "vue"
 import { useRoute, useRouter } from "vue-router"
 
-import childrenWithDiverseNeedsFundingCategoriesApi from "@/api/children-with-diverse-needs-funding-categories-api"
+import childrenWithChildrenWithDiverseNeedsFundingRecordsCategoriesApi from "@/api/children-with-diverse-needs-funding-categories-api"
 import { required } from "@/utils/validators"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useSnack from "@/use/use-snack"
@@ -112,32 +112,31 @@ async function createCategory() {
 
   isCreating.value = true
   try {
-    const { childrenWithDiverseNeedsFundingCategory } =
-      await childrenWithDiverseNeedsFundingCategoriesApi.create({
+    const { childrenWithChildrenWithDiverseNeedsFundingRecordsCategory } = await childrenWithChildrenWithDiverseNeedsFundingRecordsCategoriesApi.create(
+      {
         fundingPeriodId: attributes.fundingPeriodId,
         categoryName: attributes.categoryName,
         fromAge: attributes.fromAge,
         toAge: attributes.toAge,
         monthlyAmount: attributes.monthlyAmount,
-      })
-    snack.success("Diverse need category created successfully!")
+      }
+    )
+    snack.success("Children with Diverse Needs category created successfully!")
     await router.push({
       name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
-      params: {
-        childrenWithDiverseNeedsFundingCategoryId: childrenWithDiverseNeedsFundingCategory.id,
-      },
+      params: { childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryId: childrenWithChildrenWithDiverseNeedsFundingRecordsCategory.id },
     })
   } catch (error) {
-    snack.error(`Failed to create diverse need category: ${error}`)
+    snack.error(`Failed to create Children with Diverse Needs category: ${error}`)
   } finally {
     isCreating.value = false
   }
 }
 
-useBreadcrumbs("New Diverse Need Category", [
+useBreadcrumbs("New Children with Diverse Needs Category", [
   { title: "Administration", to: { name: "AdministrationPage" } },
   {
-    title: "Diverse Need Categories",
+    title: "Children with Diverse Needs Categories",
     to: { name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage" },
   },
   {

@@ -3,7 +3,7 @@
     ref="form"
     @submit.prevent="create"
   >
-    <template #header><h4>Add Diverse Need</h4></template>
+    <template #header><h4>Add Children with Diverse Needs</h4></template>
     <v-row>
       <v-col cols="12">
         <ChildrenWithDiverseNeedsFundingCategorySearchableAutocomplete
@@ -72,7 +72,7 @@
 <script setup lang="ts">
 import { ref, useTemplateRef } from "vue"
 
-import childrenWithDiverseNeedsFundingRecordsApi from "@/api/children-with-diverse-needs-funding-records-api"
+import childrenWithChildrenWithDiverseNeedsFundingRecordsApi from "@/api/children-with-diverse-needs-funding-records-api"
 import { greaterThanOrEqualTo, required } from "@/utils/validators"
 import useSnack from "@/use/use-snack"
 import ChildrenWithDiverseNeedsFundingCategorySearchableAutocomplete from "@/components/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategorySearchableAutocomplete.vue"
@@ -107,19 +107,18 @@ async function create() {
   try {
     const { valid } = await form.value.validate()
     if (!valid || attributes.value.categoryId === null) return
-    const { childrenWithDiverseNeedsFundingRecord } =
-      await childrenWithDiverseNeedsFundingRecordsApi.create({
-        centreId: props.centreId,
-        fiscalPeriodId: props.fiscalPeriodId,
-        categoryId: attributes.value.categoryId,
-        estimatedChildOccupancyRate: attributes.value.estimatedChildOccupancyRate,
-        actualChildOccupancyRate: attributes.value.actualChildOccupancyRate,
-        applyToCurrentAndFutureFiscalPeriods: attributes.value.applyToCurrentAndFutureFiscalPeriods,
-      })
-    emit("created", childrenWithDiverseNeedsFundingRecord.id)
+    const { childrenWithChildrenWithDiverseNeedsFundingRecordsRecord } = await childrenWithChildrenWithDiverseNeedsFundingRecordsApi.create({
+      centreId: props.centreId,
+      fiscalPeriodId: props.fiscalPeriodId,
+      categoryId: attributes.value.categoryId,
+      estimatedChildOccupancyRate: attributes.value.estimatedChildOccupancyRate,
+      actualChildOccupancyRate: attributes.value.actualChildOccupancyRate,
+      applyToCurrentAndFutureFiscalPeriods: attributes.value.applyToCurrentAndFutureFiscalPeriods,
+    })
+    emit("created", childrenWithChildrenWithDiverseNeedsFundingRecordsRecord.id)
     snack.success("Diverse need created successfully")
   } catch (error) {
-    snack.error(`Failed to create diverse need: ${error}`)
+    snack.error(`Failed to create Children with Diverse Needs: ${error}`)
   } finally {
     isCreating.value = false
     emit("saving", false)

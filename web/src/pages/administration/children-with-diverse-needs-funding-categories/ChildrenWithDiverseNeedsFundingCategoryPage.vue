@@ -8,7 +8,7 @@
     class="ma-5"
     icon="mdi-alert-circle-outline"
     headline="Unable to Load Category"
-    title="Diverse need category could not be loaded."
+    title="Children with Diverse Needs category could not be loaded."
   >
     <template #actions>
       <v-btn
@@ -19,8 +19,8 @@
     </template>
   </v-empty-state>
   <HeaderActionsCard
-    v-else-if="childrenWithDiverseNeedsFundingCategory"
-    title="Diverse Need Category Details"
+    v-else-if="childrenWithChildrenWithDiverseNeedsFundingRecordsCategory"
+    title="Children with Diverse Needs Category Details"
   >
     <template #header-actions>
       <v-btn
@@ -28,7 +28,7 @@
         color="primary"
         :to="{
           name: 'administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryEditPage',
-          params: { childrenWithDiverseNeedsFundingCategoryId: categoryId },
+          params: { childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryId: categoryId },
         }"
       >
         Edit
@@ -62,7 +62,7 @@
         md="6"
       >
         <DescriptionElement
-          :model-value="childrenWithDiverseNeedsFundingCategory.categoryName"
+          :model-value="childrenWithChildrenWithDiverseNeedsFundingRecordsCategory.categoryName"
           label="Category Name"
           vertical
         />
@@ -85,7 +85,7 @@
         md="4"
       >
         <DescriptionElement
-          :model-value="childrenWithDiverseNeedsFundingCategory.fromAge ?? '—'"
+          :model-value="childrenWithChildrenWithDiverseNeedsFundingRecordsCategory.fromAge ?? '—'"
           label="From Age"
           vertical
         />
@@ -95,7 +95,7 @@
         md="4"
       >
         <DescriptionElement
-          :model-value="childrenWithDiverseNeedsFundingCategory.toAge ?? '—'"
+          :model-value="childrenWithChildrenWithDiverseNeedsFundingRecordsCategory.toAge ?? '—'"
           label="To Age"
           vertical
         />
@@ -106,7 +106,7 @@
       >
         <DescriptionElement
           :model-value="
-            formatMoney(childrenWithDiverseNeedsFundingCategory.monthlyAmount, {
+            formatMoney(childrenWithChildrenWithDiverseNeedsFundingRecordsCategory.monthlyAmount, {
               maximumFractionDigits: 4,
             })
           "
@@ -122,7 +122,7 @@
 import { computed, ref } from "vue"
 import { useRouter } from "vue-router"
 
-import childrenWithDiverseNeedsFundingCategoriesApi from "@/api/children-with-diverse-needs-funding-categories-api"
+import childrenWithChildrenWithDiverseNeedsFundingRecordsCategoriesApi from "@/api/children-with-diverse-needs-funding-categories-api"
 import useChildrenWithDiverseNeedsFundingCategory from "@/use/use-children-with-diverse-needs-funding-category"
 import useFundingPeriod from "@/use/use-funding-period"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
@@ -134,20 +134,18 @@ import HeaderActionsCard from "@/components/common/HeaderActionsCard.vue"
 import DescriptionElement from "@/components/common/DescriptionElement.vue"
 
 const props = defineProps<{
-  childrenWithDiverseNeedsFundingCategoryId: string
+  childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryId: string
 }>()
 const router = useRouter()
-const categoryId = computed(() => Number(props.childrenWithDiverseNeedsFundingCategoryId))
+const categoryId = computed(() => Number(props.childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryId))
 const {
-  childrenWithDiverseNeedsFundingCategory,
+  childrenWithChildrenWithDiverseNeedsFundingRecordsCategory,
   policy,
   isLoading,
   isErrored,
   fetch: refreshCategory,
 } = useChildrenWithDiverseNeedsFundingCategory(categoryId)
-const fundingPeriodId = computed(
-  () => childrenWithDiverseNeedsFundingCategory.value?.fundingPeriodId
-)
+const fundingPeriodId = computed(() => childrenWithChildrenWithDiverseNeedsFundingRecordsCategory.value?.fundingPeriodId)
 const {
   fundingPeriod,
   isLoading: isLoadingFundingPeriod,
@@ -162,33 +160,35 @@ async function retireCategory() {
   if (
     !policy.value?.destroy ||
     isDeleting.value ||
-    !blockedToTrueConfirm("Are you sure you want to retire this diverse need category?")
+    !blockedToTrueConfirm(
+      "Are you sure you want to retire this Children with Diverse Needs category?"
+    )
   )
     return
 
   isDeleting.value = true
   try {
-    await childrenWithDiverseNeedsFundingCategoriesApi.delete(categoryId.value)
-    snack.success("Diverse need category retired successfully!")
+    await childrenWithChildrenWithDiverseNeedsFundingRecordsCategoriesApi.delete(categoryId.value)
+    snack.success("Children with Diverse Needs category retired successfully!")
     await router.push({ name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage" })
   } catch (error) {
-    snack.error(`Failed to retire diverse need category: ${error}`)
+    snack.error(`Failed to retire Children with Diverse Needs category: ${error}`)
   } finally {
     isDeleting.value = false
   }
 }
 
-useBreadcrumbs("Diverse Need Category Details", [
+useBreadcrumbs("Children with Diverse Needs Category Details", [
   { title: "Administration", to: { name: "AdministrationPage" } },
   {
-    title: "Diverse Need Categories",
+    title: "Children with Diverse Needs Categories",
     to: { name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage" },
   },
   {
     title: "Details",
     to: {
       name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
-      params: { childrenWithDiverseNeedsFundingCategoryId: categoryId.value },
+      params: { childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryId: categoryId.value },
     },
   },
 ])

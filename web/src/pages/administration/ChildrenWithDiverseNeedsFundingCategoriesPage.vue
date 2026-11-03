@@ -1,5 +1,5 @@
 <template>
-  <HeaderActionsCard title="Diverse Need Categories">
+  <HeaderActionsCard title="Children with Diverse Needs Categories">
     <template #header-actions>
       <v-btn
         v-if="isSystemAdmin && fundingPeriodsCount > 0 && fundingPeriodId !== null"
@@ -10,7 +10,7 @@
         }"
       >
         <v-icon class="mr-2">mdi-plus</v-icon>
-        New Diverse Need Category
+        New Children with Diverse Needs Category
       </v-btn>
     </template>
     <FundingPeriodSearchableAutocomplete
@@ -18,7 +18,7 @@
       clearable
     />
     <ChildrenWithDiverseNeedsFundingCategoriesDataTableServer
-      :where="childrenWithDiverseNeedsFundingCategoriesWhere"
+      :where="childrenWithChildrenWithDiverseNeedsFundingRecordsCategoriesWhere"
     />
   </HeaderActionsCard>
 </template>
@@ -38,17 +38,17 @@ const fundingPeriodsQuery = ref({ perPage: 1 })
 const { totalCount: fundingPeriodsCount } = useFundingPeriods(fundingPeriodsQuery)
 const fundingPeriodId = ref<number | null>(null)
 const { isSystemAdmin } = useCurrentUser()
-const childrenWithDiverseNeedsFundingCategoriesWhere = computed(() => ({
+const childrenWithChildrenWithDiverseNeedsFundingRecordsCategoriesWhere = computed(() => ({
   fundingPeriodId: fundingPeriodId.value ?? undefined,
 }))
 
-useBreadcrumbs("Diverse Need Categories", [
+useBreadcrumbs("Children with Diverse Needs Categories", [
   {
     title: "Administration",
     to: { name: "AdministrationPage" },
   },
   {
-    title: "Diverse Need Categories",
+    title: "Children with Diverse Needs Categories",
     to: { name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage" },
   },
 ])

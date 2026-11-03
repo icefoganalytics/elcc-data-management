@@ -7,9 +7,9 @@
       :items="allCategories"
       :disabled="disabled"
       :error-messages="errorMessages"
-      label="Diverse Need Category"
-      hint="Search for a diverse need category."
-      no-data-text="No diverse need categories available"
+      label="Children with Diverse Needs Category"
+      hint="Search for a Children with Diverse Needs category."
+      no-data-text="No Children with Diverse Needs categories available"
       item-title="categoryName"
       item-value="id"
       auto-select-first
@@ -88,7 +88,7 @@ const emit = defineEmits<{
 
 const selectedCategoryId = computed(() => (props.disabled ? undefined : props.modelValue))
 const {
-  childrenWithDiverseNeedsFundingCategory: selectedCategory,
+  childrenWithChildrenWithDiverseNeedsFundingRecordsCategory: selectedCategory,
   isLoading: isLoadingSelectedCategory,
   isErrored: isSelectedCategoryErrored,
   fetch: reloadSelectedCategory,
@@ -109,7 +109,7 @@ const query = computed<ChildrenWithDiverseNeedsFundingCategoryQueryOptions>(() =
   page: page.value,
 }))
 const {
-  childrenWithDiverseNeedsFundingCategories,
+  childrenWithChildrenWithDiverseNeedsFundingRecordsCategories,
   totalCount,
   isLoading,
   isErrored,
@@ -118,7 +118,7 @@ const {
 const allCategories = computed<ChildrenWithDiverseNeedsFundingCategoryAsIndex[]>(() => {
   if (props.disabled) return []
 
-  const availableCategories = childrenWithDiverseNeedsFundingCategories.value.filter(
+  const availableCategories = childrenWithChildrenWithDiverseNeedsFundingRecordsCategories.value.filter(
     ({ id }) => !props.excludingCategoryIds.includes(id)
   )
   if (
@@ -134,7 +134,7 @@ const allCategories = computed<ChildrenWithDiverseNeedsFundingCategoryAsIndex[]>
 const errorMessages = computed(() => {
   if (props.disabled) return []
   if (isErrored.value || (!isNil(props.modelValue) && isSelectedCategoryErrored.value)) {
-    return ["Failed to load diverse need categories."]
+    return ["Failed to load Children with Diverse Needs categories."]
   }
 
   return []

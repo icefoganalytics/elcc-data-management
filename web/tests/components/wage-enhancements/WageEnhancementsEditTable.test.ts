@@ -569,54 +569,63 @@ describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", (
         expect(savedName.element.value).toBe("Alex")
       })
 
-      test("when a save fails after a row is edited and another row is created, keeps both rows editable", async () => {
-        // Arrange
-        const employeeWageTier = employeeWageTierFactory.build({ id: 2, fiscalPeriodId: 1 })
-        const wageEnhancement = wageEnhancementFactory.build({
-          id: 3,
-          centreId: 1,
-          employeeWageTierId: employeeWageTier.id,
-          employeeName: "Alex",
-        })
-        const createdWageEnhancement = wageEnhancementFactory.build({
-          id: 5,
-          centreId: 1,
-          employeeWageTierId: employeeWageTier.id,
-          employeeName: "",
-        })
-        vi.spyOn(employeeWageTiersApi, "list").mockResolvedValue({
-          employeeWageTiers: [employeeWageTier],
-          totalCount: 1,
-        })
-        vi.spyOn(wageEnhancementsApi, "list").mockResolvedValue({
-          wageEnhancements: [wageEnhancement],
-          totalCount: 1,
-        })
-        vi.spyOn(wageEnhancementsApi, "update").mockRejectedValue(new Error("offline"))
-        vi.spyOn(wageEnhancementsApi, "create").mockResolvedValue({
-          wageEnhancement: createdWageEnhancement,
-          policy: { show: true, create: true, update: true, destroy: true },
-        })
-        const wrapper = mount(WageEnhancementsEditTable, {
-          props: { centreId: 1, fiscalPeriodId: 1 },
-          global: { plugins: [mockVuetify()] },
-        })
-        await flushPromises()
+      test.each(["retains both employee names", "keeps both rows editable"])(
+        "when a save fails after editing and creating rows, %s",
+        async (outcome) => {
+          // Arrange
+          const employeeWageTier = employeeWageTierFactory.build({ id: 2, fiscalPeriodId: 1 })
+          const wageEnhancement = wageEnhancementFactory.build({
+            id: 3,
+            centreId: 1,
+            employeeWageTierId: employeeWageTier.id,
+            employeeName: "Alex",
+          })
+          const createdWageEnhancement = wageEnhancementFactory.build({
+            id: 5,
+            centreId: 1,
+            employeeWageTierId: employeeWageTier.id,
+            employeeName: "",
+          })
+          vi.spyOn(employeeWageTiersApi, "list").mockResolvedValue({
+            employeeWageTiers: [employeeWageTier],
+            totalCount: 1,
+          })
+          vi.spyOn(wageEnhancementsApi, "list").mockResolvedValue({
+            wageEnhancements: [wageEnhancement],
+            totalCount: 1,
+          })
+          vi.spyOn(wageEnhancementsApi, "update").mockRejectedValue(new Error("offline"))
+          vi.spyOn(wageEnhancementsApi, "create").mockResolvedValue({
+            wageEnhancement: createdWageEnhancement,
+            policy: { show: true, create: true, update: true, destroy: true },
+          })
+          const wrapper = mount(WageEnhancementsEditTable, {
+            props: { centreId: 1, fiscalPeriodId: 1 },
+            global: { plugins: [mockVuetify()] },
+          })
+          await flushPromises()
 
-        // Act
-        const employeeName = wrapper.get<HTMLInputElement>('input[aria-label="Employee Name"]')
-        await employeeName.setValue("Alexandra")
-        await employeeName.trigger("blur")
-        await flushPromises()
-        await wrapper.get('[title="Add employee"]').trigger("click")
-        await flushPromises()
+          // Act
+          const employeeName = wrapper.get<HTMLInputElement>('input[aria-label="Employee Name"]')
+          await employeeName.setValue("Alexandra")
+          await employeeName.trigger("blur")
+          await flushPromises()
+          await wrapper.get('[title="Add employee"]').trigger("click")
+          await flushPromises()
 
-        // Assert
-        const employeeNames = wrapper
-          .findAll<HTMLInputElement>('input[aria-label="Employee Name"]')
-          .map((input) => input.element.value)
-        expect(employeeNames).toEqual(["Alexandra", ""])
-      })
+          // Assert
+          const employeeNames = wrapper.findAll<HTMLInputElement>(
+            'input[aria-label="Employee Name"]'
+          )
+          if (outcome === "retains both employee names") {
+            expect(employeeNames.map((input) => input.element.value)).toEqual(["Alexandra", ""])
+          } else {
+            expect(
+              employeeNames.map((input) => !input.element.disabled && !input.element.readOnly)
+            ).toEqual([true, true])
+          }
+        }
+      )
 
       test("when another row is created after a failed save, keeps the save failure visible", async () => {
         // Arrange

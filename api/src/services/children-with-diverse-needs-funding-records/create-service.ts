@@ -38,7 +38,7 @@ export class CreateService extends BaseService {
     } = this.attributes
     if (isNil(centreId)) throw new Error("Centre ID is required")
     if (isNil(fiscalPeriodId)) throw new Error("Fiscal period ID is required")
-    if (isNil(categoryId)) throw new Error("Diverse Need category ID is required")
+    if (isNil(categoryId)) throw new Error("Children with Diverse Needs category ID is required")
     if (isNil(estimatedChildOccupancyRate)) {
       throw new Error("Estimated child occupancy rate is required")
     }
@@ -57,22 +57,23 @@ export class CreateService extends BaseService {
         where: { id: categoryId, fundingPeriodId: fiscalPeriod.fundingPeriodId },
       })
       if (isNil(category)) {
-        throw new Error("Diverse Need category must be active in the same funding period")
+        throw new Error(
+          "Children with Diverse Needs category must be active in the same funding period"
+        )
       }
 
-      const childrenWithDiverseNeedsFundingRecord =
-        await ChildrenWithDiverseNeedsFundingRecord.create({
-          centreId,
-          fiscalPeriodId,
-          categoryId,
-          lineName: category.categoryName,
-          monthlyAmount: category.monthlyAmount,
-          estimatedChildOccupancyRate,
-          actualChildOccupancyRate,
-          estimatedComputedTotal: "0.0000",
-          actualComputedTotal: "0.0000",
-        })
-      if (!applyToCurrentAndFutureFiscalPeriods) return childrenWithDiverseNeedsFundingRecord
+      const childrenWithChildrenWithDiverseNeedsFundingRecordsRecord = await ChildrenWithDiverseNeedsFundingRecord.create({
+        centreId,
+        fiscalPeriodId,
+        categoryId,
+        lineName: category.categoryName,
+        monthlyAmount: category.monthlyAmount,
+        estimatedChildOccupancyRate,
+        actualChildOccupancyRate,
+        estimatedComputedTotal: "0.0000",
+        actualComputedTotal: "0.0000",
+      })
+      if (!applyToCurrentAndFutureFiscalPeriods) return childrenWithChildrenWithDiverseNeedsFundingRecordsRecord
 
       await FiscalPeriod.findEach(
         {
@@ -105,7 +106,7 @@ export class CreateService extends BaseService {
         }
       )
 
-      return childrenWithDiverseNeedsFundingRecord
+      return childrenWithChildrenWithDiverseNeedsFundingRecordsRecord
     })
   }
 }

@@ -9,8 +9,8 @@ import {
   childCareSpaceFactory,
   fiscalPeriodFactory,
   fundingPeriodFactory,
-  childrenWithDiverseNeedsFundingCategoryFactory,
-  childrenWithDiverseNeedsFundingRecordFactory,
+  childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory,
+  childrenWithChildrenWithDiverseNeedsFundingRecordsRecordFactory,
   fundingSubmissionLineJsonFactory,
   qualityEnhancementCategoryFactory,
   qualityEnhancementFactory,
@@ -115,7 +115,7 @@ describe("api/src/services/funding-reconciliations/calculate-eligible-expenses-p
         expect(result).toBe("70.0000")
       })
 
-      test("when a Diverse Need exists, includes its actual total exactly once alongside JSON expenses", async () => {
+      test("when a Children with Diverse Needs exists, includes its actual total exactly once alongside JSON expenses", async () => {
         // Arrange
         const centre = await centreFactory.create()
         const fundingPeriod = await fundingPeriodFactory.create({
@@ -129,10 +129,10 @@ describe("api/src/services/funding-reconciliations/calculate-eligible-expenses-p
           dateStart: new Date("2025-04-01"),
           dateEnd: new Date("2025-04-30"),
         })
-        const category = await childrenWithDiverseNeedsFundingCategoryFactory
+        const category = await childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory
           .associations({ fundingPeriod })
           .create({ categoryName: "Toddlers", monthlyAmount: "10.0000" })
-        await childrenWithDiverseNeedsFundingRecordFactory
+        await childrenWithChildrenWithDiverseNeedsFundingRecordsRecordFactory
           .associations({ centre, fiscalPeriod, category })
           .create({
             monthlyAmount: "10.0000",

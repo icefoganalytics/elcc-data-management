@@ -20,14 +20,14 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
       this.fiscalPeriodId
     )
     const qualityEnhancementsTotalAmount = await this.calculateQualityEnhancements()
-    const childrenWithDiverseNeedsFundingRecordsTotalAmount =
-      await this.calculateChildrenWithDiverseNeedsFundingRecords()
+    const childrenWithChildrenWithDiverseNeedsFundingRecordsRecordsTotalAmount =
+      await this.calculateChildrenWithDiverseNeedsFundingRecord()
     const administrationCostsTotalAmount = await this.calculateAdministrationCosts()
     const buildingExpensesTotalAmount = await this.calculateBuildingExpenses()
     const totalEligibleExpenses = Big(fundingSubmissionExpensesAmount)
       .plus(childCareSpacesTotalAmount)
       .plus(qualityEnhancementsTotalAmount)
-      .plus(childrenWithDiverseNeedsFundingRecordsTotalAmount)
+      .plus(childrenWithChildrenWithDiverseNeedsFundingRecordsRecordsTotalAmount)
       .plus(administrationCostsTotalAmount)
       .plus(buildingExpensesTotalAmount)
 
@@ -145,16 +145,16 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
 
     return Big(qualityEnhancementsResult.qualityEnhancementsTotalAmount).toFixed(4)
   }
-  private async calculateChildrenWithDiverseNeedsFundingRecords(): Promise<string> {
-    const [childrenWithDiverseNeedsFundingRecordsResult] = await db.query<{
-      childrenWithDiverseNeedsFundingRecordsTotalAmount: string
+  private async calculateChildrenWithDiverseNeedsFundingRecord(): Promise<string> {
+    const [childrenWithChildrenWithDiverseNeedsFundingRecordsRecordsResult] = await db.query<{
+      childrenWithChildrenWithDiverseNeedsFundingRecordsRecordsTotalAmount: string
     }>(
       /* sql */ `
         SELECT
           CONVERT(
             VARCHAR(50),
             COALESCE(SUM(actual_computed_total), 0)
-          ) AS childrenWithDiverseNeedsFundingRecordsTotalAmount
+          ) AS childrenWithChildrenWithDiverseNeedsFundingRecordsRecordsTotalAmount
         FROM
           children_with_diverse_needs_funding_records
         WHERE
@@ -172,7 +172,7 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
     )
 
     return Big(
-      childrenWithDiverseNeedsFundingRecordsResult.childrenWithDiverseNeedsFundingRecordsTotalAmount
+      childrenWithChildrenWithDiverseNeedsFundingRecordsRecordsResult.childrenWithChildrenWithDiverseNeedsFundingRecordsRecordsTotalAmount
     ).toFixed(4)
   }
 

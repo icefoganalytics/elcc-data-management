@@ -4,11 +4,11 @@ import { isUndefined } from "lodash"
 
 import { ChildrenWithDiverseNeedsFundingRecord } from "@/models"
 
-import childrenWithDiverseNeedsFundingCategoryFactory from "@/factories/children-with-diverse-needs-funding-category-factory"
+import childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory from "@/factories/children-with-diverse-needs-funding-category-factory"
 import centreFactory from "@/factories/centre-factory"
 import fiscalPeriodFactory from "@/factories/fiscal-period-factory"
 
-export const childrenWithDiverseNeedsFundingRecordFactory =
+export const childrenWithChildrenWithDiverseNeedsFundingRecordsRecordFactory =
   FactoryShark.define<ChildrenWithDiverseNeedsFundingRecord>(
     ChildrenWithDiverseNeedsFundingRecord,
     ({ associate, params, beforeCreate }) => {
@@ -16,21 +16,21 @@ export const childrenWithDiverseNeedsFundingRecordFactory =
       const fiscalPeriod = associate("fiscalPeriod", fiscalPeriodFactory)
       const category = associate(
         "category",
-        childrenWithDiverseNeedsFundingCategoryFactory,
+        childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory,
         (resolvedParams) => ({
           fundingPeriodId:
             resolvedParams.fiscalPeriod?.fundingPeriodId ?? fiscalPeriod.fundingPeriodId,
         })
       )
 
-      beforeCreate((childrenWithDiverseNeedsFundingRecord) => {
-        const resolvedCategory = childrenWithDiverseNeedsFundingRecord.category
+      beforeCreate((childrenWithChildrenWithDiverseNeedsFundingRecordsRecord) => {
+        const resolvedCategory = childrenWithChildrenWithDiverseNeedsFundingRecordsRecord.category
         if (isUndefined(resolvedCategory)) return
 
         if (isUndefined(params.lineName))
-          childrenWithDiverseNeedsFundingRecord.lineName = resolvedCategory.categoryName
+          childrenWithChildrenWithDiverseNeedsFundingRecordsRecord.lineName = resolvedCategory.categoryName
         if (isUndefined(params.monthlyAmount))
-          childrenWithDiverseNeedsFundingRecord.monthlyAmount = resolvedCategory.monthlyAmount
+          childrenWithChildrenWithDiverseNeedsFundingRecordsRecord.monthlyAmount = resolvedCategory.monthlyAmount
       })
 
       return {
@@ -44,4 +44,4 @@ export const childrenWithDiverseNeedsFundingRecordFactory =
     }
   )
 
-export default childrenWithDiverseNeedsFundingRecordFactory
+export default childrenWithChildrenWithDiverseNeedsFundingRecordsRecordFactory

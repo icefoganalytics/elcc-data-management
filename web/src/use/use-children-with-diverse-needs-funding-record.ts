@@ -2,18 +2,16 @@ import { isCancel } from "axios"
 import { onScopeDispose, reactive, toRefs, unref, watch } from "vue"
 import type { Ref } from "vue"
 
-import childrenWithDiverseNeedsFundingRecordsApi from "@/api/children-with-diverse-needs-funding-records-api"
+import childrenWithChildrenWithDiverseNeedsFundingRecordsApi from "@/api/children-with-diverse-needs-funding-records-api"
 import type { ChildrenWithDiverseNeedsFundingRecordAsShow } from "@/api/children-with-diverse-needs-funding-records-api"
 
-export function useChildrenWithDiverseNeedsFundingRecord(
-  childrenWithDiverseNeedsFundingRecordId: Ref<number>
-) {
+export function useChildrenWithDiverseNeedsFundingRecord(childrenWithChildrenWithDiverseNeedsFundingRecordsRecordId: Ref<number>) {
   const state = reactive<{
-    childrenWithDiverseNeedsFundingRecord: ChildrenWithDiverseNeedsFundingRecordAsShow | null
+    childrenWithChildrenWithDiverseNeedsFundingRecordsRecord: ChildrenWithDiverseNeedsFundingRecordAsShow | null
     isLoading: boolean
     isErrored: boolean
   }>({
-    childrenWithDiverseNeedsFundingRecord: null,
+    childrenWithChildrenWithDiverseNeedsFundingRecordsRecord: null,
     isLoading: false,
     isErrored: false,
   })
@@ -25,20 +23,19 @@ export function useChildrenWithDiverseNeedsFundingRecord(
     requestController = controller
     state.isLoading = true
     try {
-      const response = await childrenWithDiverseNeedsFundingRecordsApi.get(
-        unref(childrenWithDiverseNeedsFundingRecordId),
+      const response = await childrenWithChildrenWithDiverseNeedsFundingRecordsApi.get(
+        unref(childrenWithChildrenWithDiverseNeedsFundingRecordsRecordId),
         {
           signal: controller.signal,
         }
       )
-      if (controller.signal.aborted) return state.childrenWithDiverseNeedsFundingRecord
+      if (controller.signal.aborted) return state.childrenWithChildrenWithDiverseNeedsFundingRecordsRecord
 
-      state.childrenWithDiverseNeedsFundingRecord = response.childrenWithDiverseNeedsFundingRecord
+      state.childrenWithChildrenWithDiverseNeedsFundingRecordsRecord = response.childrenWithChildrenWithDiverseNeedsFundingRecordsRecord
       state.isErrored = false
-      return response.childrenWithDiverseNeedsFundingRecord
+      return response.childrenWithChildrenWithDiverseNeedsFundingRecordsRecord
     } catch (error) {
-      if (controller.signal.aborted || isCancel(error))
-        return state.childrenWithDiverseNeedsFundingRecord
+      if (controller.signal.aborted || isCancel(error)) return state.childrenWithChildrenWithDiverseNeedsFundingRecordsRecord
 
       state.isErrored = true
       throw error
@@ -50,7 +47,7 @@ export function useChildrenWithDiverseNeedsFundingRecord(
   }
 
   watch(
-    childrenWithDiverseNeedsFundingRecordId,
+    childrenWithChildrenWithDiverseNeedsFundingRecordsRecordId,
     async () => {
       try {
         await fetch()
@@ -65,15 +62,13 @@ export function useChildrenWithDiverseNeedsFundingRecord(
     requestController?.abort()
   })
 
-  async function save(
-    attributes: Parameters<typeof childrenWithDiverseNeedsFundingRecordsApi.update>[1]
-  ) {
-    const response = await childrenWithDiverseNeedsFundingRecordsApi.update(
-      unref(childrenWithDiverseNeedsFundingRecordId),
+  async function save(attributes: Parameters<typeof childrenWithChildrenWithDiverseNeedsFundingRecordsApi.update>[1]) {
+    const response = await childrenWithChildrenWithDiverseNeedsFundingRecordsApi.update(
+      unref(childrenWithChildrenWithDiverseNeedsFundingRecordsRecordId),
       attributes
     )
-    state.childrenWithDiverseNeedsFundingRecord = response.childrenWithDiverseNeedsFundingRecord
-    return response.childrenWithDiverseNeedsFundingRecord
+    state.childrenWithChildrenWithDiverseNeedsFundingRecordsRecord = response.childrenWithChildrenWithDiverseNeedsFundingRecordsRecord
+    return response.childrenWithChildrenWithDiverseNeedsFundingRecordsRecord
   }
 
   return {

@@ -21,13 +21,14 @@
     v-model:sort-by="sortBy"
     :page="page"
     :headers="headers"
-    :items="childrenWithDiverseNeedsFundingCategories"
+    :items="childrenWithChildrenWithDiverseNeedsFundingRecordsCategories"
     :items-length="totalCount"
     :loading="isLoading"
     density="comfortable"
     class="row-clickable"
     @dblclick:row="
-      (_event: unknown, { item }: ChildrenWithDiverseNeedsFundingCategoryTableRow) => goToChildrenWithDiverseNeedsFundingCategory(item)
+      (_event: unknown, { item }: ChildrenWithDiverseNeedsFundingCategoryTableRow) =>
+        goToChildrenWithDiverseNeedsFundingCategory(item)
     "
     @update:page="updatePage"
   >
@@ -114,7 +115,7 @@ const query = computed(() => ({
   page: page.value,
   perPage: perPage.value,
 }))
-const { childrenWithDiverseNeedsFundingCategories, totalCount, isLoading, isErrored, fetch } =
+const { childrenWithChildrenWithDiverseNeedsFundingRecordsCategories, totalCount, isLoading, isErrored, fetch } =
   useChildrenWithDiverseNeedsFundingCategories(query)
 
 async function reload() {
@@ -137,7 +138,7 @@ type ChildrenWithDiverseNeedsFundingCategoryTableRow = { item: ChildrenWithDiver
 function buildChildrenWithDiverseNeedsFundingCategoryTo(item: ChildrenWithDiverseNeedsFundingCategoryAsIndex) {
   return {
     name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
-    params: { childrenWithDiverseNeedsFundingCategoryId: item.id },
+    params: { childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryId: item.id },
   }
 }
 

@@ -2,7 +2,7 @@ import { FiscalPeriod, User } from "@/models"
 
 import {
   centreFactory,
-  childrenWithDiverseNeedsFundingCategoryFactory,
+  childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory,
   fiscalPeriodFactory,
   fundingPeriodFactory,
   userFactory,
@@ -26,25 +26,23 @@ describe("api/src/controllers/children-with-diverse-needs-funding-records-contro
           dateStart: new Date("2025-04-01"),
           dateEnd: new Date("2025-04-30"),
         })
-        const category = await childrenWithDiverseNeedsFundingCategoryFactory
+        const category = await childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory
           .associations({ fundingPeriod })
           .create({ categoryName: "Toddlers", monthlyAmount: "54.9600" })
 
         // Act
-        const response = await request()
-          .post("/api/children-with-diverse-needs-funding-records")
-          .send({
-            centreId: centre.id,
-            fiscalPeriodId: fiscalPeriod.id,
-            categoryId: category.id,
-            estimatedChildOccupancyRate: "0.5000",
-            actualChildOccupancyRate: "0.2500",
-          })
+        const response = await request().post("/api/children-with-diverse-needs-funding-records").send({
+          centreId: centre.id,
+          fiscalPeriodId: fiscalPeriod.id,
+          categoryId: category.id,
+          estimatedChildOccupancyRate: "0.5000",
+          actualChildOccupancyRate: "0.2500",
+        })
 
         // Assert
         expect(response.status).toEqual(201)
         expect(response.body).toEqual({
-          childrenWithDiverseNeedsFundingRecord: {
+          childrenWithChildrenWithDiverseNeedsFundingRecordsRecord: {
             id: expect.any(Number),
             centreId: centre.id,
             fiscalPeriodId: fiscalPeriod.id,

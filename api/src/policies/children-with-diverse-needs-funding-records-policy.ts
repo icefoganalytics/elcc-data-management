@@ -4,9 +4,7 @@ import { type Path } from "@/utils/deep-pick"
 import { ChildrenWithDiverseNeedsFundingRecord, User } from "@/models"
 import { ALL_RECORDS_SCOPE, PolicyFactory } from "@/policies/base-policy"
 
-export class ChildrenWithDiverseNeedsFundingRecordPolicy extends PolicyFactory(
-  ChildrenWithDiverseNeedsFundingRecord
-) {
+export class ChildrenWithDiverseNeedsFundingRecordsPolicy extends PolicyFactory(ChildrenWithDiverseNeedsFundingRecord) {
   show(): boolean {
     return true
   }
@@ -42,4 +40,4 @@ export class ChildrenWithDiverseNeedsFundingRecordPolicy extends PolicyFactory(
   }
 }
 
-export default ChildrenWithDiverseNeedsFundingRecordPolicy
+export default ChildrenWithDiverseNeedsFundingRecordsPolicy

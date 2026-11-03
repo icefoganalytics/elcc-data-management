@@ -1,4 +1,4 @@
-import { childrenWithDiverseNeedsFundingRecordFactory } from "@/factories/children-with-diverse-needs-funding-record-factory"
+import { childrenWithChildrenWithDiverseNeedsFundingRecordsRecordFactory } from "@/factories/children-with-diverse-needs-funding-record-factory"
 import ChildrenWithDiverseNeedsFundingRecord from "@/models/children-with-diverse-needs-funding-record"
 
 describe("api/src/models/children-with-diverse-needs-funding-record.ts", () => {
@@ -43,7 +43,7 @@ describe("api/src/models/children-with-diverse-needs-funding-record.ts", () => {
 
         // Assert
         const persisted = await ChildrenWithDiverseNeedsFundingRecord.findByPk(
-          childrenWithDiverseNeedsFundingRecord.id
+          childrenWithChildrenWithDiverseNeedsFundingRecordsRecord.id
         )
         expect(persisted).toMatchObject({
           monthlyAmount: "54.96",
@@ -60,8 +60,7 @@ describe("api/src/models/children-with-diverse-needs-funding-record.ts", () => {
         "actualChildOccupancyRate",
       ] as const)("when %s exceeds four decimal places, rejects the update", async (attribute) => {
         // Arrange
-        const childrenWithDiverseNeedsFundingRecord =
-          await childrenWithDiverseNeedsFundingRecordFactory.create()
+        const childrenWithChildrenWithDiverseNeedsFundingRecordsRecord = await childrenWithChildrenWithDiverseNeedsFundingRecordsRecordFactory.create()
 
         // Act / Assert
         await expect(

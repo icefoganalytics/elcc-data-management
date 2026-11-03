@@ -4,7 +4,7 @@ export { BuildingExpenseCategoryPolicy } from "./building-expense-category-polic
 export { BuildingExpensePolicy } from "./building-expense-policy"
 export { ChildCareSpaceCategoryPolicy } from "./child-care-space-category-policy"
 export { ChildrenWithDiverseNeedsFundingCategoryPolicy } from "./children-with-diverse-needs-funding-category-policy"
-export { ChildrenWithDiverseNeedsFundingRecordPolicy } from "./children-with-diverse-needs-funding-record-policy"
+export { ChildrenWithDiverseNeedsFundingRecordsPolicy } from "./children-with-diverse-needs-funding-records-policy"
 export { ChildCareSpacePolicy } from "./child-care-space-policy"
 export { EmployeeBenefitPolicy } from "./employee-benefit-policy"
 export { EmployeeWageTierPolicy } from "./employee-wage-tier-policy"

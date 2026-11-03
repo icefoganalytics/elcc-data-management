@@ -156,9 +156,7 @@ router
   .get(ChildrenWithDiverseNeedsFundingCategoriesController.index)
   .post(ChildrenWithDiverseNeedsFundingCategoriesController.create)
 router
-  .route(
-    "/api/children-with-diverse-needs-funding-categories/:childrenWithDiverseNeedsFundingCategoryId"
-  )
+  .route("/api/children-with-diverse-needs-funding-categories/:childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryId")
   .get(ChildrenWithDiverseNeedsFundingCategoriesController.show)
   .patch(ChildrenWithDiverseNeedsFundingCategoriesController.update)
   .delete(ChildrenWithDiverseNeedsFundingCategoriesController.destroy)
@@ -168,16 +166,12 @@ router
   .get(ChildrenWithDiverseNeedsFundingRecordsController.index)
   .post(ChildrenWithDiverseNeedsFundingRecordsController.create)
 router
-  .route(
-    "/api/children-with-diverse-needs-funding-records/:childrenWithDiverseNeedsFundingRecordId"
-  )
+  .route("/api/children-with-diverse-needs-funding-records/:childrenWithChildrenWithDiverseNeedsFundingRecordsRecordId")
   .get(ChildrenWithDiverseNeedsFundingRecordsController.show)
   .patch(ChildrenWithDiverseNeedsFundingRecordsController.update)
   .delete(ChildrenWithDiverseNeedsFundingRecordsController.destroy)
 router
-  .route(
-    "/api/children-with-diverse-needs-funding-records/:childrenWithDiverseNeedsFundingRecordId/replicate-estimates"
-  )
+  .route("/api/children-with-diverse-needs-funding-records/:childrenWithChildrenWithDiverseNeedsFundingRecordsRecordId/replicate-estimates")
   .post(ChildrenWithDiverseNeedsFundingRecords.ReplicateEstimatesController.create)
 router
   .route("/api/administration-costs")

@@ -60,16 +60,13 @@ describe("api/src/services/funding-submission-line-jsons/replicate-estimates-ser
         await fundingSubmissionLineJson2.reload()
 
         // Assert
-        expect(fundingSubmissionLineJson2.lines).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              estimatedChildOccupancyRate: "1",
-              actualChildOccupancyRate: "0",
-              estimatedComputedTotal: "3",
-              actualComputedTotal: "0",
-            }),
-          ])
-        )
+        expect(fundingSubmissionLineJson2.lines).toEqual([
+          {
+            ...fundingLineValue1,
+            actualChildOccupancyRate: "0",
+            actualComputedTotal: "0",
+          },
+        ])
       })
 
       test("when provided with a fundingSubmissionLineJson, it does not replicate the estimates to past submissions", async () => {
@@ -116,16 +113,7 @@ describe("api/src/services/funding-submission-line-jsons/replicate-estimates-ser
 
         // Assert
         await fundingSubmissionLineJson1.reload()
-        expect(fundingSubmissionLineJson1.lines).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              estimatedChildOccupancyRate: "0",
-              actualChildOccupancyRate: "0",
-              estimatedComputedTotal: "0",
-              actualComputedTotal: "0",
-            }),
-          ])
-        )
+        expect(fundingSubmissionLineJson1.lines).toEqual([fundingLineValue1])
       })
 
       test("when provided with a fundingSubmissionLineJson, it does not replicate the estimates to different centres", async () => {
@@ -173,16 +161,7 @@ describe("api/src/services/funding-submission-line-jsons/replicate-estimates-ser
 
         // Assert
         await fundingSubmissionLineJson2.reload()
-        expect(fundingSubmissionLineJson2.lines).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              estimatedChildOccupancyRate: "0",
-              actualChildOccupancyRate: "0",
-              estimatedComputedTotal: "0",
-              actualComputedTotal: "0",
-            }),
-          ])
-        )
+        expect(fundingSubmissionLineJson2.lines).toEqual([fundingLineValue2])
       })
 
       test("when provided with a fundingSubmissionLineJson, it does not replicate the estimates to different fiscal years", async () => {
@@ -229,16 +208,7 @@ describe("api/src/services/funding-submission-line-jsons/replicate-estimates-ser
 
         // Assert
         await fundingSubmissionLineJson2.reload()
-        expect(fundingSubmissionLineJson2.lines).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              estimatedChildOccupancyRate: "0",
-              actualChildOccupancyRate: "0",
-              estimatedComputedTotal: "0",
-              actualComputedTotal: "0",
-            }),
-          ])
-        )
+        expect(fundingSubmissionLineJson2.lines).toEqual([fundingLineValue2])
       })
     })
   })
