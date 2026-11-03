@@ -1,18 +1,14 @@
-import { shallowReactive, toRef, type ToRef } from "vue"
+import { reactive, toRef, ToRef } from "vue"
 import { type VSnackbar } from "vuetify/components"
-
-import { type UnexpectedApiResponseError } from "@/api/errors/unexpected-api-response-error"
 
 type VSnackbarProps = VSnackbar["$props"]
 
-const state = shallowReactive<{
+const state = reactive<{
   message: string
   options: VSnackbarProps
-  apiResponseError: UnexpectedApiResponseError | null
 }>({
   message: "",
   options: {},
-  apiResponseError: null,
 })
 
 /**
@@ -28,7 +24,6 @@ export function useSnack(defaultOptions: VSnackbarProps = {}): {
   (message: string, options?: VSnackbarProps): void
   message: ToRef<string>
   options: ToRef<VSnackbarProps>
-  apiResponseError: ToRef<UnexpectedApiResponseError | null>
   notify: (message: string, options?: VSnackbarProps) => void
   reset: () => void
   success: (message: string, options?: VSnackbarProps) => void
@@ -37,21 +32,18 @@ export function useSnack(defaultOptions: VSnackbarProps = {}): {
   warning: (message: string, options?: VSnackbarProps) => void
 } {
   const notify = (message: string, options: VSnackbarProps = {}) => {
-    state.apiResponseError = null
     state.message = message
     state.options = { ...defaultOptions, ...options }
   }
 
   notify.message = toRef(state, "message")
   notify.options = toRef(state, "options")
-  notify.apiResponseError = toRef(state, "apiResponseError")
 
   notify.notify = notify
 
   notify.reset = () => {
     state.message = ""
     state.options = {}
-    state.apiResponseError = null
   }
 
   notify.success = (message: string, options: VSnackbarProps = {}) => {
@@ -70,6 +62,7 @@ export function useSnack(defaultOptions: VSnackbarProps = {}): {
     notify(message, { color: "warning", ...options })
   }
 
+  // @ts-expect-error - VSnackbarProps definition is probably not infinte
   return notify
 }
 
