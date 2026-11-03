@@ -8,7 +8,7 @@ import BuildingExpensesEditTable from "@/components/building-expenses/BuildingEx
 describe("web/src/components/building-expenses/BuildingExpensesEditTable.vue", () => {
   describe("BuildingExpensesEditTable", () => {
     describe("row-switch saves", () => {
-      test("when a previous row is saving, blocks next-row editing until the response settles", async () => {
+      test("when a previous row is saving, keeps the destination editor inert", async () => {
         // Arrange
         const first: BuildingExpenseAsIndex = {
           id: 1,
@@ -59,7 +59,7 @@ describe("web/src/components/building-expenses/BuildingExpensesEditTable.vue", (
         await flushPromises()
 
         // Assert
-        expect(wrapper.get(".v-data-table").attributes("aria-busy")).toEqual("true")
+        expect(wrapper.get(".v-data-table").attributes("inert")).toEqual("true")
       })
     })
   })
