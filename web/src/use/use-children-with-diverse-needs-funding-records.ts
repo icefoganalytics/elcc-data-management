@@ -2,40 +2,46 @@ import { isCancel } from "axios"
 import { onScopeDispose, reactive, toRefs, unref, watch } from "vue"
 import type { Ref } from "vue"
 
-import diverseNeedsApi from "@/api/diverse-needs-api"
-import type { DiverseNeedAsIndex, DiverseNeedQueryOptions } from "@/api/diverse-needs-api"
+import childrenWithDiverseNeedsFundingRecordsApi from "@/api/children-with-diverse-needs-funding-records-api"
+import type {
+  ChildrenWithDiverseNeedsFundingRecordAsIndex,
+  ChildrenWithDiverseNeedsFundingRecordQueryOptions,
+} from "@/api/children-with-diverse-needs-funding-records-api"
 
-export function useDiverseNeeds(queryOptions: Ref<DiverseNeedQueryOptions>) {
+export function useChildrenWithDiverseNeedsFundingRecords(
+  queryOptions: Ref<ChildrenWithDiverseNeedsFundingRecordQueryOptions>
+) {
   const state = reactive<{
-    diverseNeeds: DiverseNeedAsIndex[]
+    childrenWithDiverseNeedsFundingRecords: ChildrenWithDiverseNeedsFundingRecordAsIndex[]
     totalCount: number
     isLoading: boolean
     isErrored: boolean
   }>({
-    diverseNeeds: [],
+    childrenWithDiverseNeedsFundingRecords: [],
     totalCount: 0,
     isLoading: false,
     isErrored: false,
   })
   let requestController: AbortController | undefined
 
-  async function fetch(): Promise<DiverseNeedAsIndex[]> {
+  async function fetch(): Promise<ChildrenWithDiverseNeedsFundingRecordAsIndex[]> {
     requestController?.abort()
     const controller = new AbortController()
     requestController = controller
     state.isLoading = true
     try {
-      const response = await diverseNeedsApi.list(unref(queryOptions), {
+      const response = await childrenWithDiverseNeedsFundingRecordsApi.list(unref(queryOptions), {
         signal: controller.signal,
       })
-      if (controller.signal.aborted) return state.diverseNeeds
+      if (controller.signal.aborted) return state.childrenWithDiverseNeedsFundingRecords
 
-      state.diverseNeeds = response.diverseNeeds
+      state.childrenWithDiverseNeedsFundingRecords = response.childrenWithDiverseNeedsFundingRecords
       state.totalCount = response.totalCount
       state.isErrored = false
-      return response.diverseNeeds
+      return response.childrenWithDiverseNeedsFundingRecords
     } catch (error) {
-      if (controller.signal.aborted || isCancel(error)) return state.diverseNeeds
+      if (controller.signal.aborted || isCancel(error))
+        return state.childrenWithDiverseNeedsFundingRecords
 
       state.isErrored = true
       throw error
@@ -66,4 +72,4 @@ export function useDiverseNeeds(queryOptions: Ref<DiverseNeedQueryOptions>) {
   }
 }
 
-export default useDiverseNeeds
+export default useChildrenWithDiverseNeedsFundingRecords
