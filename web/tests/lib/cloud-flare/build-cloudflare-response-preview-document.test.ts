@@ -116,7 +116,7 @@ describe("web/src/lib/cloud-flare/build-cloudflare-response-preview-document.ts"
         expect(parsedDocument.body.textContent?.trim()).toBe("Diagnostic remains")
       })
 
-      test.each(["audio", "video", "svg", "math"])(
+      test.each(["audio", "video", "svg", "math", "object"])(
         "when a disallowed %s container contains fallback text, removes its hidden content",
         (tag) => {
           // Arrange

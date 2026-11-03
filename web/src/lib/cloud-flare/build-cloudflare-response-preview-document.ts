@@ -61,6 +61,7 @@ const DISCARDED_CONTENT_TAGS = [
   "noembed",
   "noframes",
   "noscript",
+  "object",
   "option",
   "plaintext",
   "script",
