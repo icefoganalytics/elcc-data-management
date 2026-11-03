@@ -4,6 +4,8 @@ export { BuildingExpenseCategoriesFundingRegionIdCategoryNameUniqueIndex } from 
 export { BuildingExpensesCentreIdFiscalPeriodIdCategoryIdUniqueIndex } from "./building-expenses-centre-id-fiscal-period-id-category-id-unique-index"
 export { ChildCareSpaceCategoriesFundingPeriodIdCategoryNameUniqueIndex } from "./child-care-space-categories-funding-period-id-category-name-unique-index"
 export { ChildCareSpacesCentreIdFiscalPeriodIdCategoryIdUniqueIndex } from "./child-care-spaces-centre-id-fiscal-period-id-category-id-unique-index"
+export { ChildrenWithDiverseNeedsFundingCategoriesFundingPeriodIdCategoryNameUniqueIndex } from "./children-with-diverse-needs-funding-categories-funding-period-id-category-name-unique-index"
+export { ChildrenWithDiverseNeedsFundingRecordsCentreIdFiscalPeriodIdCategoryIdUniqueIndex } from "./children-with-diverse-needs-funding-records-centre-id-fiscal-period-id-category-id-unique-index"
 export { EmployeeBenefitsCenterIdFiscalPeriodIdUniqueIndex } from "./employee-benefits-center-id-fiscal-period-id-unique-index"
 export { EmployeeWageTiersFiscalPeriodIdTierLevelUniqueIndex } from "./employee-wage-tiers-fiscal-period-id-tier-level-unique-index"
 export { FiscalPeriodsFundingPeriodIdFiscalYearMonthUniqueIndex } from "./fiscal-periods-fiscal-year-month-unique-index"

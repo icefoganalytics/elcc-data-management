@@ -18,7 +18,7 @@ describe("api/src/services/funding-submission-line-jsons/replicate-estimates-ser
         // Arrange
         const centre1 = await centreFactory.create()
         const submissionLine1 = await fundingSubmissionLineFactory.create({
-          sectionName: "Children with Diverse Needs",
+          sectionName: "Additional Funding",
         })
         const fundingLineValue1 = fundingLineValueFactory.build({
           submissionLineId: submissionLine1.id,
@@ -56,27 +56,22 @@ describe("api/src/services/funding-submission-line-jsons/replicate-estimates-ser
         // Act
         await ReplicateEstimatesService.perform(fundingSubmissionLineJson1)
 
-        // Reload persisted worksheet state
-        await fundingSubmissionLineJson2.reload()
-
         // Assert
-        expect(fundingSubmissionLineJson2.lines).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              estimatedChildOccupancyRate: "1",
-              actualChildOccupancyRate: "0",
-              estimatedComputedTotal: "3",
-              actualComputedTotal: "0",
-            }),
-          ])
-        )
+        await fundingSubmissionLineJson2.reload()
+        expect(fundingSubmissionLineJson2.lines).toEqual([
+          {
+            ...fundingLineValue1,
+            actualChildOccupancyRate: "0",
+            actualComputedTotal: "0",
+          },
+        ])
       })
 
       test("when provided with a fundingSubmissionLineJson, it does not replicate the estimates to past submissions", async () => {
         // Arrange
         const centre1 = await centreFactory.create()
         const submissionLine1 = await fundingSubmissionLineFactory.create({
-          sectionName: "Children with Diverse Needs",
+          sectionName: "Additional Funding",
         })
         const fundingLineValue1 = fundingLineValueFactory.build({
           submissionLineId: submissionLine1.id,
@@ -116,16 +111,7 @@ describe("api/src/services/funding-submission-line-jsons/replicate-estimates-ser
 
         // Assert
         await fundingSubmissionLineJson1.reload()
-        expect(fundingSubmissionLineJson1.lines).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              estimatedChildOccupancyRate: "0",
-              actualChildOccupancyRate: "0",
-              estimatedComputedTotal: "0",
-              actualComputedTotal: "0",
-            }),
-          ])
-        )
+        expect(fundingSubmissionLineJson1.lines).toEqual([fundingLineValue1])
       })
 
       test("when provided with a fundingSubmissionLineJson, it does not replicate the estimates to different centres", async () => {
@@ -133,7 +119,7 @@ describe("api/src/services/funding-submission-line-jsons/replicate-estimates-ser
         const centre1 = await centreFactory.create()
         const centre2 = await centreFactory.create()
         const submissionLine1 = await fundingSubmissionLineFactory.create({
-          sectionName: "Children with Diverse Needs",
+          sectionName: "Additional Funding",
         })
         const fundingLineValue1 = fundingLineValueFactory.build({
           submissionLineId: submissionLine1.id,
@@ -173,23 +159,14 @@ describe("api/src/services/funding-submission-line-jsons/replicate-estimates-ser
 
         // Assert
         await fundingSubmissionLineJson2.reload()
-        expect(fundingSubmissionLineJson2.lines).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              estimatedChildOccupancyRate: "0",
-              actualChildOccupancyRate: "0",
-              estimatedComputedTotal: "0",
-              actualComputedTotal: "0",
-            }),
-          ])
-        )
+        expect(fundingSubmissionLineJson2.lines).toEqual([fundingLineValue2])
       })
 
       test("when provided with a fundingSubmissionLineJson, it does not replicate the estimates to different fiscal years", async () => {
         // Arrange
         const centre1 = await centreFactory.create()
         const submissionLine1 = await fundingSubmissionLineFactory.create({
-          sectionName: "Children with Diverse Needs",
+          sectionName: "Additional Funding",
         })
         const fundingLineValue1 = fundingLineValueFactory.build({
           submissionLineId: submissionLine1.id,
@@ -229,16 +206,7 @@ describe("api/src/services/funding-submission-line-jsons/replicate-estimates-ser
 
         // Assert
         await fundingSubmissionLineJson2.reload()
-        expect(fundingSubmissionLineJson2.lines).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              estimatedChildOccupancyRate: "0",
-              actualChildOccupancyRate: "0",
-              estimatedComputedTotal: "0",
-              actualComputedTotal: "0",
-            }),
-          ])
-        )
+        expect(fundingSubmissionLineJson2.lines).toEqual([fundingLineValue2])
       })
     })
   })

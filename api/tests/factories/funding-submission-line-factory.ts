@@ -4,10 +4,7 @@ import { faker } from "@faker-js/faker"
 import { FundingSubmissionLine } from "@/models"
 import { formatAsFiscalYear } from "@/factories/helpers"
 
-export const SECTION_NAMES_EXAMPLES = Object.freeze([
-  "Quality Program Enhancement",
-  "Children with Diverse Needs",
-])
+export const SECTION_NAMES_EXAMPLES = Object.freeze(["Additional Funding"])
 
 export const LINE_NAMES_EXAMPLES = Object.freeze([
   "Infants",
