@@ -15,6 +15,7 @@ import {
   NotNull,
   PrimaryKey,
   Table,
+  ValidateAttribute,
 } from "@sequelize/core/decorators-legacy"
 import Big from "big.js"
 
@@ -58,14 +59,44 @@ export class ChildrenWithDiverseNeedsFundingRecord extends BaseModel<
 
   @Attribute(DataTypes.DECIMAL(15, 4))
   @NotNull
+  @ValidateAttribute({
+    supportsFourDecimalPlaces(value: string) {
+      const amount = new Big(value)
+      if (!amount.eq(amount.toFixed(4))) {
+        throw new Error(
+          "Children with Diverse Needs monthly amount supports at most four decimal places"
+        )
+      }
+    },
+  })
   declare monthlyAmount: string
 
   @Attribute(DataTypes.DECIMAL(15, 4))
   @NotNull
+  @ValidateAttribute({
+    supportsFourDecimalPlaces(value: string) {
+      const rate = new Big(value)
+      if (!rate.eq(rate.toFixed(4))) {
+        throw new Error(
+          "Children with Diverse Needs estimated occupancy rate supports at most four decimal places"
+        )
+      }
+    },
+  })
   declare estimatedChildOccupancyRate: string
 
   @Attribute(DataTypes.DECIMAL(15, 4))
   @NotNull
+  @ValidateAttribute({
+    supportsFourDecimalPlaces(value: string) {
+      const rate = new Big(value)
+      if (!rate.eq(rate.toFixed(4))) {
+        throw new Error(
+          "Children with Diverse Needs actual occupancy rate supports at most four decimal places"
+        )
+      }
+    },
+  })
   declare actualChildOccupancyRate: string
 
   @Attribute(DataTypes.DECIMAL(15, 4))
@@ -90,20 +121,15 @@ export class ChildrenWithDiverseNeedsFundingRecord extends BaseModel<
   // Hooks
   @BeforeSave
   static updateComputedTotals(need: ChildrenWithDiverseNeedsFundingRecord) {
-    const amount = checkedFourDecimals(new Big(need.monthlyAmount), "monthly amount")
-    const estimatedRate = checkedFourDecimals(
-      new Big(need.estimatedChildOccupancyRate),
-      "estimated occupancy rate"
-    )
-    const actualRate = checkedFourDecimals(
-      new Big(need.actualChildOccupancyRate),
-      "actual occupancy rate"
-    )
-    need.monthlyAmount = amount
-    need.estimatedChildOccupancyRate = estimatedRate
-    need.actualChildOccupancyRate = actualRate
-    need.estimatedComputedTotal = new Big(amount).mul(estimatedRate).toFixed(4)
-    need.actualComputedTotal = new Big(amount).mul(actualRate).toFixed(4)
+    const amount = new Big(need.monthlyAmount)
+    const estimatedRate = new Big(need.estimatedChildOccupancyRate)
+    const actualRate = new Big(need.actualChildOccupancyRate)
+
+    need.monthlyAmount = amount.toFixed(4)
+    need.estimatedChildOccupancyRate = estimatedRate.toFixed(4)
+    need.actualChildOccupancyRate = actualRate.toFixed(4)
+    need.estimatedComputedTotal = amount.mul(estimatedRate).toFixed(4)
+    need.actualComputedTotal = amount.mul(actualRate).toFixed(4)
   }
 
   // Associations
@@ -164,12 +190,6 @@ export class ChildrenWithDiverseNeedsFundingRecord extends BaseModel<
       ],
     }))
   }
-}
-
-function checkedFourDecimals(value: Big, label: string): string {
-  if (!value.eq(value.toFixed(4)))
-    throw new Error(`Diverse Need ${label} supports at most four decimal places`)
-  return value.toFixed(4)
 }
 
 export default ChildrenWithDiverseNeedsFundingRecord
