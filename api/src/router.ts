@@ -38,9 +38,9 @@ import {
   FundingSubmissionLinesController,
   PaymentsController,
   QualityEnhancementCategoriesController,
-  DiverseNeedCategoriesController,
-  DiverseNeeds,
-  DiverseNeedsController,
+  ChildrenWithDiverseNeedsFundingCategoriesController,
+  ChildrenWithDiverseNeedsFundingRecords,
+  ChildrenWithDiverseNeedsFundingRecordsController,
   QualityEnhancements,
   QualityEnhancementsController,
   UsersController,
@@ -152,27 +152,33 @@ router
   .post(ChildCareSpaces.ReplicateEstimatesController.create)
 
 router
-  .route("/api/diverse-need-categories")
-  .get(DiverseNeedCategoriesController.index)
-  .post(DiverseNeedCategoriesController.create)
+  .route("/api/children-with-diverse-needs-funding-categories")
+  .get(ChildrenWithDiverseNeedsFundingCategoriesController.index)
+  .post(ChildrenWithDiverseNeedsFundingCategoriesController.create)
 router
-  .route("/api/diverse-need-categories/:diverseNeedCategoryId")
-  .get(DiverseNeedCategoriesController.show)
-  .patch(DiverseNeedCategoriesController.update)
-  .delete(DiverseNeedCategoriesController.destroy)
+  .route(
+    "/api/children-with-diverse-needs-funding-categories/:childrenWithDiverseNeedsFundingCategoryId"
+  )
+  .get(ChildrenWithDiverseNeedsFundingCategoriesController.show)
+  .patch(ChildrenWithDiverseNeedsFundingCategoriesController.update)
+  .delete(ChildrenWithDiverseNeedsFundingCategoriesController.destroy)
 
 router
-  .route("/api/diverse-needs")
-  .get(DiverseNeedsController.index)
-  .post(DiverseNeedsController.create)
+  .route("/api/children-with-diverse-needs-funding-records")
+  .get(ChildrenWithDiverseNeedsFundingRecordsController.index)
+  .post(ChildrenWithDiverseNeedsFundingRecordsController.create)
 router
-  .route("/api/diverse-needs/:diverseNeedId")
-  .get(DiverseNeedsController.show)
-  .patch(DiverseNeedsController.update)
-  .delete(DiverseNeedsController.destroy)
+  .route(
+    "/api/children-with-diverse-needs-funding-records/:childrenWithDiverseNeedsFundingRecordId"
+  )
+  .get(ChildrenWithDiverseNeedsFundingRecordsController.show)
+  .patch(ChildrenWithDiverseNeedsFundingRecordsController.update)
+  .delete(ChildrenWithDiverseNeedsFundingRecordsController.destroy)
 router
-  .route("/api/diverse-needs/:diverseNeedId/replicate-estimates")
-  .post(DiverseNeeds.ReplicateEstimatesController.create)
+  .route(
+    "/api/children-with-diverse-needs-funding-records/:childrenWithDiverseNeedsFundingRecordId/replicate-estimates"
+  )
+  .post(ChildrenWithDiverseNeedsFundingRecords.ReplicateEstimatesController.create)
 router
   .route("/api/administration-costs")
   .get(AdministrationCostsController.index)

@@ -1,11 +1,11 @@
 import { pick } from "lodash"
 import { type PolicyAsReference } from "@/policies/base-policy"
-import { DiverseNeedCategory, User } from "@/models"
-import { DiverseNeedCategoryPolicy } from "@/policies"
+import { ChildrenWithDiverseNeedsFundingCategory, User } from "@/models"
+import { ChildrenWithDiverseNeedsFundingCategoryPolicy } from "@/policies"
 import BaseSerializer from "@/serializers/base-serializer"
-export class IndexSerializer extends BaseSerializer<DiverseNeedCategory> {
+export class IndexSerializer extends BaseSerializer<ChildrenWithDiverseNeedsFundingCategory> {
   constructor(
-    protected record: DiverseNeedCategory,
+    protected record: ChildrenWithDiverseNeedsFundingCategory,
     protected user: User
   ) {
     super(record)
@@ -22,7 +22,10 @@ export class IndexSerializer extends BaseSerializer<DiverseNeedCategory> {
         "createdAt",
         "updatedAt",
       ]),
-      policy: new DiverseNeedCategoryPolicy(this.user, this.record).toJSON() as PolicyAsReference,
+      policy: new ChildrenWithDiverseNeedsFundingCategoryPolicy(
+        this.user,
+        this.record
+      ).toJSON() as PolicyAsReference,
     }
   }
 }

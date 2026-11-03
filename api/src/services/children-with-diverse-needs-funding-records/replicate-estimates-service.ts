@@ -1,15 +1,18 @@
 import { Op } from "@sequelize/core"
 import { isNil } from "lodash"
-import db, { DiverseNeed, FiscalPeriod } from "@/models"
+import db, { ChildrenWithDiverseNeedsFundingRecord, FiscalPeriod } from "@/models"
 import BaseService from "@/services/base-service"
 
 export class ReplicateEstimatesService extends BaseService {
-  constructor(private diverseNeed: DiverseNeed) {
+  constructor(
+    private childrenWithDiverseNeedsFundingRecord: ChildrenWithDiverseNeedsFundingRecord
+  ) {
     super()
   }
   async perform(): Promise<void> {
     await db.transaction(async () => {
-      const { fiscalPeriodId, centreId, categoryId, estimatedChildOccupancyRate } = this.diverseNeed
+      const { fiscalPeriodId, centreId, categoryId, estimatedChildOccupancyRate } =
+        this.childrenWithDiverseNeedsFundingRecord
       const source = await FiscalPeriod.findByPk(fiscalPeriodId)
       if (isNil(source)) throw new Error(`Fiscal period with ID ${fiscalPeriodId} not found`)
       await FiscalPeriod.findEach(
@@ -21,7 +24,7 @@ export class ReplicateEstimatesService extends BaseService {
           },
         },
         async (target) => {
-          const row = await DiverseNeed.findOne({
+          const row = await ChildrenWithDiverseNeedsFundingRecord.findOne({
             where: { centreId, fiscalPeriodId: target.id, categoryId },
           })
           if (isNil(row)) return

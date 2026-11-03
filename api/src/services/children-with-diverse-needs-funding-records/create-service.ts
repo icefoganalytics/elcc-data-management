@@ -1,12 +1,17 @@
 import { Op, type CreationAttributes } from "@sequelize/core"
 import { isNil } from "lodash"
 
-import db, { Centre, DiverseNeed, DiverseNeedCategory, FiscalPeriod } from "@/models"
+import db, {
+  Centre,
+  ChildrenWithDiverseNeedsFundingRecord,
+  ChildrenWithDiverseNeedsFundingCategory,
+  FiscalPeriod,
+} from "@/models"
 import BaseService from "@/services/base-service"
 
-export type DiverseNeedCreationAttributes = Partial<
+export type ChildrenWithDiverseNeedsFundingRecordCreationAttributes = Partial<
   Pick<
-    CreationAttributes<DiverseNeed>,
+    CreationAttributes<ChildrenWithDiverseNeedsFundingRecord>,
     | "centreId"
     | "fiscalPeriodId"
     | "categoryId"
@@ -18,11 +23,11 @@ export type DiverseNeedCreationAttributes = Partial<
 }
 
 export class CreateService extends BaseService {
-  constructor(private attributes: DiverseNeedCreationAttributes) {
+  constructor(private attributes: ChildrenWithDiverseNeedsFundingRecordCreationAttributes) {
     super()
   }
 
-  async perform(): Promise<DiverseNeed> {
+  async perform(): Promise<ChildrenWithDiverseNeedsFundingRecord> {
     const {
       centreId,
       fiscalPeriodId,
@@ -48,25 +53,26 @@ export class CreateService extends BaseService {
       const fiscalPeriod = await FiscalPeriod.findByPk(fiscalPeriodId)
       if (isNil(fiscalPeriod)) throw new Error("Fiscal period not found")
 
-      const category = await DiverseNeedCategory.findOne({
+      const category = await ChildrenWithDiverseNeedsFundingCategory.findOne({
         where: { id: categoryId, fundingPeriodId: fiscalPeriod.fundingPeriodId },
       })
       if (isNil(category)) {
         throw new Error("Diverse Need category must be active in the same funding period")
       }
 
-      const diverseNeed = await DiverseNeed.create({
-        centreId,
-        fiscalPeriodId,
-        categoryId,
-        lineName: category.categoryName,
-        monthlyAmount: category.monthlyAmount,
-        estimatedChildOccupancyRate,
-        actualChildOccupancyRate,
-        estimatedComputedTotal: "0.0000",
-        actualComputedTotal: "0.0000",
-      })
-      if (!applyToCurrentAndFutureFiscalPeriods) return diverseNeed
+      const childrenWithDiverseNeedsFundingRecord =
+        await ChildrenWithDiverseNeedsFundingRecord.create({
+          centreId,
+          fiscalPeriodId,
+          categoryId,
+          lineName: category.categoryName,
+          monthlyAmount: category.monthlyAmount,
+          estimatedChildOccupancyRate,
+          actualChildOccupancyRate,
+          estimatedComputedTotal: "0.0000",
+          actualComputedTotal: "0.0000",
+        })
+      if (!applyToCurrentAndFutureFiscalPeriods) return childrenWithDiverseNeedsFundingRecord
 
       await FiscalPeriod.findEach(
         {
@@ -78,14 +84,14 @@ export class CreateService extends BaseService {
           order: [["dateStart", "ASC"]],
         },
         async (futureFiscalPeriod) => {
-          const existing = await DiverseNeed.findOne({
+          const existing = await ChildrenWithDiverseNeedsFundingRecord.findOne({
             attributes: ["id"],
             where: { centreId, categoryId, fiscalPeriodId: futureFiscalPeriod.id },
             paranoid: false,
           })
           if (!isNil(existing)) return
 
-          await DiverseNeed.create({
+          await ChildrenWithDiverseNeedsFundingRecord.create({
             centreId,
             fiscalPeriodId: futureFiscalPeriod.id,
             categoryId,
@@ -99,7 +105,7 @@ export class CreateService extends BaseService {
         }
       )
 
-      return diverseNeed
+      return childrenWithDiverseNeedsFundingRecord
     })
   }
 }

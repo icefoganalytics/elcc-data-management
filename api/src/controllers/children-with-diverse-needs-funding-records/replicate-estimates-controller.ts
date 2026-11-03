@@ -1,17 +1,19 @@
 import { isNil } from "lodash"
 import logger from "@/utils/logger"
-import { DiverseNeed } from "@/models"
-import { DiverseNeedPolicy } from "@/policies"
+import { ChildrenWithDiverseNeedsFundingRecord } from "@/models"
+import { ChildrenWithDiverseNeedsFundingRecordPolicy } from "@/policies"
 import BaseController from "@/controllers/base-controller"
-import { ReplicateEstimatesService } from "@/services/diverse-needs"
+import { ReplicateEstimatesService } from "@/services/children-with-diverse-needs-funding-records"
 
-export class ReplicateEstimatesController extends BaseController<DiverseNeed> {
+export class ReplicateEstimatesController extends BaseController<ChildrenWithDiverseNeedsFundingRecord> {
   async create() {
     try {
-      const record = await DiverseNeed.findByPk(this.params.diverseNeedId)
+      const record = await ChildrenWithDiverseNeedsFundingRecord.findByPk(
+        this.params.childrenWithDiverseNeedsFundingRecordId
+      )
       if (isNil(record))
         return this.response.status(404).json({ message: "Diverse Need not found" })
-      const policy = new DiverseNeedPolicy(this.currentUser, record)
+      const policy = new ChildrenWithDiverseNeedsFundingRecordPolicy(this.currentUser, record)
       if (!policy.update())
         return this.response
           .status(403)
