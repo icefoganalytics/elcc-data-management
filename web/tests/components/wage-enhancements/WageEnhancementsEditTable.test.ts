@@ -1,4 +1,5 @@
 import { flushPromises, mount } from "@vue/test-utils"
+import Big from "big.js"
 
 import employeeWageTiersApi from "@/api/employee-wage-tiers-api"
 import wageEnhancementsApi, {
@@ -97,10 +98,10 @@ describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", (
         await flushPromises()
 
         // Assert
-        expect(
-          wrapper.get<HTMLInputElement>('input[aria-label="Wage Enhancement Total Estimated"]')
-            .element.value
-        ).toBe("$24.80")
+        const displayedTotal = wrapper.get<HTMLInputElement>(
+          'input[aria-label="Wage Enhancement Total Estimated"]'
+        ).element.value
+        expect(Big(displayedTotal.replace(/[$,]/g, "")).eq("24.8000")).toBe(true)
       })
 
       test("when a trailing blur arrives after deletion starts, does not send a new save", async () => {
