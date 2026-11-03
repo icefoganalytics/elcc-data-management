@@ -8,6 +8,7 @@
 - **Legacy pattern:** manual `applyScope()` (being phased out).
 - Use `ALL_RECORDS_SCOPE` constant for admin users with early returns.
 - Use `permittedAttributes()` — not `permittedAttributesForUpdate()`.
+- In permitted-attribute arrays, list action-specific fields and option flags first; `...this.permittedAttributes()` always goes last.
 - Role checks: use `user.isSystemAdmin` directly.
 - Compose scopes by storing parent policy scope in a variable and spreading.
 
