@@ -1,7 +1,7 @@
 export { administrationCostCategoryFactory } from "./administration-cost-category-factory"
 export { administrationCostFactory } from "./administration-cost-factory"
 export { childCareSpaceFactory } from "./child-care-space-factory"
-export { diverseNeedFactory } from "./diverse-need-factory"
+export { childrenWithDiverseNeedsFundingRecordFactory } from "./children-with-diverse-needs-funding-record-factory"
 export { employeeBenefitFactory } from "./employee-benefit-factory"
 export { employeeWageTierFactory } from "./employee-wage-tier-factory"
 export { fiscalPeriodFactory } from "./fiscal-period-factory"
