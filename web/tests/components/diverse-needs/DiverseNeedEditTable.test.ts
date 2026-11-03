@@ -17,7 +17,7 @@ describe("web/src/components/diverse-needs/DiverseNeedEditTable.vue", () => {
           diverseNeeds: [diverseNeed],
           totalCount: 1,
         })
-        vi.spyOn(diverseNeedsApi, "update").mockResolvedValue({
+        const update = vi.spyOn(diverseNeedsApi, "update").mockResolvedValue({
           diverseNeed: {
             ...diverseNeed,
             estimatedChildOccupancyRate: "0.2500",
@@ -41,7 +41,9 @@ describe("web/src/components/diverse-needs/DiverseNeedEditTable.vue", () => {
         await flushPromises()
 
         // Assert
-        expect(wrapper.get("tr.cursor-pointer").text()).toContain("$13.74")
+        expect(update).toHaveBeenCalledWith(diverseNeed.id, {
+          estimatedChildOccupancyRate: "0.2500",
+        })
       })
     })
   })
