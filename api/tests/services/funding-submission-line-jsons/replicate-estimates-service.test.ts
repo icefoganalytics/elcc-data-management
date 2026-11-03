@@ -18,7 +18,7 @@ describe("api/src/services/funding-submission-line-jsons/replicate-estimates-ser
         // Arrange
         const centre1 = await centreFactory.create()
         const submissionLine1 = await fundingSubmissionLineFactory.create({
-          sectionName: "Children with Diverse Needs",
+          sectionName: "Additional Funding",
         })
         const fundingLineValue1 = fundingLineValueFactory.build({
           submissionLineId: submissionLine1.id,
@@ -76,7 +76,7 @@ describe("api/src/services/funding-submission-line-jsons/replicate-estimates-ser
         // Arrange
         const centre1 = await centreFactory.create()
         const submissionLine1 = await fundingSubmissionLineFactory.create({
-          sectionName: "Children with Diverse Needs",
+          sectionName: "Additional Funding",
         })
         const fundingLineValue1 = fundingLineValueFactory.build({
           submissionLineId: submissionLine1.id,
@@ -133,7 +133,7 @@ describe("api/src/services/funding-submission-line-jsons/replicate-estimates-ser
         const centre1 = await centreFactory.create()
         const centre2 = await centreFactory.create()
         const submissionLine1 = await fundingSubmissionLineFactory.create({
-          sectionName: "Children with Diverse Needs",
+          sectionName: "Additional Funding",
         })
         const fundingLineValue1 = fundingLineValueFactory.build({
           submissionLineId: submissionLine1.id,
@@ -189,7 +189,7 @@ describe("api/src/services/funding-submission-line-jsons/replicate-estimates-ser
         // Arrange
         const centre1 = await centreFactory.create()
         const submissionLine1 = await fundingSubmissionLineFactory.create({
-          sectionName: "Children with Diverse Needs",
+          sectionName: "Additional Funding",
         })
         const fundingLineValue1 = fundingLineValueFactory.build({
           submissionLineId: submissionLine1.id,

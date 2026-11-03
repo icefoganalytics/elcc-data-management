@@ -9,6 +9,8 @@ import BuildingExpenseCategory from "@/models/building-expense-category"
 import Centre from "@/models/centre"
 import ChildCareSpace from "@/models/child-care-space"
 import ChildCareSpaceCategory from "@/models/child-care-space-category"
+import DiverseNeed from "@/models/diverse-need"
+import DiverseNeedCategory from "@/models/diverse-need-category"
 import EmployeeBenefit from "@/models/employee-benefit"
 import EmployeeWageTier from "@/models/employee-wage-tier"
 import FiscalPeriod from "@/models/fiscal-period"
@@ -33,6 +35,8 @@ db.addModels([
   Centre,
   ChildCareSpace,
   ChildCareSpaceCategory,
+  DiverseNeed,
+  DiverseNeedCategory,
   EmployeeBenefit,
   EmployeeWageTier,
   FiscalPeriod,
@@ -57,6 +61,8 @@ BuildingExpenseCategory.establishScopes()
 Centre.establishScopes()
 ChildCareSpace.establishScopes()
 ChildCareSpaceCategory.establishScopes()
+DiverseNeed.establishScopes()
+DiverseNeedCategory.establishScopes()
 EmployeeBenefit.establishScopes()
 EmployeeWageTier.establishScopes()
 FiscalPeriod.establishScopes()
@@ -81,6 +87,8 @@ export {
   Centre,
   ChildCareSpace,
   ChildCareSpaceCategory,
+  DiverseNeed,
+  DiverseNeedCategory,
   EmployeeBenefit,
   EmployeeWageTier,
   FiscalPeriod,

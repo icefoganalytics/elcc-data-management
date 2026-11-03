@@ -175,7 +175,7 @@ describe("api/src/controllers/funding-submission-line-jsons-controller.ts", () =
           }
           const remainingLine = {
             ...staleLine,
-            sectionName: "Children with Diverse Needs",
+            sectionName: "Additional Funding",
           }
           const worksheet = await fundingSubmissionLineJsonFactory.create({
             centreId: centre.id,
@@ -223,7 +223,7 @@ describe("api/src/controllers/funding-submission-line-jsons-controller.ts", () =
           }
           const remainingLine = {
             ...staleLine,
-            sectionName: "Children with Diverse Needs",
+            sectionName: "Additional Funding",
           }
           const worksheet = await fundingSubmissionLineJsonFactory.create({
             centreId: centre.id,
@@ -253,7 +253,7 @@ describe("api/src/controllers/funding-submission-line-jsons-controller.ts", () =
           const centre = await centreFactory.create()
           const remainingLine = {
             submissionLineId: 2,
-            sectionName: "Children with Diverse Needs",
+            sectionName: "Additional Funding",
             lineName: "Infants",
             monthlyAmount: "10",
             estimatedChildOccupancyRate: "0.5",
@@ -317,7 +317,7 @@ describe("api/src/controllers/funding-submission-line-jsons-controller.ts", () =
           const centre = await centreFactory.create()
           const remainingLine = {
             submissionLineId: 2,
-            sectionName: "Children with Diverse Needs",
+            sectionName: "Additional Funding",
             lineName: "Infants",
             monthlyAmount: "10",
             estimatedChildOccupancyRate: "0.5",
@@ -356,7 +356,7 @@ describe("api/src/controllers/funding-submission-line-jsons-controller.ts", () =
         const centre = await centreFactory.create()
         const validLine = {
           submissionLineId: 2,
-          sectionName: "Children with Diverse Needs",
+          sectionName: "Additional Funding",
           lineName: "Infants",
           monthlyAmount: "10.0000",
           estimatedChildOccupancyRate: "0.5000",
