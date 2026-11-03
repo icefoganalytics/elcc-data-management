@@ -39,7 +39,6 @@ export function useCentres(
       state.totalCount = totalCount
       return centres
     } catch (error) {
-      console.error(`Failed to fetch centres: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {

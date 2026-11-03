@@ -180,6 +180,7 @@ async function deleteCategory(administrationCostCategoryId: number) {
     })
   } catch (error) {
     if (error instanceof ApiOperationError) {
+      console.error(`Failed to delete Administration cost category: ${error}`, { error })
       snack.error(`Failed to delete Administration cost category: ${error}`)
       return
     }

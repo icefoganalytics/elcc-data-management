@@ -1,33 +1,53 @@
 import { type App } from "vue"
+import { START_LOCATION } from "vue-router"
 
-import ApiOperationError from "@/api/errors/api-operation-error"
 import AuthenticationRequiredError from "@/api/errors/authentication-required-error"
-import { UnexpectedApiResponseError } from "@/api/errors/unexpected-api-response-error"
+import CloudflareChallengeError from "@/api/errors/cloudflare-challenge-error"
+import UnexpectedApiResponseError from "@/api/errors/unexpected-api-response-error"
+
 import auth0 from "@/plugins/auth0-plugin"
 
-import useSnack from "@/use/use-snack"
+import useCloudflareChallenge from "@/use/use-cloudflare-challenge"
 
 export function apiResponseErrorPlugin(application: App): void {
   const previousErrorHandler = application.config.errorHandler
-  const snack = useSnack()
+  const { error: cloudflareChallengeError } = useCloudflareChallenge()
+  const router = application.config.globalProperties.$router
 
+  const stopNavigationErrorWatch = router.onError((error, to) => {
+    if (router.currentRoute.value !== START_LOCATION) return
+
+    if (error instanceof AuthenticationRequiredError || error instanceof CloudflareChallengeError) {
+      // Auth0 clears its callback URL before the protected destination can commit.
+      router.options.history.replace(to.fullPath)
+    }
+  })
+  application.onUnmount(stopNavigationErrorWatch)
+
+  // Detached editor popups share the app context but are outside App's component ancestry.
   application.config.errorHandler = async (error, instance, info) => {
     if (error instanceof AuthenticationRequiredError) {
+      let target = router.currentRoute.value.fullPath
+      if (router.currentRoute.value === START_LOCATION) {
+        target = router.options.history.location
+      }
+
       await auth0.loginWithRedirect({
-        appState: { targetUrl: window.location.pathname },
+        appState: { target },
       })
       return
     }
 
-    const apiResponseError = findUnexpectedApiResponseError(error)
-    if (apiResponseError !== null) {
-      snack.error(apiResponseError.message, { timeout: -1 })
-      snack.apiResponseError.value = apiResponseError
+    if (error instanceof CloudflareChallengeError) {
+      cloudflareChallengeError.value = error
       return
     }
 
-    if (error instanceof ApiOperationError) {
-      snack.error(error.message)
+    if (error instanceof UnexpectedApiResponseError) {
+      console.error(`Unexpected API response from ELCC: ${error}`, { error })
+      await router.replace({
+        name: "errors/InternalServerErrorPage",
+      })
       return
     }
 
@@ -37,19 +57,6 @@ export function apiResponseErrorPlugin(application: App): void {
       console.error(error)
     }
   }
-}
-
-function findUnexpectedApiResponseError(error: unknown): UnexpectedApiResponseError | null {
-  if (error instanceof UnexpectedApiResponseError) return error
-
-  if (!(error instanceof AggregateError)) return null
-
-  for (const cause of error.errors) {
-    const apiResponseError = findUnexpectedApiResponseError(cause)
-    if (apiResponseError !== null) return apiResponseError
-  }
-
-  return null
 }
 
 export default apiResponseErrorPlugin

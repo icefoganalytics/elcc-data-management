@@ -54,7 +54,6 @@ export function useEmployeeBenefits(
         return state.employeeBenefits
       }
 
-      console.error(`Failed to fetch employee benefits: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {

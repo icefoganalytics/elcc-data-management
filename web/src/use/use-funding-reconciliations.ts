@@ -41,7 +41,6 @@ export function useFundingReconciliations(
       state.totalCount = totalCount
       return fundingReconciliations
     } catch (error) {
-      console.error(`Failed to fetch funding reconciliations: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {

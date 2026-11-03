@@ -51,9 +51,6 @@ export function useAdministrationCostCategories(
     } catch (error) {
       if (controller.signal.aborted || isCancel(error)) return state.administrationCostCategories
 
-      console.error(`Failed to fetch Administration categories: ${error}`, {
-        error,
-      })
       state.isErrored = true
       throw error
     } finally {

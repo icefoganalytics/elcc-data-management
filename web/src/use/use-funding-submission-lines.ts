@@ -41,7 +41,6 @@ export function useFundingSubmissionLines(
       state.totalCount = totalCount
       return fundingSubmissionLines
     } catch (error) {
-      console.error(`Failed to fetch funding submission lines: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {

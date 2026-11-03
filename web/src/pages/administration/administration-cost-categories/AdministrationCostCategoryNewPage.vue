@@ -140,6 +140,7 @@ async function createCategory() {
     })
   } catch (error) {
     if (error instanceof ApiOperationError) {
+      console.error(`Failed to create Administration cost category: ${error}`, { error })
       snack.error(`Failed to create Administration cost category: ${error}`)
       return
     }

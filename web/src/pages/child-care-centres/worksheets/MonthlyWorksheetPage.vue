@@ -330,11 +330,10 @@ async function loadWorksheet() {
 
     if (error instanceof ApiOperationError) {
       if (requestId === activeRequest) {
-        console.error("Failed to load worksheet:", error)
+        console.error(`Failed to load worksheet: ${error}`, { error })
       }
       return
     }
-
     throw error
   } finally {
     if (requestId === activeRequest) {

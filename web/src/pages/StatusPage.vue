@@ -69,7 +69,7 @@ async function refresh() {
     await fetchVersion()
   } catch (error) {
     if (error instanceof ApiOperationError) {
-      console.error(`Error fetching version: ${error}`)
+      console.error(`Error fetching version: ${error}`, { error })
       return
     }
 

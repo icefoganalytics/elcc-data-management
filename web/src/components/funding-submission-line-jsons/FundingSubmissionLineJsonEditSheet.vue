@@ -249,7 +249,7 @@ async function saveFundingSubmissionLineJson(): Promise<boolean> {
     return true
   } catch (error) {
     if (isExpectedApiFailure(error)) {
-      console.error(error)
+      console.error(`Failed to save worksheet: ${error}`, { error })
       notificationStore.notify({
         text: `Failed to save worksheet: ${error}`,
         variant: "error",

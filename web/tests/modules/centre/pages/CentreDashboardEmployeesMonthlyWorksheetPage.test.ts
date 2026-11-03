@@ -205,7 +205,9 @@ describe("web/src/modules/centre/pages/CentreDashboardEmployeesMonthlyWorksheetP
           employeeBenefit: id === 42 ? benefit2 : benefit1,
           policy: { show: true, create: true, update: true, destroy: true },
         }))
-        vi.spyOn(employeeBenefitsApi, "update").mockRejectedValue(new ApiOperationError("offline", 503))
+        vi.spyOn(employeeBenefitsApi, "update").mockRejectedValue(
+          new ApiOperationError("offline", 503)
+        )
         vi.spyOn(employeeWageTiersApi, "list").mockResolvedValue({
           employeeWageTiers: [],
           totalCount: 0,
@@ -265,7 +267,9 @@ describe("web/src/modules/centre/pages/CentreDashboardEmployeesMonthlyWorksheetP
           employeeBenefit: id === 42 ? benefit2 : benefit1,
           policy: { show: true, create: true, update: true, destroy: true },
         }))
-        vi.spyOn(employeeBenefitsApi, "update").mockRejectedValue(new ApiOperationError("offline", 503))
+        vi.spyOn(employeeBenefitsApi, "update").mockRejectedValue(
+          new ApiOperationError("offline", 503)
+        )
         vi.spyOn(employeeWageTiersApi, "list").mockResolvedValue({
           employeeWageTiers: [],
           totalCount: 0,

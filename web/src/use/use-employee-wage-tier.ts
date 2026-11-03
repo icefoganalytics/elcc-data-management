@@ -29,7 +29,6 @@ export function useEmployeeWageTier(employeeWageTierId: Ref<number | null | unde
       state.isErrored = false
       return employeeWageTier
     } catch (error) {
-      console.error(`Failed to fetch employee wage tier: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {

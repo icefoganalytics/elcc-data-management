@@ -1,44 +1,26 @@
-import { AxiosHeaders, type AxiosRequestConfig } from "axios"
+import type { AxiosResponse } from "axios"
 
-import { ApiError } from "@/api/errors/api-error"
+import ApiError from "@/api/errors/api-error"
 
-/** Metadata only: never retain the response body, request config, or original error. */
-export class UnexpectedApiResponseError extends ApiError {
-  readonly name = "UnexpectedApiResponseError"
-  readonly isChallenge: boolean
-  readonly method: string
-  readonly path: string
-  readonly status: number
-  readonly rayId: string | undefined
+export abstract class UnexpectedApiResponseError extends ApiError {
+  public readonly name: string = "UnexpectedApiResponseError"
+  public readonly status: number
+  public readonly method: string
+  public readonly path: string
 
-  constructor(
-    config: AxiosRequestConfig,
-    status: number,
-    headers: AxiosHeaders,
-    isChallenge = false
-  ) {
-    super(
-      isChallenge
-        ? "The request was interrupted by a browser verification challenge."
-        : "The server returned an unexpected response instead of JSON."
-    )
-    this.isChallenge = isChallenge
-    this.method = (config.method || "get").toUpperCase()
-    this.path = sanitizedPath(config)
-    this.status = status
+  constructor(message: string, response?: AxiosResponse) {
+    super(message)
 
-    const rayId = headers.get("cf-ray")
-    this.rayId =
-      typeof rayId === "string" && /^[a-zA-Z0-9-]{1,100}$/.test(rayId) ? rayId : undefined
-  }
-}
+    if (!response) {
+      this.status = 0
+      this.method = ""
+      this.path = ""
+      return
+    }
 
-function sanitizedPath(config: AxiosRequestConfig): string {
-  try {
-    const baseUrl = new URL(config.baseURL || "/", window.location.origin)
-    return new URL(config.url || "/", baseUrl).pathname
-  } catch {
-    return "/"
+    this.status = response.status
+    this.method = response.config.method?.toUpperCase() ?? "GET"
+    this.path = UnexpectedApiResponseError.extractRequestPath(response)
   }
 }
 

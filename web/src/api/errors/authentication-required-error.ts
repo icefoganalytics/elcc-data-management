@@ -4,9 +4,9 @@ import ApiError from "@/api/errors/api-error"
 
 export class AuthenticationRequiredError extends ApiError {
   public static isAuthenticationRequiredResponse(response?: AxiosResponse): boolean {
-    return Boolean(
-      response && response.status === 401 && this.isApiResponseWithErrorMessage(response)
-    )
+    if (!response || response.status !== 401) return false
+
+    return this.isApiResponseWithErrorMessage(response)
   }
 
   public readonly name = "AuthenticationRequiredError"

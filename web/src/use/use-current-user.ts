@@ -45,7 +45,6 @@ export function useCurrentUser<IsLoaded extends boolean = false>() {
       state.isCached = true
       return user
     } catch (error) {
-      console.error("Failed to fetch current user:", error)
       state.isErrored = true
       throw error
     } finally {

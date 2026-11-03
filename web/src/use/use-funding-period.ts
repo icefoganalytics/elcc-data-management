@@ -59,7 +59,6 @@ export function useFundingPeriod(fundingPeriodId: Ref<number | null | undefined>
     } catch (error) {
       if (controller.signal.aborted || isCancel(error)) return state.fundingPeriod
 
-      console.error(`Failed to fetch funding period: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {
@@ -91,7 +90,6 @@ export function useFundingPeriod(fundingPeriodId: Ref<number | null | undefined>
       state.policy = policy
       return fundingPeriod
     } catch (error) {
-      console.error(`Failed to save funding period: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {

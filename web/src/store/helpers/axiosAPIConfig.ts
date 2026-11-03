@@ -2,9 +2,10 @@
 
 import axios from "axios"
 
-import { parseJsonResponse, classifyApiResponse } from "@/api/parse-json-response"
-import { UnexpectedApiResponseError } from "@/api/errors/unexpected-api-response-error"
-import { AuthenticationRequiredError } from "@/api/errors/authentication-required-error"
+import ApiOperationError from "@/api/errors/api-operation-error"
+import AuthenticationRequiredError from "@/api/errors/authentication-required-error"
+import CloudflareChallengeError from "@/api/errors/cloudflare-challenge-error"
+import UnexpectedHtmlResponseError from "@/api/errors/unexpected-html-response-error"
 
 export function SecureAPICall(method: string, token: string) {
   const headers = {
@@ -15,19 +16,51 @@ export function SecureAPICall(method: string, token: string) {
   }
   const client = axios.create({
     method: method,
-    transformResponse: [parseJsonResponse],
     headers: headers,
   })
   client.interceptors.response.use(
-    (response) => response,
+    // Axios resolves HTTP 2xx responses here, but they can still contain unexpected HTML.
+    (response) => {
+      if (CloudflareChallengeError.isChallengeResponse(response)) {
+        throw new CloudflareChallengeError(response)
+      }
+
+      if (UnexpectedHtmlResponseError.isUnexpectedHtmlResponse(response)) {
+        throw new UnexpectedHtmlResponseError(response)
+      }
+
+      return response
+    },
+    // HTTP responses outside the 2xx range and request failures reach this error handler.
     (error) => {
-      if (error instanceof UnexpectedApiResponseError || axios.isCancel(error)) throw error
+      if (axios.isCancel(error)) {
+        throw error
+      }
 
-      if (error?.error === "login_required") throw new AuthenticationRequiredError()
+      const response = error?.response
+      if (CloudflareChallengeError.isChallengeResponse(response)) {
+        throw new CloudflareChallengeError(response)
+      }
 
-      const classified = error?.response ? classifyApiResponse(error.response) : undefined
-      throw classified || error
+      if (UnexpectedHtmlResponseError.isUnexpectedHtmlResponse(response)) {
+        throw new UnexpectedHtmlResponseError(response)
+      }
+
+      if (error?.error === "login_required") {
+        throw new AuthenticationRequiredError()
+      }
+
+      if (AuthenticationRequiredError.isAuthenticationRequiredResponse(response)) {
+        throw new AuthenticationRequiredError(response.data.message)
+      }
+
+      if (ApiOperationError.isOperationErrorResponse(response)) {
+        throw new ApiOperationError(response.data.message, response.status)
+      }
+
+      throw error
     }
   )
+
   return client
 }

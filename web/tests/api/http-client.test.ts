@@ -3,7 +3,8 @@ import axios, { AxiosError, AxiosHeaders, type InternalAxiosRequestConfig } from
 import httpClient from "@/api/http-client"
 import { SecureAPICall } from "@/store/helpers/axiosAPIConfig"
 import { AuthenticationRequiredError } from "@/api/errors/authentication-required-error"
-import { UnexpectedApiResponseError } from "@/api/errors/unexpected-api-response-error"
+import { CloudflareChallengeError } from "@/api/errors/cloudflare-challenge-error"
+import { UnexpectedHtmlResponseError } from "@/api/errors/unexpected-html-response-error"
 
 vi.hoisted(() => vi.resetModules())
 const getAccessTokenSilentlyMock = vi.hoisted(() => vi.fn())
@@ -68,27 +69,68 @@ describe("web/src/api/http-client.ts real clients", () => {
     }
   )
 
-  test.each(clients)(
-    "when %s receives malformed JSON, preserves the unexpected-response error",
-    async (_name, client) => {
-      // Arrange
-      const adapter = client.defaults.adapter
-      client.defaults.adapter = async (config) => ({
-        config,
-        data: '{"message":',
-        headers: new AxiosHeaders({ "content-type": "application/json" }),
-        status: 200,
-        statusText: "OK",
-      })
+  describe.each(clients)("%s", (_name, client) => {
+    test.each([200, 403, 502])(
+      "when marked HTML arrives with status %i, requires challenge recovery",
+      async (status) => {
+        // Arrange
+        const adapter = client.defaults.adapter
+        client.defaults.adapter = async (config) => {
+          const response = {
+            config,
+            data: "<html>Browser verification</html>",
+            headers: new AxiosHeaders({
+              "content-type": "text/html",
+              "cf-mitigated": "challenge",
+            }),
+            status,
+            statusText: "Controlled response",
+          }
+          if (status >= 400) {
+            throw new AxiosError("Request failed", "ERR_BAD_RESPONSE", config, undefined, response)
+          }
 
-      // Act
-      const request = client.get("/api/items")
+          return response
+        }
 
-      // Assert
-      await expect(request).rejects.toBeInstanceOf(UnexpectedApiResponseError)
-      client.defaults.adapter = adapter
-    }
-  )
+        // Act
+        const request = client.get("/api/items")
+
+        // Assert
+        await expect(request).rejects.toBeInstanceOf(CloudflareChallengeError)
+        client.defaults.adapter = adapter
+      }
+    )
+
+    test.each([200, 403, 502])(
+      "when unmarked HTML arrives with status %i, reports an unexpected HTML failure",
+      async (status) => {
+        // Arrange
+        const adapter = client.defaults.adapter
+        client.defaults.adapter = async (config) => {
+          const response = {
+            config,
+            data: "<html>Upstream error</html>",
+            headers: new AxiosHeaders({ "content-type": "text/html" }),
+            status,
+            statusText: "Controlled response",
+          }
+          if (status >= 400) {
+            throw new AxiosError("Request failed", "ERR_BAD_RESPONSE", config, undefined, response)
+          }
+
+          return response
+        }
+
+        // Act
+        const request = client.get("/_status")
+
+        // Assert
+        await expect(request).rejects.toBeInstanceOf(UnexpectedHtmlResponseError)
+        client.defaults.adapter = adapter
+      }
+    )
+  })
 
   test("when a successful JSON response has a message field, returns it as ordinary data", async () => {
     // Arrange

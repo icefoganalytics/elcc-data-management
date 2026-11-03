@@ -222,7 +222,7 @@ async function createFundingSubmissionLine() {
     })
   } catch (error) {
     if (error instanceof ApiOperationError) {
-      console.error(error)
+      console.error(`Failed to create submission line: ${error}`, { error })
       snack.error(`Failed to create submission line: ${error}`)
       return
     }

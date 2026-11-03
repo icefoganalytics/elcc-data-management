@@ -56,7 +56,6 @@ export function useWageEnhancements(
         return state.wageEnhancements
       }
 
-      console.error(`Failed to fetch wage enhancements: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {

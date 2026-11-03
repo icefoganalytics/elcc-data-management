@@ -126,7 +126,7 @@ async function createFundingPeriod() {
     })
   } catch (error) {
     if (error instanceof ApiOperationError) {
-      console.error(error)
+      console.error(`Failed to create funding period: ${error}`, { error })
       snack.error(`Failed to create funding period: ${error}`)
       return
     }
