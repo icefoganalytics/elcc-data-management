@@ -13,7 +13,6 @@ import {
   fundingSubmissionLineJsonFactory,
 } from "@/tests/factories"
 import { mockRouter, mockVuetify } from "@/tests/support"
-
 import MonthlyWorksheetPage from "@/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue"
 
 describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue", () => {
@@ -183,7 +182,6 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         // Assert
         expect(savedWorksheetUpdates).toEqual([
           "/api/child-care-spaces/50",
-          "/api/administration-costs/60",
           "/api/funding-submission-line-jsons/55",
         ])
       })
@@ -197,6 +195,9 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           id: 44,
           centreId: 1,
           dateName: "April",
+          dateStart: "2024-04-01",
+          dateEnd: "2024-04-30",
+          lines: [],
         })
         const mayWorksheet = fundingSubmissionLineJsonFactory.build({
           id: 55,
@@ -258,11 +259,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             }
           }
 
-          return {
-            data: {
-              fundingSubmissionLineJson: aprilWorksheet,
-            },
-          }
+          return { data: { fundingSubmissionLineJson: aprilWorksheet } }
         })
         vi.mocked(httpClient, true).patch.mockResolvedValue({
           data: {},
@@ -315,7 +312,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         expect(wrapper.findAll("tbody input")).toHaveLength(0)
       })
 
-      test("when Administration costs fail to load, withholds worksheet editing", async () => {
+      test("when Administration costs fail to load, disables cross-section estimate replication", async () => {
         // Arrange
         const worksheet = fundingSubmissionLineJsonFactory.build({
           id: 44,
@@ -397,7 +394,410 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         await flushPromises()
 
         // Assert
-        expect(wrapper.findAll("tbody input")).toHaveLength(0)
+        const replicate = wrapper
+          .findAll("button")
+          .find((button) => button.text().includes("Replicate Estimates"))
+        expect(replicate?.attributes("disabled")).toEqual("")
+      })
+
+      test("when the worksheet loads, preserves the established order of independent and JSON sections", async () => {
+        // Arrange
+        const worksheet = fundingSubmissionLineJsonFactory.build({
+          id: 44,
+          centreId: 1,
+          dateName: "April",
+          lines: [
+            {
+              submissionLineId: 90,
+              sectionName: "Children with Diverse Needs",
+              lineName: "Toddlers",
+              monthlyAmount: "54.9600",
+              estimatedChildOccupancyRate: "0.0000",
+              actualChildOccupancyRate: "0.0000",
+              estimatedComputedTotal: "0.0000",
+              actualComputedTotal: "0.0000",
+            },
+          ],
+        })
+        const fiscalPeriod = fiscalPeriodFactory.build({
+          id: 4,
+          fundingPeriodId: 1,
+          fiscalYear: "2024-25",
+          month: FiscalPeriodMonths.APRIL,
+        })
+        vi.mocked(httpClient, true).get.mockImplementation(async (url) => {
+          if (url === "/api/funding-submission-line-jsons") {
+            return { data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 } }
+          }
+          if (url === "/api/fiscal-periods") {
+            return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
+          }
+          if (url === "/api/child-care-spaces") {
+            return { data: { childCareSpaces: [], totalCount: 0 } }
+          }
+          if (url === "/api/administration-costs") {
+            return { data: { administrationCosts: [], totalCount: 0 } }
+          }
+          return { data: { fundingSubmissionLineJson: worksheet } }
+        })
+        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+        await router.push("/")
+        await router.isReady()
+        const wrapper = mount(MonthlyWorksheetPage, {
+          props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
+          global: {
+            plugins: [router, createPinia(), mockVuetify()],
+            stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
+          },
+        })
+
+        // Act
+        await flushPromises()
+
+        // Assert
+        expect(wrapper.findAll("h3").map((heading) => heading.text())).toEqual([
+          "Child Care Spaces",
+          "Children with Diverse Needs",
+          "Administration (10% of Spaces)",
+          "Building Expenses",
+        ])
+      })
+      test.each(["Save", "Replicate Estimates"])(
+        "when an Administration cell is edited, %s saves it without Enter",
+        async (actionLabel) => {
+          // Arrange
+          const worksheet = fundingSubmissionLineJsonFactory.build({
+            id: 44,
+            centreId: 1,
+            dateName: "April",
+            lines: [],
+          })
+          const fiscalPeriod = fiscalPeriodFactory.build({
+            id: 4,
+            fundingPeriodId: 1,
+            fiscalYear: "2024-25",
+            month: FiscalPeriodMonths.APRIL,
+          })
+          const administration = administrationCostFactory.build({
+            id: 70,
+            centreId: 1,
+            fiscalPeriodId: 4,
+            categoryId: 20,
+            estimatedChildOccupancyRate: "0.6250",
+          })
+          const http = vi.mocked(httpClient, true)
+          const administrationUpdates: unknown[] = []
+          const replicationRequests: string[] = []
+          http.get.mockImplementation(async (url) => {
+            if (url === "/api/funding-submission-line-jsons") {
+              return { data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 } }
+            }
+            if (url === "/api/fiscal-periods") {
+              return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
+            }
+            if (url === "/api/child-care-spaces") {
+              return { data: { childCareSpaces: [], totalCount: 0 } }
+            }
+            if (url === "/api/administration-costs") {
+              return { data: { administrationCosts: [administration], totalCount: 1 } }
+            }
+            return { data: { fundingSubmissionLineJson: worksheet } }
+          })
+          http.patch.mockImplementation(async (url, attributes) => {
+            if (url === "/api/administration-costs/70") administrationUpdates.push(attributes)
+            return { data: {} }
+          })
+          http.post.mockImplementation(async (url) => {
+            replicationRequests.push(url)
+            return { data: undefined }
+          })
+          const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+          await router.push("/")
+          await router.isReady()
+          const wrapper = mount(MonthlyWorksheetPage, {
+            props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
+            global: {
+              plugins: [router, createPinia(), mockVuetify()],
+              stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
+            },
+          })
+          await flushPromises()
+
+          // Act
+          const administrationRow = wrapper
+            .findAll("tr.cursor-pointer")
+            .find((row) => row.text().includes(administration.lineName))
+          if (!administrationRow) throw new Error("Expected the Administration row")
+          await administrationRow.trigger("click")
+          await flushPromises()
+          const estimateInput = wrapper.get<HTMLInputElement>("tbody input")
+          await estimateInput.setValue("0.8125")
+          const action = wrapper
+            .findAll("button")
+            .find((button) => button.text().trim() === actionLabel)
+          if (!action) throw new Error(`Expected ${actionLabel} button`)
+          await action.trigger("click")
+          await flushPromises()
+
+          // Assert
+          expect(administrationUpdates).toContainEqual({ estimatedChildOccupancyRate: "0.8125" })
+          if (actionLabel === "Replicate Estimates") {
+            expect(replicationRequests).toContain(
+              "/api/administration-costs/70/replicate-estimates"
+            )
+          } else {
+            expect(replicationRequests).toEqual([])
+          }
+        }
+      )
+
+      test("when one Spaces update fails, refreshes linked tables after the partial save", async () => {
+        // Arrange
+        const worksheet = fundingSubmissionLineJsonFactory.build({
+          id: 44,
+          centreId: 1,
+          dateName: "April",
+          lines: [],
+        })
+        const fiscalPeriod = fiscalPeriodFactory.build({
+          id: 4,
+          fundingPeriodId: 1,
+          fiscalYear: "2024-25",
+          month: FiscalPeriodMonths.APRIL,
+        })
+        const spaces = [
+          childCareSpaceFactory.build({ id: 40, centreId: 1, fiscalPeriodId: 4, categoryId: 9 }),
+          childCareSpaceFactory.build({ id: 41, centreId: 1, fiscalPeriodId: 4, categoryId: 10 }),
+        ]
+        let firstSpaceSaved = false
+        const http = vi.mocked(httpClient, true)
+        http.get.mockImplementation(async (url) => {
+          if (url === "/api/funding-submission-line-jsons") {
+            return { data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 } }
+          }
+          if (url === "/api/fiscal-periods") {
+            return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
+          }
+          if (url === "/api/child-care-spaces") {
+            return { data: { childCareSpaces: spaces, totalCount: spaces.length } }
+          }
+          if (url === "/api/administration-costs") {
+            const administration = administrationCostFactory.build({
+              lineName: "Linked administration",
+              estimatedComputedTotal: firstSpaceSaved ? "35.0000" : "0.0000",
+            })
+            return { data: { administrationCosts: [administration], totalCount: 1 } }
+          }
+          return { data: { fundingSubmissionLineJson: worksheet } }
+        })
+        const replicationRequests: string[] = []
+        http.patch.mockImplementation(async (url) => {
+          if (url === "/api/child-care-spaces/41") throw new Error("Second Spaces update failed")
+          firstSpaceSaved = true
+          return { data: {} }
+        })
+        http.post.mockImplementation(async (url) => {
+          replicationRequests.push(url)
+          return { data: undefined }
+        })
+        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+        await router.push("/")
+        await router.isReady()
+        const wrapper = mount(MonthlyWorksheetPage, {
+          props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
+          global: {
+            plugins: [router, createPinia(), mockVuetify()],
+            stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
+          },
+        })
+        await flushPromises()
+        const inputs = wrapper.findAll("tbody input")
+        await inputs[0]?.setValue("0.5")
+        await inputs[2]?.setValue("0.75")
+        const replicate = wrapper
+          .findAll("button")
+          .find((button) => button.text().includes("Replicate Estimates"))
+        if (!replicate) throw new Error("Expected the Replicate Estimates button")
+
+        // Act
+        await replicate.trigger("click")
+        await flushPromises()
+
+        // Assert
+        expect(wrapper.text()).toContain("$35.00")
+        expect(replicationRequests).toEqual([])
+      })
+
+      test.each([
+        ["success", false],
+        ["failure", true],
+      ] as const)(
+        "when JSON replication remains pending after a sibling %s, keeps Spaces editing locked",
+        async (_outcome, failAdministration) => {
+          // Arrange
+          const worksheet = fundingSubmissionLineJsonFactory.build({
+            id: 44,
+            centreId: 1,
+            dateName: "April",
+          })
+          const fiscalPeriod = fiscalPeriodFactory.build({
+            id: 4,
+            fundingPeriodId: 1,
+            fiscalYear: "2024-25",
+            month: FiscalPeriodMonths.APRIL,
+          })
+          const space = childCareSpaceFactory.build({ id: 40, centreId: 1, fiscalPeriodId: 4 })
+          const administration = administrationCostFactory.build({
+            id: 60,
+            centreId: 1,
+            fiscalPeriodId: 4,
+          })
+          const pendingReplication = Promise.withResolvers<{ data: undefined }>()
+          const replicationStarted = Promise.withResolvers<void>()
+          const http = vi.mocked(httpClient, true)
+          http.get.mockImplementation(async (url) => {
+            if (url === "/api/funding-submission-line-jsons") {
+              return { data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 } }
+            }
+            if (url === "/api/fiscal-periods") {
+              return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
+            }
+            if (url === "/api/child-care-spaces") {
+              return { data: { childCareSpaces: [space], totalCount: 1 } }
+            }
+            if (url === "/api/administration-costs") {
+              return { data: { administrationCosts: [administration], totalCount: 1 } }
+            }
+            return { data: { fundingSubmissionLineJson: worksheet } }
+          })
+          http.patch.mockResolvedValue({ data: { fundingSubmissionLineJson: worksheet } })
+          http.post.mockImplementation(async (url) => {
+            if (url === "/api/funding-submission-line-jsons/44/replicate-estimates") {
+              replicationStarted.resolve()
+              return pendingReplication.promise
+            }
+            if (failAdministration && url === "/api/administration-costs/60/replicate-estimates") {
+              throw new Error("Administration replication unavailable")
+            }
+            return { data: undefined }
+          })
+          const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+          await router.push("/")
+          await router.isReady()
+          const wrapper = mount(MonthlyWorksheetPage, {
+            props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
+            global: {
+              plugins: [router, createPinia(), mockVuetify()],
+              stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
+            },
+          })
+          await flushPromises()
+          const replicate = wrapper
+            .findAll("button")
+            .find((button) => button.text().includes("Replicate Estimates"))
+          if (!replicate) throw new Error("Expected Replicate Estimates")
+
+          // Act
+          await replicate.trigger("click")
+          await replicationStarted.promise
+          await flushPromises()
+
+          // Assert
+          expect(wrapper.get<HTMLInputElement>("tbody input").element.readOnly).toEqual(true)
+        }
+      )
+
+      test("when a creation form unmounts during month navigation, releases its lock without unlocking a newer creation", async () => {
+        // Arrange
+        const aprilWorksheet = fundingSubmissionLineJsonFactory.build({
+          id: 44,
+          centreId: 1,
+          fiscalYear: "2024/25",
+          dateName: "April",
+          lines: [],
+        })
+        const mayWorksheet = fundingSubmissionLineJsonFactory.build({
+          id: 45,
+          centreId: 1,
+          fiscalYear: "2024/25",
+          dateName: "May",
+          lines: [],
+        })
+        const april = fiscalPeriodFactory.build({
+          id: 4,
+          fundingPeriodId: 1,
+          fiscalYear: "2024-25",
+          month: FiscalPeriodMonths.APRIL,
+        })
+        const may = fiscalPeriodFactory.build({
+          id: 5,
+          fundingPeriodId: 1,
+          fiscalYear: "2024-25",
+          month: FiscalPeriodMonths.MAY,
+        })
+        vi.mocked(httpClient, true).get.mockImplementation(async (url, config) => {
+          if (url === "/api/funding-submission-line-jsons") {
+            const worksheet =
+              config?.params?.where?.dateName === "April" ? aprilWorksheet : mayWorksheet
+            return { data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 } }
+          }
+          if (url === "/api/fiscal-periods") {
+            const period = config?.params?.where?.month === FiscalPeriodMonths.APRIL ? april : may
+            return { data: { fiscalPeriods: [period], totalCount: 1 } }
+          }
+          if (url === "/api/administration-costs") {
+            return { data: { administrationCosts: [], totalCount: 0 } }
+          }
+          if (url === "/api/child-care-spaces") {
+            return { data: { childCareSpaces: [], totalCount: 0 } }
+          }
+          if (url === "/api/administration-cost-categories") {
+            return { data: { administrationCostCategories: [], totalCount: 0 } }
+          }
+          return { data: { fundingSubmissionLineJson: mayWorksheet } }
+        })
+        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+        await router.push("/")
+        await router.isReady()
+        const wrapper = mount(MonthlyWorksheetPage, {
+          props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
+          global: {
+            plugins: [router, createPinia(), mockVuetify()],
+            stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
+          },
+        })
+        await flushPromises()
+        const firstAdd = wrapper
+          .findAll("button")
+          .find((button) => button.text() === "Add Administration Cost")
+        if (!firstAdd) throw new Error("Expected Add Administration Cost")
+        await firstAdd.trigger("click")
+        const previousForm = wrapper.getComponent({ name: "AdministrationCostCreateFormCard" })
+        previousForm.vm.$emit("saving", true)
+        await flushPromises()
+
+        // Act & Assert
+        await wrapper.setProps({ month: FiscalPeriodMonths.MAY })
+        await flushPromises()
+        const save = wrapper.findAll("button").find((button) => button.text() === "Save")
+        if (!save) throw new Error("Expected worksheet Save")
+        expect(save.attributes("disabled")).toEqual(undefined)
+
+        const nextAdd = wrapper
+          .findAll("button")
+          .find((button) => button.text() === "Add Administration Cost")
+        if (!nextAdd) throw new Error("Expected Add Administration Cost")
+        await nextAdd.trigger("click")
+
+        const currentForm = wrapper.getComponent({ name: "AdministrationCostCreateFormCard" })
+        currentForm.vm.$emit("saving", true)
+        previousForm.vm.$emit("saving", false)
+        await flushPromises()
+        expect(save.attributes("disabled")).toEqual("")
+
+        currentForm.vm.$emit("saving", false)
+        await flushPromises()
+        expect(save.attributes("disabled")).toEqual(undefined)
       })
     })
   })

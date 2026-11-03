@@ -3,6 +3,8 @@
     v-click-outside="emitInputAndCancel"
     :items="itemClones"
     :headers="headers"
+    :inert="busy"
+    :aria-busy="busy"
   >
     <template #item="{ index, item, itemRef }">
       <tr
@@ -97,7 +99,7 @@
     ColumnKey extends string
   "
 >
-import { nextTick, ref, watchEffect } from "vue"
+import { nextTick, ref, shallowRef, watch, watchEffect } from "vue"
 import { cloneDeep, isNil } from "lodash"
 
 type InputComponents = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -108,12 +110,17 @@ const props = defineProps<{
   headers: Header[]
   items: Item[]
   editableColumns: ColumnKey[]
+  busy?: boolean
 }>()
 
 const emit = defineEmits<{
   "update:cell": [item: Item]
   cancel: [void]
 }>()
+
+defineExpose({
+  commitEdit: emitInputAndCancel,
+})
 
 const itemClones = ref<Item[]>([])
 
@@ -122,6 +129,14 @@ watchEffect(() => {
 })
 
 const activeRowIndex = ref<number | null>(null)
+const pendingFocus = shallowRef<{ columnKey: ColumnKey; rowIndex: number } | null>(null)
+
+watch(
+  () => props.busy,
+  (busy) => {
+    if (!busy) void resumePendingFocus()
+  }
+)
 
 const inputElementRefsByAlphaNumericIndex = ref<Record<string, InputComponents | null>>({})
 
@@ -144,6 +159,7 @@ function getInputElementBy(columnKey: ColumnKey, rowIndex: number): InputCompone
 async function startEditingRow(rowIndex: number, columnKey: ColumnKey): Promise<void> {
   if (isEditingRow(rowIndex)) return
 
+  emitInputAndCancel()
   activeRowIndex.value = rowIndex
 
   await nextTick()
@@ -178,14 +194,24 @@ function registerInputElement(columnKey: ColumnKey, rowIndex: number, element: u
 }
 
 function focusOnField(columnKey: ColumnKey, rowIndex: number): void {
-  const inputElement = getInputElementBy(columnKey, rowIndex)
+  pendingFocus.value = { columnKey, rowIndex }
+  void resumePendingFocus()
+}
+
+async function resumePendingFocus(): Promise<void> {
+  const target = pendingFocus.value
+  if (isNil(target)) return
+
+  await nextTick()
+  if (props.busy || pendingFocus.value !== target || activeRowIndex.value !== target.rowIndex)
+    return
+
+  const inputElement = getInputElementBy(target.columnKey, target.rowIndex)
   if (isNil(inputElement)) return
 
   inputElement.focus()
-
-  if (inputElement instanceof HTMLSelectElement) return
-
-  inputElement.select()
+  pendingFocus.value = null
+  if (!(inputElement instanceof HTMLSelectElement)) inputElement.select()
 }
 
 function navigateOnKeydown(event: KeyboardEvent, columnKey: ColumnKey, rowIndex: number): void {
@@ -231,7 +257,7 @@ function navigateOnKeydown(event: KeyboardEvent, columnKey: ColumnKey, rowIndex:
 }
 
 async function goToNextRow(rowIndex: number, columnKey: ColumnKey): Promise<void> {
-  emitUpdateCell(rowIndex)
+  emitInputAndCancel()
 
   const nextRowIndex = rowIndex + 1
   if (nextRowIndex >= props.items.length) {
@@ -243,7 +269,7 @@ async function goToNextRow(rowIndex: number, columnKey: ColumnKey): Promise<void
 }
 
 async function goToPreviousRow(rowIndex: number, columnKey: ColumnKey): Promise<void> {
-  emitUpdateCell(rowIndex)
+  emitInputAndCancel()
 
   if (rowIndex <= 0) {
     resetActiveRow()
@@ -254,8 +280,6 @@ async function goToPreviousRow(rowIndex: number, columnKey: ColumnKey): Promise<
 }
 
 function goToNextColumn(rowIndex: number, columnKey: ColumnKey): void {
-  emitUpdateCell(rowIndex)
-
   const columnIndex = props.editableColumns.indexOf(columnKey)
   const nextColumnIndex = columnIndex + 1
 
@@ -264,6 +288,8 @@ function goToNextColumn(rowIndex: number, columnKey: ColumnKey): void {
     return
   }
 
+  emitUpdateCell(rowIndex)
+
   const nextColumnKey = props.editableColumns[nextColumnIndex]
   if (nextColumnKey) {
     focusOnField(nextColumnKey, rowIndex)
@@ -271,8 +297,6 @@ function goToNextColumn(rowIndex: number, columnKey: ColumnKey): void {
 }
 
 function goToPreviousColumn(rowIndex: number, columnKey: ColumnKey): void {
-  emitUpdateCell(rowIndex)
-
   const columnIndex = props.editableColumns.indexOf(columnKey)
   const previousColumnIndex = columnIndex - 1
 
@@ -283,6 +307,7 @@ function goToPreviousColumn(rowIndex: number, columnKey: ColumnKey): void {
     }
     return
   }
+  emitUpdateCell(rowIndex)
 
   const previousColumnKey = props.editableColumns[previousColumnIndex]
   if (previousColumnKey) {
@@ -299,5 +324,6 @@ function emitUpdateCell(rowIndex: number): void {
 
 function resetActiveRow() {
   activeRowIndex.value = null
+  pendingFocus.value = null
 }
 </script>

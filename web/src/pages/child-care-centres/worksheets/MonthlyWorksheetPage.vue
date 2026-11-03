@@ -1,112 +1,190 @@
 <template>
-  <PageLoader
-    v-if="isLoading"
-    style="height: calc(100dvh - 14em) !important"
-    message="Loading worksheets"
-  />
-  <v-alert
-    v-else-if="loadError"
-    type="error"
-    variant="tonal"
-    class="ma-5"
-  >
-    Worksheet data could not be loaded.
-    <v-btn
-      class="ml-3"
-      variant="outlined"
-      @click="loadWorksheet"
-    >
-      Reload Worksheet
-    </v-btn>
-  </v-alert>
-  <v-empty-state
-    v-else-if="!isNil(fundingSubmissionLineJson) && isNil(fiscalPeriod)"
-    class="ma-5"
-    headline="Fiscal Period Not Found"
-    :title="`There is currently no fiscal period for ${monthAsDateName} ${fiscalYear}.`"
-    text="Contact support, explain the page you were on, and what you were trying to do."
-  >
-    <template #actions>
-      <v-btn
-        color="primary"
-        href="mailto:help+elcc@icefoganalytics.com"
-        >Contact Support</v-btn
-      >
-    </template>
-  </v-empty-state>
-  <v-empty-state
-    v-else-if="!isLoading && isNil(fundingSubmissionLineJson)"
-    class="ma-5"
-    headline="No Worksheets Found"
-    :title="`There are currently no worksheets for ${fiscalYear}.`"
-    text="Contact support, explain the page you were on, and what you were trying to do."
-  >
-    <template #actions>
-      <v-btn
-        color="primary"
-        href="mailto:help+elcc@icefoganalytics.com"
-        >Contact Support</v-btn
-      >
-    </template>
-  </v-empty-state>
-  <div v-else-if="!isNil(fundingSubmissionLineJson) && !isNil(fiscalPeriod)">
-    <FundingSubmissionLineJsonEditSheet
-      :key="`${centreId}-${fiscalYearSlug}-${month}-${fundingSubmissionLineJson.id}-${fiscalPeriod.id}`"
-      :funding-submission-line-json-id="fundingSubmissionLineJson.id"
-      :centre-id="centreId"
-      :fiscal-period-id="fiscalPeriod.id"
-      class="ma-4"
-      @update:funding-submission-line-json="emit('update:fundingSubmissionLineJson', $event)"
+  <div>
+    <PageLoader
+      v-if="isLoading"
+      style="height: calc(100dvh - 14em) !important"
+      message="Loading worksheets"
     />
-
-    <section class="ma-4 mt-8">
-      <h3
-        class="d-flex justify-space-between align-center mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2"
+    <v-alert
+      v-else-if="loadError"
+      type="error"
+      variant="tonal"
+      class="ma-5"
+    >
+      Worksheet data could not be loaded.
+      <v-btn
+        class="ml-3"
+        variant="outlined"
+        @click="loadWorksheet"
       >
-        Building Expenses
-
-        <v-icon
-          title="Show keyboard shortcuts"
-          class="included"
-          @click="showKeyboardShortcutsModal"
+        Reload Worksheet
+      </v-btn>
+    </v-alert>
+    <v-empty-state
+      v-else-if="!isNil(fundingSubmissionLineJson) && isNil(fiscalPeriod)"
+      class="ma-5"
+      headline="Fiscal Period Not Found"
+      :title="`There is currently no fiscal period for ${monthAsDateName} ${fiscalYear}.`"
+      text="Contact support, explain the page you were on, and what you were trying to do."
+    >
+      <template #actions>
+        <v-btn
+          color="primary"
+          href="mailto:help+elcc@icefoganalytics.com"
+          >Contact Support</v-btn
         >
-          mdi-keyboard
-        </v-icon>
-      </h3>
-
-      <BuildingExpensesEditTable
-        ref="buildingExpensesEditTable"
-        :where="buildingExpenseWhere"
-      />
-
-      <v-row class="mt-4">
-        <v-col
-          v-if="!showBuildingExpenseCreateForm"
-          cols="12"
-          class="d-flex justify-end"
+      </template>
+    </v-empty-state>
+    <v-empty-state
+      v-else-if="!isLoading && isNil(fundingSubmissionLineJson)"
+      class="ma-5"
+      headline="No Worksheets Found"
+      :title="`There are currently no worksheets for ${fiscalYear}.`"
+      text="Contact support, explain the page you were on, and what you were trying to do."
+    >
+      <template #actions>
+        <v-btn
+          color="primary"
+          href="mailto:help+elcc@icefoganalytics.com"
+          >Contact Support</v-btn
         >
+      </template>
+    </v-empty-state>
+    <div v-else-if="!isNil(fundingSubmissionLineJson) && !isNil(fiscalPeriod)">
+      <FundingSubmissionLineJsonEditSheet
+        ref="jsonSheet"
+        :key="`${centreId}-${fiscalYearSlug}-${month}-${fundingSubmissionLineJson.id}-${fiscalPeriod.id}`"
+        :funding-submission-line-json-id="fundingSubmissionLineJson.id"
+        :centre-id="centreId"
+        :fiscal-period-id="fiscalPeriod.id"
+        class="ma-4"
+        :is-workflow-busy="
+          isWorksheetSaving || isReplicating || isLedgerMutating || isRefreshingLinked
+        "
+        @update:funding-submission-line-json="onJsonUpdated"
+        @saving="isWorksheetSaving = $event"
+      >
+        <template #actions>
+          <div class="d-flex flex-wrap justify-end ga-2">
+            <v-btn
+              v-if="month === FiscalPeriodMonths.APRIL"
+              color="yg-sun"
+              :loading="isReplicating"
+              :disabled="isWorkflowBusy || isReplicationUnavailable"
+              @click="replicateEstimatesForward"
+            >
+              <v-icon>mdi-content-copy</v-icon>
+              Replicate Estimates
+            </v-btn>
+          </div>
+        </template>
+        <template #section-actions>
           <v-btn
             color="primary"
-            @click="showBuildingExpenseCreateForm = true"
+            :loading="isWorksheetSaving"
+            :disabled="isWorkflowBusy || isReplicationUnavailable"
+            @click="saveWorksheet"
           >
-            Add Building Expense
+            Save
           </v-btn>
-        </v-col>
-        <v-col
-          v-else
-          cols="12"
+        </template>
+      </FundingSubmissionLineJsonEditSheet>
+      <section class="ma-4 mt-8">
+        <h3 class="mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2">
+          Administration (10% of Spaces)
+        </h3>
+        <AdministrationCostEditTable
+          ref="administrationCostTable"
+          :where="worksheetWhere"
+          :is-replicating="
+            isReplicating || isWorksheetSaving || isRefreshingLinked || isCreatingAdministrationCost
+          "
+          @updated="refreshLinkedResources"
+        />
+        <v-row class="mt-0">
+          <v-col
+            v-if="!showAdministrationCostCreateForm"
+            cols="12"
+            class="d-flex justify-end"
+          >
+            <v-btn
+              color="primary"
+              :disabled="
+                isWorkflowBusy ||
+                administrationCostTable?.isLoading ||
+                administrationCostTable?.isErrored
+              "
+              @click="showAdministrationCostCreateForm = true"
+              >Add Administration Cost</v-btn
+            >
+          </v-col>
+          <v-col
+            v-else
+            cols="12"
+          >
+            <AdministrationCostCreateFormCard
+              :centre-id="centreId"
+              :fiscal-period-id="fiscalPeriod.id"
+              :funding-period-id="fiscalPeriod.fundingPeriodId"
+              :existing-category-ids="administrationCostTable?.categoryIds ?? []"
+              :is-workflow-busy="isWorkflowBusy"
+              @saving="isCreatingAdministrationCost = $event"
+              @created="onAdministrationCostCreated"
+              @cancel="showAdministrationCostCreateForm = false"
+            />
+          </v-col>
+        </v-row>
+      </section>
+
+      <section class="ma-4 mt-8">
+        <h3
+          class="d-flex justify-space-between align-center mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2"
         >
-          <BuildingExpenseCreateFormCard
-            id="building-expense-create-form-card"
-            :centre-id="centreId"
-            :fiscal-period-id="fiscalPeriod.id"
-            @created="closeCreateFormAndRefresh"
-            @cancel="showBuildingExpenseCreateForm = false"
-          />
-        </v-col>
-      </v-row>
-    </section>
-    <KeyboardShortcutsModal ref="keyboardShortcutsModal" />
+          Building Expenses
+
+          <v-icon
+            title="Show keyboard shortcuts"
+            class="included"
+            @click="showKeyboardShortcutsModal"
+          >
+            mdi-keyboard
+          </v-icon>
+        </h3>
+
+        <BuildingExpensesEditTable
+          ref="buildingExpensesEditTable"
+          :where="worksheetWhere"
+        />
+
+        <v-row class="mt-0">
+          <v-col
+            v-if="!showBuildingExpenseCreateForm"
+            cols="12"
+            class="d-flex justify-end"
+          >
+            <v-btn
+              color="primary"
+              @click="showBuildingExpenseCreateForm = true"
+            >
+              Add Building Expense
+            </v-btn>
+          </v-col>
+          <v-col
+            v-else
+            cols="12"
+          >
+            <BuildingExpenseCreateFormCard
+              id="building-expense-create-form-card"
+              :centre-id="centreId"
+              :fiscal-period-id="fiscalPeriod.id"
+              @created="closeCreateFormAndRefresh"
+              @cancel="showBuildingExpenseCreateForm = false"
+            />
+          </v-col>
+        </v-row>
+      </section>
+      <KeyboardShortcutsModal ref="keyboardShortcutsModal" />
+    </div>
   </div>
 </template>
 
@@ -114,14 +192,12 @@
 import { computed, ref, useTemplateRef, watch, watchEffect } from "vue"
 import { isNil, upperFirst } from "lodash"
 import { useHotkey } from "vuetify"
-import { useRouteQuery } from "@vueuse/router"
 
 import fiscalPeriodsApi, { type FiscalPeriod } from "@/api/fiscal-periods-api"
 import fundingSubmissionLineJsonsApi, {
   type FundingSubmissionLineJsonAsIndex,
 } from "@/api/funding-submission-line-jsons-api"
 import sleepMs from "@/utils/sleep-ms"
-import { booleanTransformer } from "@/utils/use-route-query-transformers"
 import { FiscalPeriodMonths } from "@/use/use-fiscal-periods"
 
 import PageLoader from "@/components/common/PageLoader.vue"
@@ -129,7 +205,9 @@ import KeyboardShortcutsModal from "@/components/common/KeyboardShortcutsModal.v
 import FundingSubmissionLineJsonEditSheet from "@/components/funding-submission-line-jsons/FundingSubmissionLineJsonEditSheet.vue"
 import BuildingExpenseCreateFormCard from "@/components/building-expenses/BuildingExpenseCreateFormCard.vue"
 import BuildingExpensesEditTable from "@/components/building-expenses/BuildingExpensesEditTable.vue"
-
+import AdministrationCostEditTable from "@/components/administration-costs/AdministrationCostEditTable.vue"
+import AdministrationCostCreateFormCard from "@/components/administration-costs/AdministrationCostCreateFormCard.vue"
+import useSnack from "@/use/use-snack"
 const props = defineProps<{
   centreId: number
   fiscalYearSlug: string
@@ -147,8 +225,12 @@ const fiscalPeriod = ref<FiscalPeriod | null>(null)
 const isLoading = ref(true)
 const loadError = ref(false)
 let activeRequest = 0
+const showAdministrationCostCreateForm = ref(false)
+const isCreatingAdministrationCost = ref(false)
 
 async function loadWorksheet() {
+  showAdministrationCostCreateForm.value = false
+  isCreatingAdministrationCost.value = false
   const requestId = ++activeRequest
   isLoading.value = true
   loadError.value = false
@@ -203,20 +285,49 @@ async function loadWorksheet() {
 
 watch(() => [props.centreId, props.fiscalYearSlug, props.month], loadWorksheet, {
   immediate: true,
-  flush: "sync",
 })
 
-const buildingExpenseWhere = computed(() => ({
+const worksheetWhere = computed(() => ({
   centreId: props.centreId,
   fiscalPeriodId: fiscalPeriod.value?.id,
 }))
-
-const showBuildingExpenseCreateForm = useRouteQuery("showBuildingExpenseCreateForm", "false", {
-  transform: booleanTransformer,
-})
-
-const keyboardShortcutsModal = useTemplateRef("keyboardShortcutsModal")
+const administrationCostTable =
+  useTemplateRef<InstanceType<typeof AdministrationCostEditTable>>("administrationCostTable")
+const jsonSheet =
+  useTemplateRef<InstanceType<typeof FundingSubmissionLineJsonEditSheet>>("jsonSheet")
 const buildingExpensesEditTable = useTemplateRef("buildingExpensesEditTable")
+const keyboardShortcutsModal = useTemplateRef("keyboardShortcutsModal")
+const showBuildingExpenseCreateForm = ref(false)
+const isReplicating = ref(false)
+const isWorksheetSaving = ref(false)
+const isRefreshingLinked = ref(false)
+const snack = useSnack()
+const isLedgerMutating = computed(() =>
+  Boolean(
+    administrationCostTable.value?.isSaving ||
+      administrationCostTable.value?.isDeleting ||
+      isCreatingAdministrationCost.value
+  )
+)
+const isWorkflowBusy = computed(
+  () =>
+    isReplicating.value ||
+    isWorksheetSaving.value ||
+    isLedgerMutating.value ||
+    isRefreshingLinked.value
+)
+const isReplicationUnavailable = computed(() => {
+  const sheet = jsonSheet.value
+  const administration = administrationCostTable.value
+  return (
+    !sheet ||
+    sheet.isLoading ||
+    sheet.isErrored ||
+    !administration ||
+    administration.isLoading ||
+    administration.isErrored
+  )
+})
 
 useHotkey("shift+?", showKeyboardShortcutsModal)
 
@@ -238,5 +349,88 @@ function showKeyboardShortcutsModal() {
 async function closeCreateFormAndRefresh() {
   showBuildingExpenseCreateForm.value = false
   await buildingExpensesEditTable.value?.refresh()
+}
+
+async function refreshLinkedResources() {
+  const results = await Promise.allSettled([administrationCostTable.value?.refresh()])
+  const failures = results.flatMap((result) =>
+    result.status === "rejected" ? [result.reason] : []
+  )
+  if (failures.length > 0) throw new AggregateError(failures, failures.map(String).join("; "))
+}
+
+function onJsonUpdated(fundingSubmissionLineJsonId: number) {
+  if (fundingSubmissionLineJson.value?.id !== fundingSubmissionLineJsonId) return
+
+  emit("update:fundingSubmissionLineJson", fundingSubmissionLineJsonId)
+}
+
+async function saveWorksheet(): Promise<boolean> {
+  if (isWorkflowBusy.value || isReplicationUnavailable.value) return false
+
+  const sheet = jsonSheet.value
+  const administration = administrationCostTable.value
+  if (!sheet || !administration) return false
+
+  try {
+    const committedEdit = administration.commitEdit()
+    isWorksheetSaving.value = true
+    if (!(await committedEdit)) return false
+    let wasSaved = false
+    try {
+      wasSaved = await sheet.saveFundingSubmissionLineJson()
+    } finally {
+      isRefreshingLinked.value = true
+      try {
+        await refreshLinkedResources()
+      } finally {
+        isRefreshingLinked.value = false
+      }
+    }
+    return wasSaved
+  } catch (error) {
+    snack.error(`Failed to save worksheet: ${error}`)
+    return false
+  } finally {
+    isWorksheetSaving.value = false
+  }
+}
+
+async function onAdministrationCostCreated() {
+  showAdministrationCostCreateForm.value = false
+  try {
+    await administrationCostTable.value?.refresh()
+  } catch (error) {
+    snack.error(`Failed to refresh administration costs: ${error}`)
+  }
+}
+
+async function replicateEstimatesForward() {
+  if (isWorkflowBusy.value || isReplicationUnavailable.value) return
+
+  const sheet = jsonSheet.value
+  const administration = administrationCostTable.value
+  if (!sheet || !administration) return
+
+  const savedWorksheet = saveWorksheet()
+  isReplicating.value = true
+  try {
+    if (!(await savedWorksheet)) return
+
+    const results = await Promise.allSettled([
+      sheet.replicateOwnEstimates(),
+      administration.replicateEstimates(),
+    ])
+    const failures = results.flatMap((result) =>
+      result.status === "rejected" ? [result.reason] : []
+    )
+    if (failures.length > 0) throw new AggregateError(failures, failures.map(String).join("; "))
+
+    snack.success("Estimates replicated successfully!")
+  } catch (error) {
+    snack.error(`Failed to replicate estimates: ${error}`)
+  } finally {
+    isReplicating.value = false
+  }
 }
 </script>

@@ -20,8 +20,16 @@ export type AdministrationCost = {
 }
 
 export type AdministrationCostPolicy = Policy
-export type AdministrationCostAsIndex = AdministrationCost
+export type AdministrationCostAsIndex = AdministrationCost & { policy: AdministrationCostPolicy }
 export type AdministrationCostAsShow = AdministrationCost
+export type AdministrationCostCreationAttributes = Pick<
+  AdministrationCost,
+  | "centreId"
+  | "fiscalPeriodId"
+  | "categoryId"
+  | "estimatedChildOccupancyRate"
+  | "actualChildOccupancyRate"
+> & { applyToCurrentAndFutureFiscalPeriods?: boolean }
 export type AdministrationCostWhereOptions = WhereOptions<
   AdministrationCost,
   "id" | "centreId" | "fiscalPeriodId" | "categoryId"
@@ -35,14 +43,15 @@ export const administrationCostsApi = {
   async list(
     params: AdministrationCostQueryOptions = {},
     { signal }: { signal?: AbortSignal } = {}
-  ): Promise<{
-    administrationCosts: AdministrationCostAsIndex[]
-    totalCount: number
+  ): Promise<{ administrationCosts: AdministrationCostAsIndex[]; totalCount: number }> {
+    const { data } = await http.get("/api/administration-costs", { params, signal })
+    return data
+  },
+  async create(attributes: AdministrationCostCreationAttributes): Promise<{
+    administrationCost: AdministrationCostAsShow
+    policy: AdministrationCostPolicy
   }> {
-    const { data } = await http.get("/api/administration-costs", {
-      params,
-      signal,
-    })
+    const { data } = await http.post("/api/administration-costs", attributes)
     return data
   },
   async get(administrationCostId: number): Promise<{
@@ -59,6 +68,16 @@ export const administrationCostsApi = {
     const { data } = await http.patch(
       `/api/administration-costs/${administrationCostId}`,
       attributes
+    )
+    return data
+  },
+  async delete(administrationCostId: number): Promise<void> {
+    const { data } = await http.delete(`/api/administration-costs/${administrationCostId}`)
+    return data
+  },
+  async replicateEstimates(administrationCostId: number): Promise<void> {
+    const { data } = await http.post(
+      `/api/administration-costs/${administrationCostId}/replicate-estimates`
     )
     return data
   },

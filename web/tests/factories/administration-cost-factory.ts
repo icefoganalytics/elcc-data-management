@@ -1,8 +1,8 @@
 import { Factory } from "fishery"
 
-import { type AdministrationCostAsShow } from "@/api/administration-costs-api"
+import { type AdministrationCostAsIndex } from "@/api/administration-costs-api"
 
-export const administrationCostFactory = Factory.define<AdministrationCostAsShow>(() => {
+export const administrationCostFactory = Factory.define<AdministrationCostAsIndex>(() => {
   const timestamp = "2026-01-01T00:00:00.000Z"
 
   return {
@@ -19,6 +19,7 @@ export const administrationCostFactory = Factory.define<AdministrationCostAsShow
     actualComputedTotal: "0.0000",
     createdAt: timestamp,
     updatedAt: timestamp,
+    policy: { show: true, create: true, update: true, destroy: false },
   }
 })
 

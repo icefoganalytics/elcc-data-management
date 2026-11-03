@@ -1,5 +1,17 @@
 <template>
   <v-sheet @keydown="activateKeyboardShortcutsModalIfCorrectEvent($event)">
+    <div class="d-flex flex-wrap align-center ga-2 mb-3">
+      <h2>{{ dateName }} {{ calendarYear }}</h2>
+
+      <div class="ml-auto">
+        <slot
+          name="actions"
+          :is-saving="isSaving"
+          :is-workflow-busy="isWorkflowBusy"
+        />
+      </div>
+    </div>
+
     <v-skeleton-loader
       v-if="isLoading"
       type="table"
@@ -18,35 +30,12 @@
         Reload Worksheet
       </v-btn>
     </v-alert>
-    <template v-else>
-      <v-btn
-        color="primary"
-        class="float-right"
-        :loading="isSaving"
-        :disabled="isReplicatingEstimates"
-        @click="saveFundingSubmissionLineJson"
-      >
-        Save
-      </v-btn>
 
-      <h2 class="mb-3">{{ dateName }} {{ calendarYear }}</h2>
-      <div class="d-flex justify-end">
-        <v-btn
-          v-if="dateName == FIRST_FISCAL_MONTH_NAME"
-          :loading="isReplicatingEstimates"
-          :disabled="isSaving"
-          color="yg-sun"
-          size="small"
-          @click="replicateEstimatesForward"
-        >
-          <v-icon>mdi-content-copy</v-icon> Replicate Estimates
-        </v-btn>
-      </div>
-
-      <section
-        v-for="({ sectionName, lines }, sectionIndex) in sections"
-        :key="`${sectionName}-${sectionIndex}`"
-      >
+    <template
+      v-for="({ sectionName, lines }, sectionIndex) in sections"
+      :key="`${sectionName}-${sectionIndex}`"
+    >
+      <section v-if="!isLoading && !isErrored">
         <h3
           class="d-flex justify-space-between align-center mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2"
         >
@@ -68,9 +57,21 @@
           @focus-beyond-first-in-column="goToPreviousSection(sectionIndex, $event)"
           @line-changed="propagateUpdatesAsNeeded($event)"
         />
+        <div class="d-flex justify-end mt-3">
+          <slot name="section-actions">
+            <v-btn
+              color="primary"
+              :loading="isSaving"
+              :disabled="isSaving || isWorkflowBusy || isLoading || isErrored"
+              @click="saveFundingSubmissionLineJson"
+            >
+              Save
+            </v-btn>
+          </slot>
+        </div>
       </section>
-      <KeyboardShortcutsModal ref="keyboardShortcutsModal" />
     </template>
+    <KeyboardShortcutsModal ref="keyboardShortcutsModal" />
   </v-sheet>
 </template>
 
@@ -79,14 +80,11 @@ import { DateTime } from "luxon"
 import { computed, reactive, ref, toRefs } from "vue"
 import { groupBy, isNil } from "lodash"
 
-import api from "@/api"
-import administrationCostsApi, { ADMINISTRATION_SECTION_NAME } from "@/api/administration-costs-api"
 import childCareSpacesApi, { CHILD_CARE_SPACES_SECTION_NAME } from "@/api/child-care-spaces-api"
 import fundingSubmissionLineJsonsApi, {
   type FundingLineValue,
 } from "@/api/funding-submission-line-jsons-api"
 import { useNotificationStore } from "@/store/NotificationStore"
-import useAdministrationCosts from "@/use/use-administration-costs"
 import useChildCareSpaces from "@/use/use-child-care-spaces"
 import useFundingSubmissionLineJson from "@/use/use-funding-submission-line-json"
 
@@ -95,17 +93,19 @@ import FundingSubmissionLineJsonSectionTable, {
   type ColumnNames,
 } from "@/components/funding-submission-line-jsons/FundingSubmissionLineJsonSectionTable.vue"
 
-const FIRST_FISCAL_MONTH_NAME = "April"
-const LINKED_SECTION_NAMES = [ADMINISTRATION_SECTION_NAME, "Quality Enhancement Program"]
-
-const props = defineProps<{
-  fundingSubmissionLineJsonId: number
-  centreId: number
-  fiscalPeriodId: number
-}>()
+const props = withDefaults(
+  defineProps<{
+    fundingSubmissionLineJsonId: number
+    centreId: number
+    fiscalPeriodId: number
+    isWorkflowBusy?: boolean
+  }>(),
+  { isWorkflowBusy: false }
+)
 
 const emit = defineEmits<{
   "update:fundingSubmissionLineJson": [fundingSubmissionLineJsonId: number]
+  saving: [value: boolean]
 }>()
 
 const { fundingSubmissionLineJsonId } = toRefs(props)
@@ -128,37 +128,18 @@ const {
   isErrored: isErroredChildCareSpaces,
   refresh: refreshChildCareSpaces,
 } = useChildCareSpaces(childCareSpacesQuery)
-const administrationCostsQuery = computed(() => ({
-  where: {
-    centreId: props.centreId,
-    fiscalPeriodId: props.fiscalPeriodId,
-  },
-  perPage: -1,
-}))
-const {
-  administrationCosts,
-  isLoading: isLoadingAdministrationCosts,
-  isErrored: isErroredAdministrationCosts,
-  fetch: refreshAdministrationCosts,
-} = useAdministrationCosts(administrationCostsQuery)
-
 const isLoading = computed(
-  () =>
-    isLoadingFundingSubmissionLineJson.value ||
-    isLoadingChildCareSpaces.value ||
-    isLoadingAdministrationCosts.value
+  () => isLoadingFundingSubmissionLineJson.value || isLoadingChildCareSpaces.value
 )
 const isErrored = computed(
   () =>
     isErroredFundingSubmissionLineJson.value ||
     isErroredChildCareSpaces.value ||
-    isErroredAdministrationCosts.value ||
     isNil(fundingSubmissionLineJson.value)
 )
 
 const isSaving = ref(false)
-const isReplicatingEstimates = ref(false)
-const isWorkflowRunning = computed(() => isSaving.value || isReplicatingEstimates.value)
+const isWorkflowRunning = computed(() => isSaving.value || props.isWorkflowBusy)
 const dateName = computed(() => fundingSubmissionLineJson.value?.dateName)
 const calendarYear = computed(() => {
   if (isNil(fundingSubmissionLineJson.value)) {
@@ -185,35 +166,16 @@ const childCareSpacesAsFundingLineValues = computed<FundingLineValue[]>(() => {
     })
   })
 })
-const administrationCostsAsFundingLineValues = computed<FundingLineValue[]>(() =>
-  administrationCosts.value.map((cost) =>
-    reactive({
-      submissionLineId: cost.categoryId,
-      childCareSpaceCategoryId: cost.childCareSpaceCategoryId ?? undefined,
-      sectionName: ADMINISTRATION_SECTION_NAME,
-      lineName: cost.lineName,
-      monthlyAmount: cost.monthlyAmount,
-      estimatedChildOccupancyRate: cost.estimatedChildOccupancyRate,
-      actualChildOccupancyRate: cost.actualChildOccupancyRate,
-      estimatedComputedTotal: cost.estimatedComputedTotal,
-      actualComputedTotal: cost.actualComputedTotal,
-    })
-  )
-)
-const sections = computed<{ sectionName: string; lines: FundingLineValue[] }[]>(() => {
-  if (isNil(fundingSubmissionLineJson.value)) {
-    return []
-  }
 
-  const lines = [
-    ...childCareSpacesAsFundingLineValues.value,
-    ...administrationCostsAsFundingLineValues.value,
-    ...fundingSubmissionLineJson.value.lines,
+const sections = computed<{ sectionName: string; lines: FundingLineValue[] }[]>(() => {
+  const sectionGroups = groupBy(fundingSubmissionLineJson.value?.lines ?? [], "sectionName")
+  return [
+    {
+      sectionName: CHILD_CARE_SPACES_SECTION_NAME,
+      lines: childCareSpacesAsFundingLineValues.value,
+    },
+    ...Object.entries(sectionGroups).map(([sectionName, lines]) => ({ sectionName, lines })),
   ]
-  const sectionGroups = groupBy(lines, "sectionName")
-  return Object.entries(sectionGroups).map(([sectionName, lines]) => {
-    return { sectionName, lines }
-  })
 })
 const fundingSubmissionLineJsonSectionTables = ref<
   InstanceType<typeof FundingSubmissionLineJsonSectionTable>[]
@@ -222,11 +184,7 @@ const notificationStore = useNotificationStore()
 
 async function reloadWorksheet() {
   try {
-    await Promise.all([
-      refreshChildCareSpaces(),
-      refreshAdministrationCosts(),
-      refreshFundingSubmissionLineJson(),
-    ])
+    await Promise.all([refreshChildCareSpaces(), refreshFundingSubmissionLineJson()])
   } catch (error) {
     notificationStore.notify({
       text: `Failed to load worksheet: ${error}`,
@@ -236,11 +194,12 @@ async function reloadWorksheet() {
 }
 
 async function saveFundingSubmissionLineJson(): Promise<boolean> {
-  if (isLoading.value || isErrored.value) {
+  if (isSaving.value || isLoading.value || isErrored.value) {
     return false
   }
 
   isSaving.value = true
+  emit("saving", true)
   try {
     const childCareSpaceLines = sections.value.find(
       ({ sectionName }) => sectionName === CHILD_CARE_SPACES_SECTION_NAME
@@ -248,25 +207,18 @@ async function saveFundingSubmissionLineJson(): Promise<boolean> {
     const childCareSpacesByCategoryId = new Map(
       childCareSpaces.value.map((childCareSpace) => [childCareSpace.categoryId, childCareSpace])
     )
-    const administrationCostsByCategoryId = new Map(
-      administrationCosts.value.map((cost) => [cost.categoryId, cost])
-    )
     const childCareSpaceUpdates = []
-    const administrationCostUpdates = []
 
     for (const line of childCareSpaceLines ?? []) {
       const childCareSpace = childCareSpacesByCategoryId.get(line.submissionLineId)
       if (isNil(childCareSpace)) {
         throw new Error(`Child Care Space for category ${line.submissionLineId} is missing`)
       }
-
       if (
         childCareSpace.estimatedChildOccupancyRate === line.estimatedChildOccupancyRate &&
         childCareSpace.actualChildOccupancyRate === line.actualChildOccupancyRate
-      ) {
+      )
         continue
-      }
-
       childCareSpaceUpdates.push({
         id: childCareSpace.id,
         update: {
@@ -276,55 +228,17 @@ async function saveFundingSubmissionLineJson(): Promise<boolean> {
       })
     }
 
-    const administrationLines = sections.value.find(
-      ({ sectionName }) => sectionName === ADMINISTRATION_SECTION_NAME
-    )?.lines
-    for (const line of administrationLines ?? []) {
-      const cost = administrationCostsByCategoryId.get(line.submissionLineId)
-      if (
-        isNil(cost) ||
-        (line.childCareSpaceCategoryId ?? null) !== cost.childCareSpaceCategoryId
-      ) {
-        throw new Error(`Administration category ${line.submissionLineId} has mismatched identity`)
-      }
-
-      if (
-        cost.estimatedChildOccupancyRate === line.estimatedChildOccupancyRate &&
-        cost.actualChildOccupancyRate === line.actualChildOccupancyRate
-      ) {
-        continue
-      }
-
-      administrationCostUpdates.push({
-        id: cost.id,
-        update: {
-          estimatedChildOccupancyRate: line.estimatedChildOccupancyRate,
-          actualChildOccupancyRate: line.actualChildOccupancyRate,
-        },
-      })
-    }
-
-    const linesInOtherSections = sections.value.filter(
-      ({ sectionName }) =>
-        sectionName !== CHILD_CARE_SPACES_SECTION_NAME &&
-        sectionName !== ADMINISTRATION_SECTION_NAME
+    const jsonLines = sections.value
+      .filter(({ sectionName }) => sectionName !== CHILD_CARE_SPACES_SECTION_NAME)
+      .flatMap(({ lines }) => lines)
+    const mutations = childCareSpaceUpdates.map(({ id, update }) =>
+      childCareSpacesApi.update(id, update)
     )
-    const fundingSubmissionLineJsonLines = linesInOtherSections.flatMap(({ lines }) => lines)
-    const ledgerRequests = [
-      ...childCareSpaceUpdates.map(({ id, update }) => childCareSpacesApi.update(id, update)),
-      ...administrationCostUpdates.map(({ id, update }) =>
-        administrationCostsApi.update(id, update)
-      ),
-    ]
-    await awaitMutationSettlements(ledgerRequests)
+    await awaitMutationSettlements(mutations)
     await fundingSubmissionLineJsonsApi.update(fundingSubmissionLineJsonId.value, {
-      lines: fundingSubmissionLineJsonLines,
+      lines: jsonLines,
     })
-    await Promise.all([
-      refreshChildCareSpaces(),
-      refreshAdministrationCosts(),
-      refreshFundingSubmissionLineJson(),
-    ])
+    await Promise.all([refreshChildCareSpaces(), refreshFundingSubmissionLineJson()])
 
     emit("update:fundingSubmissionLineJson", fundingSubmissionLineJsonId.value)
     return true
@@ -337,6 +251,7 @@ async function saveFundingSubmissionLineJson(): Promise<boolean> {
     return false
   } finally {
     isSaving.value = false
+    emit("saving", false)
   }
 }
 
@@ -351,88 +266,39 @@ async function awaitMutationSettlements(mutations: Promise<unknown>[]) {
   }
 }
 
-async function replicateEstimatesForward() {
-  isReplicatingEstimates.value = true
-  try {
-    const wasSaved = await saveFundingSubmissionLineJson()
-    if (!wasSaved) {
-      return
-    }
-
-    const replicationRequests = [
-      fundingSubmissionLineJsonsApi.replicateEstimates(fundingSubmissionLineJsonId.value),
-      replicateChildCareSpaceEstimates(),
-      replicateAdministrationCostEstimates(),
-    ]
-    await awaitMutationSettlements(replicationRequests)
-    await Promise.all([
-      refreshChildCareSpaces(),
-      refreshAdministrationCosts(),
-      refreshFundingSubmissionLineJson(),
-    ])
-
-    emit("update:fundingSubmissionLineJson", fundingSubmissionLineJsonId.value)
-  } catch (error) {
-    notificationStore.notify({
-      text: `Failed to replicate estimates: ${error}`,
-      variant: "error",
-    })
-  } finally {
-    isReplicatingEstimates.value = false
-  }
+async function replicateOwnEstimates(): Promise<void> {
+  await awaitMutationSettlements([
+    fundingSubmissionLineJsonsApi.replicateEstimates(fundingSubmissionLineJsonId.value),
+    replicateChildCareSpaceEstimates(),
+  ])
+  await Promise.all([refreshChildCareSpaces(), refreshFundingSubmissionLineJson()])
+  emit("update:fundingSubmissionLineJson", fundingSubmissionLineJsonId.value)
 }
 
-async function replicateChildCareSpaceEstimates() {
+async function replicateChildCareSpaceEstimates(): Promise<void> {
   for (const childCareSpace of childCareSpaces.value) {
     await childCareSpacesApi.replicateEstimates(childCareSpace.id)
   }
 }
 
-async function replicateAdministrationCostEstimates() {
-  for (const administrationCost of administrationCosts.value) {
-    await api.administrationCosts.replicateEstimatesApi.create(administrationCost.id)
-  }
-}
-
 function propagateUpdatesAsNeeded({ line }: { line: FundingLineValue }) {
-  if (line.sectionName !== CHILD_CARE_SPACES_SECTION_NAME) {
-    return
-  }
+  if (line.sectionName !== CHILD_CARE_SPACES_SECTION_NAME) return
 
-  try {
-    for (const linkedSectionName of LINKED_SECTION_NAMES) {
-      const linkedSectionIndex = sections.value.findIndex(
-        ({ sectionName }) => sectionName === linkedSectionName
-      )
-      if (linkedSectionIndex === -1) {
-        continue
-      }
+  const sectionIndex = sections.value.findIndex(
+    ({ sectionName }) => sectionName === "Quality Enhancement Program"
+  )
+  if (sectionIndex === -1) return
 
-      const linkedSection = sections.value[linkedSectionIndex]
-      const matchingLines = linkedSection.lines.filter(
-        ({ childCareSpaceCategoryId }) => childCareSpaceCategoryId === line.submissionLineId
-      )
-      if (matchingLines.length === 0) {
-        continue
-      }
+  const linkedSection = sections.value[sectionIndex]
+  const linkedTable = fundingSubmissionLineJsonSectionTables.value[sectionIndex]
+  if (isNil(linkedTable)) return
 
-      const linkedSectionTable = fundingSubmissionLineJsonSectionTables.value[linkedSectionIndex]
-      if (isNil(linkedSectionTable)) {
-        throw new Error(`Expected "${linkedSectionName}" section table`)
-      }
+  for (const linkedLine of linkedSection.lines) {
+    if (linkedLine.childCareSpaceCategoryId !== line.submissionLineId) continue
 
-      for (const linkedLine of matchingLines) {
-        linkedLine.estimatedChildOccupancyRate = line.estimatedChildOccupancyRate
-        linkedLine.actualChildOccupancyRate = line.actualChildOccupancyRate
-        linkedSectionTable.refreshLineTotals(linkedLine)
-      }
-    }
-  } catch (error) {
-    notificationStore.notify({
-      text: `Failed to propagate Child Care Spaces values: ${error}`,
-      variant: "error",
-    })
-    throw error
+    linkedLine.estimatedChildOccupancyRate = line.estimatedChildOccupancyRate
+    linkedLine.actualChildOccupancyRate = line.actualChildOccupancyRate
+    linkedTable.refreshLineTotals(linkedLine)
   }
 }
 
@@ -475,4 +341,10 @@ function showKeyboardShortcutsModal() {
 
   keyboardShortcutsModal.value.open()
 }
+defineExpose({
+  saveFundingSubmissionLineJson,
+  replicateOwnEstimates,
+  isLoading,
+  isErrored,
+})
 </script>

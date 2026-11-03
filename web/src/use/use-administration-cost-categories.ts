@@ -66,7 +66,11 @@ export function useAdministrationCostCategories(
   watch(
     queryOptions,
     async () => {
-      await fetch()
+      try {
+        await fetch()
+      } catch {
+        // Explicit refresh callers receive the rejection; watched failures use isErrored.
+      }
     },
     {
       deep: true,

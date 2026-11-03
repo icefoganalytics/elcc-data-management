@@ -2,7 +2,8 @@
   <EditDataTableVirtual
     :headers="headers"
     :items="buildingExpenses"
-    :loading="isLoading || isSaving || !isNil(isDeletingBuildingExpenseId)"
+    :busy="isBusy"
+    :loading="isBusy"
     :editable-columns="editableColumns"
     height="630"
     fixed-footer
@@ -250,6 +251,9 @@ async function saveBuildingExpenseIfDirty(buildingExpense: BuildingExpense) {
 }
 
 const isDeletingBuildingExpenseId = ref<number | null>(null)
+const isBusy = computed(
+  () => isLoading.value || isSaving.value || !isNil(isDeletingBuildingExpenseId.value)
+)
 
 async function deleteBuildingExpense(buildingExpense: BuildingExpense) {
   if (!blockedToTrueConfirm("Are you sure you want to remove this building expense?")) return

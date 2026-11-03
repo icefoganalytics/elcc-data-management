@@ -3,7 +3,6 @@ import { param } from "express-validator"
 import { isNil } from "lodash"
 
 import { ReturnValidationErrors } from "@/middleware"
-import { checkJwt, autheticateAndLoadUser } from "@/middleware/authz.middleware"
 import { FundingSubmissionLine } from "@/models"
 import { FundingSubmissionLineSerializer } from "@/serializers"
 import { FundingSubmissionLineServices } from "@/services/funding-submission-line-services"

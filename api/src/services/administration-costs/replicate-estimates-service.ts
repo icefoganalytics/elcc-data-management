@@ -37,9 +37,7 @@ export class ReplicateEstimatesService extends BaseService {
             },
           })
           if (isNil(futureAdministrationCost)) {
-            throw new Error(
-              `Expected Administration cost for fiscal period ${futureFiscalPeriod.id} and category ${categoryId}`
-            )
+            return
           }
 
           await futureAdministrationCost.update({

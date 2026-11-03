@@ -145,11 +145,15 @@ router
   .route("/api/child-care-spaces/:childCareSpaceId/replicate-estimates")
   .post(ChildCareSpaces.ReplicateEstimatesController.create)
 
-router.route("/api/administration-costs").get(AdministrationCostsController.index)
+router
+  .route("/api/administration-costs")
+  .get(AdministrationCostsController.index)
+  .post(AdministrationCostsController.create)
 router
   .route("/api/administration-costs/:administrationCostId")
   .get(AdministrationCostsController.show)
   .patch(AdministrationCostsController.update)
+  .delete(AdministrationCostsController.destroy)
 router
   .route("/api/administration-costs/:administrationCostId/replicate-estimates")
   .post(AdministrationCosts.ReplicateEstimatesController.create)

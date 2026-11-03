@@ -14,15 +14,21 @@ The [JSON model](../../api/src/models/funding-submission-line-json.ts) attaches 
 
 Both retired Administration labels, `Administration` and `Administration (10% of Spaces)`, are rejected by worksheet JSON and shared configuration writes. The worksheet displays the latter label for its ledger-backed section.
 
-The [worksheet editor](../../web/src/components/funding-submission-line-jsons/FundingSubmissionLineJsonEditSheet.vue) composes the two ledgers and JSON for display, persists changed ledger rows before saving JSON-owned lines, and refreshes all three resources after success. **Replicate Estimates** first saves, then invokes each store's replication operation. Occupancy inputs remain read only until the entire save or replication workflow finishes, preventing edits between persistence requests.
+The [monthly page](../../web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue) keeps Child Care Spaces and the remaining JSON sections together, followed by an independent Administration table and Building Expenses. Administration uses the Building Expenses interaction: committing an occupancy edit saves immediately, **Escape** cancels it, and category-based creation can fill later months without changing existing records. Authenticated users can create monthly rows; only system administrators can delete them.
 
-The editor recalculates dependent totals from each section's own snapshotted rate when occupancy changes. If any source fails to load, it withholds editing and reloads all sources through **Reload Worksheet**.
+Building Expenses passes its loading, save, and deletion state to the shared editable table's `busy` prop. While a row-switch save is pending, the table is inert so a server response cannot discard a newly entered edit in the destination row. The shared table restores keyboard focus to that row after the save settles.
 
-The monthly page loads the worksheet and fiscal period together before mounting a centre/year/month-specific editor. It discards responses from superseded requests instead of pairing a newly selected worksheet with the previous month's fiscal period.
+**Save** commits any active Administration edit before persisting Spaces and JSON-owned lines. It refreshes Administration even after a partially successful Spaces save. **Replicate Estimates** first saves, then invokes the independent replication operations and waits for every dispatched write to settle. A failed Administration load disables these cross-section actions until its **Retry** succeeds; **Reload Worksheet** reloads the JSON and Spaces sources.
+
+The monthly page loads the worksheet and fiscal period together before mounting a centre/year/month-specific editor. It discards responses from superseded requests instead of pairing a newly selected worksheet with the previous month's fiscal period. Changing context releases the unmounted creation form's busy state without canceling its committed request or unlocking a newer creation.
 
 These are separate API requests, not one worksheet-wide transaction. A save or replication failure is surfaced, but completed requests are not rolled back across stores. All dispatched mutations settle before the editor unlocks, including after a sibling request fails. Categories replicate sequentially within each ledger to avoid overlapping SQL Server transactions; the independent persistence owners can still run concurrently. Each replication operation transacts its later-month updates. Administration uses controller-loaded records for ordinary occupancy updates and estimate replication, with default database isolation for the multi-row replication transaction, following the project's [current-scale tradeoffs](/docs/README.md#current-scale-and-engineering-tradeoffs). Child Care Spaces retains its existing repeatable-read refreshes.
 
 Occupancy edits and estimate replication use the standard `update()` authorization action on the ledger policies. Ordinary authenticated users retain these actions; only system administrators may create, edit, or retire annual category configuration.
+
+Estimate replication updates only matching active later-month rows. It skips absent or retired monthly rows without recreating them, so current-month-only creation and later-month deletion remain intentional.
+
+Deleting a monthly row first commits and awaits any active occupancy edit. If that save fails, deletion stops instead of discarding another row's uncommitted values.
 
 ## Category configuration ownership
 
