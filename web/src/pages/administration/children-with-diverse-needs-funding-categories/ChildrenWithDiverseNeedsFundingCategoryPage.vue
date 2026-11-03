@@ -19,7 +19,7 @@
     </template>
   </v-empty-state>
   <HeaderActionsCard
-    v-else-if="diverseNeedCategory"
+    v-else-if="childrenWithDiverseNeedsFundingCategory"
     title="Diverse Need Category Details"
   >
     <template #header-actions>
@@ -27,8 +27,8 @@
         v-if="policy?.update"
         color="primary"
         :to="{
-          name: 'administration/diverse-need-categories/DiverseNeedCategoryEditPage',
-          params: { diverseNeedCategoryId: categoryId },
+          name: 'administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryEditPage',
+          params: { childrenWithDiverseNeedsFundingCategoryId: categoryId },
         }"
       >
         Edit
@@ -62,7 +62,7 @@
         md="6"
       >
         <DescriptionElement
-          :model-value="diverseNeedCategory.categoryName"
+          :model-value="childrenWithDiverseNeedsFundingCategory.categoryName"
           label="Category Name"
           vertical
         />
@@ -85,7 +85,7 @@
         md="4"
       >
         <DescriptionElement
-          :model-value="diverseNeedCategory.fromAge ?? '—'"
+          :model-value="childrenWithDiverseNeedsFundingCategory.fromAge ?? '—'"
           label="From Age"
           vertical
         />
@@ -95,7 +95,7 @@
         md="4"
       >
         <DescriptionElement
-          :model-value="diverseNeedCategory.toAge ?? '—'"
+          :model-value="childrenWithDiverseNeedsFundingCategory.toAge ?? '—'"
           label="To Age"
           vertical
         />
@@ -106,7 +106,9 @@
       >
         <DescriptionElement
           :model-value="
-            formatMoney(diverseNeedCategory.monthlyAmount, { maximumFractionDigits: 4 })
+            formatMoney(childrenWithDiverseNeedsFundingCategory.monthlyAmount, {
+              maximumFractionDigits: 4,
+            })
           "
           label="Monthly Amount"
           vertical
@@ -120,8 +122,8 @@
 import { computed, ref } from "vue"
 import { useRouter } from "vue-router"
 
-import diverseNeedCategoriesApi from "@/api/diverse-need-categories-api"
-import useDiverseNeedCategory from "@/use/use-diverse-need-category"
+import childrenWithDiverseNeedsFundingCategoriesApi from "@/api/children-with-diverse-needs-funding-categories-api"
+import useChildrenWithDiverseNeedsFundingCategory from "@/use/use-children-with-diverse-needs-funding-category"
 import useFundingPeriod from "@/use/use-funding-period"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useSnack from "@/use/use-snack"
@@ -132,18 +134,20 @@ import HeaderActionsCard from "@/components/common/HeaderActionsCard.vue"
 import DescriptionElement from "@/components/common/DescriptionElement.vue"
 
 const props = defineProps<{
-  diverseNeedCategoryId: string
+  childrenWithDiverseNeedsFundingCategoryId: string
 }>()
 const router = useRouter()
-const categoryId = computed(() => Number(props.diverseNeedCategoryId))
+const categoryId = computed(() => Number(props.childrenWithDiverseNeedsFundingCategoryId))
 const {
-  diverseNeedCategory,
+  childrenWithDiverseNeedsFundingCategory,
   policy,
   isLoading,
   isErrored,
   fetch: refreshCategory,
-} = useDiverseNeedCategory(categoryId)
-const fundingPeriodId = computed(() => diverseNeedCategory.value?.fundingPeriodId)
+} = useChildrenWithDiverseNeedsFundingCategory(categoryId)
+const fundingPeriodId = computed(
+  () => childrenWithDiverseNeedsFundingCategory.value?.fundingPeriodId
+)
 const {
   fundingPeriod,
   isLoading: isLoadingFundingPeriod,
@@ -164,9 +168,9 @@ async function retireCategory() {
 
   isDeleting.value = true
   try {
-    await diverseNeedCategoriesApi.delete(categoryId.value)
+    await childrenWithDiverseNeedsFundingCategoriesApi.delete(categoryId.value)
     snack.success("Diverse need category retired successfully!")
-    await router.push({ name: "administration/DiverseNeedCategoriesPage" })
+    await router.push({ name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage" })
   } catch (error) {
     snack.error(`Failed to retire diverse need category: ${error}`)
   } finally {
@@ -176,12 +180,15 @@ async function retireCategory() {
 
 useBreadcrumbs("Diverse Need Category Details", [
   { title: "Administration", to: { name: "AdministrationPage" } },
-  { title: "Diverse Need Categories", to: { name: "administration/DiverseNeedCategoriesPage" } },
+  {
+    title: "Diverse Need Categories",
+    to: { name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage" },
+  },
   {
     title: "Details",
     to: {
-      name: "administration/diverse-need-categories/DiverseNeedCategoryPage",
-      params: { diverseNeedCategoryId: categoryId.value },
+      name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
+      params: { childrenWithDiverseNeedsFundingCategoryId: categoryId.value },
     },
   },
 ])
