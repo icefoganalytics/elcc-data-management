@@ -17,9 +17,10 @@ import {
 } from "@sequelize/core/decorators-legacy"
 import Big from "big.js"
 
-import DiverseNeedCategoriesFundingPeriodIdCategoryNameUniqueIndex from "@/models/indexes/diverse-need-categories-funding-period-id-category-name-unique-index"
-import DiverseNeed from "@/models/diverse-need"
+import { DiverseNeedCategoriesFundingPeriodIdCategoryNameUniqueIndex } from "@/models/indexes"
+
 import BaseModel from "@/models/base-model"
+import DiverseNeed from "@/models/diverse-need"
 import FundingPeriod from "@/models/funding-period"
 
 @Table({ tableName: "diverse_need_categories" })
@@ -27,6 +28,7 @@ export class DiverseNeedCategory extends BaseModel<
   InferAttributes<DiverseNeedCategory>,
   InferCreationAttributes<DiverseNeedCategory>
 > {
+  // Fields
   @Attribute(DataTypes.INTEGER)
   @PrimaryKey
   @AutoIncrement
@@ -71,17 +73,20 @@ export class DiverseNeedCategory extends BaseModel<
   @Attribute(DataTypes.DATE)
   declare deletedAt: Date | null
 
+  // Associations
   @BelongsTo(() => FundingPeriod, {
     foreignKey: "fundingPeriodId",
     inverse: { as: "diverseNeedCategories", type: "hasMany" },
   })
   declare fundingPeriod?: NonAttribute<FundingPeriod>
+
   @HasMany(() => DiverseNeed, {
     foreignKey: "categoryId",
     inverse: { as: "category" },
   })
   declare diverseNeeds?: NonAttribute<DiverseNeed[]>
 
+  // Scopes
   static establishScopes() {
     this.addSearchScope(["categoryName"])
   }

@@ -6,6 +6,7 @@ export const DiverseNeedCategoriesFundingPeriodIdCategoryNameUniqueIndex = creat
     unique: true,
     name: "unique_diverse_need_categories_on_funding_period_id_and_category_name",
     where: { deletedAt: null },
+    msg: "A Diverse Need category already exists for this funding period and name",
   }
 )
 

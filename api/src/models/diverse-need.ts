@@ -18,7 +18,8 @@ import {
 } from "@sequelize/core/decorators-legacy"
 import Big from "big.js"
 
-import DiverseNeedsCentreIdFiscalPeriodIdCategoryIdUniqueIndex from "@/models/indexes/diverse-needs-centre-id-fiscal-period-id-category-id-unique-index"
+import { DiverseNeedsCentreIdFiscalPeriodIdCategoryIdUniqueIndex } from "@/models/indexes"
+
 import BaseModel from "@/models/base-model"
 import Centre from "@/models/centre"
 import DiverseNeedCategory from "@/models/diverse-need-category"
@@ -29,6 +30,7 @@ export class DiverseNeed extends BaseModel<
   InferAttributes<DiverseNeed>,
   InferCreationAttributes<DiverseNeed>
 > {
+  // Fields
   @Attribute(DataTypes.INTEGER)
   @PrimaryKey
   @AutoIncrement
@@ -84,6 +86,7 @@ export class DiverseNeed extends BaseModel<
   @Attribute(DataTypes.DATE)
   declare deletedAt: Date | null
 
+  // Hooks
   @BeforeSave
   static updateComputedTotals(need: DiverseNeed) {
     const amount = checkedFourDecimals(new Big(need.monthlyAmount), "monthly amount")
@@ -102,6 +105,7 @@ export class DiverseNeed extends BaseModel<
     need.actualComputedTotal = new Big(amount).mul(actualRate).toFixed(4)
   }
 
+  // Associations
   @BelongsTo(() => Centre, {
     foreignKey: "centreId",
     inverse: { as: "diverseNeeds", type: "hasMany" },
@@ -120,6 +124,7 @@ export class DiverseNeed extends BaseModel<
   })
   declare category?: NonAttribute<DiverseNeedCategory>
 
+  // Scopes
   static establishScopes() {
     this.addScope("byFundingPeriod", (fundingPeriodId: number) => ({
       where: {
