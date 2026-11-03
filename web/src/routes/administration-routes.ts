@@ -170,6 +170,31 @@ const routes = [
         props: true,
       },
       {
+        path: "administration/diverse-need-categories",
+        name: "administration/DiverseNeedCategoriesPage",
+        component: () => import("@/pages/administration/DiverseNeedCategoriesPage.vue"),
+      },
+      {
+        path: "administration/diverse-need-categories/new",
+        name: "administration/diverse-need-categories/DiverseNeedCategoryNewPage",
+        component: () =>
+          import("@/pages/administration/diverse-need-categories/DiverseNeedCategoryNewPage.vue"),
+      },
+      {
+        path: "administration/diverse-need-categories/:diverseNeedCategoryId/edit",
+        name: "administration/diverse-need-categories/DiverseNeedCategoryEditPage",
+        component: () =>
+          import("@/pages/administration/diverse-need-categories/DiverseNeedCategoryEditPage.vue"),
+        props: true,
+      },
+      {
+        path: "administration/diverse-need-categories/:diverseNeedCategoryId",
+        name: "administration/diverse-need-categories/DiverseNeedCategoryPage",
+        component: () =>
+          import("@/pages/administration/diverse-need-categories/DiverseNeedCategoryPage.vue"),
+        props: true,
+      },
+      {
         path: "administration/child-care-space-categories",
         name: "administration/ChildCareSpaceCategoriesPage",
         component: () =>
