@@ -5,7 +5,7 @@
         v-if="isSystemAdmin && fundingPeriodsCount > 0 && fundingPeriodId !== null"
         color="primary"
         :to="{
-          name: 'administration/diverse-need-categories/DiverseNeedCategoryNewPage',
+          name: 'administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryNewPage',
           query: { fundingPeriodId },
         }"
       >
@@ -17,7 +17,9 @@
       v-model="fundingPeriodId"
       clearable
     />
-    <DiverseNeedCategoriesDataTableServer :where="diverseNeedCategoriesWhere" />
+    <ChildrenWithDiverseNeedsFundingCategoriesDataTableServer
+      :where="childrenWithDiverseNeedsFundingCategoriesWhere"
+    />
   </HeaderActionsCard>
 </template>
 
@@ -28,7 +30,7 @@ import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useFundingPeriods from "@/use/use-funding-periods"
 import useCurrentUser from "@/use/use-current-user"
 
-import DiverseNeedCategoriesDataTableServer from "@/components/diverse-need-categories/DiverseNeedCategoriesDataTableServer.vue"
+import ChildrenWithDiverseNeedsFundingCategoriesDataTableServer from "@/components/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoriesDataTableServer.vue"
 import FundingPeriodSearchableAutocomplete from "@/components/funding-periods/FundingPeriodSearchableAutocomplete.vue"
 import HeaderActionsCard from "@/components/common/HeaderActionsCard.vue"
 
@@ -36,7 +38,7 @@ const fundingPeriodsQuery = ref({ perPage: 1 })
 const { totalCount: fundingPeriodsCount } = useFundingPeriods(fundingPeriodsQuery)
 const fundingPeriodId = ref<number | null>(null)
 const { isSystemAdmin } = useCurrentUser()
-const diverseNeedCategoriesWhere = computed(() => ({
+const childrenWithDiverseNeedsFundingCategoriesWhere = computed(() => ({
   fundingPeriodId: fundingPeriodId.value ?? undefined,
 }))
 
@@ -47,7 +49,7 @@ useBreadcrumbs("Diverse Need Categories", [
   },
   {
     title: "Diverse Need Categories",
-    to: { name: "administration/DiverseNeedCategoriesPage" },
+    to: { name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage" },
   },
 ])
 </script>

@@ -78,7 +78,7 @@
 import { reactive, ref, useTemplateRef } from "vue"
 import { useRoute, useRouter } from "vue-router"
 
-import diverseNeedCategoriesApi from "@/api/diverse-need-categories-api"
+import childrenWithDiverseNeedsFundingCategoriesApi from "@/api/children-with-diverse-needs-funding-categories-api"
 import { required } from "@/utils/validators"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useSnack from "@/use/use-snack"
@@ -102,7 +102,7 @@ const form = useTemplateRef("form")
 const snack = useSnack()
 const { isSystemAdmin } = useCurrentUser()
 const cancelRoute = {
-  name: "administration/DiverseNeedCategoriesPage",
+  name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage",
 }
 
 async function createCategory() {
@@ -112,17 +112,20 @@ async function createCategory() {
 
   isCreating.value = true
   try {
-    const { diverseNeedCategory } = await diverseNeedCategoriesApi.create({
-      fundingPeriodId: attributes.fundingPeriodId,
-      categoryName: attributes.categoryName,
-      fromAge: attributes.fromAge,
-      toAge: attributes.toAge,
-      monthlyAmount: attributes.monthlyAmount,
-    })
+    const { childrenWithDiverseNeedsFundingCategory } =
+      await childrenWithDiverseNeedsFundingCategoriesApi.create({
+        fundingPeriodId: attributes.fundingPeriodId,
+        categoryName: attributes.categoryName,
+        fromAge: attributes.fromAge,
+        toAge: attributes.toAge,
+        monthlyAmount: attributes.monthlyAmount,
+      })
     snack.success("Diverse need category created successfully!")
     await router.push({
-      name: "administration/diverse-need-categories/DiverseNeedCategoryPage",
-      params: { diverseNeedCategoryId: diverseNeedCategory.id },
+      name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
+      params: {
+        childrenWithDiverseNeedsFundingCategoryId: childrenWithDiverseNeedsFundingCategory.id,
+      },
     })
   } catch (error) {
     snack.error(`Failed to create diverse need category: ${error}`)
@@ -133,11 +136,14 @@ async function createCategory() {
 
 useBreadcrumbs("New Diverse Need Category", [
   { title: "Administration", to: { name: "AdministrationPage" } },
-  { title: "Diverse Need Categories", to: { name: "administration/DiverseNeedCategoriesPage" } },
+  {
+    title: "Diverse Need Categories",
+    to: { name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage" },
+  },
   {
     title: "New Category",
     to: {
-      name: "administration/diverse-need-categories/DiverseNeedCategoryNewPage",
+      name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryNewPage",
       query: route.query,
     },
   },
