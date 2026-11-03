@@ -272,6 +272,49 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         }
       )
 
+      test("when a reload challenge follows an expected sibling failure, forwards the original challenge", async () => {
+        // Arrange
+        const worksheet = fundingSubmissionLineJsonFactory.build({ id: 11, centreId: 1 })
+        const pendingWorksheet = Promise.withResolvers<{
+          data: { fundingSubmissionLineJson: typeof worksheet }
+        }>()
+        const challenge = new CloudflareChallengeError()
+        let isReloading = false
+        vi.mocked(httpClient, true).get.mockImplementation(async (url) => {
+          if (url === "/api/child-care-spaces") {
+            throw new ApiOperationError("Spaces unavailable", 503)
+          }
+          if (isReloading) return pendingWorksheet.promise
+          return { data: { fundingSubmissionLineJson: worksheet } }
+        })
+        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+        await router.push("/")
+        await router.isReady()
+        const errorHandler = vi.fn()
+        const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
+          props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
+          global: {
+            config: { errorHandler },
+            plugins: [router, createPinia(), mockVuetify()],
+          },
+        })
+        await flushPromises()
+        const reload = wrapper
+          .findAll("button")
+          .find((button) => button.text() === "Reload Worksheet")
+        if (!reload) throw new Error("Expected Reload Worksheet")
+
+        // Act
+        isReloading = true
+        await reload.trigger("click")
+        await flushPromises()
+        pendingWorksheet.reject(challenge)
+        await flushPromises()
+
+        // Assert
+        expect(errorHandler.mock.calls[0]?.[0]).toBe(challenge)
+      })
+
       test.each(["/api/child-care-spaces", "/api/funding-submission-line-jsons/11"])(
         "when %s recovers and the worksheet is reloaded, restores Spaces editing",
         async (failedUrl) => {

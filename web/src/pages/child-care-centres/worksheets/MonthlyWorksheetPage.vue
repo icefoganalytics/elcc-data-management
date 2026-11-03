@@ -242,7 +242,6 @@ import fiscalPeriodsApi, { type FiscalPeriod } from "@/api/fiscal-periods-api"
 import fundingSubmissionLineJsonsApi, {
   type FundingSubmissionLineJsonAsIndex,
 } from "@/api/funding-submission-line-jsons-api"
-import ApiOperationError from "@/api/errors/api-operation-error"
 import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 import sleepMs from "@/utils/sleep-ms"
 import { FiscalPeriodMonths } from "@/use/use-fiscal-periods"
@@ -291,7 +290,7 @@ async function loadWorksheet() {
   fiscalPeriod.value = null
 
   try {
-    const [worksheetResponse, fiscalPeriodResponse] = await Promise.all([
+    const [worksheetResult, fiscalPeriodResult] = await Promise.allSettled([
       fundingSubmissionLineJsonsApi.list({
         where: {
           centreId: props.centreId,
@@ -308,6 +307,16 @@ async function loadWorksheet() {
         perPage: 1,
       }),
     ])
+
+    if (worksheetResult.status === "rejected" || fiscalPeriodResult.status === "rejected") {
+      const failures = [worksheetResult, fiscalPeriodResult].flatMap((result) =>
+        result.status === "rejected" ? [result.reason] : []
+      )
+      throw new AggregateError(failures, failures.map(String).join("; "))
+    }
+
+    const worksheetResponse = worksheetResult.value
+    const fiscalPeriodResponse = fiscalPeriodResult.value
 
     if (requestId !== activeRequest) {
       return
@@ -329,13 +338,10 @@ async function loadWorksheet() {
       loadError.value = true
     }
 
-    if (error instanceof ApiOperationError) {
-      if (requestId === activeRequest) {
-        console.error(`Failed to load worksheet: ${error}`, { error })
-      }
-      return
+    rethrowUnexpectedError(error)
+    if (requestId === activeRequest) {
+      console.error(`Failed to load worksheet: ${error}`, { error })
     }
-    throw error
   } finally {
     if (requestId === activeRequest) {
       isLoading.value = false
