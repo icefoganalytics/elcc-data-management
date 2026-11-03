@@ -29,6 +29,8 @@ export async function down(knex: Knex): Promise<void> {
 }
 ```
 
+Prefix every raw SQL template literal with `/* sql */` immediately before its opening backtick for SQL syntax highlighting and embedded T-SQL formatting.
+
 Use SQL `DECIMAL` types for financial values and snake_case for database names.
 
 Use native Knex timestamps for UTC audit fields. On MSSQL, `timestamp` generates `DATETIME2(7)`; keep explicit UTC defaults rather than the local-time default from `table.timestamps(true, true)`:
