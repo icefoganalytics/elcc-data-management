@@ -56,7 +56,7 @@ export function useQualityEnhancements(
         return state.qualityEnhancements
       }
 
-      console.error(`Failed to fetch Quality Enhancements: ${error}`)
+      console.error(`Failed to fetch Quality Enhancements: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {

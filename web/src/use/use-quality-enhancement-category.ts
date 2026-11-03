@@ -61,7 +61,7 @@ export function useQualityEnhancementCategory(
         return state.qualityEnhancementCategory
       }
 
-      console.error(`Failed to fetch Quality Enhancement category: ${error}`)
+      console.error(`Failed to fetch Quality Enhancement category: ${error}`, { error })
       if (latestRequest === request) {
         state.isErrored = true
       }
@@ -110,7 +110,7 @@ export function useQualityEnhancementCategory(
       }
       return qualityEnhancementCategory
     } catch (error) {
-      console.error(`Failed to save Quality Enhancement category: ${error}`)
+      console.error(`Failed to save Quality Enhancement category: ${error}`, { error })
       if (latestRequest === request) {
         state.isErrored = true
       }

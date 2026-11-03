@@ -87,7 +87,7 @@ async function checkValueIsUnique(value: string | null | undefined) {
     return result
   } catch (error) {
     if (error instanceof ApiOperationError) {
-      console.error(`Failed to check availability: ${error}`)
+      console.error(`Failed to check availability: ${error}`, { error })
       return false
     }
 

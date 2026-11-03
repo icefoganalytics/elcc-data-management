@@ -40,7 +40,7 @@ export function useBuildingExpenseCategory(
       state.policy = policy
       return buildingExpenseCategory
     } catch (error) {
-      console.error(`Failed to fetch building expense category: ${error}`)
+      console.error(`Failed to fetch building expense category: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {
@@ -70,7 +70,7 @@ export function useBuildingExpenseCategory(
       state.policy = policy
       return buildingExpenseCategory
     } catch (error) {
-      console.error(`Failed to save building expense category: ${error}`)
+      console.error(`Failed to save building expense category: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {

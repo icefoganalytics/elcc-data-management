@@ -46,7 +46,7 @@ export function useChildCareSpaceCategories(
       }
       return childCareSpaceCategories
     } catch (error) {
-      console.error(`Failed to fetch Child Care Space categories: ${error}`)
+      console.error(`Failed to fetch Child Care Space categories: ${error}`, { error })
       if (latestRequest === request) {
         state.isErrored = true
       }

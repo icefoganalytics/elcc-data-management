@@ -59,7 +59,7 @@ export function useFiscalPeriods(
         return state.fiscalPeriods
       }
 
-      console.error(`Failed to fetch fiscal periods: ${error}`)
+      console.error(`Failed to fetch fiscal periods: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {

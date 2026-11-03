@@ -55,7 +55,7 @@ export function useEmployeeBenefit(id: Ref<number | null | undefined>) {
         return state.employeeBenefit
       }
 
-      console.error(`Failed to fetch employee benefit: ${error}`)
+      console.error(`Failed to fetch employee benefit: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {
@@ -88,7 +88,7 @@ export function useEmployeeBenefit(id: Ref<number | null | undefined>) {
       }
       return employeeBenefit
     } catch (error) {
-      console.error(`Failed to save employee benefit: ${error}`)
+      console.error(`Failed to save employee benefit: ${error}`, { error })
       if (!signal?.aborted) {
         state.isErrored = true
       }

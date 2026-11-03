@@ -56,7 +56,7 @@ export function useQualityEnhancementCategories(
         return state.qualityEnhancementCategories
       }
 
-      console.error(`Failed to fetch Quality Enhancement categories: ${error}`)
+      console.error(`Failed to fetch Quality Enhancement categories: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {

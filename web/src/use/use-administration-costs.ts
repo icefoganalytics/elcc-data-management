@@ -41,7 +41,7 @@ export function useAdministrationCosts(queryOptions: Ref<AdministrationCostQuery
     } catch (error) {
       if (controller.signal.aborted || isCancel(error)) return state.administrationCosts
 
-      console.error(`Failed to fetch Administration costs: ${error}`)
+      console.error(`Failed to fetch Administration costs: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {

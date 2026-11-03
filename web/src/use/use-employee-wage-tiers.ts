@@ -55,7 +55,7 @@ export function useEmployeeWageTiers(
         return state.employeeWageTiers
       }
 
-      console.error(`Failed to fetch employee wage tiers: ${error}`)
+      console.error(`Failed to fetch employee wage tiers: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {

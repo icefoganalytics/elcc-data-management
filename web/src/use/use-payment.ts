@@ -32,7 +32,7 @@ export function usePayment(id: Ref<number | null | undefined>) {
       state.policy = policy
       return payment
     } catch (error) {
-      console.error(`Failed to fetch payment: ${error}`)
+      console.error(`Failed to fetch payment: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {

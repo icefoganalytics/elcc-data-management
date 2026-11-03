@@ -34,7 +34,7 @@ export function useCentre(centreId: Ref<number | null | undefined>) {
 
       return centre
     } catch (error) {
-      console.error(`Failed to fetch centre: ${error}`)
+      console.error(`Failed to fetch centre: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {
@@ -62,7 +62,7 @@ export function useCentre(centreId: Ref<number | null | undefined>) {
 
       return centre
     } catch (error) {
-      console.error(`Failed to save centre: ${error}`)
+      console.error(`Failed to save centre: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {

@@ -40,7 +40,7 @@ export function useFundingRegions(
 
       return fundingRegions
     } catch (error) {
-      console.error(`Failed to fetch funding regions: ${error}`)
+      console.error(`Failed to fetch funding regions: ${error}`, { error })
       state.isErrored = true
 
       throw error

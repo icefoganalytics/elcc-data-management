@@ -38,7 +38,7 @@ export function useFundingSubmissionLine(fundingSubmissionLineId: Ref<number | n
       state.policy = policy
       return fundingSubmissionLine
     } catch (error) {
-      console.error(`Failed to fetch funding submission line: ${error}`)
+      console.error(`Failed to fetch funding submission line: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {
@@ -68,7 +68,7 @@ export function useFundingSubmissionLine(fundingSubmissionLineId: Ref<number | n
       state.policy = policy
       return fundingSubmissionLine
     } catch (error) {
-      console.error(`Failed to save funding submission line: ${error}`)
+      console.error(`Failed to save funding submission line: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {
