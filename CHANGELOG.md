@@ -30,6 +30,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
 
 ### Changed
 
+- Audit timestamps now use UTC `DATETIME2(7)` consistently, preserving existing instants and fractional seconds while discarding original timezone-offset labels.
 - API model test factories now use Factory Shark for declarative related-record setup, with Sequelize core and the SQL Server dialect aligned to its supported release. Plain JSON and frontend fixtures remain on Fishery.
 - Administration category browsing now uses server-side pagination and sorting, with explicit View actions and funding-period filtering.
 - Agent guidance resolves shared authoring, review, testing, delivery, and browser-QA standards directly while retaining ELCC's financial, security, API, and development/test requirements locally. Packaged workflows remain the base when no local override exists; requested PR screenshots follow the shared capture/upload procedure with ELCC-specific login and data prerequisites.
