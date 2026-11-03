@@ -37,9 +37,6 @@ export class BulkCreateService extends BaseService {
         fiscalYear: fiscalYearLegacy,
       },
     })
-    if (isEmpty(fundingSubmissionLines)) {
-      throw new Error("No funding submission lines found for the funding period.")
-    }
 
     const fundingSubmissionLineJsonsDefaults = fundingSubmissionLines.map(
       (fundingSubmissionLine) => {

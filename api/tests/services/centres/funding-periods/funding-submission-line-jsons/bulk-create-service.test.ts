@@ -30,13 +30,13 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
         })
         const fundingSubmissionLine1 = await fundingSubmissionLineFactory.create({
           fiscalYear: "2024/25",
-          sectionName: "Children with Diverse Needs",
+          sectionName: "Additional Funding",
           lineName: "Infants",
           monthlyAmount: "100",
         })
         const fundingSubmissionLine2 = await fundingSubmissionLineFactory.create({
           fiscalYear: "2024/25",
-          sectionName: "Children with Diverse Needs",
+          sectionName: "Additional Funding",
           lineName: "Toddlers",
           monthlyAmount: "200",
         })
@@ -52,10 +52,10 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
             dateName: "April",
             dateStart: new Date("2024-04-01T00:00:00.000Z"),
             dateEnd: new Date("2024-04-30T23:59:59.000Z"),
-            values: JSON.stringify([
+            lines: [
               {
                 submissionLineId: fundingSubmissionLine1.id,
-                sectionName: "Children with Diverse Needs",
+                sectionName: "Additional Funding",
                 lineName: "Infants",
                 monthlyAmount: "100",
                 estimatedChildOccupancyRate: "0",
@@ -65,7 +65,7 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
               },
               {
                 submissionLineId: fundingSubmissionLine2.id,
-                sectionName: "Children with Diverse Needs",
+                sectionName: "Additional Funding",
                 lineName: "Toddlers",
                 monthlyAmount: "200",
                 estimatedChildOccupancyRate: "0",
@@ -73,7 +73,7 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
                 estimatedComputedTotal: "0",
                 actualComputedTotal: "0",
               },
-            ]),
+            ],
           }),
           expect.objectContaining({
             centreId: centre.id,
@@ -81,10 +81,10 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
             dateName: "May",
             dateStart: new Date("2024-05-01T00:00:00.000Z"),
             dateEnd: new Date("2024-05-31T23:59:59.000Z"),
-            values: JSON.stringify([
+            lines: [
               {
                 submissionLineId: fundingSubmissionLine1.id,
-                sectionName: "Children with Diverse Needs",
+                sectionName: "Additional Funding",
                 lineName: "Infants",
                 monthlyAmount: "100",
                 estimatedChildOccupancyRate: "0",
@@ -94,7 +94,7 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
               },
               {
                 submissionLineId: fundingSubmissionLine2.id,
-                sectionName: "Children with Diverse Needs",
+                sectionName: "Additional Funding",
                 lineName: "Toddlers",
                 monthlyAmount: "200",
                 estimatedChildOccupancyRate: "0",
@@ -102,7 +102,7 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
                 estimatedComputedTotal: "0",
                 actualComputedTotal: "0",
               },
-            ]),
+            ],
           }),
         ])
       })
@@ -115,18 +115,6 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
           fromDate: new Date("2024-04-01"),
           toDate: new Date("2024-05-30"),
         })
-        await fundingSubmissionLineFactory.create({
-          fiscalYear: "2024/25",
-          sectionName: "Children with Diverse Needs",
-          lineName: "Infants",
-          monthlyAmount: "100",
-        })
-        await fundingSubmissionLineFactory.create({
-          fiscalYear: "2024/25",
-          sectionName: "Children with Diverse Needs",
-          lineName: "Toddlers",
-          monthlyAmount: "200",
-        })
 
         // Act
         const bulkCreatePromise = BulkCreateService.perform(centre, fundingPeriod)
@@ -137,7 +125,7 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
         )
       })
 
-      test("when funding submission lines are missing, errors informatively", async () => {
+      test("when all configured sections use dedicated ledgers, creates empty JSON worksheets for each fiscal month", async () => {
         // Arrange
         const centre = await centreFactory.create()
         const fundingPeriod = await fundingPeriodFactory.create({
@@ -157,12 +145,23 @@ describe("api/src/services/centres/funding-periods/funding-submission-line-jsons
         })
 
         // Act
-        const bulkCreatePromise = BulkCreateService.perform(centre, fundingPeriod)
+        const worksheets = await BulkCreateService.perform(centre, fundingPeriod)
 
         // Assert
-        await expect(bulkCreatePromise).rejects.toThrow(
-          "No funding submission lines found for the funding period."
-        )
+        expect(worksheets).toEqual([
+          expect.objectContaining({
+            centreId: centre.id,
+            fiscalYear: "2024/25",
+            dateName: "April",
+            lines: [],
+          }),
+          expect.objectContaining({
+            centreId: centre.id,
+            fiscalYear: "2024/25",
+            dateName: "May",
+            lines: [],
+          }),
+        ])
       })
     })
   })

@@ -20,11 +20,13 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
       this.fiscalPeriodId
     )
     const qualityEnhancementsTotalAmount = await this.calculateQualityEnhancements()
+    const diverseNeedsTotalAmount = await this.calculateDiverseNeeds()
     const administrationCostsTotalAmount = await this.calculateAdministrationCosts()
     const buildingExpensesTotalAmount = await this.calculateBuildingExpenses()
     const totalEligibleExpenses = Big(fundingSubmissionExpensesAmount)
       .plus(childCareSpacesTotalAmount)
       .plus(qualityEnhancementsTotalAmount)
+      .plus(diverseNeedsTotalAmount)
       .plus(administrationCostsTotalAmount)
       .plus(buildingExpensesTotalAmount)
 
@@ -141,6 +143,34 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
     )
 
     return Big(qualityEnhancementsResult.qualityEnhancementsTotalAmount).toFixed(4)
+  }
+  private async calculateDiverseNeeds(): Promise<string> {
+    const [diverseNeedsResult] = await db.query<{
+      diverseNeedsTotalAmount: string
+    }>(
+      /* sql */ `
+        SELECT
+          CONVERT(
+            VARCHAR(50),
+            COALESCE(SUM(actual_computed_total), 0)
+          ) AS diverseNeedsTotalAmount
+        FROM
+          diverse_needs
+        WHERE
+          centre_id = :centreId
+          AND fiscal_period_id = :fiscalPeriodId
+          AND deleted_at IS NULL
+      `,
+      {
+        type: QueryTypes.SELECT,
+        replacements: {
+          centreId: this.centreId,
+          fiscalPeriodId: this.fiscalPeriodId,
+        },
+      }
+    )
+
+    return Big(diverseNeedsResult.diverseNeedsTotalAmount).toFixed(4)
   }
 
   private async calculateAdministrationCosts(): Promise<string> {

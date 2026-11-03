@@ -14,6 +14,7 @@ import {
   childCareSpaceFactory,
   fiscalPeriodFactory,
   fundingSubmissionLineJsonFactory,
+  diverseNeedFactory,
   qualityEnhancementFactory,
 } from "@/tests/factories"
 import { mockRouter, mockVuetify } from "@/tests/support"
@@ -162,6 +163,9 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
           }
 
+          if (url === "/api/diverse-needs") {
+            return { data: { diverseNeeds: [], totalCount: 0 } }
+          }
           if (url === "/api/quality-enhancements") {
             return { data: { qualityEnhancements: [qualityEnhancement], totalCount: 1 } }
           }
@@ -340,6 +344,9 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             }
           }
 
+          if (url === "/api/diverse-needs") {
+            return { data: { diverseNeeds: [], totalCount: 0 } }
+          }
           if (url === "/api/quality-enhancements") {
             return { data: { qualityEnhancements: [], totalCount: 0 } }
           }
@@ -445,6 +452,9 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           if (url === "/api/administration-costs") {
             throw new ApiOperationError("Administration costs unavailable", 503)
           }
+          if (url === "/api/diverse-needs") {
+            return { data: { diverseNeeds: [], totalCount: 0 } }
+          }
           if (url === "/api/quality-enhancements") {
             return { data: { qualityEnhancements: [], totalCount: 0 } }
           }
@@ -488,7 +498,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         expect(replicate?.attributes("disabled")).toEqual("")
       })
 
-      test("when the worksheet loads, preserves the established order of independent and JSON sections", async () => {
+      test("when the worksheet loads, renders ledger-owned Diverse Needs in section order", async () => {
         // Arrange
         const worksheet = fundingSubmissionLineJsonFactory.build({
           id: 44,
@@ -507,13 +517,20 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             },
           ],
         })
+        const diverseNeed = diverseNeedFactory.build({
+          id: 91,
+          centreId: 1,
+          fiscalPeriodId: 4,
+          categoryId: 90,
+        })
         const fiscalPeriod = fiscalPeriodFactory.build({
           id: 4,
           fundingPeriodId: 1,
           fiscalYear: "2024-25",
           month: FiscalPeriodMonths.APRIL,
         })
-        vi.mocked(httpClient, true).get.mockImplementation(async (url) => {
+        const get = vi.mocked(httpClient, true).get
+        get.mockImplementation(async (url) => {
           if (url === "/api/funding-submission-line-jsons") {
             return { data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 } }
           }
@@ -525,6 +542,9 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           }
           if (url === "/api/administration-costs") {
             return { data: { administrationCosts: [], totalCount: 0 } }
+          }
+          if (url === "/api/diverse-needs") {
+            return { data: { diverseNeeds: [diverseNeed], totalCount: 1 } }
           }
           if (url === "/api/quality-enhancements") {
             return { data: { qualityEnhancements: [], totalCount: 0 } }
@@ -553,6 +573,14 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           "Quality Enhancement Program",
           "Building Expenses",
         ])
+        expect(
+          get.mock.calls.some(
+            ([url, config]) =>
+              url === "/api/diverse-needs" &&
+              config?.params?.where?.centreId === 1 &&
+              config.params.where.fiscalPeriodId === 4
+          )
+        ).toEqual(true)
       })
       test.each(["Save", "Replicate Estimates"])(
         "when a Quality Enhancement cell is edited, %s saves it without Enter",
@@ -592,6 +620,9 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             }
             if (url === "/api/administration-costs") {
               return { data: { administrationCosts: [], totalCount: 0 } }
+            }
+            if (url === "/api/diverse-needs") {
+              return { data: { diverseNeeds: [], totalCount: 0 } }
             }
             if (url === "/api/quality-enhancements") {
               return { data: { qualityEnhancements: [quality], totalCount: 1 } }
@@ -680,6 +711,9 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           if (url === "/api/administration-costs") {
             administrationRequests += 1
             return { data: { administrationCosts: [], totalCount: 0 } }
+          }
+          if (url === "/api/diverse-needs") {
+            return { data: { diverseNeeds: [], totalCount: 0 } }
           }
           if (url === "/api/quality-enhancements") {
             qualityRequests += 1
@@ -774,6 +808,9 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             if (url === "/api/administration-costs") {
               return { data: { administrationCosts: [administration], totalCount: 1 } }
             }
+            if (url === "/api/diverse-needs") {
+              return { data: { diverseNeeds: [], totalCount: 0 } }
+            }
             if (url === "/api/quality-enhancements") {
               return { data: { qualityEnhancements: [quality], totalCount: 1 } }
             }
@@ -862,6 +899,9 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             if (url === "/api/administration-costs") {
               return { data: { administrationCosts: [], totalCount: 0 } }
             }
+            if (url === "/api/diverse-needs") {
+              return { data: { diverseNeeds: [], totalCount: 0 } }
+            }
             if (url === "/api/quality-enhancements") {
               return { data: { qualityEnhancements: [], totalCount: 0 } }
             }
@@ -915,6 +955,87 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           expect(save.attributes("disabled")).toEqual(undefined)
         }
       )
+    })
+    describe("estimate replication", () => {
+      test("when estimate replication is requested, calls the diverse need replication API", async () => {
+        // Arrange
+        const worksheet = fundingSubmissionLineJsonFactory.build({
+          id: 44,
+          centreId: 1,
+          dateName: "April",
+          lines: [],
+        })
+        const fiscalPeriod = fiscalPeriodFactory.build({
+          id: 4,
+          fundingPeriodId: 1,
+          fiscalYear: "2024-25",
+          month: FiscalPeriodMonths.APRIL,
+        })
+        const diverseNeed = diverseNeedFactory.build({
+          id: 91,
+          centreId: 1,
+          fiscalPeriodId: 4,
+          categoryId: 90,
+        })
+        const http = vi.mocked(httpClient, true)
+        const pendingReplication = Promise.withResolvers<{ data: undefined }>()
+        const replicationRequests: string[] = []
+        http.get.mockImplementation(async (url) => {
+          if (url === "/api/funding-submission-line-jsons") {
+            return { data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 } }
+          }
+          if (url === "/api/fiscal-periods") {
+            return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
+          }
+          if (url === "/api/child-care-spaces") {
+            return { data: { childCareSpaces: [], totalCount: 0 } }
+          }
+          if (url === "/api/administration-costs") {
+            return { data: { administrationCosts: [], totalCount: 0 } }
+          }
+          if (url === "/api/diverse-needs") {
+            return { data: { diverseNeeds: [diverseNeed], totalCount: 1 } }
+          }
+          if (url === "/api/quality-enhancements") {
+            return { data: { qualityEnhancements: [], totalCount: 0 } }
+          }
+          return { data: { fundingSubmissionLineJson: worksheet } }
+        })
+        http.patch.mockResolvedValue({ data: {} })
+        http.post.mockImplementation(async (url) => {
+          if (url === `/api/diverse-needs/${diverseNeed.id}/replicate-estimates`) {
+            replicationRequests.push(url)
+            return pendingReplication.promise
+          }
+          return { data: undefined }
+        })
+        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+        await router.push("/")
+        await router.isReady()
+        const wrapper = mount(MonthlyWorksheetPage, {
+          props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
+          global: {
+            plugins: [router, createPinia(), mockVuetify()],
+            stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
+          },
+        })
+        await flushPromises()
+
+        // Act
+        const replicate = wrapper
+          .findAll("button")
+          .find((button) => button.text().trim() === "Replicate Estimates")
+        if (!replicate) throw new Error("Expected the Replicate Estimates button")
+        await replicate.trigger("click")
+        await flushPromises()
+        pendingReplication.resolve({ data: undefined })
+        await flushPromises()
+
+        // Assert
+        expect(replicationRequests).toEqual([
+          `/api/diverse-needs/${diverseNeed.id}/replicate-estimates`,
+        ])
+      })
     })
   })
 })
