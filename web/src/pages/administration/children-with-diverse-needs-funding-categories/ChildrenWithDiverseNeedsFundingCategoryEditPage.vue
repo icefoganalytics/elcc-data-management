@@ -18,16 +18,16 @@
       >
     </template>
   </v-empty-state>
-  <DiverseNeedCategoryEditForm
-    v-else-if="diverseNeedCategory && policy?.update"
-    v-model:diverse-need-category="diverseNeedCategory"
+  <ChildrenWithDiverseNeedsFundingCategoryEditForm
+    v-else-if="childrenWithDiverseNeedsFundingCategory && policy?.update"
+    v-model:children-with-diverse-needs-funding-category="childrenWithDiverseNeedsFundingCategory"
     :funding-period-description="fundingPeriodDescription"
     :is-saving="isSaving"
     @save="saveCategory"
     @cancel="cancelEditing"
   />
   <v-empty-state
-    v-else-if="diverseNeedCategory"
+    v-else-if="childrenWithDiverseNeedsFundingCategory"
     class="ma-5"
     icon="mdi-lock-outline"
     headline="Editing Not Allowed"
@@ -39,33 +39,33 @@
 import { computed, ref } from "vue"
 import { useRouter } from "vue-router"
 
-import useDiverseNeedCategory from "@/use/use-diverse-need-category"
+import useChildrenWithDiverseNeedsFundingCategory from "@/use/use-children-with-diverse-needs-funding-category"
 import useFundingPeriods from "@/use/use-funding-periods"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useSnack from "@/use/use-snack"
 
-import DiverseNeedCategoryEditForm from "@/components/diverse-need-categories/DiverseNeedCategoryEditForm.vue"
+import ChildrenWithDiverseNeedsFundingCategoryEditForm from "@/components/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryEditForm.vue"
 
 const props = defineProps<{
-  diverseNeedCategoryId: string
+  childrenWithDiverseNeedsFundingCategoryId: string
 }>()
 const router = useRouter()
 const isSaving = ref(false)
 const snack = useSnack()
-const categoryId = computed(() => Number(props.diverseNeedCategoryId))
+const categoryId = computed(() => Number(props.childrenWithDiverseNeedsFundingCategoryId))
 const {
-  diverseNeedCategory,
+  childrenWithDiverseNeedsFundingCategory,
   policy,
   isLoading,
   isErrored,
   fetch: refreshCategory,
   save,
-} = useDiverseNeedCategory(categoryId)
+} = useChildrenWithDiverseNeedsFundingCategory(categoryId)
 const fundingPeriodsQuery = ref({ perPage: -1 })
 const { fundingPeriods } = useFundingPeriods(fundingPeriodsQuery)
 const fundingPeriodDescription = computed(() => {
   const fundingPeriod = fundingPeriods.value.find(
-    ({ id }) => id === diverseNeedCategory.value?.fundingPeriodId
+    ({ id }) => id === childrenWithDiverseNeedsFundingCategory.value?.fundingPeriodId
   )
   return fundingPeriod?.fiscalYear ?? "Unknown"
 })
@@ -86,19 +86,22 @@ async function saveCategory() {
 
 async function cancelEditing() {
   await router.push({
-    name: "administration/diverse-need-categories/DiverseNeedCategoryPage",
-    params: { diverseNeedCategoryId: categoryId.value },
+    name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
+    params: { childrenWithDiverseNeedsFundingCategoryId: categoryId.value },
   })
 }
 
 useBreadcrumbs("Edit Diverse Need Category", [
   { title: "Administration", to: { name: "AdministrationPage" } },
-  { title: "Diverse Need Categories", to: { name: "administration/DiverseNeedCategoriesPage" } },
+  {
+    title: "Diverse Need Categories",
+    to: { name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage" },
+  },
   {
     title: "Edit Category",
     to: {
-      name: "administration/diverse-need-categories/DiverseNeedCategoryEditPage",
-      params: { diverseNeedCategoryId: categoryId.value },
+      name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryEditPage",
+      params: { childrenWithDiverseNeedsFundingCategoryId: categoryId.value },
     },
   },
 ])

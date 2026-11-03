@@ -170,28 +170,35 @@ const routes = [
         props: true,
       },
       {
-        path: "administration/diverse-need-categories",
-        name: "administration/DiverseNeedCategoriesPage",
-        component: () => import("@/pages/administration/DiverseNeedCategoriesPage.vue"),
+        path: "administration/children-with-diverse-needs-funding-categories",
+        name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage",
+        component: () =>
+          import("@/pages/administration/ChildrenWithDiverseNeedsFundingCategoriesPage.vue"),
       },
       {
-        path: "administration/diverse-need-categories/new",
-        name: "administration/diverse-need-categories/DiverseNeedCategoryNewPage",
+        path: "administration/children-with-diverse-needs-funding-categories/new",
+        name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryNewPage",
         component: () =>
-          import("@/pages/administration/diverse-need-categories/DiverseNeedCategoryNewPage.vue"),
+          import(
+            "@/pages/administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryNewPage.vue"
+          ),
       },
       {
-        path: "administration/diverse-need-categories/:diverseNeedCategoryId/edit",
-        name: "administration/diverse-need-categories/DiverseNeedCategoryEditPage",
+        path: "administration/children-with-diverse-needs-funding-categories/:childrenWithDiverseNeedsFundingCategoryId/edit",
+        name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryEditPage",
         component: () =>
-          import("@/pages/administration/diverse-need-categories/DiverseNeedCategoryEditPage.vue"),
+          import(
+            "@/pages/administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryEditPage.vue"
+          ),
         props: true,
       },
       {
-        path: "administration/diverse-need-categories/:diverseNeedCategoryId",
-        name: "administration/diverse-need-categories/DiverseNeedCategoryPage",
+        path: "administration/children-with-diverse-needs-funding-categories/:childrenWithDiverseNeedsFundingCategoryId",
+        name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
         component: () =>
-          import("@/pages/administration/diverse-need-categories/DiverseNeedCategoryPage.vue"),
+          import(
+            "@/pages/administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage.vue"
+          ),
         props: true,
       },
       {
