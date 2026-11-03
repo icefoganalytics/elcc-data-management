@@ -66,7 +66,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
 
 ### Fixed
 
-- JSON API requests now distinguish backend errors from HTML/intermediary responses and propagate unexpected failures to application-owned recovery instead of treating them as successful data or ordinary permission failures.
+- JSON API requests now distinguish backend errors from intermediary HTML. Cloudflare challenges offer explicit reload/verification and an opt-in, isolated diagnostic preview; other HTML reaches the application-error page. Recovery never automatically replays a write.
 - Funding-period selections retain their fiscal-year labels when earlier lookup requests finish late.
 - Failed Administration category loads now show a dedicated error state instead of an empty table or indefinite skeleton. Category details and edit pages offer Retry.
 - Administration category forms now use searchable funding-period and linked Child Care Space category inputs, retaining selected labels across result pages and excluding previous-period options during loading.
