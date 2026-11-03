@@ -58,7 +58,7 @@
         :centre-id="centreId"
         :fiscal-period-id="fiscalPeriod.id"
         class="ma-4"
-        :workflow-busy="
+        :is-workflow-busy="
           isWorksheetSaving || isReplicating || isLedgerMutating || isRefreshingLinked
         "
         @update:funding-submission-line-json="onJsonUpdated"
@@ -127,7 +127,7 @@
               :fiscal-period-id="fiscalPeriod.id"
               :funding-period-id="fiscalPeriod.fundingPeriodId"
               :existing-category-ids="administrationCostTable?.categoryIds ?? []"
-              :workflow-busy="isWorkflowBusy"
+              :is-workflow-busy="isWorkflowBusy"
               @saving="isCreatingAdministrationCost = $event"
               @created="onAdministrationCostCreated"
               @cancel="showAdministrationCostCreateForm = false"

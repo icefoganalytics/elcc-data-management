@@ -10,7 +10,7 @@
           v-model="attributes.categoryId"
           :funding-period-id="fundingPeriodId"
           :excluding-category-ids="existingCategoryIds"
-          :disabled="isCreating || workflowBusy"
+          :disabled="isCreating || isWorkflowBusy"
           :rules="[required]" /></v-col
     ></v-row>
     <v-row
@@ -21,7 +21,7 @@
           type="text"
           inputmode="decimal"
           :rules="[required, greaterThanOrEqualTo(0)]"
-          :disabled="isCreating || workflowBusy" /></v-col
+          :disabled="isCreating || isWorkflowBusy" /></v-col
     ></v-row>
     <v-row
       ><v-col cols="12"
@@ -31,7 +31,7 @@
           type="text"
           inputmode="decimal"
           :rules="[required, greaterThanOrEqualTo(0)]"
-          :disabled="isCreating || workflowBusy" /></v-col
+          :disabled="isCreating || isWorkflowBusy" /></v-col
     ></v-row>
     <v-row
       ><v-col cols="12"
@@ -40,19 +40,19 @@
           color="primary"
           hide-details
           label="Apply to current and future fiscal periods for this centre"
-          :disabled="isCreating || workflowBusy" /></v-col
+          :disabled="isCreating || isWorkflowBusy" /></v-col
     ></v-row>
     <template #actions
       ><v-btn
         color="primary"
         type="submit"
         :loading="isCreating"
-        :disabled="workflowBusy"
+        :disabled="isWorkflowBusy"
         >Create</v-btn
       ><v-btn
         variant="text"
         color="warning"
-        :disabled="isCreating || workflowBusy"
+        :disabled="isCreating || isWorkflowBusy"
         @click="emit('cancel')"
         >Cancel</v-btn
       ></template
@@ -75,9 +75,9 @@ const props = withDefaults(
     fiscalPeriodId: number
     fundingPeriodId: number
     existingCategoryIds: number[]
-    workflowBusy?: boolean
+    isWorkflowBusy?: boolean
   }>(),
-  { workflowBusy: false }
+  { isWorkflowBusy: false }
 )
 const emit = defineEmits<{ created: [id: number]; cancel: []; saving: [value: boolean] }>()
 const attributes = ref<{
@@ -96,7 +96,7 @@ const form = useTemplateRef("form")
 const snack = useSnack()
 
 async function create() {
-  if (!form.value || props.workflowBusy || isCreating.value) return
+  if (!form.value || props.isWorkflowBusy || isCreating.value) return
   isCreating.value = true
   emit("saving", true)
   try {

@@ -7,7 +7,7 @@
         <slot
           name="actions"
           :is-saving="isSaving"
-          :workflow-busy="workflowBusy"
+          :is-workflow-busy="isWorkflowBusy"
         />
       </div>
     </div>
@@ -62,7 +62,7 @@
             <v-btn
               color="primary"
               :loading="isSaving"
-              :disabled="isSaving || workflowBusy || isLoading || isErrored"
+              :disabled="isSaving || isWorkflowBusy || isLoading || isErrored"
               @click="saveFundingSubmissionLineJson"
             >
               Save
@@ -98,9 +98,9 @@ const props = withDefaults(
     fundingSubmissionLineJsonId: number
     centreId: number
     fiscalPeriodId: number
-    workflowBusy?: boolean
+    isWorkflowBusy?: boolean
   }>(),
-  { workflowBusy: false }
+  { isWorkflowBusy: false }
 )
 
 const emit = defineEmits<{
@@ -139,7 +139,7 @@ const isErrored = computed(
 )
 
 const isSaving = ref(false)
-const isWorkflowRunning = computed(() => isSaving.value || props.workflowBusy)
+const isWorkflowRunning = computed(() => isSaving.value || props.isWorkflowBusy)
 const dateName = computed(() => fundingSubmissionLineJson.value?.dateName)
 const calendarYear = computed(() => {
   if (isNil(fundingSubmissionLineJson.value)) {
