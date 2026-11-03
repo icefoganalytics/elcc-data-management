@@ -134,7 +134,7 @@ import { computed, ref, useTemplateRef, watch } from "vue"
 import { useRouter } from "vue-router"
 import { isNil } from "lodash"
 
-import { greaterThan, greaterThanOrEqualTo, required } from "@/utils/validators"
+import { greaterThanOrEqualTo, required } from "@/utils/validators"
 
 import qualityEnhancementCategoriesApi, {
   type QualityEnhancementCategoryCreationAttributes,
@@ -192,7 +192,7 @@ function updateMonthlyAmount(value: string | number | null) {
 const toAgeRules = computed(() => [
   wholeNumberOrEmpty,
   greaterThanOrEqualTo(0),
-  greaterThan(categoryAttributes.value.fromAge, {
+  greaterThanOrEqualTo(categoryAttributes.value.fromAge ?? 0, {
     referenceFieldLabel: `From Age of ${categoryAttributes.value.fromAge}`,
   }),
 ])

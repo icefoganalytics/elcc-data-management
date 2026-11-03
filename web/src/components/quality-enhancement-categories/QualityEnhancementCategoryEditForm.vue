@@ -147,7 +147,7 @@
 import { computed, ref, toRefs, useTemplateRef } from "vue"
 import { isNil } from "lodash"
 
-import { greaterThan, greaterThanOrEqualTo, required } from "@/utils/validators"
+import { greaterThanOrEqualTo, required } from "@/utils/validators"
 
 import useQualityEnhancementCategory from "@/use/use-quality-enhancement-category"
 import useFundingPeriod from "@/use/use-funding-period"
@@ -199,7 +199,7 @@ const fundingPeriodDescription = computed(() => {
 const toAgeRules = computed(() => [
   wholeNumberOrEmpty,
   greaterThanOrEqualTo(0),
-  greaterThan(qualityEnhancementCategory.value?.fromAge, {
+  greaterThanOrEqualTo(qualityEnhancementCategory.value?.fromAge ?? 0, {
     referenceFieldLabel: `From Age of ${qualityEnhancementCategory.value?.fromAge}`,
   }),
 ])
