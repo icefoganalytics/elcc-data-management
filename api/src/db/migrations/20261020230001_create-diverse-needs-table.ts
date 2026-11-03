@@ -24,7 +24,8 @@ export async function up(knex: Knex): Promise<void> {
     table.foreign("fiscal_period_id").references("fiscal_periods.id")
     table.foreign("category_id").references("children_with_diverse_needs_funding_categories.id")
     table.unique(["centre_id", "fiscal_period_id", "category_id"], {
-      indexName: "unique_children_with_diverse_needs_funding_records_on_centre_id_fiscal_period_id_category_id",
+      indexName:
+        "unique_children_with_diverse_needs_funding_records_on_centre_id_fiscal_period_id_category_id",
       predicate: knex.whereNull("deleted_at"),
     })
   })
