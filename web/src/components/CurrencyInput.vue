@@ -14,7 +14,7 @@
 <script setup lang="ts">
 import Big from "big.js"
 import { ref, watch, computed } from "vue"
-import { useCurrencyInput, type CurrencyInputOptions, CurrencyDisplay } from "vue-currency-input"
+import { useCurrencyInput, type CurrencyInputOptions } from "vue-currency-input"
 import { isNil, isString } from "lodash"
 
 type ValidationRule = (value: unknown) => boolean | string
