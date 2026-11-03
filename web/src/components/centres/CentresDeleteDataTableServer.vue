@@ -48,6 +48,8 @@ import { useRouter } from "vue-router"
 import blockedToTrueConfirm from "@/utils/blocked-to-true-confirm"
 import { integerTransformer } from "@/utils/use-route-query-transformers"
 
+import { ApiOperationError } from "@/api/errors/api-operation-error"
+
 import centresApi, { type CentreAsIndex } from "@/api/centres-api"
 
 import useSnack from "@/use/use-snack"
@@ -176,9 +178,13 @@ async function confirmAndDeleteCentre(centreId: number) {
 
     await refresh()
   } catch (error) {
-    console.error(`Failed to delete centre: ${error}`, { error })
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to delete centre: ${error}`, { error })
+      snack.error(`Failed to delete centre: ${error}`)
+      return
+    }
 
-    snack.error(`Failed to delete centre: ${error}`)
+    throw error
   } finally {
     isDeleting.value = false
     deletingCentreId.value = null

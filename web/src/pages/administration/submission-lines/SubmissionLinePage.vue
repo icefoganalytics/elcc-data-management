@@ -92,6 +92,8 @@ import blockedToTrueConfirm from "@/utils/blocked-to-true-confirm"
 
 import fundingSubmissionLinesApi from "@/api/funding-submission-lines-api"
 
+import ApiOperationError from "@/api/errors/api-operation-error"
+
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useFundingSubmissionLine from "@/use/use-funding-submission-line"
 import useSnack from "@/use/use-snack"
@@ -123,8 +125,13 @@ async function deleteFundingSubmissionLine(userId: number) {
       name: "administration/AdministrationSubmissionLinesPage",
     })
   } catch (error) {
-    console.error(`Failed to delete submission line: ${error}`, { error })
-    snack.error(`Failed to delete submission line: ${error}`)
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to delete submission line: ${error}`, { error })
+      snack.error(`Failed to delete submission line: ${error}`)
+      return
+    }
+
+    throw error
   } finally {
     isDeleting.value = false
   }

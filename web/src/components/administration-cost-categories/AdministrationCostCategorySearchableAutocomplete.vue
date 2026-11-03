@@ -42,6 +42,8 @@ import { computed, onScopeDispose, ref } from "vue"
 import { debounce } from "lodash"
 
 import { MAX_PER_PAGE } from "@/api/base-api"
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
+
 import useAdministrationCostCategories from "@/use/use-administration-cost-categories"
 
 const props = withDefaults(
@@ -73,8 +75,8 @@ onScopeDispose(() => updateSearch.cancel())
 async function reload() {
   try {
     await fetch()
-  } catch {
-    // The collection exposes the active load error and keeps Retry available.
+  } catch (error) {
+    rethrowUnexpectedError(error)
   }
 }
 </script>

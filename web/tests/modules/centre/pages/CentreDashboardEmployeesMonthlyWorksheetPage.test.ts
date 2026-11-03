@@ -1,6 +1,7 @@
 import { flushPromises, mount } from "@vue/test-utils"
 
 import employeeBenefitsApi from "@/api/employee-benefits-api"
+import ApiOperationError from "@/api/errors/api-operation-error"
 import employeeWageTiersApi from "@/api/employee-wage-tiers-api"
 import fiscalPeriodsApi, { FiscalPeriodMonths } from "@/api/fiscal-periods-api"
 import wageEnhancementsApi from "@/api/wage-enhancements-api"
@@ -204,7 +205,9 @@ describe("web/src/modules/centre/pages/CentreDashboardEmployeesMonthlyWorksheetP
           employeeBenefit: id === 42 ? benefit2 : benefit1,
           policy: { show: true, create: true, update: true, destroy: true },
         }))
-        vi.spyOn(employeeBenefitsApi, "update").mockRejectedValue(new Error("offline"))
+        vi.spyOn(employeeBenefitsApi, "update").mockRejectedValue(
+          new ApiOperationError("offline", 503)
+        )
         vi.spyOn(employeeWageTiersApi, "list").mockResolvedValue({
           employeeWageTiers: [],
           totalCount: 0,
@@ -264,7 +267,9 @@ describe("web/src/modules/centre/pages/CentreDashboardEmployeesMonthlyWorksheetP
           employeeBenefit: id === 42 ? benefit2 : benefit1,
           policy: { show: true, create: true, update: true, destroy: true },
         }))
-        vi.spyOn(employeeBenefitsApi, "update").mockRejectedValue(new Error("offline"))
+        vi.spyOn(employeeBenefitsApi, "update").mockRejectedValue(
+          new ApiOperationError("offline", 503)
+        )
         vi.spyOn(employeeWageTiersApi, "list").mockResolvedValue({
           employeeWageTiers: [],
           totalCount: 0,

@@ -87,7 +87,9 @@ export async function autheticateAndLoadUser(req: Request, res: Response, next: 
       }
 
       if (!isAuthenticatedRequest(req)) {
-        throw new Error("Failed to authenticate user")
+        return res.status(403).json({
+          message: "Your account is inactive. Contact an administrator.",
+        })
       }
 
       return next()

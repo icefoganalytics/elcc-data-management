@@ -70,6 +70,8 @@ import { isNil } from "lodash"
 import DateTimeUtils from "@/utils/date-time-utils"
 import { dateBetween, greaterThan, required } from "@/utils/validators"
 
+import { ApiOperationError } from "@/api/errors/api-operation-error"
+
 import paymentsApi from "@/api/payments-api"
 
 import useSnack from "@/use/use-snack"
@@ -129,8 +131,13 @@ async function updatePayment() {
     emit("updated", props.paymentId)
     snack.success("Payment updated successfully")
   } catch (error) {
-    console.error(`Failed to update payment: ${error}`, { error })
-    snack.error(`Failed to update payment: ${error}`)
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to update payment: ${error}`, { error })
+      snack.error(`Failed to update payment: ${error}`)
+      return
+    }
+
+    throw error
   } finally {
     isUpdating.value = false
   }

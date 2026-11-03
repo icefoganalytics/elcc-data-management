@@ -95,7 +95,9 @@ import { formatMoney } from "@/utils/formatters"
 import blockedToTrueConfirm from "@/utils/blocked-to-true-confirm"
 import sumByDecimal from "@/utils/sum-by-decimal"
 
+import { ApiOperationError } from "@/api/errors/api-operation-error"
 import { MAX_PER_PAGE } from "@/api/base-api"
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 import buildingExpensesApi, {
   BuildingExpenseAsIndex,
   type BuildingExpense,
@@ -241,10 +243,15 @@ async function saveBuildingExpenseIfDirty(buildingExpense: BuildingExpense) {
 
     snack.success("Building expense saved!")
   } catch (error) {
-    await refresh()
+    if (error instanceof ApiOperationError) {
+      await refresh()
 
-    console.error(`Failed to save building expense: ${error}`, { error })
-    snack.error(`Failed to save building expense: ${error}`)
+      console.error(`Failed to save building expense: ${error}`, { error })
+      snack.error(`Failed to save building expense: ${error}`)
+      return
+    }
+
+    throw error
   } finally {
     isSaving.value = false
   }
@@ -264,6 +271,8 @@ async function deleteBuildingExpense(buildingExpense: BuildingExpense) {
     await refresh()
     snack.success("Building expense deleted!")
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     console.error(`Failed to delete building expense: ${error}`, { error })
     snack.error(`Failed to delete building expense: ${error}`)
   } finally {

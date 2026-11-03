@@ -84,6 +84,8 @@ import { useRouter } from "vue-router"
 
 import { required } from "@/utils/validators"
 import fundingPeriodsApi, { type FundingPeriod } from "@/api/funding-periods-api"
+import ApiOperationError from "@/api/errors/api-operation-error"
+
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useSnack from "@/use/use-snack"
 
@@ -123,8 +125,13 @@ async function createFundingPeriod() {
       },
     })
   } catch (error) {
-    console.error(error)
-    snack(`Failed to create funding period: ${error}`, { color: "error" })
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to create funding period: ${error}`, { error })
+      snack.error(`Failed to create funding period: ${error}`)
+      return
+    }
+
+    throw error
   } finally {
     isLoading.value = false
   }

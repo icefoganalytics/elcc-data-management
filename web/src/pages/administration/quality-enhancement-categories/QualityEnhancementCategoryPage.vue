@@ -165,6 +165,8 @@ import blockedToTrueConfirm from "@/utils/blocked-to-true-confirm"
 import { formatDate, formatMoney } from "@/utils/formatters"
 
 import qualityEnhancementCategoriesApi from "@/api/quality-enhancement-categories-api"
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
+
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useQualityEnhancementCategory from "@/use/use-quality-enhancement-category"
 import useFundingPeriod from "@/use/use-funding-period"
@@ -229,6 +231,8 @@ async function deleteQualityEnhancementCategory(qualityEnhancementCategoryId: nu
       name: "administration/QualityEnhancementCategoriesPage",
     })
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     console.error(`Failed to delete Quality Enhancement category: ${error}`, { error })
     snack.error(`Failed to delete Quality Enhancement category: ${error}`)
   } finally {

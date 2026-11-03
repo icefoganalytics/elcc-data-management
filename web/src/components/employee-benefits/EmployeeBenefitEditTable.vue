@@ -299,7 +299,9 @@ import Big from "big.js"
 import { formatMoney } from "@/utils/formatters"
 import minDecimal from "@/utils/min-decimal"
 
+import { ApiOperationError } from "@/api/errors/api-operation-error"
 import employeeBenefitsApi, { type EmployeeBenefitAsShow } from "@/api/employee-benefits-api"
+
 import useEmployeeBenefit from "@/use/use-employee-benefit"
 
 import CurrencyInput from "@/components/CurrencyInput.vue"
@@ -347,7 +349,10 @@ watch(employeeBenefitId, () => {
   costCapPercentageDraftAtEditStart.value = ""
 })
 
-function updateAttribute(attribute: EmployeeBenefitEditableAttribute, value: string) {
+function updateAttribute(
+  attribute: EmployeeBenefitEditableAttribute,
+  value: string
+): Promise<void> | undefined {
   const recordId = employeeBenefitId.value
   const record = employeeBenefit.value
   if (isNil(record) || isNil(recordId)) return
@@ -363,7 +368,7 @@ function updateAttribute(attribute: EmployeeBenefitEditableAttribute, value: str
   }
 
   editor.pendingChanges[attribute] = value
-  void saveAttribute(editor, recordId, attribute)
+  return saveAttribute(editor, recordId, attribute)
 }
 
 function saveAttribute(
@@ -400,7 +405,12 @@ async function persistAttribute(
     delete editor.saveErrors[attribute]
   } catch (error) {
     editor.saveErrors[attribute] = `Failed to save employee benefit: ${error}`
-    console.error(`Failed to save employee benefit: ${error}`, { error })
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to save employee benefit: ${error}`, { error })
+      return
+    }
+
+    throw error
   }
 }
 
@@ -422,9 +432,9 @@ const costCapPercentage = computed(() => {
 
 function toggleEditingCostCapPercentage() {
   if (isEditingCostCapPercentage.value) {
-    commitCostCapPercentage()
+    const write = commitCostCapPercentage()
     isEditingCostCapPercentage.value = false
-    return
+    return write
   }
 
   costCapPercentageDraft.value = costCapPercentage.value
@@ -445,8 +455,8 @@ function commitCostCapPercentage() {
     costCapPercentageDraft.value = "0"
   }
 
-  updateAttribute("costCapPercentage", costCapPercentageValue)
   costCapPercentageDraftAtEditStart.value = costCapPercentageDraft.value
+  return updateAttribute("costCapPercentage", costCapPercentageValue)
 }
 
 const monthlyBenefitCostCapEstimated = computed(() => {
@@ -514,9 +524,9 @@ const minimumPaidAmountActual = computed(() => {
 function updateEmployeeBenefitCurrencyValue(
   attribute: Exclude<EmployeeBenefitEditableAttribute, "costCapPercentage">,
   newValue: string | null
-) {
+): Promise<void> | undefined {
   const value = newValue === "-" || newValue === "" || newValue === null ? "0" : newValue
-  updateAttribute(attribute, value)
+  return updateAttribute(attribute, value)
 }
 
 async function retry() {

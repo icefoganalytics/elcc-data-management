@@ -242,6 +242,7 @@ import fiscalPeriodsApi, { type FiscalPeriod } from "@/api/fiscal-periods-api"
 import fundingSubmissionLineJsonsApi, {
   type FundingSubmissionLineJsonAsIndex,
 } from "@/api/funding-submission-line-jsons-api"
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 import sleepMs from "@/utils/sleep-ms"
 import { FiscalPeriodMonths } from "@/use/use-fiscal-periods"
 
@@ -289,7 +290,7 @@ async function loadWorksheet() {
   fiscalPeriod.value = null
 
   try {
-    const [worksheetResponse, fiscalPeriodResponse] = await Promise.all([
+    const [worksheetResult, fiscalPeriodResult] = await Promise.allSettled([
       fundingSubmissionLineJsonsApi.list({
         where: {
           centreId: props.centreId,
@@ -306,6 +307,16 @@ async function loadWorksheet() {
         perPage: 1,
       }),
     ])
+
+    if (worksheetResult.status === "rejected" || fiscalPeriodResult.status === "rejected") {
+      const failures = [worksheetResult, fiscalPeriodResult].flatMap((result) =>
+        result.status === "rejected" ? [result.reason] : []
+      )
+      throw new AggregateError(failures, failures.map(String).join("; "))
+    }
+
+    const worksheetResponse = worksheetResult.value
+    const fiscalPeriodResponse = fiscalPeriodResult.value
 
     if (requestId !== activeRequest) {
       return
@@ -324,8 +335,12 @@ async function loadWorksheet() {
       ) ?? null
   } catch (error) {
     if (requestId === activeRequest) {
-      console.error("Failed to load worksheet:", error)
       loadError.value = true
+    }
+
+    rethrowUnexpectedError(error)
+    if (requestId === activeRequest) {
+      console.error(`Failed to load worksheet: ${error}`, { error })
     }
   } finally {
     if (requestId === activeRequest) {
@@ -442,19 +457,17 @@ async function saveWorksheet(): Promise<boolean> {
     const [administrationCommitted, qualityCommitted] = await committedEdits
     if (!administrationCommitted || !qualityCommitted) return false
 
-    let wasSaved = false
+    const wasSaved = await sheet.saveFundingSubmissionLineJson()
+    isRefreshingLinked.value = true
     try {
-      wasSaved = await sheet.saveFundingSubmissionLineJson()
+      await refreshLinkedResources()
     } finally {
-      isRefreshingLinked.value = true
-      try {
-        await refreshLinkedResources()
-      } finally {
-        isRefreshingLinked.value = false
-      }
+      isRefreshingLinked.value = false
     }
     return wasSaved
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     snack.error(`Failed to save worksheet: ${error}`)
     return false
   } finally {
@@ -467,6 +480,8 @@ async function onAdministrationCostCreated() {
   try {
     await administrationCostTable.value?.refresh()
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     snack.error(`Failed to refresh administration costs: ${error}`)
   }
 }
@@ -476,6 +491,8 @@ async function onQualityEnhancementCreated() {
   try {
     await qualityEnhancementTable.value?.refresh()
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     snack.error(`Failed to refresh Quality Enhancements: ${error}`)
   }
 }
@@ -505,6 +522,8 @@ async function replicateEstimatesForward() {
 
     snack.success("Estimates replicated successfully!")
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     snack.error(`Failed to replicate estimates: ${error}`)
   } finally {
     isReplicating.value = false

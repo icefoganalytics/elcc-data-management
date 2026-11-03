@@ -12,6 +12,10 @@ after that middleware so JWT verification and user loading run before any API ac
 Child routers inherit authentication; do not register it again on individual routes or routers.
 Keep role and record-level authorization in the existing middleware and policies.
 
+Return HTTP 401 for authentication failures and HTTP 403 for a verified identity whose ELCC account
+is inactive. A successful sign-in cannot resolve account denial; keep that response distinct so
+clients show stable access-denied feedback instead of repeatedly starting authentication.
+
 Frontend static files and SPA routes remain outside `/api` and do not require an API token.
 
 ---

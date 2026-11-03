@@ -72,6 +72,8 @@
 import { ref, toRefs, useTemplateRef } from "vue"
 import { isNil } from "lodash"
 
+import { ApiOperationError } from "@/api/errors/api-operation-error"
+
 import { required } from "@/utils/validators"
 
 import useFundingRegion from "@/use/use-funding-region"
@@ -108,8 +110,13 @@ async function validateSaveAndNotify() {
     emit("saved", props.fundingRegionId)
     snack.success("Funding region saved!")
   } catch (error) {
-    console.error(`Failed to update funding region: ${error}`, { error })
-    snack.error(`Failed to update funding region: ${error}`)
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to update funding region: ${error}`, { error })
+      snack.error(`Failed to update funding region: ${error}`)
+      return
+    }
+
+    throw error
   } finally {
     isSaving.value = false
   }

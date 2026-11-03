@@ -187,6 +187,8 @@ import { isNil } from "lodash"
 
 import { type VForm } from "vuetify/components"
 
+import { ApiOperationError } from "@/api/errors/api-operation-error"
+
 import { integerTransformer } from "@/utils/use-route-query-transformers"
 import { required } from "@/utils/validators"
 
@@ -230,8 +232,13 @@ async function updateAndClose() {
 
     close()
   } catch (error) {
-    console.error(`Failed to save centre ${error}`, { error })
-    snack.error(`Failed to save centre ${error}`)
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to save centre ${error}`, { error })
+      snack.error(`Failed to save centre ${error}`)
+      return
+    }
+
+    throw error
   } finally {
     isLoading.value = false
   }

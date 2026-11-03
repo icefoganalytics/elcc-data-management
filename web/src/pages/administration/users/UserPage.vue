@@ -103,6 +103,8 @@ import blockedToTrueConfirm from "@/utils/blocked-to-true-confirm"
 
 import usersApi from "@/api/users-api"
 
+import ApiOperationError from "@/api/errors/api-operation-error"
+
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useUser, { UserRoles } from "@/use/use-user"
 import useSnack from "@/use/use-snack"
@@ -136,8 +138,13 @@ async function deleteUser(userId: number) {
       name: "administration/UsersPage",
     })
   } catch (error) {
-    console.error(`Failed to delete user: ${error}`, { error })
-    snack.error(`Failed to delete user: ${error}`)
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to delete user: ${error}`, { error })
+      snack.error(`Failed to delete user: ${error}`)
+      return
+    }
+
+    throw error
   } finally {
     isDeleting.value = false
   }

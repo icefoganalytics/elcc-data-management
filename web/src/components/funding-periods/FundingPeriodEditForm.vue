@@ -85,6 +85,8 @@
 import { ref, toRefs } from "vue"
 import { isNil } from "lodash"
 
+import { ApiOperationError } from "@/api/errors/api-operation-error"
+
 import { required } from "@/utils/validators"
 
 import useFundingPeriod from "@/use/use-funding-period"
@@ -115,8 +117,13 @@ async function saveAndNotify() {
     emit("updated", updatedFundingPeriod.id)
     snack.success("Funding period updated successfully!")
   } catch (error) {
-    console.error(`Failed to update funding period: ${error}`, { error })
-    snack.error(`Failed to update funding period: ${error}`)
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to update funding period: ${error}`, { error })
+      snack.error(`Failed to update funding period: ${error}`)
+      return
+    }
+
+    throw error
   } finally {
     isSaving.value = false
   }

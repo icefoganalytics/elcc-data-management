@@ -83,6 +83,8 @@ import { computed, ref, useTemplateRef } from "vue"
 
 import { greaterThanOrEqualTo, required } from "@/utils/validators"
 
+import { ApiOperationError } from "@/api/errors/api-operation-error"
+
 import buildingExpensesApi, {
   type BuildingExpenseCreationAttributes,
 } from "@/api/building-expenses-api"
@@ -145,8 +147,13 @@ async function createBuildingExpense() {
     emit("created", buildingExpense.id)
     snack.success("Building expense created successfully")
   } catch (error) {
-    console.error(`Failed to create building expense: ${error}`, { error })
-    snack.error(`Failed to create building expense: ${error}`)
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to create building expense: ${error}`, { error })
+      snack.error(`Failed to create building expense: ${error}`)
+      return
+    }
+
+    throw error
   } finally {
     isCreating.value = false
   }

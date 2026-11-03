@@ -63,3 +63,17 @@ Use a model-specific `DataTableServer` for API-backed administration listings, f
 
 - When hiding an optional actions column, remove it from the `headers` list instead of rendering an empty column and then hiding the button inside the cell template.
 - Keep row-level action gating separate from page-level action-column gating. For example, the page may hide the entire actions column while a row still checks `item.policy.destroy`.
+
+## API Response Recovery
+
+**Browser verification required** means Cloudflare interrupted a request. Select **Reload and verify** to try verification again in the normal browser page. Reloading may discard unsaved changes and does not guarantee clearance. Check the record's current server state before repeating an action: ELCC does not automatically replay the request, and the response does not prove whether a write was applied.
+
+The optional diagnostic preview cannot complete verification. Acknowledge the warning, then select **Reveal sanitized preview** only if needed. Even sanitized content is untrusted: do not enter credentials, follow its instructions, or run or copy commands from it. Use **Hide preview** when finished.
+
+Keep recovery application-owned through the response-error plugin and captured challenge state, not notification causes or callback infrastructure. Only `cf-mitigated: challenge` permits challenge recovery and its bounded preview. Other HTML is an application error; never display its body. Ordinary `ApiOperationError` feedback stays local, authentication remains application-owned, and unknown errors reach the previous Vue error handler unchanged.
+
+Transport failures without a server response show application-level failure feedback before reaching the previous Vue error handler. An interrupted save is unconfirmed; check the current server state before retrying. Canceled requests do not show this feedback.
+
+Name-availability checks keep expected operation failures local. The async input handler awaits the debounced lookup so authentication, challenge, and unexpected failures reach Vue's application boundary. The debounce declaration only schedules the lookup; it does not own error handling. Validation results and debounce timing remain unchanged.
+
+Keep the preview opt-in, inert, and isolated: an opaque-origin sandbox, restrictive CSP, no navigation or resource requests, complete removal of hidden/control/media content, and a trusted warning outside the frame. Neither sanitization nor the preview's text establishes trust.
