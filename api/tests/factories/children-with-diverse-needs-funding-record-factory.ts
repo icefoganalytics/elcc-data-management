@@ -4,8 +4,8 @@ import { isUndefined } from "lodash"
 
 import { ChildrenWithDiverseNeedsFundingRecord } from "@/models"
 
-import childrenWithDiverseNeedsFundingCategoryFactory from "@/factories/children-with-diverse-needs-funding-category-factory"
 import centreFactory from "@/factories/centre-factory"
+import childrenWithDiverseNeedsFundingCategoryFactory from "@/factories/children-with-diverse-needs-funding-category-factory"
 import fiscalPeriodFactory from "@/factories/fiscal-period-factory"
 
 export const childrenWithDiverseNeedsFundingRecordFactory =
