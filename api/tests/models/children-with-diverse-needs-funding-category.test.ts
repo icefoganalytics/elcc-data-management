@@ -1,11 +1,11 @@
-import { childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory } from "@/factories/children-with-diverse-needs-funding-category-factory"
+import { childrenWithDiverseNeedsFundingCategoryFactory } from "@/factories/children-with-diverse-needs-funding-category-factory"
 
 describe("api/src/models/children-with-diverse-needs-funding-category.ts", () => {
   describe("ChildrenWithDiverseNeedsFundingCategory", () => {
     describe("#validate", () => {
       test("when monthly amount has more than four decimal places, rejects the value", async () => {
         // Arrange
-        const category = childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory.build({
+        const category = childrenWithDiverseNeedsFundingCategoryFactory.build({
           fundingPeriodId: 1,
           monthlyAmount: "54.96001",
         })
@@ -23,7 +23,7 @@ describe("api/src/models/children-with-diverse-needs-funding-category.ts", () =>
         const attributes = { fromAge: null, toAge: null }
 
         // Act
-        const category = await childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory.create(attributes)
+        const category = await childrenWithDiverseNeedsFundingCategoryFactory.create(attributes)
 
         // Assert
         expect(category).toMatchObject({ fromAge: null, toAge: null })

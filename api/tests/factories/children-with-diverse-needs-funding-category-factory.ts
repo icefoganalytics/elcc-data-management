@@ -4,7 +4,7 @@ import { ChildrenWithDiverseNeedsFundingCategory } from "@/models"
 
 import fundingPeriodFactory from "@/factories/funding-period-factory"
 
-export const childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory =
+export const childrenWithDiverseNeedsFundingCategoryFactory =
   FactoryShark.define<ChildrenWithDiverseNeedsFundingCategory>(
     ChildrenWithDiverseNeedsFundingCategory,
     ({ associate, sequence }) => {
@@ -19,4 +19,4 @@ export const childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory =
     }
   )
 
-export default childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory
+export default childrenWithDiverseNeedsFundingCategoryFactory

@@ -101,7 +101,9 @@ export class ChildrenWithDiverseNeedsFundingCategory extends BaseModel<
       as: "category",
     },
   })
-  declare childrenWithChildrenWithDiverseNeedsFundingRecordsRecords?: NonAttribute<ChildrenWithDiverseNeedsFundingRecord[]>
+  declare childrenWithDiverseNeedsFundingRecords?: NonAttribute<
+    ChildrenWithDiverseNeedsFundingRecord[]
+  >
 
   // Scopes
   static establishScopes() {

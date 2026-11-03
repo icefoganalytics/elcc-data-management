@@ -1,8 +1,8 @@
 import { createPinia } from "pinia"
 import { flushPromises, mount } from "@vue/test-utils"
 
-import childrenWithChildrenWithDiverseNeedsFundingRecordsApi from "@/api/children-with-diverse-needs-funding-records-api"
-import { childrenWithChildrenWithDiverseNeedsFundingRecordsRecordFactory } from "@/tests/factories"
+import childrenWithDiverseNeedsFundingRecordsApi from "@/api/children-with-diverse-needs-funding-records-api"
+import { childrenWithDiverseNeedsFundingRecordFactory } from "@/tests/factories"
 import { mockVuetify } from "@/tests/support"
 
 import ChildrenWithDiverseNeedsFundingRecordsEditTable from "@/components/children-with-diverse-needs-funding-records/ChildrenWithDiverseNeedsFundingRecordsEditTable.vue"
@@ -12,24 +12,27 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
     describe("#commitEdit", () => {
       test("when estimated occupancy is edited and committed, persists it through the Children with Diverse Needs API", async () => {
         // Arrange
-        const childrenWithChildrenWithDiverseNeedsFundingRecordsRecord = childrenWithChildrenWithDiverseNeedsFundingRecordsRecordFactory.build()
-        vi.spyOn(childrenWithChildrenWithDiverseNeedsFundingRecordsApi, "list").mockResolvedValue({
-          childrenWithChildrenWithDiverseNeedsFundingRecordsRecords: [childrenWithChildrenWithDiverseNeedsFundingRecordsRecord],
+        const childrenWithDiverseNeedsFundingRecord =
+          childrenWithDiverseNeedsFundingRecordFactory.build()
+        vi.spyOn(childrenWithDiverseNeedsFundingRecordsApi, "list").mockResolvedValue({
+          childrenWithDiverseNeedsFundingRecords: [childrenWithDiverseNeedsFundingRecord],
           totalCount: 1,
         })
-        const update = vi.spyOn(childrenWithChildrenWithDiverseNeedsFundingRecordsApi, "update").mockResolvedValue({
-          childrenWithChildrenWithDiverseNeedsFundingRecordsRecord: {
-            ...childrenWithChildrenWithDiverseNeedsFundingRecordsRecord,
-            estimatedChildOccupancyRate: "0.2500",
-            estimatedComputedTotal: "13.7400",
-          },
-          policy: childrenWithChildrenWithDiverseNeedsFundingRecordsRecord.policy,
-        })
+        const update = vi
+          .spyOn(childrenWithDiverseNeedsFundingRecordsApi, "update")
+          .mockResolvedValue({
+            childrenWithDiverseNeedsFundingRecord: {
+              ...childrenWithDiverseNeedsFundingRecord,
+              estimatedChildOccupancyRate: "0.2500",
+              estimatedComputedTotal: "13.7400",
+            },
+            policy: childrenWithDiverseNeedsFundingRecord.policy,
+          })
         const wrapper = mount(ChildrenWithDiverseNeedsFundingRecordsEditTable, {
           props: {
             where: {
-              centreId: childrenWithChildrenWithDiverseNeedsFundingRecordsRecord.centreId,
-              fiscalPeriodId: childrenWithChildrenWithDiverseNeedsFundingRecordsRecord.fiscalPeriodId,
+              centreId: childrenWithDiverseNeedsFundingRecord.centreId,
+              fiscalPeriodId: childrenWithDiverseNeedsFundingRecord.fiscalPeriodId,
             },
           },
           global: { plugins: [createPinia(), mockVuetify()] },
@@ -44,7 +47,7 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
         await flushPromises()
 
         // Assert
-        expect(update).toHaveBeenCalledWith(childrenWithChildrenWithDiverseNeedsFundingRecordsRecord.id, {
+        expect(update).toHaveBeenCalledWith(childrenWithDiverseNeedsFundingRecord.id, {
           estimatedChildOccupancyRate: "0.2500",
         })
       })

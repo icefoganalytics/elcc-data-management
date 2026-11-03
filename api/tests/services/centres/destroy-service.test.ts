@@ -19,8 +19,8 @@ import {
   administrationCostFactory,
   buildingExpenseFactory,
   centreFactory,
-  childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory,
-  childrenWithChildrenWithDiverseNeedsFundingRecordsRecordFactory,
+  childrenWithDiverseNeedsFundingCategoryFactory,
+  childrenWithDiverseNeedsFundingRecordFactory,
   employeeBenefitFactory,
   employeeWageTierFactory,
   fiscalPeriodFactory,
@@ -47,15 +47,16 @@ describe("api/src/services/centres/destroy-service.ts", () => {
         const otherCentre = await centreFactory.create()
         const fundingPeriod = await fundingPeriodFactory.create()
         const fiscalPeriod = await fiscalPeriodFactory.associations({ fundingPeriod }).create()
-        const category = await childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory
+        const category = await childrenWithDiverseNeedsFundingCategoryFactory
           .associations({ fundingPeriod })
           .create()
-        await childrenWithChildrenWithDiverseNeedsFundingRecordsRecordFactory
+        await childrenWithDiverseNeedsFundingRecordFactory
           .associations({ centre, fiscalPeriod, category })
           .create()
-        const otherChildrenWithDiverseNeedsFundingRecord = await childrenWithChildrenWithDiverseNeedsFundingRecordsRecordFactory
-          .associations({ centre: otherCentre, fiscalPeriod, category })
-          .create()
+        const otherChildrenWithDiverseNeedsFundingRecord =
+          await childrenWithDiverseNeedsFundingRecordFactory
+            .associations({ centre: otherCentre, fiscalPeriod, category })
+            .create()
 
         // Act
         await DestroyService.perform(centre, currentUser)

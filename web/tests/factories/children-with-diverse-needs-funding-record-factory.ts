@@ -2,7 +2,7 @@ import { Factory } from "fishery"
 
 import type { ChildrenWithDiverseNeedsFundingRecordAsIndex } from "@/api/children-with-diverse-needs-funding-records-api"
 
-export const childrenWithChildrenWithDiverseNeedsFundingRecordsRecordFactory =
+export const childrenWithDiverseNeedsFundingRecordFactory =
   Factory.define<ChildrenWithDiverseNeedsFundingRecordAsIndex>(() => {
     const timestamp = "2026-01-01T00:00:00.000Z"
 
@@ -23,4 +23,4 @@ export const childrenWithChildrenWithDiverseNeedsFundingRecordsRecordFactory =
     }
   })
 
-export default childrenWithChildrenWithDiverseNeedsFundingRecordsRecordFactory
+export default childrenWithDiverseNeedsFundingRecordFactory
