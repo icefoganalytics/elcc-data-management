@@ -9,6 +9,8 @@ import {
   childCareSpaceFactory,
   fiscalPeriodFactory,
   fundingPeriodFactory,
+  diverseNeedCategoryFactory,
+  diverseNeedFactory,
   fundingSubmissionLineJsonFactory,
   qualityEnhancementCategoryFactory,
   qualityEnhancementFactory,
@@ -111,6 +113,47 @@ describe("api/src/services/funding-reconciliations/calculate-eligible-expenses-p
 
         // Assert
         expect(result).toBe("70.0000")
+      })
+
+      test("when a Diverse Need exists, includes its actual total exactly once alongside JSON expenses", async () => {
+        // Arrange
+        const centre = await centreFactory.create()
+        const fundingPeriod = await fundingPeriodFactory.create({
+          fiscalYear: "2025-2026",
+          fromDate: new Date("2025-04-01"),
+          toDate: new Date("2026-03-31"),
+        })
+        const fiscalPeriod = await fiscalPeriodFactory.associations({ fundingPeriod }).create({
+          fiscalYear: "2025-26",
+          month: FiscalPeriod.Months.APRIL,
+          dateStart: new Date("2025-04-01"),
+          dateEnd: new Date("2025-04-30"),
+        })
+        const category = await diverseNeedCategoryFactory
+          .associations({ fundingPeriod })
+          .create({ categoryName: "Toddlers", monthlyAmount: "10.0000" })
+        await diverseNeedFactory.associations({ centre, fiscalPeriod, category }).create({
+          monthlyAmount: "10.0000",
+          estimatedChildOccupancyRate: "0.5000",
+          actualChildOccupancyRate: "0.2500",
+        })
+        await fundingSubmissionLineJsonFactory.create({
+          centreId: centre.id,
+          fiscalYear: "2025/26",
+          dateName: FundingSubmissionLineJson.Months.APRIL,
+          dateStart: new Date("2025-04-01"),
+          dateEnd: new Date("2025-04-30"),
+          values: JSON.stringify([{ actualComputedTotal: "50.0000" }]),
+        })
+
+        // Act
+        const result = await CalculateEligibleExpensesPeriodAmountService.perform(
+          centre.id,
+          fiscalPeriod.id
+        )
+
+        // Assert
+        expect(result).toBe("52.5000")
       })
 
       test("when there are no eligible expenses, returns zero", async () => {

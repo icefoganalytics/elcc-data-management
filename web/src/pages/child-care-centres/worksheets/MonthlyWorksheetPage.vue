@@ -90,6 +90,50 @@
       </FundingSubmissionLineJsonEditSheet>
       <section class="ma-4 mt-8">
         <h3 class="mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2">
+          Children with Diverse Needs
+        </h3>
+        <DiverseNeedEditTable
+          ref="diverseNeedTable"
+          :where="worksheetWhere"
+          :is-replicating="
+            isReplicating || isWorksheetSaving || isRefreshingLinked || isCreatingDiverseNeed
+          "
+        />
+        <v-row class="mt-0">
+          <v-col
+            v-if="!showDiverseNeedCreateForm"
+            cols="12"
+            class="d-flex justify-end"
+          >
+            <v-btn
+              color="primary"
+              :disabled="
+                isWorkflowBusy || diverseNeedTable?.isLoading || diverseNeedTable?.isErrored
+              "
+              @click="showDiverseNeedCreateForm = true"
+            >
+              Add Diverse Need
+            </v-btn>
+          </v-col>
+          <v-col
+            v-else
+            cols="12"
+          >
+            <DiverseNeedCreateFormCard
+              :centre-id="centreId"
+              :fiscal-period-id="fiscalPeriod.id"
+              :funding-period-id="fiscalPeriod.fundingPeriodId"
+              :existing-category-ids="diverseNeedTable?.categoryIds ?? []"
+              :is-workflow-busy="isReplicating || isWorksheetSaving || isRefreshingLinked"
+              @saving="isCreatingDiverseNeed = $event"
+              @created="onDiverseNeedCreated"
+              @cancel="showDiverseNeedCreateForm = false"
+            />
+          </v-col>
+        </v-row>
+      </section>
+      <section class="ma-4 mt-8">
+        <h3 class="mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2">
           Administration (10% of Spaces)
         </h3>
         <AdministrationCostEditTable
@@ -255,6 +299,8 @@ import AdministrationCostEditTable from "@/components/administration-costs/Admin
 import AdministrationCostCreateFormCard from "@/components/administration-costs/AdministrationCostCreateFormCard.vue"
 import QualityEnhancementEditTable from "@/components/quality-enhancements/QualityEnhancementEditTable.vue"
 import QualityEnhancementCreateFormCard from "@/components/quality-enhancements/QualityEnhancementCreateFormCard.vue"
+import DiverseNeedEditTable from "@/components/diverse-needs/DiverseNeedEditTable.vue"
+import DiverseNeedCreateFormCard from "@/components/diverse-needs/DiverseNeedCreateFormCard.vue"
 import useSnack from "@/use/use-snack"
 const props = defineProps<{
   centreId: number
@@ -273,6 +319,8 @@ const fiscalPeriod = ref<FiscalPeriod | null>(null)
 const isLoading = ref(true)
 const loadError = ref(false)
 let activeRequest = 0
+const showDiverseNeedCreateForm = ref(false)
+const isCreatingDiverseNeed = ref(false)
 const showAdministrationCostCreateForm = ref(false)
 const showQualityEnhancementCreateForm = ref(false)
 const isCreatingAdministrationCost = ref(false)
@@ -281,6 +329,8 @@ const isCreatingQualityEnhancement = ref(false)
 async function loadWorksheet() {
   showAdministrationCostCreateForm.value = false
   showQualityEnhancementCreateForm.value = false
+  showDiverseNeedCreateForm.value = false
+  isCreatingDiverseNeed.value = false
   isCreatingAdministrationCost.value = false
   isCreatingQualityEnhancement.value = false
   const requestId = ++activeRequest
@@ -357,6 +407,8 @@ const worksheetWhere = computed(() => ({
   centreId: props.centreId,
   fiscalPeriodId: fiscalPeriod.value?.id,
 }))
+const diverseNeedTable =
+  useTemplateRef<InstanceType<typeof DiverseNeedEditTable>>("diverseNeedTable")
 const administrationCostTable =
   useTemplateRef<InstanceType<typeof AdministrationCostEditTable>>("administrationCostTable")
 const qualityEnhancementTable =
@@ -372,10 +424,13 @@ const isRefreshingLinked = ref(false)
 const snack = useSnack()
 const isLedgerMutating = computed(() =>
   Boolean(
-    administrationCostTable.value?.isSaving ||
+    diverseNeedTable.value?.isSaving ||
+      diverseNeedTable.value?.isDeleting ||
+      administrationCostTable.value?.isSaving ||
       administrationCostTable.value?.isDeleting ||
       qualityEnhancementTable.value?.isSaving ||
       qualityEnhancementTable.value?.isDeleting ||
+      isCreatingDiverseNeed.value ||
       isCreatingAdministrationCost.value ||
       isCreatingQualityEnhancement.value
   )
@@ -390,11 +445,15 @@ const isWorkflowBusy = computed(
 const isReplicationUnavailable = computed(() => {
   const sheet = jsonSheet.value
   const administration = administrationCostTable.value
+  const diverseNeed = diverseNeedTable.value
   const quality = qualityEnhancementTable.value
   return (
     !sheet ||
     sheet.isLoading ||
     sheet.isErrored ||
+    !diverseNeed ||
+    diverseNeed.isLoading ||
+    diverseNeed.isErrored ||
     !administration ||
     administration.isLoading ||
     administration.isErrored ||
@@ -429,6 +488,7 @@ async function closeCreateFormAndRefresh() {
 async function refreshLinkedResources() {
   const results = await Promise.allSettled([
     administrationCostTable.value?.refresh(),
+    diverseNeedTable.value?.refresh(),
     qualityEnhancementTable.value?.refresh(),
   ])
   const failures = results.flatMap((result) =>
@@ -448,14 +508,18 @@ async function saveWorksheet(): Promise<boolean> {
 
   const sheet = jsonSheet.value
   const administration = administrationCostTable.value
+  const diverseNeed = diverseNeedTable.value
   const quality = qualityEnhancementTable.value
-  if (!sheet || !administration || !quality) return false
+  if (!sheet || !administration || !diverseNeed || !quality) return false
 
   try {
-    const committedEdits = Promise.all([administration.commitEdit(), quality.commitEdit()])
     isWorksheetSaving.value = true
-    const [administrationCommitted, qualityCommitted] = await committedEdits
-    if (!administrationCommitted || !qualityCommitted) return false
+    const [administrationCommitted, diverseNeedCommitted, qualityCommitted] = await Promise.all([
+      administration.commitEdit(),
+      diverseNeed.commitEdit(),
+      quality.commitEdit(),
+    ])
+    if (!administrationCommitted || !diverseNeedCommitted || !qualityCommitted) return false
 
     const wasSaved = await sheet.saveFundingSubmissionLineJson()
     isRefreshingLinked.value = true
@@ -486,6 +550,15 @@ async function onAdministrationCostCreated() {
   }
 }
 
+async function onDiverseNeedCreated() {
+  showDiverseNeedCreateForm.value = false
+  try {
+    await diverseNeedTable.value?.refresh()
+  } catch (error) {
+    snack.error(`Failed to refresh diverse needs: ${error}`)
+  }
+}
+
 async function onQualityEnhancementCreated() {
   showQualityEnhancementCreateForm.value = false
   try {
@@ -498,21 +571,43 @@ async function onQualityEnhancementCreated() {
 }
 
 async function replicateEstimatesForward() {
-  if (isWorkflowBusy.value || isReplicationUnavailable.value) return
+  const context = {
+    centreId: props.centreId,
+    fiscalPeriodId: fiscalPeriod.value?.id,
+    worksheetId: fundingSubmissionLineJson.value?.id,
+  }
+  if (
+    isNil(context.fiscalPeriodId) ||
+    isNil(context.worksheetId) ||
+    isWorkflowBusy.value ||
+    isReplicationUnavailable.value
+  ) {
+    return
+  }
 
   const sheet = jsonSheet.value
   const administration = administrationCostTable.value
+  const diverseNeed = diverseNeedTable.value
   const quality = qualityEnhancementTable.value
-  if (!sheet || !administration || !quality) return
+  if (!sheet || !administration || !diverseNeed || !quality) return
 
   const savedWorksheet = saveWorksheet()
   isReplicating.value = true
   try {
     if (!(await savedWorksheet)) return
 
+    if (
+      props.centreId !== context.centreId ||
+      fiscalPeriod.value?.id !== context.fiscalPeriodId ||
+      fundingSubmissionLineJson.value?.id !== context.worksheetId
+    ) {
+      return
+    }
+
     const results = await Promise.allSettled([
       sheet.replicateOwnEstimates(),
       administration.replicateEstimates(),
+      diverseNeed.replicateEstimates(),
       quality.replicateEstimates(),
     ])
     const failures = results.flatMap((result) =>
