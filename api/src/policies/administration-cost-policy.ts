@@ -30,8 +30,8 @@ export class AdministrationCostPolicy extends PolicyFactory(AdministrationCost) 
       "centreId",
       "fiscalPeriodId",
       "categoryId",
-      ...this.permittedAttributes(),
       "applyToCurrentAndFutureFiscalPeriods",
+      ...this.permittedAttributes(),
     ]
   }
 
