@@ -1,5 +1,6 @@
 import { type App } from "vue"
 import { START_LOCATION } from "vue-router"
+import { isAxiosError, isCancel } from "axios"
 
 import AuthenticationRequiredError from "@/api/errors/authentication-required-error"
 import CloudflareChallengeError from "@/api/errors/cloudflare-challenge-error"
@@ -8,11 +9,13 @@ import UnexpectedApiResponseError from "@/api/errors/unexpected-api-response-err
 import auth0 from "@/plugins/auth0-plugin"
 
 import useCloudflareChallenge from "@/use/use-cloudflare-challenge"
+import useSnack from "@/use/use-snack"
 
 export function apiResponseErrorPlugin(application: App): void {
   const previousErrorHandler = application.config.errorHandler
   const { error: cloudflareChallengeError } = useCloudflareChallenge()
   const router = application.config.globalProperties.$router
+  const snack = useSnack()
 
   const stopNavigationErrorWatch = router.onError((error, to) => {
     if (router.currentRoute.value !== START_LOCATION) return
@@ -49,6 +52,12 @@ export function apiResponseErrorPlugin(application: App): void {
         name: "errors/InternalServerErrorPage",
       })
       return
+    }
+
+    if (isAxiosError(error) && !error.response && !isCancel(error)) {
+      snack.error(
+        "The server could not be reached. Your changes have not been confirmed saved. Check the current server state before retrying."
+      )
     }
 
     if (previousErrorHandler) {

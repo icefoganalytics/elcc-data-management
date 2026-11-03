@@ -1,15 +1,52 @@
 import { createPinia } from "pinia"
-import { flushPromises, mount } from "@vue/test-utils"
+import { DOMWrapper, flushPromises, mount } from "@vue/test-utils"
+import { AxiosError } from "axios"
 
 import administrationCostsApi from "@/api/administration-costs-api"
 import ApiOperationError from "@/api/errors/api-operation-error"
+import apiResponseErrorPlugin from "@/plugins/api-response-error-plugin"
+import useSnack from "@/use/use-snack"
 import { administrationCostFactory } from "@/tests/factories"
-import { mockVuetify } from "@/tests/support"
+import { mockRouter, mockVuetify } from "@/tests/support"
 import AdministrationCostEditTable from "@/components/administration-costs/AdministrationCostEditTable.vue"
+import AppSnackbar from "@/components/layouts/AppSnackbar.vue"
 
 describe("web/src/components/administration-costs/AdministrationCostEditTable.vue", () => {
   describe("AdministrationCostEditTable", () => {
     describe("#commitEdit", () => {
+      test("when an autosave loses its network connection, shows unconfirmed-save feedback", async () => {
+        // Arrange
+        vi.stubGlobal("visualViewport", undefined)
+        const snack = useSnack()
+        snack.reset()
+        const record = administrationCostFactory.build()
+        vi.spyOn(administrationCostsApi, "list").mockResolvedValue({
+          administrationCosts: [record],
+          totalCount: 1,
+        })
+        vi.spyOn(administrationCostsApi, "update").mockRejectedValue(
+          new AxiosError("Network unavailable", "ERR_NETWORK")
+        )
+        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+        await router.push("/")
+        await router.isReady()
+        mount(AppSnackbar, { global: { plugins: [mockVuetify()] }, attachTo: document.body })
+        const wrapper = mount(AdministrationCostEditTable, {
+          props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
+          global: { plugins: [router, createPinia(), mockVuetify(), apiResponseErrorPlugin] },
+        })
+        await flushPromises()
+        await wrapper.get("tr.cursor-pointer").trigger("click")
+        await wrapper.get('input[inputmode="decimal"]').setValue("0.25")
+
+        // Act
+        await wrapper.get('input[inputmode="decimal"]').trigger("keydown", { key: "Tab" })
+        await flushPromises()
+
+        // Assert
+        expect(new DOMWrapper(document.body).get(".v-snackbar").isVisible()).toBe(true)
+      })
+
       test("when a failed save is still reloading, keeps the table busy until recovery settles", async () => {
         // Arrange
         const record = administrationCostFactory.build()
