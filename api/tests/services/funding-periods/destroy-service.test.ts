@@ -2,8 +2,8 @@ import {
   AdministrationCost,
   AdministrationCostCategory,
   ChildCareSpace,
-  DiverseNeed,
-  DiverseNeedCategory,
+  ChildrenWithDiverseNeedsFundingRecord,
+  ChildrenWithDiverseNeedsFundingCategory,
   QualityEnhancement,
 } from "@/models"
 
@@ -13,8 +13,8 @@ import {
   centreFactory,
   childCareSpaceCategoryFactory,
   childCareSpaceFactory,
-  diverseNeedCategoryFactory,
-  diverseNeedFactory,
+  childrenWithDiverseNeedsFundingCategoryFactory,
+  childrenWithDiverseNeedsFundingRecordFactory,
   fiscalPeriodFactory,
   fundingPeriodFactory,
   qualityEnhancementCategoryFactory,
@@ -35,23 +35,29 @@ describe("api/src/services/funding-periods/destroy-service.ts", () => {
         const otherFiscalPeriod = await fiscalPeriodFactory
           .associations({ fundingPeriod: otherFundingPeriod })
           .create()
-        const category = await diverseNeedCategoryFactory.associations({ fundingPeriod }).create()
-        const otherCategory = await diverseNeedCategoryFactory
+        const category = await childrenWithDiverseNeedsFundingCategoryFactory
+          .associations({ fundingPeriod })
+          .create()
+        const otherCategory = await childrenWithDiverseNeedsFundingCategoryFactory
           .associations({ fundingPeriod: otherFundingPeriod })
           .create()
-        await diverseNeedFactory.associations({ centre, fiscalPeriod, category }).create()
-        const otherDiverseNeed = await diverseNeedFactory
-          .associations({ centre, fiscalPeriod: otherFiscalPeriod, category: otherCategory })
+        await childrenWithDiverseNeedsFundingRecordFactory
+          .associations({ centre, fiscalPeriod, category })
           .create()
+        const otherChildrenWithDiverseNeedsFundingRecord =
+          await childrenWithDiverseNeedsFundingRecordFactory
+            .associations({ centre, fiscalPeriod: otherFiscalPeriod, category: otherCategory })
+            .create()
 
         // Act
         await DestroyService.perform(fundingPeriod)
 
         // Assert
-        const remainingDiverseNeeds = await DiverseNeed.findAll()
-        expect(remainingDiverseNeeds).toEqual([
+        const remainingChildrenWithDiverseNeedsFundingRecords =
+          await ChildrenWithDiverseNeedsFundingRecord.findAll()
+        expect(remainingChildrenWithDiverseNeedsFundingRecords).toEqual([
           expect.objectContaining({
-            id: otherDiverseNeed.id,
+            id: otherChildrenWithDiverseNeedsFundingRecord.id,
             fiscalPeriodId: otherFiscalPeriod.id,
           }),
         ])
@@ -61,8 +67,10 @@ describe("api/src/services/funding-periods/destroy-service.ts", () => {
         // Arrange
         const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2026-2027" })
         const otherFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2027-2028" })
-        await diverseNeedCategoryFactory.associations({ fundingPeriod }).create()
-        const otherCategory = await diverseNeedCategoryFactory
+        await childrenWithDiverseNeedsFundingCategoryFactory
+          .associations({ fundingPeriod })
+          .create()
+        const otherCategory = await childrenWithDiverseNeedsFundingCategoryFactory
           .associations({ fundingPeriod: otherFundingPeriod })
           .create()
 
@@ -70,7 +78,7 @@ describe("api/src/services/funding-periods/destroy-service.ts", () => {
         await DestroyService.perform(fundingPeriod)
 
         // Assert
-        const remainingCategories = await DiverseNeedCategory.findAll()
+        const remainingCategories = await ChildrenWithDiverseNeedsFundingCategory.findAll()
         expect(remainingCategories).toEqual([
           expect.objectContaining({ id: otherCategory.id, fundingPeriodId: otherFundingPeriod.id }),
         ])

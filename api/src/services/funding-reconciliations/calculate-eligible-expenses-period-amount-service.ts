@@ -20,13 +20,14 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
       this.fiscalPeriodId
     )
     const qualityEnhancementsTotalAmount = await this.calculateQualityEnhancements()
-    const diverseNeedsTotalAmount = await this.calculateDiverseNeeds()
+    const childrenWithDiverseNeedsFundingRecordsTotalAmount =
+      await this.calculateChildrenWithDiverseNeedsFundingRecords()
     const administrationCostsTotalAmount = await this.calculateAdministrationCosts()
     const buildingExpensesTotalAmount = await this.calculateBuildingExpenses()
     const totalEligibleExpenses = Big(fundingSubmissionExpensesAmount)
       .plus(childCareSpacesTotalAmount)
       .plus(qualityEnhancementsTotalAmount)
-      .plus(diverseNeedsTotalAmount)
+      .plus(childrenWithDiverseNeedsFundingRecordsTotalAmount)
       .plus(administrationCostsTotalAmount)
       .plus(buildingExpensesTotalAmount)
 
@@ -144,18 +145,18 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
 
     return Big(qualityEnhancementsResult.qualityEnhancementsTotalAmount).toFixed(4)
   }
-  private async calculateDiverseNeeds(): Promise<string> {
-    const [diverseNeedsResult] = await db.query<{
-      diverseNeedsTotalAmount: string
+  private async calculateChildrenWithDiverseNeedsFundingRecords(): Promise<string> {
+    const [childrenWithDiverseNeedsFundingRecordsResult] = await db.query<{
+      childrenWithDiverseNeedsFundingRecordsTotalAmount: string
     }>(
       /* sql */ `
         SELECT
           CONVERT(
             VARCHAR(50),
             COALESCE(SUM(actual_computed_total), 0)
-          ) AS diverseNeedsTotalAmount
+          ) AS childrenWithDiverseNeedsFundingRecordsTotalAmount
         FROM
-          diverse_needs
+          children_with_diverse_needs_funding_records
         WHERE
           centre_id = :centreId
           AND fiscal_period_id = :fiscalPeriodId
@@ -170,7 +171,9 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
       }
     )
 
-    return Big(diverseNeedsResult.diverseNeedsTotalAmount).toFixed(4)
+    return Big(
+      childrenWithDiverseNeedsFundingRecordsResult.childrenWithDiverseNeedsFundingRecordsTotalAmount
+    ).toFixed(4)
   }
 
   private async calculateAdministrationCosts(): Promise<string> {

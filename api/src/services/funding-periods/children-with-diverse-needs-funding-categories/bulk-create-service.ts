@@ -1,7 +1,7 @@
 import { Op } from "@sequelize/core"
 import { isNil } from "lodash"
 
-import { DiverseNeedCategory, FundingPeriod } from "@/models"
+import { ChildrenWithDiverseNeedsFundingCategory, FundingPeriod } from "@/models"
 import BaseService from "@/services/base-service"
 
 const DEFAULT_CATEGORIES = [
@@ -16,7 +16,7 @@ export class BulkCreateService extends BaseService {
     super()
   }
 
-  async perform(): Promise<DiverseNeedCategory[]> {
+  async perform(): Promise<ChildrenWithDiverseNeedsFundingCategory[]> {
     const previousFundingPeriod = await FundingPeriod.findOne({
       attributes: ["id"],
       where: {
@@ -30,7 +30,7 @@ export class BulkCreateService extends BaseService {
     })
     const previousCategories = isNil(previousFundingPeriod)
       ? []
-      : await DiverseNeedCategory.findAll({
+      : await ChildrenWithDiverseNeedsFundingCategory.findAll({
           where: { fundingPeriodId: previousFundingPeriod.id },
           order: [["id", "ASC"]],
         })
@@ -44,7 +44,7 @@ export class BulkCreateService extends BaseService {
           monthlyAmount,
         }))
 
-    return DiverseNeedCategory.bulkCreate(
+    return ChildrenWithDiverseNeedsFundingCategory.bulkCreate(
       categories.map((category) => ({ ...category, fundingPeriodId: this.fundingPeriod.id }))
     )
   }
