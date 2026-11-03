@@ -19,15 +19,15 @@
     </template>
   </v-empty-state>
   <ChildrenWithDiverseNeedsFundingCategoryEditForm
-    v-else-if="childrenWithChildrenWithDiverseNeedsFundingRecordsCategory && policy?.update"
-    v-model:children-with-diverse-needs-funding-category="childrenWithChildrenWithDiverseNeedsFundingRecordsCategory"
+    v-else-if="childrenWithDiverseNeedsFundingCategory && policy?.update"
+    v-model:children-with-diverse-needs-funding-category="childrenWithDiverseNeedsFundingCategory"
     :funding-period-description="fundingPeriodDescription"
     :is-saving="isSaving"
     @save="saveCategory"
     @cancel="cancelEditing"
   />
   <v-empty-state
-    v-else-if="childrenWithChildrenWithDiverseNeedsFundingRecordsCategory"
+    v-else-if="childrenWithDiverseNeedsFundingCategory"
     class="ma-5"
     icon="mdi-lock-outline"
     headline="Editing Not Allowed"
@@ -47,14 +47,14 @@ import useSnack from "@/use/use-snack"
 import ChildrenWithDiverseNeedsFundingCategoryEditForm from "@/components/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryEditForm.vue"
 
 const props = defineProps<{
-  childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryId: string
+  childrenWithDiverseNeedsFundingCategoryId: string
 }>()
 const router = useRouter()
 const isSaving = ref(false)
 const snack = useSnack()
-const categoryId = computed(() => Number(props.childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryId))
+const categoryId = computed(() => Number(props.childrenWithDiverseNeedsFundingCategoryId))
 const {
-  childrenWithChildrenWithDiverseNeedsFundingRecordsCategory,
+  childrenWithDiverseNeedsFundingCategory,
   policy,
   isLoading,
   isErrored,
@@ -65,7 +65,7 @@ const fundingPeriodsQuery = ref({ perPage: -1 })
 const { fundingPeriods } = useFundingPeriods(fundingPeriodsQuery)
 const fundingPeriodDescription = computed(() => {
   const fundingPeriod = fundingPeriods.value.find(
-    ({ id }) => id === childrenWithChildrenWithDiverseNeedsFundingRecordsCategory.value?.fundingPeriodId
+    ({ id }) => id === childrenWithDiverseNeedsFundingCategory.value?.fundingPeriodId
   )
   return fundingPeriod?.fiscalYear ?? "Unknown"
 })
@@ -87,7 +87,7 @@ async function saveCategory() {
 async function cancelEditing() {
   await router.push({
     name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
-    params: { childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryId: categoryId.value },
+    params: { childrenWithDiverseNeedsFundingCategoryId: categoryId.value },
   })
 }
 
@@ -101,7 +101,7 @@ useBreadcrumbs("Edit Children with Diverse Needs Category", [
     title: "Edit Category",
     to: {
       name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryEditPage",
-      params: { childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryId: categoryId.value },
+      params: { childrenWithDiverseNeedsFundingCategoryId: categoryId.value },
     },
   },
 ])

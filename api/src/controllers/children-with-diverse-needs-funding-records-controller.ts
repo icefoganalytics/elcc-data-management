@@ -8,7 +8,10 @@ import {
   DestroyService,
   UpdateService,
 } from "@/services/children-with-diverse-needs-funding-records"
-import { IndexSerializer, ShowSerializer } from "@/serializers/children-with-diverse-needs-funding-records"
+import {
+  IndexSerializer,
+  ShowSerializer,
+} from "@/serializers/children-with-diverse-needs-funding-records"
 
 export class ChildrenWithDiverseNeedsFundingRecordsController extends BaseController<ChildrenWithDiverseNeedsFundingRecord> {
   async index() {
@@ -29,7 +32,7 @@ export class ChildrenWithDiverseNeedsFundingRecordsController extends BaseContro
         offset: this.pagination.offset,
       })
       return this.response.json({
-        childrenWithChildrenWithDiverseNeedsFundingRecordsRecords: IndexSerializer.perform(records, this.currentUser),
+        childrenWithDiverseNeedsFundingRecords: IndexSerializer.perform(records, this.currentUser),
         totalCount,
       })
     } catch (error) {
@@ -50,7 +53,7 @@ export class ChildrenWithDiverseNeedsFundingRecordsController extends BaseContro
           .status(403)
           .json({ message: "You are not authorized to view this Children with Diverse Needs" })
       return this.response.json({
-        childrenWithChildrenWithDiverseNeedsFundingRecordsRecord: ShowSerializer.perform(record),
+        childrenWithDiverseNeedsFundingRecord: ShowSerializer.perform(record),
         policy,
       })
     } catch (error) {
@@ -72,7 +75,7 @@ export class ChildrenWithDiverseNeedsFundingRecordsController extends BaseContro
       )
       return this.response
         .status(201)
-        .json({ childrenWithChildrenWithDiverseNeedsFundingRecordsRecord: ShowSerializer.perform(record), policy })
+        .json({ childrenWithDiverseNeedsFundingRecord: ShowSerializer.perform(record), policy })
     } catch (error) {
       logger.error(`Error creating Children with Diverse Needs: ${error}`, { error })
       return this.response
@@ -95,7 +98,7 @@ export class ChildrenWithDiverseNeedsFundingRecordsController extends BaseContro
         policy.permitAttributes(this.request.body)
       )
       return this.response.json({
-        childrenWithChildrenWithDiverseNeedsFundingRecordsRecord: ShowSerializer.perform(updated),
+        childrenWithDiverseNeedsFundingRecord: ShowSerializer.perform(updated),
         policy,
       })
     } catch (error) {
@@ -125,7 +128,9 @@ export class ChildrenWithDiverseNeedsFundingRecordsController extends BaseContro
     }
   }
   private load() {
-    return ChildrenWithDiverseNeedsFundingRecord.findByPk(this.params.childrenWithChildrenWithDiverseNeedsFundingRecordsRecordId)
+    return ChildrenWithDiverseNeedsFundingRecord.findByPk(
+      this.params.childrenWithDiverseNeedsFundingRecordId
+    )
   }
   private buildPolicy(
     record: ChildrenWithDiverseNeedsFundingRecord = ChildrenWithDiverseNeedsFundingRecord.build()

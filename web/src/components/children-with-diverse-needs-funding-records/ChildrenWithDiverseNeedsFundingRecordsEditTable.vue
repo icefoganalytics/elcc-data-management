@@ -105,7 +105,7 @@
 import { computed, ref, useTemplateRef } from "vue"
 import { keyBy, pick } from "lodash"
 
-import childrenWithChildrenWithDiverseNeedsFundingRecordsApi from "@/api/children-with-diverse-needs-funding-records-api"
+import childrenWithDiverseNeedsFundingRecordsApi from "@/api/children-with-diverse-needs-funding-records-api"
 import type {
   ChildrenWithDiverseNeedsFundingRecordAsIndex,
   ChildrenWithDiverseNeedsFundingRecordOccupancyAttributes,
@@ -133,10 +133,10 @@ const emit = defineEmits<{
   focusBeyondFirstInColumn: [column: "estimates" | "actuals"]
 }>()
 const query = computed(() => ({ where: props.where, perPage: MAX_PER_PAGE }))
-const { childrenWithChildrenWithDiverseNeedsFundingRecordsRecords, isLoading, isErrored, fetch } =
+const { childrenWithDiverseNeedsFundingRecords, isLoading, isErrored, fetch } =
   useChildrenWithDiverseNeedsFundingRecords(query)
 const displayedNeeds = computed(() =>
-  childrenWithChildrenWithDiverseNeedsFundingRecordsRecords.value.map((record) => ({
+  childrenWithDiverseNeedsFundingRecords.value.map((record) => ({
     ...record,
     estimatedChildOccupancyRate: formatDecimal(record.estimatedChildOccupancyRate),
     actualChildOccupancyRate: formatDecimal(record.actualChildOccupancyRate),
@@ -156,26 +156,35 @@ const editableColumns: (keyof ChildrenWithDiverseNeedsFundingRecordOccupancyAttr
   "actualChildOccupancyRate",
 ]
 const totalEstimated = computed(() =>
-  sumByDecimal(childrenWithChildrenWithDiverseNeedsFundingRecordsRecords.value, "estimatedComputedTotal").toFixed(4)
+  sumByDecimal(childrenWithDiverseNeedsFundingRecords.value, "estimatedComputedTotal").toFixed(4)
 )
 const totalActual = computed(() =>
-  sumByDecimal(childrenWithChildrenWithDiverseNeedsFundingRecordsRecords.value, "actualComputedTotal").toFixed(4)
+  sumByDecimal(childrenWithDiverseNeedsFundingRecords.value, "actualComputedTotal").toFixed(4)
 )
 const totalEstimatedOccupancy = computed(() =>
   formatDecimal(
-    sumByDecimal(childrenWithChildrenWithDiverseNeedsFundingRecordsRecords.value, "estimatedChildOccupancyRate").toFixed(4)
+    sumByDecimal(
+      childrenWithDiverseNeedsFundingRecords.value,
+      "estimatedChildOccupancyRate"
+    ).toFixed(4)
   )
 )
 const totalActualOccupancy = computed(() =>
   formatDecimal(
-    sumByDecimal(childrenWithChildrenWithDiverseNeedsFundingRecordsRecords.value, "actualChildOccupancyRate").toFixed(4)
+    sumByDecimal(childrenWithDiverseNeedsFundingRecords.value, "actualChildOccupancyRate").toFixed(
+      4
+    )
   )
 )
-const byId = computed(() => keyBy(childrenWithChildrenWithDiverseNeedsFundingRecordsRecords.value, "id"))
+const byId = computed(() => keyBy(childrenWithDiverseNeedsFundingRecords.value, "id"))
 const editTable = useTemplateRef<{
   commitEdit: () => void
-  focusOnFirstInColumn: (column: keyof ChildrenWithDiverseNeedsFundingRecordOccupancyAttributes) => boolean
-  focusOnLastInColumn: (column: keyof ChildrenWithDiverseNeedsFundingRecordOccupancyAttributes) => boolean
+  focusOnFirstInColumn: (
+    column: keyof ChildrenWithDiverseNeedsFundingRecordOccupancyAttributes
+  ) => boolean
+  focusOnLastInColumn: (
+    column: keyof ChildrenWithDiverseNeedsFundingRecordOccupancyAttributes
+  ) => boolean
   cancelPendingFocus: () => void
 }>("editTable")
 let currentSave: Promise<boolean> | null = null
@@ -219,15 +228,15 @@ async function saveIfDirty(record: ChildrenWithDiverseNeedsFundingRecordAsIndex)
   isSaving.value = true
   saveError.value = ""
   try {
-    const { childrenWithChildrenWithDiverseNeedsFundingRecordsRecord } = await childrenWithChildrenWithDiverseNeedsFundingRecordsApi.update(
-      record.id,
-      pick(record, changed)
+    const { childrenWithDiverseNeedsFundingRecord } =
+      await childrenWithDiverseNeedsFundingRecordsApi.update(record.id, pick(record, changed))
+    const index = childrenWithDiverseNeedsFundingRecords.value.findIndex(
+      (item) => item.id === record.id
     )
-    const index = childrenWithChildrenWithDiverseNeedsFundingRecordsRecords.value.findIndex((item) => item.id === record.id)
     if (index >= 0)
-      childrenWithChildrenWithDiverseNeedsFundingRecordsRecords.value.splice(index, 1, {
+      childrenWithDiverseNeedsFundingRecords.value.splice(index, 1, {
         ...current,
-        ...childrenWithChildrenWithDiverseNeedsFundingRecordsRecord,
+        ...childrenWithDiverseNeedsFundingRecord,
       })
     snack.success("Diverse need saved!")
     emit("updated")
@@ -260,7 +269,7 @@ async function deleteRecord(record: ChildrenWithDiverseNeedsFundingRecordAsIndex
   isDeleting.value = true
   deletingId.value = record.id
   try {
-    await childrenWithChildrenWithDiverseNeedsFundingRecordsApi.delete(record.id)
+    await childrenWithDiverseNeedsFundingRecordsApi.delete(record.id)
     await refresh()
     snack.success("Diverse need deleted!")
     emit("updated")
@@ -292,7 +301,7 @@ async function replicateEstimates() {
   isSaving.value = true
   const failures: unknown[] = []
   try {
-    for (const record of childrenWithChildrenWithDiverseNeedsFundingRecordsRecords.value) {
+    for (const record of childrenWithDiverseNeedsFundingRecords.value) {
       try {
         await replicateEstimatesApi.create(record.id)
       } catch (error) {
@@ -347,7 +356,7 @@ defineExpose({
   isLoading,
   isErrored,
   categoryIds: computed(() =>
-    childrenWithChildrenWithDiverseNeedsFundingRecordsRecords.value.map(({ categoryId }) => categoryId)
+    childrenWithDiverseNeedsFundingRecords.value.map(({ categoryId }) => categoryId)
   ),
 })
 </script>

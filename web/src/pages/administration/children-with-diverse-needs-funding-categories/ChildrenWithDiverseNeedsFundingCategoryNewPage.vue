@@ -78,7 +78,7 @@
 import { reactive, ref, useTemplateRef } from "vue"
 import { useRoute, useRouter } from "vue-router"
 
-import childrenWithChildrenWithDiverseNeedsFundingRecordsCategoriesApi from "@/api/children-with-diverse-needs-funding-categories-api"
+import childrenWithDiverseNeedsFundingCategoriesApi from "@/api/children-with-diverse-needs-funding-categories-api"
 import { required } from "@/utils/validators"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useSnack from "@/use/use-snack"
@@ -112,19 +112,20 @@ async function createCategory() {
 
   isCreating.value = true
   try {
-    const { childrenWithChildrenWithDiverseNeedsFundingRecordsCategory } = await childrenWithChildrenWithDiverseNeedsFundingRecordsCategoriesApi.create(
-      {
+    const { childrenWithDiverseNeedsFundingCategory } =
+      await childrenWithDiverseNeedsFundingCategoriesApi.create({
         fundingPeriodId: attributes.fundingPeriodId,
         categoryName: attributes.categoryName,
         fromAge: attributes.fromAge,
         toAge: attributes.toAge,
         monthlyAmount: attributes.monthlyAmount,
-      }
-    )
+      })
     snack.success("Children with Diverse Needs category created successfully!")
     await router.push({
       name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
-      params: { childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryId: childrenWithChildrenWithDiverseNeedsFundingRecordsCategory.id },
+      params: {
+        childrenWithDiverseNeedsFundingCategoryId: childrenWithDiverseNeedsFundingCategory.id,
+      },
     })
   } catch (error) {
     snack.error(`Failed to create Children with Diverse Needs category: ${error}`)

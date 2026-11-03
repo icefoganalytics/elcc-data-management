@@ -13,8 +13,8 @@ import {
   centreFactory,
   childCareSpaceCategoryFactory,
   childCareSpaceFactory,
-  childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory,
-  childrenWithChildrenWithDiverseNeedsFundingRecordsRecordFactory,
+  childrenWithDiverseNeedsFundingCategoryFactory,
+  childrenWithDiverseNeedsFundingRecordFactory,
   fiscalPeriodFactory,
   fundingPeriodFactory,
   qualityEnhancementCategoryFactory,
@@ -35,18 +35,19 @@ describe("api/src/services/funding-periods/destroy-service.ts", () => {
         const otherFiscalPeriod = await fiscalPeriodFactory
           .associations({ fundingPeriod: otherFundingPeriod })
           .create()
-        const category = await childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory
+        const category = await childrenWithDiverseNeedsFundingCategoryFactory
           .associations({ fundingPeriod })
           .create()
-        const otherCategory = await childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory
+        const otherCategory = await childrenWithDiverseNeedsFundingCategoryFactory
           .associations({ fundingPeriod: otherFundingPeriod })
           .create()
-        await childrenWithChildrenWithDiverseNeedsFundingRecordsRecordFactory
+        await childrenWithDiverseNeedsFundingRecordFactory
           .associations({ centre, fiscalPeriod, category })
           .create()
-        const otherChildrenWithDiverseNeedsFundingRecord = await childrenWithChildrenWithDiverseNeedsFundingRecordsRecordFactory
-          .associations({ centre, fiscalPeriod: otherFiscalPeriod, category: otherCategory })
-          .create()
+        const otherChildrenWithDiverseNeedsFundingRecord =
+          await childrenWithDiverseNeedsFundingRecordFactory
+            .associations({ centre, fiscalPeriod: otherFiscalPeriod, category: otherCategory })
+            .create()
 
         // Act
         await DestroyService.perform(fundingPeriod)
@@ -66,8 +67,10 @@ describe("api/src/services/funding-periods/destroy-service.ts", () => {
         // Arrange
         const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2026-2027" })
         const otherFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2027-2028" })
-        await childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory.associations({ fundingPeriod }).create()
-        const otherCategory = await childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory
+        await childrenWithDiverseNeedsFundingCategoryFactory
+          .associations({ fundingPeriod })
+          .create()
+        const otherCategory = await childrenWithDiverseNeedsFundingCategoryFactory
           .associations({ fundingPeriod: otherFundingPeriod })
           .create()
 

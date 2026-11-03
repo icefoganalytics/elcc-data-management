@@ -4,13 +4,15 @@ import db, { ChildrenWithDiverseNeedsFundingRecord, FiscalPeriod } from "@/model
 import BaseService from "@/services/base-service"
 
 export class ReplicateEstimatesService extends BaseService {
-  constructor(private childrenWithChildrenWithDiverseNeedsFundingRecordsRecord: ChildrenWithDiverseNeedsFundingRecord) {
+  constructor(
+    private childrenWithDiverseNeedsFundingRecord: ChildrenWithDiverseNeedsFundingRecord
+  ) {
     super()
   }
   async perform(): Promise<void> {
     await db.transaction(async () => {
       const { fiscalPeriodId, centreId, categoryId, estimatedChildOccupancyRate } =
-        this.childrenWithChildrenWithDiverseNeedsFundingRecordsRecord
+        this.childrenWithDiverseNeedsFundingRecord
       const source = await FiscalPeriod.findByPk(fiscalPeriodId)
       if (isNil(source)) throw new Error(`Fiscal period with ID ${fiscalPeriodId} not found`)
       await FiscalPeriod.findEach(

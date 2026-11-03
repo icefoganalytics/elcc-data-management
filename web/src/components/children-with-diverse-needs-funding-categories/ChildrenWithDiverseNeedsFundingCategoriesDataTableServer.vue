@@ -21,7 +21,7 @@
     v-model:sort-by="sortBy"
     :page="page"
     :headers="headers"
-    :items="childrenWithChildrenWithDiverseNeedsFundingRecordsCategories"
+    :items="childrenWithDiverseNeedsFundingCategories"
     :items-length="totalCount"
     :loading="isLoading"
     density="comfortable"
@@ -115,7 +115,7 @@ const query = computed(() => ({
   page: page.value,
   perPage: perPage.value,
 }))
-const { childrenWithChildrenWithDiverseNeedsFundingRecordsCategories, totalCount, isLoading, isErrored, fetch } =
+const { childrenWithDiverseNeedsFundingCategories, totalCount, isLoading, isErrored, fetch } =
   useChildrenWithDiverseNeedsFundingCategories(query)
 
 async function reload() {
@@ -133,16 +133,22 @@ function updatePage(newPage: number) {
 }
 
 const router = useRouter()
-type ChildrenWithDiverseNeedsFundingCategoryTableRow = { item: ChildrenWithDiverseNeedsFundingCategoryAsIndex }
+type ChildrenWithDiverseNeedsFundingCategoryTableRow = {
+  item: ChildrenWithDiverseNeedsFundingCategoryAsIndex
+}
 
-function buildChildrenWithDiverseNeedsFundingCategoryTo(item: ChildrenWithDiverseNeedsFundingCategoryAsIndex) {
+function buildChildrenWithDiverseNeedsFundingCategoryTo(
+  item: ChildrenWithDiverseNeedsFundingCategoryAsIndex
+) {
   return {
     name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
-    params: { childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryId: item.id },
+    params: { childrenWithDiverseNeedsFundingCategoryId: item.id },
   }
 }
 
-function goToChildrenWithDiverseNeedsFundingCategory(item: ChildrenWithDiverseNeedsFundingCategoryAsIndex) {
+function goToChildrenWithDiverseNeedsFundingCategory(
+  item: ChildrenWithDiverseNeedsFundingCategoryAsIndex
+) {
   router.push(buildChildrenWithDiverseNeedsFundingCategoryTo(item))
 }
 </script>

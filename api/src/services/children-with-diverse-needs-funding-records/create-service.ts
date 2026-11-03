@@ -62,18 +62,19 @@ export class CreateService extends BaseService {
         )
       }
 
-      const childrenWithChildrenWithDiverseNeedsFundingRecordsRecord = await ChildrenWithDiverseNeedsFundingRecord.create({
-        centreId,
-        fiscalPeriodId,
-        categoryId,
-        lineName: category.categoryName,
-        monthlyAmount: category.monthlyAmount,
-        estimatedChildOccupancyRate,
-        actualChildOccupancyRate,
-        estimatedComputedTotal: "0.0000",
-        actualComputedTotal: "0.0000",
-      })
-      if (!applyToCurrentAndFutureFiscalPeriods) return childrenWithChildrenWithDiverseNeedsFundingRecordsRecord
+      const childrenWithDiverseNeedsFundingRecord =
+        await ChildrenWithDiverseNeedsFundingRecord.create({
+          centreId,
+          fiscalPeriodId,
+          categoryId,
+          lineName: category.categoryName,
+          monthlyAmount: category.monthlyAmount,
+          estimatedChildOccupancyRate,
+          actualChildOccupancyRate,
+          estimatedComputedTotal: "0.0000",
+          actualComputedTotal: "0.0000",
+        })
+      if (!applyToCurrentAndFutureFiscalPeriods) return childrenWithDiverseNeedsFundingRecord
 
       await FiscalPeriod.findEach(
         {
@@ -106,7 +107,7 @@ export class CreateService extends BaseService {
         }
       )
 
-      return childrenWithChildrenWithDiverseNeedsFundingRecordsRecord
+      return childrenWithDiverseNeedsFundingRecord
     })
   }
 }

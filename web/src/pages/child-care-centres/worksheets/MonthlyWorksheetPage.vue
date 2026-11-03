@@ -192,7 +192,7 @@
           Children with Diverse Needs
         </h3>
         <ChildrenWithDiverseNeedsFundingRecordsEditTable
-          ref="childrenWithChildrenWithDiverseNeedsFundingRecordsRecordTable"
+          ref="childrenWithDiverseNeedsFundingRecordTable"
           :where="worksheetWhere"
           :is-replicating="
             isReplicating ||
@@ -213,8 +213,8 @@
               color="primary"
               :disabled="
                 isWorkflowBusy ||
-                childrenWithChildrenWithDiverseNeedsFundingRecordsRecordTable?.isLoading ||
-                childrenWithChildrenWithDiverseNeedsFundingRecordsRecordTable?.isErrored
+                childrenWithDiverseNeedsFundingRecordTable?.isLoading ||
+                childrenWithDiverseNeedsFundingRecordTable?.isErrored
               "
               @click="showChildrenWithDiverseNeedsFundingRecordCreateForm = true"
             >
@@ -229,7 +229,7 @@
               :centre-id="centreId"
               :fiscal-period-id="fiscalPeriod.id"
               :funding-period-id="fiscalPeriod.fundingPeriodId"
-              :existing-category-ids="childrenWithChildrenWithDiverseNeedsFundingRecordsRecordTable?.categoryIds ?? []"
+              :existing-category-ids="childrenWithDiverseNeedsFundingRecordTable?.categoryIds ?? []"
               :is-workflow-busy="isReplicating || isWorksheetSaving || isRefreshingLinked"
               @saving="isCreatingChildrenWithDiverseNeedsFundingRecord = $event"
               @created="onChildrenWithDiverseNeedsFundingRecordCreated"
@@ -409,9 +409,9 @@ const worksheetWhere = computed(() => ({
   centreId: props.centreId,
   fiscalPeriodId: fiscalPeriod.value?.id,
 }))
-const childrenWithChildrenWithDiverseNeedsFundingRecordsRecordTable = useTemplateRef<
+const childrenWithDiverseNeedsFundingRecordTable = useTemplateRef<
   InstanceType<typeof ChildrenWithDiverseNeedsFundingRecordsEditTable>
->("childrenWithChildrenWithDiverseNeedsFundingRecordsRecordTable")
+>("childrenWithDiverseNeedsFundingRecordTable")
 const administrationCostTable =
   useTemplateRef<InstanceType<typeof AdministrationCostEditTable>>("administrationCostTable")
 const qualityEnhancementTable =
@@ -437,7 +437,7 @@ async function navigateBetweenSections(
     jsonSheet.value,
     administrationCostTable.value,
     qualityEnhancementTable.value,
-    childrenWithChildrenWithDiverseNeedsFundingRecordsRecordTable.value,
+    childrenWithDiverseNeedsFundingRecordTable.value,
     buildingExpensesEditTable.value,
   ] as unknown as Array<WorksheetFocusTarget | null>
   const current = targets[currentIndex]
@@ -474,8 +474,8 @@ const isRefreshingLinked = ref(false)
 const snack = useSnack()
 const isLedgerMutating = computed(() =>
   Boolean(
-    childrenWithChildrenWithDiverseNeedsFundingRecordsRecordTable.value?.isSaving ||
-      childrenWithChildrenWithDiverseNeedsFundingRecordsRecordTable.value?.isDeleting ||
+    childrenWithDiverseNeedsFundingRecordTable.value?.isSaving ||
+      childrenWithDiverseNeedsFundingRecordTable.value?.isDeleting ||
       administrationCostTable.value?.isSaving ||
       administrationCostTable.value?.isDeleting ||
       qualityEnhancementTable.value?.isSaving ||
@@ -495,15 +495,15 @@ const isWorkflowBusy = computed(
 const isReplicationUnavailable = computed(() => {
   const sheet = jsonSheet.value
   const administration = administrationCostTable.value
-  const childrenWithChildrenWithDiverseNeedsFundingRecordsRecord = childrenWithChildrenWithDiverseNeedsFundingRecordsRecordTable.value
+  const childrenWithDiverseNeedsFundingRecord = childrenWithDiverseNeedsFundingRecordTable.value
   const quality = qualityEnhancementTable.value
   return (
     !sheet ||
     sheet.isLoading ||
     sheet.isErrored ||
-    !childrenWithChildrenWithDiverseNeedsFundingRecordsRecord ||
-    childrenWithChildrenWithDiverseNeedsFundingRecordsRecord.isLoading ||
-    childrenWithChildrenWithDiverseNeedsFundingRecordsRecord.isErrored ||
+    !childrenWithDiverseNeedsFundingRecord ||
+    childrenWithDiverseNeedsFundingRecord.isLoading ||
+    childrenWithDiverseNeedsFundingRecord.isErrored ||
     !administration ||
     administration.isLoading ||
     administration.isErrored ||
@@ -538,7 +538,7 @@ async function closeCreateFormAndRefresh() {
 async function refreshLinkedResources() {
   const results = await Promise.allSettled([
     administrationCostTable.value?.refresh(),
-    childrenWithChildrenWithDiverseNeedsFundingRecordsRecordTable.value?.refresh(),
+    childrenWithDiverseNeedsFundingRecordTable.value?.refresh(),
     qualityEnhancementTable.value?.refresh(),
   ])
   const failures = results.flatMap((result) =>
@@ -563,19 +563,26 @@ async function saveWorksheet(): Promise<boolean> {
 
   const sheet = jsonSheet.value
   const administration = administrationCostTable.value
-  const childrenWithChildrenWithDiverseNeedsFundingRecordsRecord = childrenWithChildrenWithDiverseNeedsFundingRecordsRecordTable.value
+  const childrenWithDiverseNeedsFundingRecord = childrenWithDiverseNeedsFundingRecordTable.value
   const quality = qualityEnhancementTable.value
-  if (!sheet || !administration || !childrenWithChildrenWithDiverseNeedsFundingRecordsRecord || !quality) return false
+  if (!sheet || !administration || !childrenWithDiverseNeedsFundingRecord || !quality) return false
 
   try {
     isWorksheetSaving.value = true
-    const [administrationCommitted, childrenWithChildrenWithDiverseNeedsFundingRecordsRecordCommitted, qualityCommitted] =
-      await Promise.all([
-        administration.commitEdit(),
-        childrenWithChildrenWithDiverseNeedsFundingRecordsRecord.commitEdit(),
-        quality.commitEdit(),
-      ])
-    if (!administrationCommitted || !childrenWithChildrenWithDiverseNeedsFundingRecordsRecordCommitted || !qualityCommitted)
+    const [
+      administrationCommitted,
+      childrenWithDiverseNeedsFundingRecordCommitted,
+      qualityCommitted,
+    ] = await Promise.all([
+      administration.commitEdit(),
+      childrenWithDiverseNeedsFundingRecord.commitEdit(),
+      quality.commitEdit(),
+    ])
+    if (
+      !administrationCommitted ||
+      !childrenWithDiverseNeedsFundingRecordCommitted ||
+      !qualityCommitted
+    )
       return false
 
     let wasSaved = false
@@ -610,7 +617,7 @@ async function onAdministrationCostCreated() {
 async function onChildrenWithDiverseNeedsFundingRecordCreated() {
   showChildrenWithDiverseNeedsFundingRecordCreateForm.value = false
   try {
-    await childrenWithChildrenWithDiverseNeedsFundingRecordsRecordTable.value?.refresh()
+    await childrenWithDiverseNeedsFundingRecordTable.value?.refresh()
   } catch (error) {
     snack.error(`Failed to refresh diverse needs: ${error}`)
   }
@@ -642,9 +649,9 @@ async function replicateEstimatesForward() {
 
   const sheet = jsonSheet.value
   const administration = administrationCostTable.value
-  const childrenWithChildrenWithDiverseNeedsFundingRecordsRecord = childrenWithChildrenWithDiverseNeedsFundingRecordsRecordTable.value
+  const childrenWithDiverseNeedsFundingRecord = childrenWithDiverseNeedsFundingRecordTable.value
   const quality = qualityEnhancementTable.value
-  if (!sheet || !administration || !childrenWithChildrenWithDiverseNeedsFundingRecordsRecord || !quality) return
+  if (!sheet || !administration || !childrenWithDiverseNeedsFundingRecord || !quality) return
 
   const savedWorksheet = saveWorksheet()
   isReplicating.value = true
@@ -662,7 +669,7 @@ async function replicateEstimatesForward() {
     const results = await Promise.allSettled([
       sheet.replicateOwnEstimates(),
       administration.replicateEstimates(),
-      childrenWithChildrenWithDiverseNeedsFundingRecordsRecord.replicateEstimates(),
+      childrenWithDiverseNeedsFundingRecord.replicateEstimates(),
       quality.replicateEstimates(),
     ])
     const failures = results.flatMap((result) =>

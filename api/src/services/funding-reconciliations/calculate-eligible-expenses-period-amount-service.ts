@@ -20,14 +20,14 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
       this.fiscalPeriodId
     )
     const qualityEnhancementsTotalAmount = await this.calculateQualityEnhancements()
-    const childrenWithChildrenWithDiverseNeedsFundingRecordsRecordsTotalAmount =
+    const childrenWithDiverseNeedsFundingRecordsTotalAmount =
       await this.calculateChildrenWithDiverseNeedsFundingRecord()
     const administrationCostsTotalAmount = await this.calculateAdministrationCosts()
     const buildingExpensesTotalAmount = await this.calculateBuildingExpenses()
     const totalEligibleExpenses = Big(fundingSubmissionExpensesAmount)
       .plus(childCareSpacesTotalAmount)
       .plus(qualityEnhancementsTotalAmount)
-      .plus(childrenWithChildrenWithDiverseNeedsFundingRecordsRecordsTotalAmount)
+      .plus(childrenWithDiverseNeedsFundingRecordsTotalAmount)
       .plus(administrationCostsTotalAmount)
       .plus(buildingExpensesTotalAmount)
 
@@ -146,15 +146,15 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
     return Big(qualityEnhancementsResult.qualityEnhancementsTotalAmount).toFixed(4)
   }
   private async calculateChildrenWithDiverseNeedsFundingRecord(): Promise<string> {
-    const [childrenWithChildrenWithDiverseNeedsFundingRecordsRecordsResult] = await db.query<{
-      childrenWithChildrenWithDiverseNeedsFundingRecordsRecordsTotalAmount: string
+    const [childrenWithDiverseNeedsFundingRecordsResult] = await db.query<{
+      childrenWithDiverseNeedsFundingRecordsTotalAmount: string
     }>(
       /* sql */ `
         SELECT
           CONVERT(
             VARCHAR(50),
             COALESCE(SUM(actual_computed_total), 0)
-          ) AS childrenWithChildrenWithDiverseNeedsFundingRecordsRecordsTotalAmount
+          ) AS childrenWithDiverseNeedsFundingRecordsTotalAmount
         FROM
           children_with_diverse_needs_funding_records
         WHERE
@@ -172,7 +172,7 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
     )
 
     return Big(
-      childrenWithChildrenWithDiverseNeedsFundingRecordsRecordsResult.childrenWithChildrenWithDiverseNeedsFundingRecordsRecordsTotalAmount
+      childrenWithDiverseNeedsFundingRecordsResult.childrenWithDiverseNeedsFundingRecordsTotalAmount
     ).toFixed(4)
   }
 

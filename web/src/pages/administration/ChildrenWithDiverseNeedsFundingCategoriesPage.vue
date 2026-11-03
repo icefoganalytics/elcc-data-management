@@ -18,7 +18,7 @@
       clearable
     />
     <ChildrenWithDiverseNeedsFundingCategoriesDataTableServer
-      :where="childrenWithChildrenWithDiverseNeedsFundingRecordsCategoriesWhere"
+      :where="childrenWithDiverseNeedsFundingCategoriesWhere"
     />
   </HeaderActionsCard>
 </template>
@@ -38,7 +38,7 @@ const fundingPeriodsQuery = ref({ perPage: 1 })
 const { totalCount: fundingPeriodsCount } = useFundingPeriods(fundingPeriodsQuery)
 const fundingPeriodId = ref<number | null>(null)
 const { isSystemAdmin } = useCurrentUser()
-const childrenWithChildrenWithDiverseNeedsFundingRecordsCategoriesWhere = computed(() => ({
+const childrenWithDiverseNeedsFundingCategoriesWhere = computed(() => ({
   fundingPeriodId: fundingPeriodId.value ?? undefined,
 }))
 

@@ -9,8 +9,8 @@ import {
   childCareSpaceFactory,
   fiscalPeriodFactory,
   fundingPeriodFactory,
-  childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory,
-  childrenWithChildrenWithDiverseNeedsFundingRecordsRecordFactory,
+  childrenWithDiverseNeedsFundingCategoryFactory,
+  childrenWithDiverseNeedsFundingRecordFactory,
   fundingSubmissionLineJsonFactory,
   qualityEnhancementCategoryFactory,
   qualityEnhancementFactory,
@@ -129,10 +129,10 @@ describe("api/src/services/funding-reconciliations/calculate-eligible-expenses-p
           dateStart: new Date("2025-04-01"),
           dateEnd: new Date("2025-04-30"),
         })
-        const category = await childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory
+        const category = await childrenWithDiverseNeedsFundingCategoryFactory
           .associations({ fundingPeriod })
           .create({ categoryName: "Toddlers", monthlyAmount: "10.0000" })
-        await childrenWithChildrenWithDiverseNeedsFundingRecordsRecordFactory
+        await childrenWithDiverseNeedsFundingRecordFactory
           .associations({ centre, fiscalPeriod, category })
           .create({
             monthlyAmount: "10.0000",

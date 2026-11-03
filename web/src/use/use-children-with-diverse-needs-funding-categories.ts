@@ -2,7 +2,7 @@ import { isCancel } from "axios"
 import { onScopeDispose, reactive, toRefs, unref, watch } from "vue"
 import type { Ref } from "vue"
 
-import childrenWithChildrenWithDiverseNeedsFundingRecordsCategoriesApi from "@/api/children-with-diverse-needs-funding-categories-api"
+import childrenWithDiverseNeedsFundingCategoriesApi from "@/api/children-with-diverse-needs-funding-categories-api"
 import type {
   ChildrenWithDiverseNeedsFundingCategoryAsIndex,
   ChildrenWithDiverseNeedsFundingCategoryQueryOptions,
@@ -12,12 +12,12 @@ export function useChildrenWithDiverseNeedsFundingCategories(
   queryOptions: Ref<ChildrenWithDiverseNeedsFundingCategoryQueryOptions>
 ) {
   const state = reactive<{
-    childrenWithChildrenWithDiverseNeedsFundingRecordsCategories: ChildrenWithDiverseNeedsFundingCategoryAsIndex[]
+    childrenWithDiverseNeedsFundingCategories: ChildrenWithDiverseNeedsFundingCategoryAsIndex[]
     totalCount: number
     isLoading: boolean
     isErrored: boolean
   }>({
-    childrenWithChildrenWithDiverseNeedsFundingRecordsCategories: [],
+    childrenWithDiverseNeedsFundingCategories: [],
     totalCount: 0,
     isLoading: false,
     isErrored: false,
@@ -30,18 +30,22 @@ export function useChildrenWithDiverseNeedsFundingCategories(
     requestController = controller
     state.isLoading = true
     try {
-      const response = await childrenWithChildrenWithDiverseNeedsFundingRecordsCategoriesApi.list(unref(queryOptions), {
-        signal: controller.signal,
-      })
-      if (controller.signal.aborted) return state.childrenWithChildrenWithDiverseNeedsFundingRecordsCategories
+      const response = await childrenWithDiverseNeedsFundingCategoriesApi.list(
+        unref(queryOptions),
+        {
+          signal: controller.signal,
+        }
+      )
+      if (controller.signal.aborted) return state.childrenWithDiverseNeedsFundingCategories
 
-      state.childrenWithChildrenWithDiverseNeedsFundingRecordsCategories = response.childrenWithChildrenWithDiverseNeedsFundingRecordsCategories
+      state.childrenWithDiverseNeedsFundingCategories =
+        response.childrenWithDiverseNeedsFundingCategories
       state.totalCount = response.totalCount
       state.isErrored = false
-      return response.childrenWithChildrenWithDiverseNeedsFundingRecordsCategories
+      return response.childrenWithDiverseNeedsFundingCategories
     } catch (error) {
       if (controller.signal.aborted || isCancel(error))
-        return state.childrenWithChildrenWithDiverseNeedsFundingRecordsCategories
+        return state.childrenWithDiverseNeedsFundingCategories
 
       state.isErrored = true
       throw error

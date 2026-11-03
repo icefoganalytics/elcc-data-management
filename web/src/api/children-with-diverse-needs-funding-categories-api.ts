@@ -20,7 +20,10 @@ export type ChildrenWithDiverseNeedsFundingCategoryCreationAttributes = Pick<
   "fundingPeriodId" | "categoryName" | "fromAge" | "toAge" | "monthlyAmount"
 >
 export type ChildrenWithDiverseNeedsFundingCategoryUpdateAttributes = Partial<
-  Pick<ChildrenWithDiverseNeedsFundingCategory, "categoryName" | "fromAge" | "toAge" | "monthlyAmount">
+  Pick<
+    ChildrenWithDiverseNeedsFundingCategory,
+    "categoryName" | "fromAge" | "toAge" | "monthlyAmount"
+  >
 >
 export type ChildrenWithDiverseNeedsFundingCategoryWhereOptions = WhereOptions<
   ChildrenWithDiverseNeedsFundingCategory,
@@ -34,12 +37,12 @@ export type ChildrenWithDiverseNeedsFundingCategoryQueryOptions = QueryOptions<
   ChildrenWithDiverseNeedsFundingCategoryFiltersOptions
 >
 
-export const childrenWithChildrenWithDiverseNeedsFundingRecordsCategoriesApi = {
+export const childrenWithDiverseNeedsFundingCategoriesApi = {
   async list(
     params: ChildrenWithDiverseNeedsFundingCategoryQueryOptions = {},
     { signal }: { signal?: AbortSignal } = {}
   ): Promise<{
-    childrenWithChildrenWithDiverseNeedsFundingRecordsCategories: ChildrenWithDiverseNeedsFundingCategoryAsIndex[]
+    childrenWithDiverseNeedsFundingCategories: ChildrenWithDiverseNeedsFundingCategoryAsIndex[]
     totalCount: number
   }> {
     const { data } = await http.get("/api/children-with-diverse-needs-funding-categories", {
@@ -49,14 +52,14 @@ export const childrenWithChildrenWithDiverseNeedsFundingRecordsCategoriesApi = {
     return data
   },
   async get(
-    childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryId: number,
+    childrenWithDiverseNeedsFundingCategoryId: number,
     { signal }: { signal?: AbortSignal } = {}
   ): Promise<{
-    childrenWithChildrenWithDiverseNeedsFundingRecordsCategory: ChildrenWithDiverseNeedsFundingCategoryAsShow
+    childrenWithDiverseNeedsFundingCategory: ChildrenWithDiverseNeedsFundingCategoryAsShow
     policy: ChildrenWithDiverseNeedsFundingCategoryPolicy
   }> {
     const { data } = await http.get(
-      `/api/children-with-diverse-needs-funding-categories/${childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryId}`,
+      `/api/children-with-diverse-needs-funding-categories/${childrenWithDiverseNeedsFundingCategoryId}`,
       {
         signal,
       }
@@ -64,31 +67,34 @@ export const childrenWithChildrenWithDiverseNeedsFundingRecordsCategoriesApi = {
     return data
   },
   async create(attributes: ChildrenWithDiverseNeedsFundingCategoryCreationAttributes): Promise<{
-    childrenWithChildrenWithDiverseNeedsFundingRecordsCategory: ChildrenWithDiverseNeedsFundingCategoryAsShow
+    childrenWithDiverseNeedsFundingCategory: ChildrenWithDiverseNeedsFundingCategoryAsShow
     policy: ChildrenWithDiverseNeedsFundingCategoryPolicy
   }> {
-    const { data } = await http.post("/api/children-with-diverse-needs-funding-categories", attributes)
-    return data
-  },
-  async update(
-    childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryId: number,
-    attributes: ChildrenWithDiverseNeedsFundingCategoryUpdateAttributes
-  ): Promise<{
-    childrenWithChildrenWithDiverseNeedsFundingRecordsCategory: ChildrenWithDiverseNeedsFundingCategoryAsShow
-    policy: ChildrenWithDiverseNeedsFundingCategoryPolicy
-  }> {
-    const { data } = await http.patch(
-      `/api/children-with-diverse-needs-funding-categories/${childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryId}`,
+    const { data } = await http.post(
+      "/api/children-with-diverse-needs-funding-categories",
       attributes
     )
     return data
   },
-  async delete(childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryId: number): Promise<void> {
+  async update(
+    childrenWithDiverseNeedsFundingCategoryId: number,
+    attributes: ChildrenWithDiverseNeedsFundingCategoryUpdateAttributes
+  ): Promise<{
+    childrenWithDiverseNeedsFundingCategory: ChildrenWithDiverseNeedsFundingCategoryAsShow
+    policy: ChildrenWithDiverseNeedsFundingCategoryPolicy
+  }> {
+    const { data } = await http.patch(
+      `/api/children-with-diverse-needs-funding-categories/${childrenWithDiverseNeedsFundingCategoryId}`,
+      attributes
+    )
+    return data
+  },
+  async delete(childrenWithDiverseNeedsFundingCategoryId: number): Promise<void> {
     const { data } = await http.delete(
-      `/api/children-with-diverse-needs-funding-categories/${childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryId}`
+      `/api/children-with-diverse-needs-funding-categories/${childrenWithDiverseNeedsFundingCategoryId}`
     )
     return data
   },
 }
 
-export default childrenWithChildrenWithDiverseNeedsFundingRecordsCategoriesApi
+export default childrenWithDiverseNeedsFundingCategoriesApi

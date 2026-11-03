@@ -10,7 +10,7 @@
       readonly
     />
     <v-text-field
-      v-model="childrenWithChildrenWithDiverseNeedsFundingRecordsCategory.categoryName"
+      v-model="childrenWithDiverseNeedsFundingCategory.categoryName"
       :disabled="isSaving"
       label="Category Name *"
       :rules="[required]"
@@ -21,7 +21,7 @@
         md="6"
       >
         <NumberTextField
-          v-model="childrenWithChildrenWithDiverseNeedsFundingRecordsCategory.fromAge"
+          v-model="childrenWithDiverseNeedsFundingCategory.fromAge"
           :disabled="isSaving"
           label="From Age"
           min="0"
@@ -33,7 +33,7 @@
         md="6"
       >
         <NumberTextField
-          v-model="childrenWithChildrenWithDiverseNeedsFundingRecordsCategory.toAge"
+          v-model="childrenWithDiverseNeedsFundingCategory.toAge"
           :disabled="isSaving"
           label="To Age"
           min="0"
@@ -42,7 +42,7 @@
       </v-col>
     </v-row>
     <CurrencyInput
-      v-model="childrenWithChildrenWithDiverseNeedsFundingRecordsCategory.monthlyAmount"
+      v-model="childrenWithDiverseNeedsFundingCategory.monthlyAmount"
       :disabled="isSaving"
       label="Monthly Amount *"
       :rules="[required]"
@@ -75,12 +75,10 @@ import CurrencyInput from "@/components/CurrencyInput.vue"
 import HeaderActionsFormCard from "@/components/common/HeaderActionsFormCard.vue"
 import NumberTextField from "@/components/common/NumberTextField.vue"
 
-const childrenWithChildrenWithDiverseNeedsFundingRecordsCategory = defineModel<ChildrenWithDiverseNeedsFundingCategory>(
-  "childrenWithChildrenWithDiverseNeedsFundingRecordsCategory",
-  {
+const childrenWithDiverseNeedsFundingCategory =
+  defineModel<ChildrenWithDiverseNeedsFundingCategory>("childrenWithDiverseNeedsFundingCategory", {
     required: true,
-  }
-)
+  })
 
 defineProps<{
   fundingPeriodDescription: string

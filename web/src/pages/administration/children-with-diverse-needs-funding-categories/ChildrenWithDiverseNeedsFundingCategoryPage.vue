@@ -19,7 +19,7 @@
     </template>
   </v-empty-state>
   <HeaderActionsCard
-    v-else-if="childrenWithChildrenWithDiverseNeedsFundingRecordsCategory"
+    v-else-if="childrenWithDiverseNeedsFundingCategory"
     title="Children with Diverse Needs Category Details"
   >
     <template #header-actions>
@@ -28,7 +28,7 @@
         color="primary"
         :to="{
           name: 'administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryEditPage',
-          params: { childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryId: categoryId },
+          params: { childrenWithDiverseNeedsFundingCategoryId: categoryId },
         }"
       >
         Edit
@@ -62,7 +62,7 @@
         md="6"
       >
         <DescriptionElement
-          :model-value="childrenWithChildrenWithDiverseNeedsFundingRecordsCategory.categoryName"
+          :model-value="childrenWithDiverseNeedsFundingCategory.categoryName"
           label="Category Name"
           vertical
         />
@@ -85,7 +85,7 @@
         md="4"
       >
         <DescriptionElement
-          :model-value="childrenWithChildrenWithDiverseNeedsFundingRecordsCategory.fromAge ?? '—'"
+          :model-value="childrenWithDiverseNeedsFundingCategory.fromAge ?? '—'"
           label="From Age"
           vertical
         />
@@ -95,7 +95,7 @@
         md="4"
       >
         <DescriptionElement
-          :model-value="childrenWithChildrenWithDiverseNeedsFundingRecordsCategory.toAge ?? '—'"
+          :model-value="childrenWithDiverseNeedsFundingCategory.toAge ?? '—'"
           label="To Age"
           vertical
         />
@@ -106,7 +106,7 @@
       >
         <DescriptionElement
           :model-value="
-            formatMoney(childrenWithChildrenWithDiverseNeedsFundingRecordsCategory.monthlyAmount, {
+            formatMoney(childrenWithDiverseNeedsFundingCategory.monthlyAmount, {
               maximumFractionDigits: 4,
             })
           "
@@ -122,7 +122,7 @@
 import { computed, ref } from "vue"
 import { useRouter } from "vue-router"
 
-import childrenWithChildrenWithDiverseNeedsFundingRecordsCategoriesApi from "@/api/children-with-diverse-needs-funding-categories-api"
+import childrenWithDiverseNeedsFundingCategoriesApi from "@/api/children-with-diverse-needs-funding-categories-api"
 import useChildrenWithDiverseNeedsFundingCategory from "@/use/use-children-with-diverse-needs-funding-category"
 import useFundingPeriod from "@/use/use-funding-period"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
@@ -134,18 +134,20 @@ import HeaderActionsCard from "@/components/common/HeaderActionsCard.vue"
 import DescriptionElement from "@/components/common/DescriptionElement.vue"
 
 const props = defineProps<{
-  childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryId: string
+  childrenWithDiverseNeedsFundingCategoryId: string
 }>()
 const router = useRouter()
-const categoryId = computed(() => Number(props.childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryId))
+const categoryId = computed(() => Number(props.childrenWithDiverseNeedsFundingCategoryId))
 const {
-  childrenWithChildrenWithDiverseNeedsFundingRecordsCategory,
+  childrenWithDiverseNeedsFundingCategory,
   policy,
   isLoading,
   isErrored,
   fetch: refreshCategory,
 } = useChildrenWithDiverseNeedsFundingCategory(categoryId)
-const fundingPeriodId = computed(() => childrenWithChildrenWithDiverseNeedsFundingRecordsCategory.value?.fundingPeriodId)
+const fundingPeriodId = computed(
+  () => childrenWithDiverseNeedsFundingCategory.value?.fundingPeriodId
+)
 const {
   fundingPeriod,
   isLoading: isLoadingFundingPeriod,
@@ -168,7 +170,7 @@ async function retireCategory() {
 
   isDeleting.value = true
   try {
-    await childrenWithChildrenWithDiverseNeedsFundingRecordsCategoriesApi.delete(categoryId.value)
+    await childrenWithDiverseNeedsFundingCategoriesApi.delete(categoryId.value)
     snack.success("Children with Diverse Needs category retired successfully!")
     await router.push({ name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage" })
   } catch (error) {
@@ -188,7 +190,7 @@ useBreadcrumbs("Children with Diverse Needs Category Details", [
     title: "Details",
     to: {
       name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
-      params: { childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryId: categoryId.value },
+      params: { childrenWithDiverseNeedsFundingCategoryId: categoryId.value },
     },
   },
 ])

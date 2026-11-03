@@ -1,9 +1,9 @@
 import http from "@/api/http-client"
 
 export const replicateEstimatesApi = {
-  async create(childrenWithChildrenWithDiverseNeedsFundingRecordsRecordId: number): Promise<void> {
+  async create(childrenWithDiverseNeedsFundingRecordId: number): Promise<void> {
     const { data } = await http.post(
-      `/api/children-with-diverse-needs-funding-records/${childrenWithChildrenWithDiverseNeedsFundingRecordsRecordId}/replicate-estimates`
+      `/api/children-with-diverse-needs-funding-records/${childrenWithDiverseNeedsFundingRecordId}/replicate-estimates`
     )
     return data
   },

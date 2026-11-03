@@ -32,7 +32,10 @@ export class ChildrenWithDiverseNeedsFundingCategoriesController extends BaseCon
         offset: this.pagination.offset,
       })
       return this.response.json({
-        childrenWithChildrenWithDiverseNeedsFundingRecordsCategories: IndexSerializer.perform(records, this.currentUser),
+        childrenWithDiverseNeedsFundingCategories: IndexSerializer.perform(
+          records,
+          this.currentUser
+        ),
         totalCount,
       })
     } catch (error) {
@@ -55,7 +58,7 @@ export class ChildrenWithDiverseNeedsFundingCategoriesController extends BaseCon
           .status(403)
           .json({ message: "You are not authorized to view this category" })
       return this.response.json({
-        childrenWithChildrenWithDiverseNeedsFundingRecordsCategory: ShowSerializer.perform(record),
+        childrenWithDiverseNeedsFundingCategory: ShowSerializer.perform(record),
         policy,
       })
     } catch (error) {
@@ -77,7 +80,7 @@ export class ChildrenWithDiverseNeedsFundingCategoriesController extends BaseCon
       )
       return this.response
         .status(201)
-        .json({ childrenWithChildrenWithDiverseNeedsFundingRecordsCategory: ShowSerializer.perform(record), policy })
+        .json({ childrenWithDiverseNeedsFundingCategory: ShowSerializer.perform(record), policy })
     } catch (error) {
       logger.error(`Error creating Children with Diverse Needs category: ${error}`, { error })
       return this.response
@@ -102,7 +105,7 @@ export class ChildrenWithDiverseNeedsFundingCategoriesController extends BaseCon
         policy.permitAttributes(this.request.body)
       )
       return this.response.json({
-        childrenWithChildrenWithDiverseNeedsFundingRecordsCategory: ShowSerializer.perform(updated),
+        childrenWithDiverseNeedsFundingCategory: ShowSerializer.perform(updated),
         policy,
       })
     } catch (error) {
@@ -134,7 +137,9 @@ export class ChildrenWithDiverseNeedsFundingCategoriesController extends BaseCon
     }
   }
   private load() {
-    return ChildrenWithDiverseNeedsFundingCategory.findByPk(this.params.childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryId)
+    return ChildrenWithDiverseNeedsFundingCategory.findByPk(
+      this.params.childrenWithDiverseNeedsFundingCategoryId
+    )
   }
   private buildPolicy(
     record: ChildrenWithDiverseNeedsFundingCategory = ChildrenWithDiverseNeedsFundingCategory.build()

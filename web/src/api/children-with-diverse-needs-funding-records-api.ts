@@ -1,7 +1,8 @@
 import http from "@/api/http-client"
 import type { Policy, QueryOptions, WhereOptions } from "@/api/base-api"
 
-export const CHILDREN_WITH_CHILDREN_WITH_DIVERSE_NEEDS_FUNDING_RECORDS_SECTION_NAME = "Children with Diverse Needs"
+export const CHILDREN_WITH_CHILDREN_WITH_DIVERSE_NEEDS_FUNDING_RECORDS_SECTION_NAME =
+  "Children with Diverse Needs"
 
 export type ChildrenWithDiverseNeedsFundingRecord = {
   id: number
@@ -40,59 +41,65 @@ export type ChildrenWithDiverseNeedsFundingRecordQueryOptions = QueryOptions<
   never
 >
 export type ChildrenWithDiverseNeedsFundingRecordOccupancyAttributes = Partial<
-  Pick<ChildrenWithDiverseNeedsFundingRecord, "estimatedChildOccupancyRate" | "actualChildOccupancyRate">
+  Pick<
+    ChildrenWithDiverseNeedsFundingRecord,
+    "estimatedChildOccupancyRate" | "actualChildOccupancyRate"
+  >
 >
 
-export const childrenWithChildrenWithDiverseNeedsFundingRecordsApi = {
+export const childrenWithDiverseNeedsFundingRecordsApi = {
   async list(
     params: ChildrenWithDiverseNeedsFundingRecordQueryOptions = {},
     { signal }: { signal?: AbortSignal } = {}
   ): Promise<{
-    childrenWithChildrenWithDiverseNeedsFundingRecordsRecords: ChildrenWithDiverseNeedsFundingRecordAsIndex[]
+    childrenWithDiverseNeedsFundingRecords: ChildrenWithDiverseNeedsFundingRecordAsIndex[]
     totalCount: number
   }> {
-    const { data } = await http.get("/api/children-with-diverse-needs-funding-records", { params, signal })
+    const { data } = await http.get("/api/children-with-diverse-needs-funding-records", {
+      params,
+      signal,
+    })
     return data
   },
   async create(attributes: ChildrenWithDiverseNeedsFundingRecordCreationAttributes): Promise<{
-    childrenWithChildrenWithDiverseNeedsFundingRecordsRecord: ChildrenWithDiverseNeedsFundingRecordAsShow
+    childrenWithDiverseNeedsFundingRecord: ChildrenWithDiverseNeedsFundingRecordAsShow
     policy: ChildrenWithDiverseNeedsFundingRecordPolicy
   }> {
     const { data } = await http.post("/api/children-with-diverse-needs-funding-records", attributes)
     return data
   },
   async get(
-    childrenWithChildrenWithDiverseNeedsFundingRecordsRecordId: number,
+    childrenWithDiverseNeedsFundingRecordId: number,
     { signal }: { signal?: AbortSignal } = {}
   ): Promise<{
-    childrenWithChildrenWithDiverseNeedsFundingRecordsRecord: ChildrenWithDiverseNeedsFundingRecordAsShow
+    childrenWithDiverseNeedsFundingRecord: ChildrenWithDiverseNeedsFundingRecordAsShow
     policy: ChildrenWithDiverseNeedsFundingRecordPolicy
   }> {
     const { data } = await http.get(
-      `/api/children-with-diverse-needs-funding-records/${childrenWithChildrenWithDiverseNeedsFundingRecordsRecordId}`,
+      `/api/children-with-diverse-needs-funding-records/${childrenWithDiverseNeedsFundingRecordId}`,
       { signal }
     )
     return data
   },
   async update(
-    childrenWithChildrenWithDiverseNeedsFundingRecordsRecordId: number,
+    childrenWithDiverseNeedsFundingRecordId: number,
     attributes: ChildrenWithDiverseNeedsFundingRecordOccupancyAttributes
   ): Promise<{
-    childrenWithChildrenWithDiverseNeedsFundingRecordsRecord: ChildrenWithDiverseNeedsFundingRecordAsShow
+    childrenWithDiverseNeedsFundingRecord: ChildrenWithDiverseNeedsFundingRecordAsShow
     policy: ChildrenWithDiverseNeedsFundingRecordPolicy
   }> {
     const { data } = await http.patch(
-      `/api/children-with-diverse-needs-funding-records/${childrenWithChildrenWithDiverseNeedsFundingRecordsRecordId}`,
+      `/api/children-with-diverse-needs-funding-records/${childrenWithDiverseNeedsFundingRecordId}`,
       attributes
     )
     return data
   },
-  async delete(childrenWithChildrenWithDiverseNeedsFundingRecordsRecordId: number): Promise<void> {
+  async delete(childrenWithDiverseNeedsFundingRecordId: number): Promise<void> {
     const { data } = await http.delete(
-      `/api/children-with-diverse-needs-funding-records/${childrenWithChildrenWithDiverseNeedsFundingRecordsRecordId}`
+      `/api/children-with-diverse-needs-funding-records/${childrenWithDiverseNeedsFundingRecordId}`
     )
     return data
   },
 }
 
-export default childrenWithChildrenWithDiverseNeedsFundingRecordsApi
+export default childrenWithDiverseNeedsFundingRecordsApi

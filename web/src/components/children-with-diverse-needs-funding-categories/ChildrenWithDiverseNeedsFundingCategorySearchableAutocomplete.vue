@@ -88,7 +88,7 @@ const emit = defineEmits<{
 
 const selectedCategoryId = computed(() => (props.disabled ? undefined : props.modelValue))
 const {
-  childrenWithChildrenWithDiverseNeedsFundingRecordsCategory: selectedCategory,
+  childrenWithDiverseNeedsFundingCategory: selectedCategory,
   isLoading: isLoadingSelectedCategory,
   isErrored: isSelectedCategoryErrored,
   fetch: reloadSelectedCategory,
@@ -109,7 +109,7 @@ const query = computed<ChildrenWithDiverseNeedsFundingCategoryQueryOptions>(() =
   page: page.value,
 }))
 const {
-  childrenWithChildrenWithDiverseNeedsFundingRecordsCategories,
+  childrenWithDiverseNeedsFundingCategories,
   totalCount,
   isLoading,
   isErrored,
@@ -118,7 +118,7 @@ const {
 const allCategories = computed<ChildrenWithDiverseNeedsFundingCategoryAsIndex[]>(() => {
   if (props.disabled) return []
 
-  const availableCategories = childrenWithChildrenWithDiverseNeedsFundingRecordsCategories.value.filter(
+  const availableCategories = childrenWithDiverseNeedsFundingCategories.value.filter(
     ({ id }) => !props.excludingCategoryIds.includes(id)
   )
   if (
