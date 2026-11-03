@@ -184,7 +184,7 @@ const routes = [
           ),
       },
       {
-        path: "administration/children-with-diverse-needs-funding-categories/:childrenWithDiverseNeedsFundingCategoryId/edit",
+        path: "administration/children-with-diverse-needs-funding-categories/:childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryId/edit",
         name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryEditPage",
         component: () =>
           import(
@@ -193,7 +193,7 @@ const routes = [
         props: true,
       },
       {
-        path: "administration/children-with-diverse-needs-funding-categories/:childrenWithDiverseNeedsFundingCategoryId",
+        path: "administration/children-with-diverse-needs-funding-categories/:childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryId",
         name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
         component: () =>
           import(

@@ -32,7 +32,7 @@ describe("web/src/components/common/EditDataTableVirtual.vue", () => {
               @update:cell="busy = true"
             >
               <template #item.occupancy.edit="{ item }">
-                <input v-model="item.occupancy" :disabled="busy" />
+                <input v-model="item.occupancy" :data-record-id="item.id" :disabled="busy" />
               </template>
             </EditDataTableVirtual>
           `,
@@ -54,7 +54,7 @@ describe("web/src/components/common/EditDataTableVirtual.vue", () => {
           await flushPromises()
 
           // Assert
-          expect(document.activeElement).toBe(wrapper.get("input").element)
+          expect(document.activeElement).toBe(wrapper.get('input[data-record-id="2"]').element)
         } finally {
           wrapper.unmount()
           host.remove()

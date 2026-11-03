@@ -19,7 +19,7 @@ import {
 } from "@sequelize/core/decorators-legacy"
 import Big from "big.js"
 
-import { ChildrenWithDiverseNeedsFundingRecordsCentreIdFiscalPeriodIdCategoryIdUniqueIndex } from "@/models/indexes"
+import { ChildrenWithDiverseNeedsFundingRecordCentreIdFiscalPeriodIdCategoryIdUniqueIndex } from "@/models/indexes"
 
 import BaseModel from "@/models/base-model"
 import Centre from "@/models/centre"
@@ -40,17 +40,17 @@ export class ChildrenWithDiverseNeedsFundingRecord extends BaseModel<
 
   @Attribute(DataTypes.INTEGER)
   @NotNull
-  @ChildrenWithDiverseNeedsFundingRecordsCentreIdFiscalPeriodIdCategoryIdUniqueIndex
+  @ChildrenWithDiverseNeedsFundingRecordCentreIdFiscalPeriodIdCategoryIdUniqueIndex
   declare centreId: number
 
   @Attribute(DataTypes.INTEGER)
   @NotNull
-  @ChildrenWithDiverseNeedsFundingRecordsCentreIdFiscalPeriodIdCategoryIdUniqueIndex
+  @ChildrenWithDiverseNeedsFundingRecordCentreIdFiscalPeriodIdCategoryIdUniqueIndex
   declare fiscalPeriodId: number
 
   @Attribute(DataTypes.INTEGER)
   @NotNull
-  @ChildrenWithDiverseNeedsFundingRecordsCentreIdFiscalPeriodIdCategoryIdUniqueIndex
+  @ChildrenWithDiverseNeedsFundingRecordCentreIdFiscalPeriodIdCategoryIdUniqueIndex
   declare categoryId: number
 
   @Attribute(DataTypes.STRING(200))
@@ -191,5 +191,6 @@ export class ChildrenWithDiverseNeedsFundingRecord extends BaseModel<
     }))
   }
 }
+
 
 export default ChildrenWithDiverseNeedsFundingRecord

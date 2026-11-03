@@ -31,9 +31,7 @@ export class ChildrenWithDiverseNeedsFundingCategoryPolicy extends PolicyFactory
     return ["fundingPeriodId", ...this.permittedAttributes()]
   }
 
-  static policyScope(
-    _user: User
-  ): FindOptions<Attributes<ChildrenWithDiverseNeedsFundingCategory>> {
+  static policyScope(_user: User): FindOptions<Attributes<ChildrenWithDiverseNeedsFundingCategory>> {
     return ALL_RECORDS_SCOPE
   }
 }

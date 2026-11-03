@@ -13,8 +13,8 @@ import {
   centreFactory,
   childCareSpaceCategoryFactory,
   childCareSpaceFactory,
-  childrenWithDiverseNeedsFundingCategoryFactory,
-  childrenWithDiverseNeedsFundingRecordFactory,
+  childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory,
+  childrenWithChildrenWithDiverseNeedsFundingRecordsRecordFactory,
   fiscalPeriodFactory,
   fundingPeriodFactory,
   qualityEnhancementCategoryFactory,
@@ -26,7 +26,7 @@ import { DestroyService } from "@/services/funding-periods/destroy-service"
 describe("api/src/services/funding-periods/destroy-service.ts", () => {
   describe("DestroyService", () => {
     describe("#perform", () => {
-      test("when deleting a funding period, retires only its Diverse Needs rows", async () => {
+      test("when deleting a funding period, retires only its Children with Diverse Needs rows", async () => {
         // Arrange
         const centre = await centreFactory.create()
         const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2026-2027" })
@@ -35,27 +35,26 @@ describe("api/src/services/funding-periods/destroy-service.ts", () => {
         const otherFiscalPeriod = await fiscalPeriodFactory
           .associations({ fundingPeriod: otherFundingPeriod })
           .create()
-        const category = await childrenWithDiverseNeedsFundingCategoryFactory
+        const category = await childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory
           .associations({ fundingPeriod })
           .create()
-        const otherCategory = await childrenWithDiverseNeedsFundingCategoryFactory
+        const otherCategory = await childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory
           .associations({ fundingPeriod: otherFundingPeriod })
           .create()
-        await childrenWithDiverseNeedsFundingRecordFactory
+        await childrenWithChildrenWithDiverseNeedsFundingRecordsRecordFactory
           .associations({ centre, fiscalPeriod, category })
           .create()
-        const otherChildrenWithDiverseNeedsFundingRecord =
-          await childrenWithDiverseNeedsFundingRecordFactory
-            .associations({ centre, fiscalPeriod: otherFiscalPeriod, category: otherCategory })
-            .create()
+        const otherChildrenWithDiverseNeedsFundingRecord = await childrenWithChildrenWithDiverseNeedsFundingRecordsRecordFactory
+          .associations({ centre, fiscalPeriod: otherFiscalPeriod, category: otherCategory })
+          .create()
 
         // Act
         await DestroyService.perform(fundingPeriod)
 
         // Assert
-        const remainingChildrenWithDiverseNeedsFundingRecords =
+        const remainingChildrenWithDiverseNeedsFundingRecord =
           await ChildrenWithDiverseNeedsFundingRecord.findAll()
-        expect(remainingChildrenWithDiverseNeedsFundingRecords).toEqual([
+        expect(remainingChildrenWithDiverseNeedsFundingRecord).toEqual([
           expect.objectContaining({
             id: otherChildrenWithDiverseNeedsFundingRecord.id,
             fiscalPeriodId: otherFiscalPeriod.id,
@@ -63,14 +62,12 @@ describe("api/src/services/funding-periods/destroy-service.ts", () => {
         ])
       })
 
-      test("when deleting a funding period, retires only its Diverse Needs categories", async () => {
+      test("when deleting a funding period, retires only its Children with Diverse Needs categories", async () => {
         // Arrange
         const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2026-2027" })
         const otherFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2027-2028" })
-        await childrenWithDiverseNeedsFundingCategoryFactory
-          .associations({ fundingPeriod })
-          .create()
-        const otherCategory = await childrenWithDiverseNeedsFundingCategoryFactory
+        await childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory.associations({ fundingPeriod }).create()
+        const otherCategory = await childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory
           .associations({ fundingPeriod: otherFundingPeriod })
           .create()
 

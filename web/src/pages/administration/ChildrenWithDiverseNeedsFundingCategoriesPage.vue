@@ -101,7 +101,7 @@ const childrenWithDiverseNeedsFundingCategoriesWhere = computed(() => ({
   fundingPeriodId: fundingPeriodId.value ?? undefined,
 }))
 
-useBreadcrumbs("Diverse Need Categories", [
+useBreadcrumbs("Children with Diverse Needs Categories", [
   {
     title: "Administration",
     to: {
@@ -109,7 +109,7 @@ useBreadcrumbs("Diverse Need Categories", [
     },
   },
   {
-    title: "Diverse Need Categories",
+    title: "Children with Diverse Needs Categories",
     to: {
       name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage",
     },

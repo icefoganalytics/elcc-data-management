@@ -131,7 +131,11 @@ const snack = useSnack()
 const router = useRouter()
 
 async function retireChildrenWithDiverseNeedsFundingCategory() {
-  if (!blockedToTrueConfirm("Are you sure you want to retire this diverse need category?")) {
+  if (
+    !blockedToTrueConfirm(
+      "Are you sure you want to retire this Children with Diverse Needs category?"
+    )
+  ) {
     return
   }
 
@@ -140,20 +144,20 @@ async function retireChildrenWithDiverseNeedsFundingCategory() {
     await childrenWithDiverseNeedsFundingCategoriesApi.delete(
       childrenWithDiverseNeedsFundingCategoryIdAsNumber.value
     )
-    snack.success("Diverse need category retired successfully!")
+    snack.success("Children with Diverse Needs category retired successfully!")
     await router.push({
       name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage",
     })
   } catch (error) {
     rethrowUnexpectedError(error)
 
-    snack.error(`Failed to retire diverse need category: ${error}`)
+    snack.error(`Failed to retire Children with Diverse Needs category: ${error}`)
   } finally {
     isDeleting.value = false
   }
 }
 
-useBreadcrumbs("Diverse Need Category Details", [
+useBreadcrumbs("Children with Diverse Needs Category Details", [
   {
     title: "Administration",
     to: {
@@ -161,7 +165,7 @@ useBreadcrumbs("Diverse Need Category Details", [
     },
   },
   {
-    title: "Diverse Need Categories",
+    title: "Children with Diverse Needs Categories",
     to: {
       name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage",
     },

@@ -2,8 +2,8 @@ import ChildrenWithDiverseNeedsFundingRecord from "@/models/children-with-divers
 
 import {
   centreFactory,
-  childrenWithDiverseNeedsFundingCategoryFactory,
-  childrenWithDiverseNeedsFundingRecordFactory,
+  childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory,
+  childrenWithChildrenWithDiverseNeedsFundingRecordsRecordFactory,
   fiscalPeriodFactory,
   fundingPeriodFactory,
 } from "@/factories"
@@ -26,13 +26,13 @@ describe("api/src/services/children-with-diverse-needs-funding-records/replicate
           dateStart: new Date("2025-06-01T00:00:00.000Z"),
           dateEnd: new Date("2025-06-30T23:59:59.000Z"),
         })
-        const category = await childrenWithDiverseNeedsFundingCategoryFactory
+        const category = await childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory
           .associations({ fundingPeriod })
           .create()
-        const source = await childrenWithDiverseNeedsFundingRecordFactory
+        const source = await childrenWithChildrenWithDiverseNeedsFundingRecordsRecordFactory
           .associations({ centre, fiscalPeriod: sourcePeriod, category })
           .create({ estimatedChildOccupancyRate: "0.6250", actualChildOccupancyRate: "0.4000" })
-        const target = await childrenWithDiverseNeedsFundingRecordFactory
+        const target = await childrenWithChildrenWithDiverseNeedsFundingRecordsRecordFactory
           .associations({ centre, fiscalPeriod: targetPeriod, category })
           .create({
             monthlyAmount: "20.0000",

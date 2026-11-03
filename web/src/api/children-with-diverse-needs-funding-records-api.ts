@@ -1,7 +1,7 @@
 import http from "@/api/http-client"
 import type { Policy, QueryOptions, WhereOptions } from "@/api/base-api"
 
-export const CHILDREN_WITH_DIVERSE_NEEDS_FUNDING_RECORDS_SECTION_NAME =
+export const CHILDREN_WITH_CHILDREN_WITH_DIVERSE_NEEDS_FUNDING_RECORDS_SECTION_NAME =
   "Children with Diverse Needs"
 
 export type ChildrenWithDiverseNeedsFundingRecord = {

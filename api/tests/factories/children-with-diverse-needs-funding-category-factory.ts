@@ -4,14 +4,14 @@ import { ChildrenWithDiverseNeedsFundingCategory } from "@/models"
 
 import fundingPeriodFactory from "@/factories/funding-period-factory"
 
-export const childrenWithDiverseNeedsFundingCategoryFactory =
+export const childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory =
   FactoryShark.define<ChildrenWithDiverseNeedsFundingCategory>(
     ChildrenWithDiverseNeedsFundingCategory,
     ({ associate, sequence }) => {
       associate("fundingPeriod", fundingPeriodFactory)
 
       return {
-        categoryName: `Diverse Need Category ${sequence}`,
+        categoryName: `Children with Diverse Needs Category ${sequence}`,
         fromAge: 2,
         toAge: 3,
         monthlyAmount: "54.9600",
@@ -19,4 +19,4 @@ export const childrenWithDiverseNeedsFundingCategoryFactory =
     }
   )
 
-export default childrenWithDiverseNeedsFundingCategoryFactory
+export default childrenWithChildrenWithDiverseNeedsFundingRecordsCategoryFactory

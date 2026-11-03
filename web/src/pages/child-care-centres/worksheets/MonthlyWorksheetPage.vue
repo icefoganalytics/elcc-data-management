@@ -215,7 +215,7 @@
               :disabled="isChildrenWithDiverseNeedsFundingRecordCreationUnavailable"
               @click="openChildrenWithDiverseNeedsFundingRecordCreateForm"
             >
-              Add Diverse Need
+              Add Children with Diverse Needs
             </v-btn>
           </v-col>
           <v-col

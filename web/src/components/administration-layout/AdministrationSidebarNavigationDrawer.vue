@@ -77,12 +77,10 @@
         prepend-icon="mdi-account-child"
         exact
         :active="
-          isActiveByRoutePathStartsWith(
-            '/administration/children-with-diverse-needs-funding-categories'
-          )
+          isActiveByRoutePathStartsWith('/administration/children-with-diverse-needs-funding-categories')
         "
       >
-        Diverse Need Categories
+        Children with Diverse Needs Categories
       </v-list-item>
       <v-list-item
         :to="{

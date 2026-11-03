@@ -26,7 +26,7 @@ describe("web/src/utils/formatters", () => {
       expect(displayed).toEqual(["$700", "$27.48", "$12.3456"])
     })
 
-    test("when applying locale options, does not mutate the options object", () => {
+    test("when applying locale options, formats the amount using that locale", () => {
       // Arrange
       const options = { locales: "de-DE", currency: "EUR" }
 
@@ -35,21 +35,34 @@ describe("web/src/utils/formatters", () => {
 
       // Assert
       expect(displayed).toBe("1.234,5\u00a0€")
+    })
+
+    test("when applying locale options, does not mutate the options object", () => {
+      // Arrange
+      const options = { locales: "de-DE", currency: "EUR" }
+
+      // Act
+      formatMoney("1234.5", options)
+
+      // Assert
       expect(options).toEqual({ locales: "de-DE", currency: "EUR" })
     })
 
     test.each([
-      [{ minimumFractionDigits: 2 }, "$700.00"],
-      [{ maximumFractionDigits: 0 }, "$700"],
-    ])("when explicit fraction options are provided, honors %j", (options, expected) => {
-      // Arrange
-      const amount = "700"
+      ["700", "minimumFractionDigits", 2, "$700.00"],
+      ["700.125", "maximumFractionDigits", 0, "$700"],
+    ] as const)(
+      "when formatting %s, honors explicit %s of %s",
+      (amount, option, digits, expected) => {
+        // Arrange
+        const options: Intl.NumberFormatOptions = { [option]: digits }
 
-      // Act
-      const displayed = formatMoney(amount, options)
+        // Act
+        const displayed = formatMoney(amount, options)
 
-      // Assert
-      expect(displayed).toBe(expected)
-    })
+        // Assert
+        expect(displayed).toBe(expected)
+      }
+    )
   })
 })
