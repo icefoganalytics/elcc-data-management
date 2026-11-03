@@ -38,6 +38,9 @@ import {
   FundingSubmissionLinesController,
   PaymentsController,
   QualityEnhancementCategoriesController,
+  DiverseNeedCategoriesController,
+  DiverseNeeds,
+  DiverseNeedsController,
   QualityEnhancements,
   QualityEnhancementsController,
   UsersController,
@@ -148,6 +151,28 @@ router
   .route("/api/child-care-spaces/:childCareSpaceId/replicate-estimates")
   .post(ChildCareSpaces.ReplicateEstimatesController.create)
 
+router
+  .route("/api/diverse-need-categories")
+  .get(DiverseNeedCategoriesController.index)
+  .post(DiverseNeedCategoriesController.create)
+router
+  .route("/api/diverse-need-categories/:diverseNeedCategoryId")
+  .get(DiverseNeedCategoriesController.show)
+  .patch(DiverseNeedCategoriesController.update)
+  .delete(DiverseNeedCategoriesController.destroy)
+
+router
+  .route("/api/diverse-needs")
+  .get(DiverseNeedsController.index)
+  .post(DiverseNeedsController.create)
+router
+  .route("/api/diverse-needs/:diverseNeedId")
+  .get(DiverseNeedsController.show)
+  .patch(DiverseNeedsController.update)
+  .delete(DiverseNeedsController.destroy)
+router
+  .route("/api/diverse-needs/:diverseNeedId/replicate-estimates")
+  .post(DiverseNeeds.ReplicateEstimatesController.create)
 router
   .route("/api/administration-costs")
   .get(AdministrationCostsController.index)
