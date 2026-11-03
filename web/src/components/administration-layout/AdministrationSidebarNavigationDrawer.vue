@@ -77,7 +77,9 @@
         prepend-icon="mdi-account-child"
         exact
         :active="
-          isActiveByRoutePathStartsWith('/administration/children-with-diverse-needs-funding-categories')
+          isActiveByRoutePathStartsWith(
+            '/administration/children-with-diverse-needs-funding-categories'
+          )
         "
       >
         Children with Diverse Needs Categories

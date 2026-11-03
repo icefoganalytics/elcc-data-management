@@ -1,7 +1,10 @@
 import { Centre, FundingPeriod } from "@/models"
 import { Centres } from "@/services"
 import BaseService from "@/services/base-service"
-import { ChildrenWithDiverseNeedsFundingRecords, QualityEnhancements } from "@/services/centres/funding-periods"
+import {
+  ChildrenWithDiverseNeedsFundingRecords,
+  QualityEnhancements,
+} from "@/services/centres/funding-periods"
 
 export class EnsureChildrenService extends BaseService {
   constructor(

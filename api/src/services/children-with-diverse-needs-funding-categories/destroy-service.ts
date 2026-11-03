@@ -1,4 +1,7 @@
-import { ChildrenWithDiverseNeedsFundingRecord, ChildrenWithDiverseNeedsFundingCategory } from "@/models"
+import {
+  ChildrenWithDiverseNeedsFundingRecord,
+  ChildrenWithDiverseNeedsFundingCategory,
+} from "@/models"
 import BaseService from "@/services/base-service"
 
 export class DestroyService extends BaseService {

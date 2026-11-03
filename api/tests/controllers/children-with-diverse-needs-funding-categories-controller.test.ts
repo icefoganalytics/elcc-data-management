@@ -13,13 +13,15 @@ describe("api/src/controllers/children-with-diverse-needs-funding-categories-con
         const fundingPeriod = await fundingPeriodFactory.create()
 
         // Act
-        const response = await request().post("/api/children-with-diverse-needs-funding-categories").send({
-          fundingPeriodId: fundingPeriod.id,
-          categoryName: "Toddlers",
-          fromAge: 2,
-          toAge: 3,
-          monthlyAmount: "54.9600",
-        })
+        const response = await request()
+          .post("/api/children-with-diverse-needs-funding-categories")
+          .send({
+            fundingPeriodId: fundingPeriod.id,
+            categoryName: "Toddlers",
+            fromAge: 2,
+            toAge: 3,
+            monthlyAmount: "54.9600",
+          })
 
         // Assert
         expect(response.status).toEqual(403)
