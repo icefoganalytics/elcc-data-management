@@ -45,7 +45,7 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
 
         // Assert
         const totals = wrapper.findAll("tfoot td:nth-child(4), tfoot td:nth-child(6)")
-        expect(totals.map((cell) => cell.text())).toEqual(["$50.00", "$25.00"])
+        expect(totals.map((cell) => cell.text())).toEqual(["$50", "$25"])
       })
 
       test("when a Spaces save is pending, keeps occupancy inputs read only", async () => {
@@ -82,7 +82,7 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
 
         // Assert
         const lockedInputs = wrapper.findAll<HTMLInputElement>("tbody input[readonly]")
-        expect(lockedInputs.map((input) => input.element.value)).toEqual(["0.5", "0.0000"])
+        expect(lockedInputs.map((input) => input.element.value)).toEqual(["0.5", "0"])
       })
 
       test("when one Spaces save fails while another is pending, waits before unlocking", async () => {
@@ -128,12 +128,7 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
 
         // Assert
         const lockedInputs = wrapper.findAll<HTMLInputElement>("tbody input[readonly]")
-        expect(lockedInputs.map((input) => input.element.value)).toEqual([
-          "0.5",
-          "0.0000",
-          "0.75",
-          "0.0000",
-        ])
+        expect(lockedInputs.map((input) => input.element.value)).toEqual(["0.5", "0", "0.75", "0"])
       })
 
       test("when a Spaces save fails, does not save dependent worksheet JSON", async () => {
