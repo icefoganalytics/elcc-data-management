@@ -18,12 +18,16 @@ export function apiResponseErrorPlugin(application: App): void {
   const snack = useSnack()
 
   const stopNavigationErrorWatch = router.onError((error, to) => {
-    if (router.currentRoute.value !== START_LOCATION) return
-
-    if (error instanceof AuthenticationRequiredError || error instanceof CloudflareChallengeError) {
+    if (
+      router.currentRoute.value === START_LOCATION &&
+      (error instanceof AuthenticationRequiredError || error instanceof CloudflareChallengeError)
+    ) {
       // Auth0 clears its callback URL before the protected destination can commit.
       router.options.history.replace(to.fullPath)
+      return
     }
+
+    console.error("Failed to navigate to ELCC page", { error })
   })
   application.onUnmount(stopNavigationErrorWatch)
 
@@ -63,7 +67,7 @@ export function apiResponseErrorPlugin(application: App): void {
     if (previousErrorHandler) {
       previousErrorHandler(error, instance, info)
     } else {
-      console.error(`${error}`)
+      console.error(error)
     }
   }
 }
