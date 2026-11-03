@@ -72,6 +72,16 @@
       </v-list-item>
       <v-list-item
         :to="{
+          name: 'administration/DiverseNeedCategoriesPage',
+        }"
+        prepend-icon="mdi-account-child"
+        exact
+        :active="isActiveByRoutePathStartsWith('/administration/diverse-need-categories')"
+      >
+        Diverse Need Categories
+      </v-list-item>
+      <v-list-item
+        :to="{
           name: 'administration/CentresPage',
         }"
         prepend-icon="mdi-office-building-marker"
