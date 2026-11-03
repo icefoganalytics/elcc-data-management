@@ -16,9 +16,9 @@ export async function up(knex: Knex): Promise<void> {
     table.decimal("actual_child_occupancy_rate", 15, 4).notNullable()
     table.decimal("estimated_computed_total", 15, 4).notNullable()
     table.decimal("actual_computed_total", 15, 4).notNullable()
-    table.specificType("created_at", "DATETIME2").notNullable().defaultTo(knex.raw("GETUTCDATE()"))
-    table.specificType("updated_at", "DATETIME2").notNullable().defaultTo(knex.raw("GETUTCDATE()"))
-    table.specificType("deleted_at", "DATETIME2")
+    table.timestamp("created_at").notNullable().defaultTo(knex.raw("GETUTCDATE()"))
+    table.timestamp("updated_at").notNullable().defaultTo(knex.raw("GETUTCDATE()"))
+    table.timestamp("deleted_at").nullable()
 
     table.foreign("centre_id").references("centres.id")
     table.foreign("fiscal_period_id").references("fiscal_periods.id")
