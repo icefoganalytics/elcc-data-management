@@ -55,8 +55,9 @@ export class CreateService extends BaseService {
         throw new Error("Administration cost category must be active in the same funding period")
       }
 
-      const attributes = {
+      const administrationCost = await AdministrationCost.create({
         centreId,
+        fiscalPeriodId,
         categoryId,
         childCareSpaceCategoryId: category.childCareSpaceCategoryId,
         lineName: category.categoryName,
@@ -65,10 +66,6 @@ export class CreateService extends BaseService {
         actualChildOccupancyRate,
         estimatedComputedTotal: "0.0000",
         actualComputedTotal: "0.0000",
-      }
-      const administrationCost = await AdministrationCost.create({
-        ...attributes,
-        fiscalPeriodId,
       })
       if (!applyToCurrentAndFutureFiscalPeriods) return administrationCost
 
@@ -89,8 +86,16 @@ export class CreateService extends BaseService {
           if (!isNil(existingCost)) return
 
           await AdministrationCost.create({
-            ...attributes,
+            centreId,
             fiscalPeriodId: futureFiscalPeriod.id,
+            categoryId,
+            childCareSpaceCategoryId: category.childCareSpaceCategoryId,
+            lineName: category.categoryName,
+            monthlyAmount: category.monthlyAmount,
+            estimatedChildOccupancyRate,
+            actualChildOccupancyRate,
+            estimatedComputedTotal: "0.0000",
+            actualComputedTotal: "0.0000",
           })
         }
       )
