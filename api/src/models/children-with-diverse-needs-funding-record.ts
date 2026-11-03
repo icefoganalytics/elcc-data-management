@@ -18,17 +18,17 @@ import {
 } from "@sequelize/core/decorators-legacy"
 import Big from "big.js"
 
-import { DiverseNeedsCentreIdFiscalPeriodIdCategoryIdUniqueIndex } from "@/models/indexes"
+import { ChildrenWithDiverseNeedsFundingRecordsCentreIdFiscalPeriodIdCategoryIdUniqueIndex } from "@/models/indexes"
 
 import BaseModel from "@/models/base-model"
 import Centre from "@/models/centre"
-import DiverseNeedCategory from "@/models/diverse-need-category"
+import ChildrenWithDiverseNeedsFundingCategory from "@/models/children-with-diverse-needs-funding-category"
 import FiscalPeriod from "@/models/fiscal-period"
 
-@Table({ tableName: "diverse_needs" })
-export class DiverseNeed extends BaseModel<
-  InferAttributes<DiverseNeed>,
-  InferCreationAttributes<DiverseNeed>
+@Table({ tableName: "children_with_diverse_needs_funding_records" })
+export class ChildrenWithDiverseNeedsFundingRecord extends BaseModel<
+  InferAttributes<ChildrenWithDiverseNeedsFundingRecord>,
+  InferCreationAttributes<ChildrenWithDiverseNeedsFundingRecord>
 > {
   // Fields
   @Attribute(DataTypes.INTEGER)
@@ -38,17 +38,17 @@ export class DiverseNeed extends BaseModel<
 
   @Attribute(DataTypes.INTEGER)
   @NotNull
-  @DiverseNeedsCentreIdFiscalPeriodIdCategoryIdUniqueIndex
+  @ChildrenWithDiverseNeedsFundingRecordsCentreIdFiscalPeriodIdCategoryIdUniqueIndex
   declare centreId: number
 
   @Attribute(DataTypes.INTEGER)
   @NotNull
-  @DiverseNeedsCentreIdFiscalPeriodIdCategoryIdUniqueIndex
+  @ChildrenWithDiverseNeedsFundingRecordsCentreIdFiscalPeriodIdCategoryIdUniqueIndex
   declare fiscalPeriodId: number
 
   @Attribute(DataTypes.INTEGER)
   @NotNull
-  @DiverseNeedsCentreIdFiscalPeriodIdCategoryIdUniqueIndex
+  @ChildrenWithDiverseNeedsFundingRecordsCentreIdFiscalPeriodIdCategoryIdUniqueIndex
   declare categoryId: number
 
   @Attribute(DataTypes.STRING(200))
@@ -88,7 +88,7 @@ export class DiverseNeed extends BaseModel<
 
   // Hooks
   @BeforeSave
-  static updateComputedTotals(need: DiverseNeed) {
+  static updateComputedTotals(need: ChildrenWithDiverseNeedsFundingRecord) {
     const amount = checkedFourDecimals(new Big(need.monthlyAmount), "monthly amount")
     const estimatedRate = checkedFourDecimals(
       new Big(need.estimatedChildOccupancyRate),
@@ -108,21 +108,21 @@ export class DiverseNeed extends BaseModel<
   // Associations
   @BelongsTo(() => Centre, {
     foreignKey: "centreId",
-    inverse: { as: "diverseNeeds", type: "hasMany" },
+    inverse: { as: "childrenWithDiverseNeedsFundingRecords", type: "hasMany" },
   })
   declare centre?: NonAttribute<Centre>
 
   @BelongsTo(() => FiscalPeriod, {
     foreignKey: "fiscalPeriodId",
-    inverse: { as: "diverseNeeds", type: "hasMany" },
+    inverse: { as: "childrenWithDiverseNeedsFundingRecords", type: "hasMany" },
   })
   declare fiscalPeriod?: NonAttribute<FiscalPeriod>
 
-  @BelongsTo(() => DiverseNeedCategory, {
+  @BelongsTo(() => ChildrenWithDiverseNeedsFundingCategory, {
     foreignKey: "categoryId",
-    inverse: { as: "diverseNeeds", type: "hasMany" },
+    inverse: { as: "childrenWithDiverseNeedsFundingRecords", type: "hasMany" },
   })
-  declare category?: NonAttribute<DiverseNeedCategory>
+  declare category?: NonAttribute<ChildrenWithDiverseNeedsFundingCategory>
 
   // Scopes
   static establishScopes() {
@@ -155,4 +155,4 @@ function checkedFourDecimals(value: Big, label: string): string {
   return value.toFixed(4)
 }
 
-export default DiverseNeed
+export default ChildrenWithDiverseNeedsFundingRecord

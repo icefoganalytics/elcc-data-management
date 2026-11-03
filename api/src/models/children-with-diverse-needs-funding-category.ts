@@ -17,16 +17,16 @@ import {
 } from "@sequelize/core/decorators-legacy"
 import Big from "big.js"
 
-import { DiverseNeedCategoriesFundingPeriodIdCategoryNameUniqueIndex } from "@/models/indexes"
+import { ChildrenWithDiverseNeedsFundingCategoriesFundingPeriodIdCategoryNameUniqueIndex } from "@/models/indexes"
 
 import BaseModel from "@/models/base-model"
-import DiverseNeed from "@/models/diverse-need"
+import ChildrenWithDiverseNeedsFundingRecord from "@/models/children-with-diverse-needs-funding-record"
 import FundingPeriod from "@/models/funding-period"
 
-@Table({ tableName: "diverse_need_categories" })
-export class DiverseNeedCategory extends BaseModel<
-  InferAttributes<DiverseNeedCategory>,
-  InferCreationAttributes<DiverseNeedCategory>
+@Table({ tableName: "children_with_diverse_needs_funding_categories" })
+export class ChildrenWithDiverseNeedsFundingCategory extends BaseModel<
+  InferAttributes<ChildrenWithDiverseNeedsFundingCategory>,
+  InferCreationAttributes<ChildrenWithDiverseNeedsFundingCategory>
 > {
   // Fields
   @Attribute(DataTypes.INTEGER)
@@ -36,12 +36,12 @@ export class DiverseNeedCategory extends BaseModel<
 
   @Attribute(DataTypes.INTEGER)
   @NotNull
-  @DiverseNeedCategoriesFundingPeriodIdCategoryNameUniqueIndex
+  @ChildrenWithDiverseNeedsFundingCategoriesFundingPeriodIdCategoryNameUniqueIndex
   declare fundingPeriodId: number
 
   @Attribute(DataTypes.STRING(200))
   @NotNull
-  @DiverseNeedCategoriesFundingPeriodIdCategoryNameUniqueIndex
+  @ChildrenWithDiverseNeedsFundingCategoriesFundingPeriodIdCategoryNameUniqueIndex
   declare categoryName: string
 
   @Attribute(DataTypes.INTEGER)
@@ -76,15 +76,17 @@ export class DiverseNeedCategory extends BaseModel<
   // Associations
   @BelongsTo(() => FundingPeriod, {
     foreignKey: "fundingPeriodId",
-    inverse: { as: "diverseNeedCategories", type: "hasMany" },
+    inverse: { as: "childrenWithDiverseNeedsFundingCategories", type: "hasMany" },
   })
   declare fundingPeriod?: NonAttribute<FundingPeriod>
 
-  @HasMany(() => DiverseNeed, {
+  @HasMany(() => ChildrenWithDiverseNeedsFundingRecord, {
     foreignKey: "categoryId",
     inverse: { as: "category" },
   })
-  declare diverseNeeds?: NonAttribute<DiverseNeed[]>
+  declare childrenWithDiverseNeedsFundingRecords?: NonAttribute<
+    ChildrenWithDiverseNeedsFundingRecord[]
+  >
 
   // Scopes
   static establishScopes() {
@@ -92,4 +94,4 @@ export class DiverseNeedCategory extends BaseModel<
   }
 }
 
-export default DiverseNeedCategory
+export default ChildrenWithDiverseNeedsFundingCategory
