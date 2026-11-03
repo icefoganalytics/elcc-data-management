@@ -34,6 +34,7 @@ import useBuildingExpenseCategories from "@/use/use-building-expense-categories"
 import useCentres from "@/use/use-centres"
 import useFundingPeriods from "@/use/use-funding-periods"
 import useFundingRegions from "@/use/use-funding-regions"
+import useQualityEnhancementCategories from "@/use/use-quality-enhancement-categories"
 import useFundingSubmissionLines from "@/use/use-funding-submission-lines"
 import useUsers from "@/use/use-users"
 
@@ -102,6 +103,15 @@ const items = computed<QuickMetricsTableItem[]>(() => [
       },
     },
   },
+  {
+    title: "Quality Enhancement Categories",
+    count: totalCountQualityEnhancementCategories.value,
+    actions: {
+      to: {
+        name: "administration/QualityEnhancementCategoriesPage",
+      },
+    },
+  },
 ])
 
 type QuickMetricsTableRow = {
@@ -149,6 +159,11 @@ const usersQuery = computed(() => ({
   perPage: 1,
 }))
 const { totalCount: totalCountUsers, isLoading: isLoadingUsers } = useUsers(usersQuery)
+const qualityEnhancementCategoriesQuery = computed(() => ({ perPage: 1 }))
+const {
+  totalCount: totalCountQualityEnhancementCategories,
+  isLoading: isLoadingQualityEnhancementCategories,
+} = useQualityEnhancementCategories(qualityEnhancementCategoriesQuery)
 
 const isLoading = computed(() => {
   return (
@@ -157,6 +172,7 @@ const isLoading = computed(() => {
     isLoadingFundingPeriods.value ||
     isLoadingFundingRegions.value ||
     isLoadingFundingSubmissionLines.value ||
+    isLoadingQualityEnhancementCategories.value ||
     isLoadingUsers.value
   )
 })

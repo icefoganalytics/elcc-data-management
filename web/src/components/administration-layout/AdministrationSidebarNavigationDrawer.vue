@@ -52,6 +52,16 @@
       </v-list-item>
       <v-list-item
         :to="{
+          name: 'administration/QualityEnhancementCategoriesPage',
+        }"
+        prepend-icon="mdi-star-circle"
+        exact
+        :active="isActiveByRoutePathStartsWith('/administration/quality-enhancement-categories')"
+      >
+        Quality Enhancement Categories
+      </v-list-item>
+      <v-list-item
+        :to="{
           name: 'administration/AdministrationCostCategoriesPage',
         }"
         prepend-icon="mdi-percent"
