@@ -2,6 +2,8 @@ import {
   AdministrationCost,
   AdministrationCostCategory,
   ChildCareSpace,
+  DiverseNeed,
+  DiverseNeedCategory,
   QualityEnhancement,
 } from "@/models"
 
@@ -11,6 +13,8 @@ import {
   centreFactory,
   childCareSpaceCategoryFactory,
   childCareSpaceFactory,
+  diverseNeedCategoryFactory,
+  diverseNeedFactory,
   fiscalPeriodFactory,
   fundingPeriodFactory,
   qualityEnhancementCategoryFactory,
@@ -22,6 +26,56 @@ import { DestroyService } from "@/services/funding-periods/destroy-service"
 describe("api/src/services/funding-periods/destroy-service.ts", () => {
   describe("DestroyService", () => {
     describe("#perform", () => {
+      test("when deleting a funding period, retires only its Diverse Needs rows", async () => {
+        // Arrange
+        const centre = await centreFactory.create()
+        const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2026-2027" })
+        const otherFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2027-2028" })
+        const fiscalPeriod = await fiscalPeriodFactory.associations({ fundingPeriod }).create()
+        const otherFiscalPeriod = await fiscalPeriodFactory
+          .associations({ fundingPeriod: otherFundingPeriod })
+          .create()
+        const category = await diverseNeedCategoryFactory.associations({ fundingPeriod }).create()
+        const otherCategory = await diverseNeedCategoryFactory
+          .associations({ fundingPeriod: otherFundingPeriod })
+          .create()
+        await diverseNeedFactory.associations({ centre, fiscalPeriod, category }).create()
+        const otherDiverseNeed = await diverseNeedFactory
+          .associations({ centre, fiscalPeriod: otherFiscalPeriod, category: otherCategory })
+          .create()
+
+        // Act
+        await DestroyService.perform(fundingPeriod)
+
+        // Assert
+        const remainingDiverseNeeds = await DiverseNeed.findAll()
+        expect(remainingDiverseNeeds).toEqual([
+          expect.objectContaining({
+            id: otherDiverseNeed.id,
+            fiscalPeriodId: otherFiscalPeriod.id,
+          }),
+        ])
+      })
+
+      test("when deleting a funding period, retires only its Diverse Needs categories", async () => {
+        // Arrange
+        const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2026-2027" })
+        const otherFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2027-2028" })
+        await diverseNeedCategoryFactory.associations({ fundingPeriod }).create()
+        const otherCategory = await diverseNeedCategoryFactory
+          .associations({ fundingPeriod: otherFundingPeriod })
+          .create()
+
+        // Act
+        await DestroyService.perform(fundingPeriod)
+
+        // Assert
+        const remainingCategories = await DiverseNeedCategory.findAll()
+        expect(remainingCategories).toEqual([
+          expect.objectContaining({ id: otherCategory.id, fundingPeriodId: otherFundingPeriod.id }),
+        ])
+      })
+
       test("when deleting a funding period, preserves child care spaces from other periods", async () => {
         // Arrange
         const centre = await centreFactory.create()

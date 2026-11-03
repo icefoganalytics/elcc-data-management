@@ -20,7 +20,7 @@ describe("api/src/services/funding-submission-lines/create-service.ts", () => {
         // Act
         await CreateService.perform({
           fiscalYear: "2147/48",
-          sectionName: "Children with Diverse Needs",
+          sectionName: "Additional Funding",
           lineName: "Infants",
           monthlyAmount: "100.00",
           childCareSpaceCategoryId: null,
@@ -37,7 +37,7 @@ describe("api/src/services/funding-submission-lines/create-service.ts", () => {
         const persistedLines = await FundingSubmissionLine.findAll()
         expect(persistedLines).toEqual([
           expect.objectContaining({
-            sectionName: "Children with Diverse Needs",
+            sectionName: "Additional Funding",
             childCareSpaceCategoryId: null,
           }),
           expect.objectContaining({
@@ -49,6 +49,7 @@ describe("api/src/services/funding-submission-lines/create-service.ts", () => {
 
       test.each([
         "Child Care Spaces",
+        "Children with Diverse Needs",
         "Administration",
         "Administration (10% of Spaces)",
         "Quality Enhancement Program",

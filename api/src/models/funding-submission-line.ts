@@ -21,14 +21,11 @@ import { doesNotUseLedgerSection, isValidFiscalYearLegacy } from "@/models/valid
 
 import BaseModel from "@/models/base-model"
 import ChildCareSpaceCategory from "@/models/child-care-space-category"
-import FUNDING_SUBMISSION_LINE_DEFAULTS from "@/models/funding-submission-line-defaults"
 
 export class FundingSubmissionLine extends BaseModel<
   InferAttributes<FundingSubmissionLine>,
   InferCreationAttributes<FundingSubmissionLine>
 > {
-  static readonly DEFAULTS = FUNDING_SUBMISSION_LINE_DEFAULTS
-
   @Attribute(DataTypes.INTEGER)
   @PrimaryKey
   @AutoIncrement

@@ -50,13 +50,13 @@ describe("api/src/models/funding-submission-line.ts", () => {
           })
           const fundingSubmissionLine1 = await fundingSubmissionLineFactory.create({
             fiscalYear: "2023/24",
-            sectionName: "Children with Diverse Needs",
+            sectionName: "Additional Funding",
             lineName: "Infant Spaces",
             monthlyAmount: "100.0000",
           })
           await fundingSubmissionLineFactory.create({
             fiscalYear: "2024/25", // Different fiscal year
-            sectionName: "Children with Diverse Needs",
+            sectionName: "Additional Funding",
             lineName: "Infant Spaces",
             monthlyAmount: "200.0000",
           })
@@ -75,7 +75,7 @@ describe("api/src/models/funding-submission-line.ts", () => {
           // Arrange
           await fundingSubmissionLineFactory.create({
             fiscalYear: "2023/24",
-            sectionName: "Children with Diverse Needs",
+            sectionName: "Additional Funding",
             lineName: "Infant Spaces",
             monthlyAmount: "100.0000",
           })
@@ -97,20 +97,20 @@ describe("api/src/models/funding-submission-line.ts", () => {
           })
           const fundingSubmissionLine1 = await fundingSubmissionLineFactory.create({
             fiscalYear: "2023/24",
-            sectionName: "Children with Diverse Needs",
+            sectionName: "Additional Funding",
             lineName: "Infant Spaces",
             monthlyAmount: "100.0000",
           })
           const fundingSubmissionLine2 = await fundingSubmissionLineFactory.create({
             fiscalYear: "2023/24",
-            sectionName: "Children with Diverse Needs",
+            sectionName: "Additional Funding",
             lineName: "Toddler Spaces",
             monthlyAmount: "150.0000",
           })
 
           await fundingSubmissionLineFactory.create({
             fiscalYear: "2024/25", // Different fiscal year
-            sectionName: "Children with Diverse Needs",
+            sectionName: "Additional Funding",
             lineName: "Preschool Spaces",
             monthlyAmount: "200.0000",
           })
@@ -136,7 +136,7 @@ describe("api/src/models/funding-submission-line.ts", () => {
 
           const fundingSubmissionLine1 = await fundingSubmissionLineFactory.create({
             fiscalYear: "1999/00",
-            sectionName: "Children with Diverse Needs",
+            sectionName: "Additional Funding",
             lineName: "Infant Spaces",
             monthlyAmount: "100.0000",
           })
@@ -158,7 +158,7 @@ describe("api/src/models/funding-submission-line.ts", () => {
           })
           await fundingSubmissionLineFactory.create({
             fiscalYear: "2023/24",
-            sectionName: "Children with Diverse Needs",
+            sectionName: "Additional Funding",
             lineName: "Infant Spaces",
             monthlyAmount: "100.0000",
           })
@@ -168,7 +168,7 @@ describe("api/src/models/funding-submission-line.ts", () => {
           })
           const fundingSubmissionLine2 = await fundingSubmissionLineFactory.create({
             fiscalYear: "2024/25",
-            sectionName: "Children with Diverse Needs",
+            sectionName: "Additional Funding",
             lineName: "Infant Spaces",
             monthlyAmount: "200.0000",
           })
@@ -194,7 +194,7 @@ describe("api/src/models/funding-submission-line.ts", () => {
           })
           const softDeletedFundingSubmissionLine = await fundingSubmissionLineFactory.create({
             fiscalYear: "2023/24",
-            sectionName: "Children with Diverse Needs",
+            sectionName: "Additional Funding",
             lineName: "Infant Spaces",
             monthlyAmount: "100.0000",
           })
@@ -215,6 +215,7 @@ describe("api/src/models/funding-submission-line.ts", () => {
       describe("#doesNotUseLedgerSection", () => {
         test.each([
           "Child Care Spaces",
+          "Children with Diverse Needs",
           "Administration",
           "Administration (10% of Spaces)",
           "Quality Enhancement Program",
