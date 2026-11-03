@@ -23,12 +23,13 @@ import BaseModel from "@/models/base-model"
 import ChildrenWithDiverseNeedsFundingRecord from "@/models/children-with-diverse-needs-funding-record"
 import FundingPeriod from "@/models/funding-period"
 
-@Table({ tableName: "children_with_diverse_needs_funding_categories" })
+@Table({
+  tableName: "children_with_diverse_needs_funding_categories",
+})
 export class ChildrenWithDiverseNeedsFundingCategory extends BaseModel<
   InferAttributes<ChildrenWithDiverseNeedsFundingCategory>,
   InferCreationAttributes<ChildrenWithDiverseNeedsFundingCategory>
 > {
-  // Fields
   @Attribute(DataTypes.INTEGER)
   @PrimaryKey
   @AutoIncrement

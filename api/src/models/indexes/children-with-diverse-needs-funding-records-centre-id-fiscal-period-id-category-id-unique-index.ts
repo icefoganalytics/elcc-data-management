@@ -6,8 +6,10 @@ export const ChildrenWithDiverseNeedsFundingRecordsCentreIdFiscalPeriodIdCategor
     {
       unique: true,
       name: "unique_children_with_diverse_needs_funding_records_on_centre_id_fiscal_period_id_category_id",
-      where: { deletedAt: null },
       msg: "A Diverse Need already exists for this category, centre, and fiscal period",
+      where: {
+        deletedAt: null,
+      },
     }
   )
 
