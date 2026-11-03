@@ -12,7 +12,7 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
     describe("worksheet editing", () => {
       test("when a renamed Spaces category occupancy changes, recalculates its displayed totals", async () => {
         // Arrange
-        const worksheet = fundingSubmissionLineJsonFactory.build({ id: 11, centreId: 1, lines: [] })
+        const worksheet = fundingSubmissionLineJsonFactory.build({ id: 11, centreId: 1 })
         const space = childCareSpaceFactory.build({
           id: 1,
           centreId: 1,
@@ -50,7 +50,7 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
 
       test("when a Spaces save is pending, keeps occupancy inputs read only", async () => {
         // Arrange
-        const worksheet = fundingSubmissionLineJsonFactory.build({ id: 11, centreId: 1, lines: [] })
+        const worksheet = fundingSubmissionLineJsonFactory.build({ id: 11, centreId: 1 })
         const space = childCareSpaceFactory.build({ id: 1 })
         const save = Promise.withResolvers<{ data: { childCareSpace: typeof space } }>()
         const http = vi.mocked(httpClient, true)
@@ -87,7 +87,7 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
 
       test("when one Spaces save fails while another is pending, waits before unlocking", async () => {
         // Arrange
-        const worksheet = fundingSubmissionLineJsonFactory.build({ id: 11, centreId: 1, lines: [] })
+        const worksheet = fundingSubmissionLineJsonFactory.build({ id: 11, centreId: 1 })
         const space1 = childCareSpaceFactory.build({ id: 1, categoryId: 9 })
         const space2 = childCareSpaceFactory.build({ id: 2, categoryId: 10 })
         const pendingSave = Promise.withResolvers<{ data: { childCareSpace: typeof space2 } }>()
@@ -138,7 +138,7 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
 
       test("when a Spaces save fails, does not save dependent worksheet JSON", async () => {
         // Arrange
-        const worksheet = fundingSubmissionLineJsonFactory.build({ id: 11, centreId: 1, lines: [] })
+        const worksheet = fundingSubmissionLineJsonFactory.build({ id: 11, centreId: 1 })
         const space = childCareSpaceFactory.build({ id: 1 })
         const saveJson = vi
           .fn()
@@ -178,11 +178,7 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         "when %s fails to load, withholds dependent occupancy inputs",
         async (failedUrl) => {
           // Arrange
-          const worksheet = fundingSubmissionLineJsonFactory.build({
-            id: 11,
-            centreId: 1,
-            lines: [],
-          })
+          const worksheet = fundingSubmissionLineJsonFactory.build({ id: 11, centreId: 1 })
           const space = childCareSpaceFactory.build({ id: 1 })
           vi.mocked(httpClient, true).get.mockImplementation(async (url) => {
             if (url === failedUrl) throw new Error("Worksheet source unavailable")
@@ -211,11 +207,7 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         "when %s recovers and the worksheet is reloaded, restores Spaces editing",
         async (failedUrl) => {
           // Arrange
-          const worksheet = fundingSubmissionLineJsonFactory.build({
-            id: 11,
-            centreId: 1,
-            lines: [],
-          })
+          const worksheet = fundingSubmissionLineJsonFactory.build({ id: 11, centreId: 1 })
           const space = childCareSpaceFactory.build({ id: 1, lineName: "Renamed Infant Cohort" })
           let failing = true
           vi.mocked(httpClient, true).get.mockImplementation(async (url) => {

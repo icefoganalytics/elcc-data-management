@@ -1,7 +1,14 @@
-import { Log } from "@/models"
-import { FundingSubmissionLineJsons } from "@/services/centres/funding-periods"
+import { Log, QualityEnhancement } from "@/models"
 
-import { centreFactory, userFactory } from "@/factories"
+import {
+  centreFactory,
+  fiscalPeriodFactory,
+  fundingPeriodFactory,
+  fundingRegionFactory,
+  qualityEnhancementCategoryFactory,
+  qualityEnhancementFactory,
+  userFactory,
+} from "@/factories"
 
 import UpdateService from "@/services/centres/update-service"
 
@@ -60,96 +67,126 @@ describe("api/src/services/centres/update-service.ts", () => {
         ])
       })
 
-      test("when hotMeal changes from false to true, applies hot meal enhancement", async () => {
-        // Arrange
-        const currentUser = await userFactory.create()
-        const centre = await centreFactory.create({
-          hotMeal: false,
+      describe("hot-meal transitions", () => {
+        beforeEach(() => {
+          vi.useFakeTimers()
         })
 
-        const attributes = {
-          hotMeal: true,
-        }
-
-        const applyHotMealEnhancementSpy = vi.spyOn(
-          FundingSubmissionLineJsons.ApplyHotMealEnhancementService,
-          "perform"
-        ).mockResolvedValue(undefined)
-
-        // Act
-        await UpdateService.perform(centre, attributes, currentUser)
-
-        // Assert
-        expect(applyHotMealEnhancementSpy).toHaveBeenCalledWith(centre)
-      })
-
-      test("when hotMeal changes from true to false, removes hot meal enhancement", async () => {
-        // Arrange
-        const currentUser = await userFactory.create()
-        const centre = await centreFactory.create({
-          hotMeal: true,
+        afterEach(() => {
+          vi.useRealTimers()
         })
 
-        const attributes = {
-          hotMeal: false,
-        }
+        test("when enabling hot meals, updates current ledger amounts without rewriting past months", async () => {
+          // Arrange
+          vi.setSystemTime(new Date("2026-10-20T12:00:00Z"))
 
-        const removeHotMealEnhancementSpy = vi.spyOn(
-          FundingSubmissionLineJsons.RemoveHotMealEnhancementService,
-          "perform"
-        ).mockResolvedValue(undefined)
+          const currentUser = await userFactory.create()
+          const fundingRegion = await fundingRegionFactory.create({
+            hotMealIncrementAmount: "32.0600",
+          })
+          const centre = await centreFactory.create({
+            fundingRegionId: fundingRegion.id,
+            hotMeal: false,
+          })
+          const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2026-2027" })
+          const category = await qualityEnhancementCategoryFactory.create({
+            fundingPeriodId: fundingPeriod.id,
+            monthlyAmount: "100.0000",
+          })
+          const pastFiscalPeriod = await fiscalPeriodFactory.create({
+            fundingPeriodId: fundingPeriod.id,
+            fiscalYear: "2026-27",
+            dateStart: new Date("2026-09-01"),
+            dateEnd: new Date("2026-09-30T23:59:59Z"),
+          })
+          const currentFiscalPeriod = await fiscalPeriodFactory.create({
+            fundingPeriodId: fundingPeriod.id,
+            fiscalYear: "2026-27",
+            dateStart: new Date("2026-10-01"),
+            dateEnd: new Date("2026-10-31T23:59:59Z"),
+          })
+          const pastQualityEnhancement = await qualityEnhancementFactory
+            .associations({ centre, category, fiscalPeriod: pastFiscalPeriod })
+            .create({ actualChildOccupancyRate: "2.0000" })
+          const currentQualityEnhancement = await qualityEnhancementFactory
+            .associations({ centre, category, fiscalPeriod: currentFiscalPeriod })
+            .create({ actualChildOccupancyRate: "2.0000" })
 
-        // Act
-        await UpdateService.perform(centre, attributes, currentUser)
+          // Act
+          await UpdateService.perform(centre, { hotMeal: true }, currentUser)
 
-        // Assert
-        expect(removeHotMealEnhancementSpy).toHaveBeenCalledWith(centre)
-      })
-
-      test("when hot meal does not change, does not call apply enhancement service", async () => {
-        // Arrange
-        const currentUser = await userFactory.create()
-        const centre = await centreFactory.create({
-          hotMeal: false,
+          // Assert
+          const qualityEnhancements = await QualityEnhancement.findAll()
+          expect(qualityEnhancements).toEqual([
+            expect.objectContaining({
+              id: pastQualityEnhancement.id,
+              monthlyAmount: "100",
+              actualComputedTotal: "200",
+            }),
+            expect.objectContaining({
+              id: currentQualityEnhancement.id,
+              monthlyAmount: "132.06",
+              actualComputedTotal: "264.12",
+            }),
+          ])
         })
 
-        const attributes = {
-          hotMeal: false,
-        }
+        test("when disabling hot meals, restores current base amounts without rewriting past months", async () => {
+          // Arrange
+          vi.setSystemTime(new Date("2026-10-20T12:00:00Z"))
 
-        const applyHotMealEnhancementSpy = vi.spyOn(
-          FundingSubmissionLineJsons.ApplyHotMealEnhancementService,
-          "perform"
-        ).mockResolvedValue(undefined)
+          const currentUser = await userFactory.create()
+          const centre = await centreFactory.create({ hotMeal: true })
+          const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2026-2027" })
+          const category = await qualityEnhancementCategoryFactory.create({
+            fundingPeriodId: fundingPeriod.id,
+            monthlyAmount: "100.0000",
+          })
+          const pastFiscalPeriod = await fiscalPeriodFactory.create({
+            fundingPeriodId: fundingPeriod.id,
+            fiscalYear: "2026-27",
+            dateStart: new Date("2026-09-01"),
+            dateEnd: new Date("2026-09-30T23:59:59Z"),
+          })
+          const currentFiscalPeriod = await fiscalPeriodFactory.create({
+            fundingPeriodId: fundingPeriod.id,
+            fiscalYear: "2026-27",
+            dateStart: new Date("2026-10-01"),
+            dateEnd: new Date("2026-10-31T23:59:59Z"),
+          })
+          const pastQualityEnhancement = await qualityEnhancementFactory
+            .associations({ centre, category, fiscalPeriod: pastFiscalPeriod })
+            .create({
+              hotMealIncrementAmount: "32.0600",
+              hotMealAppliedAt: new Date("2026-09-01"),
+              actualChildOccupancyRate: "2.0000",
+            })
+          const currentQualityEnhancement = await qualityEnhancementFactory
+            .associations({ centre, category, fiscalPeriod: currentFiscalPeriod })
+            .create({
+              hotMealIncrementAmount: "32.0600",
+              hotMealAppliedAt: new Date("2026-09-01"),
+              actualChildOccupancyRate: "2.0000",
+            })
 
-        // Act
-        await UpdateService.perform(centre, attributes, currentUser)
+          // Act
+          await UpdateService.perform(centre, { hotMeal: false }, currentUser)
 
-        // Assert
-        expect(applyHotMealEnhancementSpy).not.toHaveBeenCalled()
-      })
-
-      test("when hot meal does not change, does not call remove enhancement service", async () => {
-        // Arrange
-        const currentUser = await userFactory.create()
-        const centre = await centreFactory.create({
-          hotMeal: false,
+          // Assert
+          const qualityEnhancements = await QualityEnhancement.findAll()
+          expect(qualityEnhancements).toEqual([
+            expect.objectContaining({
+              id: pastQualityEnhancement.id,
+              monthlyAmount: "132.06",
+              actualComputedTotal: "264.12",
+            }),
+            expect.objectContaining({
+              id: currentQualityEnhancement.id,
+              monthlyAmount: "100",
+              actualComputedTotal: "200",
+            }),
+          ])
         })
-
-        const attributes = {
-          hotMeal: false,
-        }
-
-        const removeHotMealEnhancementSpy = vi.spyOn(
-          FundingSubmissionLineJsons.RemoveHotMealEnhancementService,
-          "perform"
-        ).mockResolvedValue(undefined)
-
-        // Act
-        await UpdateService.perform(centre, attributes, currentUser)
-
-        // Assert
-        expect(removeHotMealEnhancementSpy).not.toHaveBeenCalled()
       })
     })
   })

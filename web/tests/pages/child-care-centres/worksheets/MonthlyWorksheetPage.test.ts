@@ -11,6 +11,7 @@ import {
   childCareSpaceFactory,
   fiscalPeriodFactory,
   fundingSubmissionLineJsonFactory,
+  qualityEnhancementFactory,
 } from "@/tests/factories"
 import { mockRouter, mockVuetify } from "@/tests/support"
 import MonthlyWorksheetPage from "@/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue"
@@ -59,6 +60,14 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           categoryId: 15,
           lineName: "Administration Infant Cohort",
         })
+        const qualityEnhancement = qualityEnhancementFactory.build({
+          id: 70,
+          centreId: 1,
+          fiscalPeriodId: 5,
+          categoryId: 20,
+          childCareSpaceCategoryId: 9,
+          lineName: "Quality Enhancement Infant Cohort",
+        })
         const httpClientMock = vi.mocked(httpClient, true)
         httpClientMock.get.mockImplementation(async (url, config) => {
           if (url === "/api/funding-submission-line-jsons") {
@@ -83,6 +92,10 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
 
           if (url === "/api/child-care-spaces" && config?.params?.where?.fiscalPeriodId === 5) {
             return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
+          }
+
+          if (url === "/api/quality-enhancements") {
+            return { data: { qualityEnhancements: [qualityEnhancement], totalCount: 1 } }
           }
 
           if (url === "/api/administration-costs") {
@@ -259,6 +272,10 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             }
           }
 
+          if (url === "/api/quality-enhancements") {
+            return { data: { qualityEnhancements: [], totalCount: 0 } }
+          }
+
           return { data: { fundingSubmissionLineJson: aprilWorksheet } }
         })
         vi.mocked(httpClient, true).patch.mockResolvedValue({
@@ -360,6 +377,9 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           if (url === "/api/administration-costs") {
             throw new Error("Administration costs unavailable")
           }
+          if (url === "/api/quality-enhancements") {
+            return { data: { qualityEnhancements: [], totalCount: 0 } }
+          }
           throw new Error(`Unexpected GET ${url}`)
         })
         const router = mockRouter([
@@ -438,6 +458,9 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           if (url === "/api/administration-costs") {
             return { data: { administrationCosts: [], totalCount: 0 } }
           }
+          if (url === "/api/quality-enhancements") {
+            return { data: { qualityEnhancements: [], totalCount: 0 } }
+          }
           return { data: { fundingSubmissionLineJson: worksheet } }
         })
         const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
@@ -459,11 +482,12 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           "Child Care Spaces",
           "Children with Diverse Needs",
           "Administration (10% of Spaces)",
+          "Quality Enhancement Program",
           "Building Expenses",
         ])
       })
       test.each(["Save", "Replicate Estimates"])(
-        "when an Administration cell is edited, %s saves it without Enter",
+        "when a Quality Enhancement cell is edited, %s saves it without Enter",
         async (actionLabel) => {
           // Arrange
           const worksheet = fundingSubmissionLineJsonFactory.build({
@@ -478,7 +502,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             fiscalYear: "2024-25",
             month: FiscalPeriodMonths.APRIL,
           })
-          const administration = administrationCostFactory.build({
+          const quality = qualityEnhancementFactory.build({
             id: 70,
             centreId: 1,
             fiscalPeriodId: 4,
@@ -486,7 +510,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             estimatedChildOccupancyRate: "0.6250",
           })
           const http = vi.mocked(httpClient, true)
-          const administrationUpdates: unknown[] = []
+          const qualityUpdates: unknown[] = []
           const replicationRequests: string[] = []
           http.get.mockImplementation(async (url) => {
             if (url === "/api/funding-submission-line-jsons") {
@@ -499,12 +523,15 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
               return { data: { childCareSpaces: [], totalCount: 0 } }
             }
             if (url === "/api/administration-costs") {
-              return { data: { administrationCosts: [administration], totalCount: 1 } }
+              return { data: { administrationCosts: [], totalCount: 0 } }
+            }
+            if (url === "/api/quality-enhancements") {
+              return { data: { qualityEnhancements: [quality], totalCount: 1 } }
             }
             return { data: { fundingSubmissionLineJson: worksheet } }
           })
           http.patch.mockImplementation(async (url, attributes) => {
-            if (url === "/api/administration-costs/70") administrationUpdates.push(attributes)
+            if (url === "/api/quality-enhancements/70") qualityUpdates.push(attributes)
             return { data: {} }
           })
           http.post.mockImplementation(async (url) => {
@@ -524,11 +551,11 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           await flushPromises()
 
           // Act
-          const administrationRow = wrapper
+          const qualityRow = wrapper
             .findAll("tr.cursor-pointer")
-            .find((row) => row.text().includes(administration.lineName))
-          if (!administrationRow) throw new Error("Expected the Administration row")
-          await administrationRow.trigger("click")
+            .find((row) => row.text().includes(quality.lineName))
+          if (!qualityRow) throw new Error("Expected the Quality Enhancement row")
+          await qualityRow.trigger("click")
           await flushPromises()
           const estimateInput = wrapper.get<HTMLInputElement>("tbody input")
           await estimateInput.setValue("0.8125")
@@ -540,10 +567,10 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           await flushPromises()
 
           // Assert
-          expect(administrationUpdates).toContainEqual({ estimatedChildOccupancyRate: "0.8125" })
+          expect(qualityUpdates).toContainEqual({ estimatedChildOccupancyRate: "0.8125" })
           if (actionLabel === "Replicate Estimates") {
             expect(replicationRequests).toContain(
-              "/api/administration-costs/70/replicate-estimates"
+              "/api/quality-enhancements/70/replicate-estimates"
             )
           } else {
             expect(replicationRequests).toEqual([])
@@ -569,7 +596,8 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           childCareSpaceFactory.build({ id: 40, centreId: 1, fiscalPeriodId: 4, categoryId: 9 }),
           childCareSpaceFactory.build({ id: 41, centreId: 1, fiscalPeriodId: 4, categoryId: 10 }),
         ]
-        let firstSpaceSaved = false
+        let administrationRequests = 0
+        let qualityRequests = 0
         const http = vi.mocked(httpClient, true)
         http.get.mockImplementation(async (url) => {
           if (url === "/api/funding-submission-line-jsons") {
@@ -582,18 +610,18 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             return { data: { childCareSpaces: spaces, totalCount: spaces.length } }
           }
           if (url === "/api/administration-costs") {
-            const administration = administrationCostFactory.build({
-              lineName: "Linked administration",
-              estimatedComputedTotal: firstSpaceSaved ? "35.0000" : "0.0000",
-            })
-            return { data: { administrationCosts: [administration], totalCount: 1 } }
+            administrationRequests += 1
+            return { data: { administrationCosts: [], totalCount: 0 } }
+          }
+          if (url === "/api/quality-enhancements") {
+            qualityRequests += 1
+            return { data: { qualityEnhancements: [], totalCount: 0 } }
           }
           return { data: { fundingSubmissionLineJson: worksheet } }
         })
         const replicationRequests: string[] = []
         http.patch.mockImplementation(async (url) => {
           if (url === "/api/child-care-spaces/41") throw new Error("Second Spaces update failed")
-          firstSpaceSaved = true
           return { data: {} }
         })
         http.post.mockImplementation(async (url) => {
@@ -611,6 +639,8 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           },
         })
         await flushPromises()
+        const initialAdministrationRequests = administrationRequests
+        const initialQualityRequests = qualityRequests
         const inputs = wrapper.findAll("tbody input")
         await inputs[0]?.setValue("0.5")
         await inputs[2]?.setValue("0.75")
@@ -624,7 +654,8 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         await flushPromises()
 
         // Assert
-        expect(wrapper.text()).toContain("$35.00")
+        expect(administrationRequests).toBeGreaterThan(initialAdministrationRequests)
+        expect(qualityRequests).toBeGreaterThan(initialQualityRequests)
         expect(replicationRequests).toEqual([])
       })
 
@@ -652,6 +683,11 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             centreId: 1,
             fiscalPeriodId: 4,
           })
+          const quality = qualityEnhancementFactory.build({
+            id: 70,
+            centreId: 1,
+            fiscalPeriodId: 4,
+          })
           const pendingReplication = Promise.withResolvers<{ data: undefined }>()
           const replicationStarted = Promise.withResolvers<void>()
           const http = vi.mocked(httpClient, true)
@@ -667,6 +703,9 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             }
             if (url === "/api/administration-costs") {
               return { data: { administrationCosts: [administration], totalCount: 1 } }
+            }
+            if (url === "/api/quality-enhancements") {
+              return { data: { qualityEnhancements: [quality], totalCount: 1 } }
             }
             return { data: { fundingSubmissionLineJson: worksheet } }
           })
@@ -707,98 +746,105 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         }
       )
 
-      test("when a creation form unmounts during month navigation, releases its lock without unlocking a newer creation", async () => {
-        // Arrange
-        const aprilWorksheet = fundingSubmissionLineJsonFactory.build({
-          id: 44,
-          centreId: 1,
-          fiscalYear: "2024/25",
-          dateName: "April",
-          lines: [],
-        })
-        const mayWorksheet = fundingSubmissionLineJsonFactory.build({
-          id: 45,
-          centreId: 1,
-          fiscalYear: "2024/25",
-          dateName: "May",
-          lines: [],
-        })
-        const april = fiscalPeriodFactory.build({
-          id: 4,
-          fundingPeriodId: 1,
-          fiscalYear: "2024-25",
-          month: FiscalPeriodMonths.APRIL,
-        })
-        const may = fiscalPeriodFactory.build({
-          id: 5,
-          fundingPeriodId: 1,
-          fiscalYear: "2024-25",
-          month: FiscalPeriodMonths.MAY,
-        })
-        vi.mocked(httpClient, true).get.mockImplementation(async (url, config) => {
-          if (url === "/api/funding-submission-line-jsons") {
-            const worksheet =
-              config?.params?.where?.dateName === "April" ? aprilWorksheet : mayWorksheet
-            return { data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 } }
-          }
-          if (url === "/api/fiscal-periods") {
-            const period = config?.params?.where?.month === FiscalPeriodMonths.APRIL ? april : may
-            return { data: { fiscalPeriods: [period], totalCount: 1 } }
-          }
-          if (url === "/api/administration-costs") {
-            return { data: { administrationCosts: [], totalCount: 0 } }
-          }
-          if (url === "/api/child-care-spaces") {
-            return { data: { childCareSpaces: [], totalCount: 0 } }
-          }
-          if (url === "/api/administration-cost-categories") {
-            return { data: { administrationCostCategories: [], totalCount: 0 } }
-          }
-          return { data: { fundingSubmissionLineJson: mayWorksheet } }
-        })
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-        await router.push("/")
-        await router.isReady()
-        const wrapper = mount(MonthlyWorksheetPage, {
-          props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
-          global: {
-            plugins: [router, createPinia(), mockVuetify()],
-            stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
-          },
-        })
-        await flushPromises()
-        const firstAdd = wrapper
-          .findAll("button")
-          .find((button) => button.text() === "Add Administration Cost")
-        if (!firstAdd) throw new Error("Expected Add Administration Cost")
-        await firstAdd.trigger("click")
-        const previousForm = wrapper.getComponent({ name: "AdministrationCostCreateFormCard" })
-        previousForm.vm.$emit("saving", true)
-        await flushPromises()
+      test.each([
+        ["AdministrationCostCreateFormCard", "Add Administration Cost"],
+        ["QualityEnhancementCreateFormCard", "Add Quality Enhancement"],
+      ])(
+        "when a %s unmounts during month navigation, releases its lock without unlocking a newer creation",
+        async (formName, addLabel) => {
+          // Arrange
+          const aprilWorksheet = fundingSubmissionLineJsonFactory.build({
+            id: 44,
+            centreId: 1,
+            fiscalYear: "2024/25",
+            dateName: "April",
+            lines: [],
+          })
+          const mayWorksheet = fundingSubmissionLineJsonFactory.build({
+            id: 45,
+            centreId: 1,
+            fiscalYear: "2024/25",
+            dateName: "May",
+            lines: [],
+          })
+          const april = fiscalPeriodFactory.build({
+            id: 4,
+            fundingPeriodId: 1,
+            fiscalYear: "2024-25",
+            month: FiscalPeriodMonths.APRIL,
+          })
+          const may = fiscalPeriodFactory.build({
+            id: 5,
+            fundingPeriodId: 1,
+            fiscalYear: "2024-25",
+            month: FiscalPeriodMonths.MAY,
+          })
+          vi.mocked(httpClient, true).get.mockImplementation(async (url, config) => {
+            if (url === "/api/funding-submission-line-jsons") {
+              const worksheet =
+                config?.params?.where?.dateName === "April" ? aprilWorksheet : mayWorksheet
+              return { data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 } }
+            }
+            if (url === "/api/fiscal-periods") {
+              const period = config?.params?.where?.month === FiscalPeriodMonths.APRIL ? april : may
+              return { data: { fiscalPeriods: [period], totalCount: 1 } }
+            }
+            if (url === "/api/administration-costs") {
+              return { data: { administrationCosts: [], totalCount: 0 } }
+            }
+            if (url === "/api/quality-enhancements") {
+              return { data: { qualityEnhancements: [], totalCount: 0 } }
+            }
+            if (url === "/api/child-care-spaces") {
+              return { data: { childCareSpaces: [], totalCount: 0 } }
+            }
+            if (url === "/api/administration-cost-categories") {
+              return { data: { administrationCostCategories: [], totalCount: 0 } }
+            }
+            if (url === "/api/quality-enhancement-categories") {
+              return { data: { qualityEnhancementCategories: [], totalCount: 0 } }
+            }
+            return { data: { fundingSubmissionLineJson: mayWorksheet } }
+          })
+          const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+          await router.push("/")
+          await router.isReady()
+          const wrapper = mount(MonthlyWorksheetPage, {
+            props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
+            global: {
+              plugins: [router, createPinia(), mockVuetify()],
+              stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
+            },
+          })
+          await flushPromises()
+          const firstAdd = wrapper.findAll("button").find((button) => button.text() === addLabel)
+          if (!firstAdd) throw new Error(`Expected ${addLabel}`)
+          await firstAdd.trigger("click")
+          const previousForm = wrapper.getComponent({ name: formName })
+          previousForm.vm.$emit("saving", true)
+          await flushPromises()
 
-        // Act & Assert
-        await wrapper.setProps({ month: FiscalPeriodMonths.MAY })
-        await flushPromises()
-        const save = wrapper.findAll("button").find((button) => button.text() === "Save")
-        if (!save) throw new Error("Expected worksheet Save")
-        expect(save.attributes("disabled")).toEqual(undefined)
+          // Act & Assert
+          await wrapper.setProps({ month: FiscalPeriodMonths.MAY })
+          await flushPromises()
+          const save = wrapper.findAll("button").find((button) => button.text() === "Save")
+          if (!save) throw new Error("Expected worksheet Save")
+          expect(save.attributes("disabled")).toEqual(undefined)
 
-        const nextAdd = wrapper
-          .findAll("button")
-          .find((button) => button.text() === "Add Administration Cost")
-        if (!nextAdd) throw new Error("Expected Add Administration Cost")
-        await nextAdd.trigger("click")
+          const nextAdd = wrapper.findAll("button").find((button) => button.text() === addLabel)
+          if (!nextAdd) throw new Error(`Expected ${addLabel}`)
+          await nextAdd.trigger("click")
+          const currentForm = wrapper.getComponent({ name: formName })
+          currentForm.vm.$emit("saving", true)
+          previousForm.vm.$emit("saving", false)
+          await flushPromises()
+          expect(save.attributes("disabled")).toEqual("")
 
-        const currentForm = wrapper.getComponent({ name: "AdministrationCostCreateFormCard" })
-        currentForm.vm.$emit("saving", true)
-        previousForm.vm.$emit("saving", false)
-        await flushPromises()
-        expect(save.attributes("disabled")).toEqual("")
-
-        currentForm.vm.$emit("saving", false)
-        await flushPromises()
-        expect(save.attributes("disabled")).toEqual(undefined)
-      })
+          currentForm.vm.$emit("saving", false)
+          await flushPromises()
+          expect(save.attributes("disabled")).toEqual(undefined)
+        }
+      )
     })
   })
 })

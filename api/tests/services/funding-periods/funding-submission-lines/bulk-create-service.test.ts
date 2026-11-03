@@ -88,7 +88,7 @@ describe("api/src/services/funding-periods/funding-submission-lines/bulk-create-
         ])
       })
 
-      test("when cloning configuration with renamed categories, maps links to the target period without changing line snapshots", async () => {
+      test("when cloning unrelated configuration with a category link, preserves its snapshot without a ledger link", async () => {
         // Arrange
         const sourceFundingPeriod = await fundingPeriodFactory.create({
           fiscalYear: "2024-2025",
@@ -105,18 +105,11 @@ describe("api/src/services/funding-periods/funding-submission-lines/bulk-create-
           monthlyAmount: "100.0000",
           childCareSpaceCategoryId: renamedCategory.id,
         })
-        await fundingSubmissionLineFactory.create({
-          fiscalYear: "2024/25",
-          sectionName: "Quality Enhancement Program",
-          lineName: "Infants",
-          monthlyAmount: "250.0000",
-          childCareSpaceCategoryId: renamedCategory.id,
-        })
 
         const targetFundingPeriod = await fundingPeriodFactory.create({
           fiscalYear: "2025-2026",
         })
-        const targetCategory = await childCareSpaceCategoryFactory.create({
+        await childCareSpaceCategoryFactory.create({
           fundingPeriodId: targetFundingPeriod.id,
           categoryName: "AAA",
           monthlyAmount: "742.5000",
@@ -129,23 +122,16 @@ describe("api/src/services/funding-periods/funding-submission-lines/bulk-create-
         const persistedLines = await FundingSubmissionLine.findAll({
           where: { fiscalYear: "2025/26" },
         })
-        expect(persistedLines).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              sectionName: "Children with Diverse Needs",
-              lineName: "Infants",
-              monthlyAmount: "100",
-              childCareSpaceCategoryId: null,
-            }),
-            expect.objectContaining({
-              sectionName: "Quality Enhancement Program",
-              lineName: "Infants",
-              monthlyAmount: "250",
-              childCareSpaceCategoryId: targetCategory.id,
-            }),
-          ])
-        )
+        expect(persistedLines).toEqual([
+          expect.objectContaining({
+            sectionName: "Children with Diverse Needs",
+            lineName: "Infants",
+            monthlyAmount: "100",
+            childCareSpaceCategoryId: null,
+          }),
+        ])
       })
+
       test("when the newest configuration contains the retired Child Care Spaces section, rejects cloning", async () => {
         // Arrange
         await FundingSubmissionLine.bulkCreate(

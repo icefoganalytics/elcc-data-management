@@ -37,6 +37,9 @@ import {
   FundingSubmissionLines,
   FundingSubmissionLinesController,
   PaymentsController,
+  QualityEnhancementCategoriesController,
+  QualityEnhancements,
+  QualityEnhancementsController,
   UsersController,
   WageEnhancements,
   WageEnhancementsController,
@@ -157,6 +160,29 @@ router
 router
   .route("/api/administration-costs/:administrationCostId/replicate-estimates")
   .post(AdministrationCosts.ReplicateEstimatesController.create)
+
+router
+  .route("/api/quality-enhancement-categories")
+  .get(QualityEnhancementCategoriesController.index)
+  .post(QualityEnhancementCategoriesController.create)
+router
+  .route("/api/quality-enhancement-categories/:qualityEnhancementCategoryId")
+  .get(QualityEnhancementCategoriesController.show)
+  .patch(QualityEnhancementCategoriesController.update)
+  .delete(QualityEnhancementCategoriesController.destroy)
+
+router
+  .route("/api/quality-enhancements")
+  .get(QualityEnhancementsController.index)
+  .post(QualityEnhancementsController.create)
+router
+  .route("/api/quality-enhancements/:qualityEnhancementId")
+  .get(QualityEnhancementsController.show)
+  .patch(QualityEnhancementsController.update)
+  .delete(QualityEnhancementsController.destroy)
+router
+  .route("/api/quality-enhancements/:qualityEnhancementId/replicate-estimates")
+  .post(QualityEnhancements.ReplicateEstimatesController.create)
 
 router
   .route("/api/funding-reconciliations")

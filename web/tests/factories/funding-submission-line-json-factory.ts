@@ -13,19 +13,7 @@ export const fundingSubmissionLineJsonFactory = Factory.define<FundingSubmission
       dateName: "April",
       dateStart: "2024-04-01",
       dateEnd: "2024-04-30",
-      lines: [
-        {
-          submissionLineId: 3,
-          childCareSpaceCategoryId: 9,
-          sectionName: "Quality Enhancement Program",
-          lineName: "Infants",
-          monthlyAmount: "20.0000",
-          estimatedChildOccupancyRate: "0.0000",
-          actualChildOccupancyRate: "0.0000",
-          estimatedComputedTotal: "0.0000",
-          actualComputedTotal: "0.0000",
-        },
-      ],
+      lines: [],
       createdAt: timestamp,
       updatedAt: timestamp,
     }

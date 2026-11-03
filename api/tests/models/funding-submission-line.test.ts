@@ -212,79 +212,19 @@ describe("api/src/models/funding-submission-line.ts", () => {
     })
 
     describe("Model Validators", () => {
-      describe("#ensureImmutableSectionNamesRemainUnchanged", () => {
-        test("when updating immutable section name to different value, validation fails", async () => {
-          // Arrange
-          const fundingSubmissionLine = await fundingSubmissionLineFactory.create({
-            fiscalYear: "2023/24",
-            sectionName: FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM,
-            lineName: "Infants",
-            monthlyAmount: "206.1000",
-          })
-
-          fundingSubmissionLine.set("sectionName", "Changed Quality Enhancement Program")
-
-          // Act
-          const validation = fundingSubmissionLine.validate()
-
-          // Assert
-          await expect(validation).rejects.toThrow(
-            `Section name "Quality Enhancement Program" is immutable and cannot be changed.`
-          )
-        })
-
-        test("when an immutable section retains its name, persists other editable fields", async () => {
-          // Arrange
-          const fundingSubmissionLine = await fundingSubmissionLineFactory.create({
-            fiscalYear: "2023/24",
-            sectionName: FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM,
-            lineName: "Infants",
-            monthlyAmount: "206.1000",
-          })
-
-          // Act
-          await fundingSubmissionLine.update({
-            sectionName: FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM,
-            lineName: "Updated Infants",
-            monthlyAmount: "250.0000",
-          })
-
-          // Assert
-          await fundingSubmissionLine.reload()
-          expect(fundingSubmissionLine).toEqual(
-            expect.objectContaining({
-              sectionName: "Quality Enhancement Program",
-              lineName: "Updated Infants",
-              monthlyAmount: "250",
-            })
-          )
-        })
-      })
-
       describe("#doesNotUseLedgerSection", () => {
-        test("when Administration configuration is written to the shared table, rejects it", async () => {
+        test.each([
+          "Child Care Spaces",
+          "Administration",
+          "Administration (10% of Spaces)",
+          "Quality Enhancement Program",
+        ])("when shared configuration uses retired %s, rejects the write", async (sectionName) => {
           // Arrange
           const fundingSubmissionLine = FundingSubmissionLine.build({
-            fiscalYear: "2023/24",
-            sectionName: "Administration (10% of Spaces)",
+            fiscalYear: "2026/27",
+            sectionName,
             lineName: "Infants",
-            monthlyAmount: "70.0000",
-          })
-
-          // Act
-          const validation = fundingSubmissionLine.validate()
-
-          // Assert
-          await expect(validation).rejects.toThrow(ValidationError)
-        })
-
-        test("when a stale client uses the legacy Administration name, rejects shared configuration", async () => {
-          // Arrange
-          const fundingSubmissionLine = FundingSubmissionLine.build({
-            fiscalYear: "2023/24",
-            sectionName: "Administration",
-            lineName: "Infants",
-            monthlyAmount: "70.0000",
+            monthlyAmount: "206.1000",
           })
 
           // Act

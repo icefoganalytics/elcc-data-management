@@ -1,7 +1,7 @@
-import { Op, type CreationAttributes } from "@sequelize/core"
+import { type CreationAttributes } from "@sequelize/core"
 import { isNil } from "lodash"
 
-import { ChildCareSpaceCategory, FundingPeriod, FundingSubmissionLine } from "@/models"
+import { FundingSubmissionLine } from "@/models"
 import BaseService from "@/services/base-service"
 
 export type FundingSubmissionLineCreationAttributes = Partial<
@@ -33,45 +33,14 @@ export class CreateService extends BaseService {
       throw new Error("Monthly amount is required")
     }
 
-    const childCareSpaceCategoryId = await this.findCategoryId(fiscalYear, sectionName, lineName)
-
     return FundingSubmissionLine.create({
       ...optionalAttributes,
       fiscalYear,
       sectionName,
       lineName,
       monthlyAmount,
-      childCareSpaceCategoryId,
+      childCareSpaceCategoryId: null,
     })
-  }
-
-  private async findCategoryId(fiscalYear: string, sectionName: string, lineName: string) {
-    if (sectionName !== FundingSubmissionLine.ImmutableSectionNames.QUALITY_ENHANCEMENT_PROGRAM) {
-      return null
-    }
-
-    const startingYear = Number(fiscalYear.slice(0, 4))
-    const fundingPeriods = await FundingPeriod.findAll({
-      attributes: ["id"],
-      where: { fiscalYear: `${startingYear}-${startingYear + 1}` },
-    })
-    if (fundingPeriods.length === 0) {
-      return null
-    }
-
-    const categories = await ChildCareSpaceCategory.findAll({
-      attributes: ["id", "categoryName"],
-      where: {
-        fundingPeriodId: { [Op.in]: fundingPeriods.map(({ id }) => id) },
-        categoryName: lineName,
-      },
-    })
-    const exactMatches = categories.filter((category) => category.categoryName === lineName)
-    if (exactMatches.length > 1) {
-      throw new Error(`Multiple child care space categories match "${lineName}" in ${fiscalYear}.`)
-    }
-
-    return exactMatches[0]?.id ?? null
   }
 }
 

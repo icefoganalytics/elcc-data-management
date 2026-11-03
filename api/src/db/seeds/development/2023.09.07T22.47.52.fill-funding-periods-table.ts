@@ -5,7 +5,11 @@ import { isNil } from "lodash"
 
 import { FundingPeriod } from "@/models"
 import { FundingPeriods } from "@/services"
-import { AdministrationCostCategories, ChildCareSpaceCategories } from "@/services/funding-periods"
+import {
+  AdministrationCostCategories,
+  ChildCareSpaceCategories,
+  QualityEnhancementCategories,
+} from "@/services/funding-periods"
 
 export async function seed(_knex: Knex): Promise<void> {
   const fundingPeriodsAttributes: CreationAttributes<FundingPeriod>[] = [
@@ -54,6 +58,7 @@ export async function seed(_knex: Knex): Promise<void> {
   }
   await FundingPeriod.findEach(async (fundingPeriod) => {
     await ChildCareSpaceCategories.BulkEnsureService.perform(fundingPeriod)
+    await QualityEnhancementCategories.BulkEnsureService.perform(fundingPeriod)
     await AdministrationCostCategories.BulkEnsureService.perform(fundingPeriod)
   })
 }

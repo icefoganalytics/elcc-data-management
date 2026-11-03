@@ -12,29 +12,22 @@ import {
   AutoIncrement,
   BelongsTo,
   Default,
-  ModelValidator,
   NotNull,
   PrimaryKey,
   ValidateAttribute,
 } from "@sequelize/core/decorators-legacy"
-import { isNil } from "lodash"
 
 import { doesNotUseLedgerSection, isValidFiscalYearLegacy } from "@/models/validators"
 
 import BaseModel from "@/models/base-model"
 import ChildCareSpaceCategory from "@/models/child-care-space-category"
-import FUNDING_SUBMISSION_LINE_DEFAULTS, {
-  FundingSubmissionLineEnhancementTypes,
-  FundingSubmissionLineImmutableSectionNames,
-} from "@/models/funding-submission-line-defaults"
+import FUNDING_SUBMISSION_LINE_DEFAULTS from "@/models/funding-submission-line-defaults"
 
 export class FundingSubmissionLine extends BaseModel<
   InferAttributes<FundingSubmissionLine>,
   InferCreationAttributes<FundingSubmissionLine>
 > {
   static readonly DEFAULTS = FUNDING_SUBMISSION_LINE_DEFAULTS
-  static readonly EnhancementTypes = FundingSubmissionLineEnhancementTypes
-  static readonly ImmutableSectionNames = FundingSubmissionLineImmutableSectionNames
 
   @Attribute(DataTypes.INTEGER)
   @PrimaryKey
@@ -101,24 +94,6 @@ export class FundingSubmissionLine extends BaseModel<
       return `${startYear}-${endYear.slice(-2)}`
     })
     return shortFormat.replace("-", "/")
-  }
-
-  // Validators
-
-  @ModelValidator
-  ensureImmutableSectionNamesRemainUnchanged() {
-    if (this.isNewRecord) return
-    if (!this.changed("sectionName")) return
-
-    const previousSectionName = this.previous("sectionName")
-    if (isNil(previousSectionName)) return
-
-    const isImmutableSectionName = Object.values<string>(
-      FundingSubmissionLineImmutableSectionNames
-    ).includes(previousSectionName)
-    if (isImmutableSectionName) {
-      throw new Error(`Section name "${previousSectionName}" is immutable and cannot be changed.`)
-    }
   }
 
   @BelongsTo(() => ChildCareSpaceCategory, {
