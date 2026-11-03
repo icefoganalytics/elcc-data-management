@@ -137,6 +137,25 @@ class DevHelper
     run(*%w[api npm run ts-node], *args, **kwargs)
   end
 
+  def lint(*args, **kwargs)
+    service = args[0]
+    if service == "api"
+      lint_api(*args.drop(1), **kwargs)
+    elsif service == "web"
+      lint_web(*args.drop(1), **kwargs)
+    else
+      lint_api(*args, **kwargs)
+    end
+  end
+
+  def lint_api(*args, **kwargs)
+    compose(*%w[run --rm --no-deps -T api npm run lint -- --no-fix], *args, **kwargs)
+  end
+
+  def lint_web(*args, **kwargs)
+    compose(*%w[run --rm --no-deps -T web npm run lint -- --no-fix], *args, **kwargs)
+  end
+
   def test(*args, **kwargs)
     service = args[0]
     if service == "api"

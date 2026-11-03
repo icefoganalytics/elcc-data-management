@@ -40,6 +40,14 @@ http://elcc-data-management.localhost; named worktrees receive their own
 Once Vite starts, the web service prints `Open ELCC: http://<hostname>/` with that checkout's
 gateway hostname.
 
+### Linting
+
+Run `./bin/dev lint api` or `./bin/dev lint web` to check the owning package with its existing ESLint configuration. With no service argument, `./bin/dev lint` selects the API. API covers JavaScript and TypeScript; web also covers Vue. Both commands use disposable, non-interactive containers with `--no-deps` and `--no-fix`, without starting application/database services or the gateway.
+
+Prepare the development images, local environment file, and bind-mounted dependencies using the [development setup](/README.md#development) and [dependency instructions](#dependencies-and-sql-scripts). Additional arguments are forwarded to the package's lint script; its full-project scope, ignores, rules, and warning policy remain unchanged.
+
+API and web own separate `.omp-verifier.json` bindings to these entrypoints. OMP Verifier runs the same commands from the declaring package rather than guessing Docker arguments or linting on the host. Missing prerequisites remain `BLOCKED`; real lint violations are `FAIL`, not a wrapper-configuration blocker. A binding does not mean the source is lint-clean. Run the scopes separately when diagnosing the verifier's bounded execution time.
+
 ### Database Connection Isolation
 
 ELCC pins Local Development Gateway **0.2.2** and follows its
