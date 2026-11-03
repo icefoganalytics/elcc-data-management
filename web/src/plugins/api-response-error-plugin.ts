@@ -54,7 +54,7 @@ export function apiResponseErrorPlugin(application: App): void {
     if (previousErrorHandler) {
       previousErrorHandler(error, instance, info)
     } else {
-      console.error(error)
+      console.error(`${error}`)
     }
   }
 }

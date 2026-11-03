@@ -41,6 +41,7 @@ export function useBuildingExpenseCategories(
       state.totalCount = totalCount
       return buildingExpenseCategories
     } catch (error) {
+      console.error(`Failed to fetch building expense categories: ${error}`)
       state.isErrored = true
       throw error
     } finally {

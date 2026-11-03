@@ -97,6 +97,7 @@ import sumByDecimal from "@/utils/sum-by-decimal"
 
 import { ApiOperationError } from "@/api/errors/api-operation-error"
 import { MAX_PER_PAGE } from "@/api/base-api"
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 import buildingExpensesApi, {
   BuildingExpenseAsIndex,
   type BuildingExpense,
@@ -270,6 +271,8 @@ async function deleteBuildingExpense(buildingExpense: BuildingExpense) {
     await refresh()
     snack.success("Building expense deleted!")
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     console.error(`Failed to delete building expense: ${error}`, { error })
     snack.error(`Failed to delete building expense: ${error}`)
   } finally {

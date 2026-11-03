@@ -37,6 +37,7 @@ export function useFundingReconciliation(fundingReconciliationId: Ref<number | n
       state.policy = policy
       return fundingReconciliation
     } catch (error) {
+      console.error(`Failed to fetch funding reconciliation: ${error}`)
       state.isErrored = true
       throw error
     } finally {
@@ -65,6 +66,7 @@ export function useFundingReconciliation(fundingReconciliationId: Ref<number | n
       state.policy = policy
       return fundingReconciliation
     } catch (error) {
+      console.error(`Failed to save funding reconciliation: ${error}`)
       state.isErrored = true
       throw error
     } finally {

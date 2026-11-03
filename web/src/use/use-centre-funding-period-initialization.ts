@@ -43,6 +43,7 @@ export function useCentreFundingPeriodInitialization(
       state.initializationStatus = initializationStatus
       return initializationStatus
     } catch (error) {
+      console.error(`Failed to fetch initialization status: ${error}`)
       state.isErrored = true
       throw error
     } finally {
@@ -72,6 +73,7 @@ export function useCentreFundingPeriodInitialization(
       state.initializationStatus = initializationStatus
       return initializationStatus
     } catch (error) {
+      console.error(`Failed to initialize: ${error}`)
       state.isErrored = true
       throw error
     } finally {

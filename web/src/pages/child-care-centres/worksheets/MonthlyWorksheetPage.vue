@@ -243,6 +243,7 @@ import fundingSubmissionLineJsonsApi, {
   type FundingSubmissionLineJsonAsIndex,
 } from "@/api/funding-submission-line-jsons-api"
 import ApiOperationError from "@/api/errors/api-operation-error"
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 import sleepMs from "@/utils/sleep-ms"
 import { FiscalPeriodMonths } from "@/use/use-fiscal-periods"
 
@@ -450,19 +451,17 @@ async function saveWorksheet(): Promise<boolean> {
     const [administrationCommitted, qualityCommitted] = await committedEdits
     if (!administrationCommitted || !qualityCommitted) return false
 
-    let wasSaved = false
+    const wasSaved = await sheet.saveFundingSubmissionLineJson()
+    isRefreshingLinked.value = true
     try {
-      wasSaved = await sheet.saveFundingSubmissionLineJson()
+      await refreshLinkedResources()
     } finally {
-      isRefreshingLinked.value = true
-      try {
-        await refreshLinkedResources()
-      } finally {
-        isRefreshingLinked.value = false
-      }
+      isRefreshingLinked.value = false
     }
     return wasSaved
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     snack.error(`Failed to save worksheet: ${error}`)
     return false
   } finally {
@@ -475,6 +474,8 @@ async function onAdministrationCostCreated() {
   try {
     await administrationCostTable.value?.refresh()
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     snack.error(`Failed to refresh administration costs: ${error}`)
   }
 }
@@ -484,6 +485,8 @@ async function onQualityEnhancementCreated() {
   try {
     await qualityEnhancementTable.value?.refresh()
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     snack.error(`Failed to refresh Quality Enhancements: ${error}`)
   }
 }
@@ -513,6 +516,8 @@ async function replicateEstimatesForward() {
 
     snack.success("Estimates replicated successfully!")
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     snack.error(`Failed to replicate estimates: ${error}`)
   } finally {
     isReplicating.value = false

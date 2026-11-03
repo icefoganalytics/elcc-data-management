@@ -2,6 +2,7 @@ import { createPinia } from "pinia"
 import { flushPromises, mount } from "@vue/test-utils"
 
 import httpClient from "@/api/http-client"
+import ApiOperationError from "@/api/errors/api-operation-error"
 import { type FiscalPeriod } from "@/api/fiscal-periods-api"
 import { type FundingSubmissionLineJsonAsIndex } from "@/api/funding-submission-line-jsons-api"
 import { FiscalPeriodMonths } from "@/use/use-fiscal-periods"
@@ -375,7 +376,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             }
           }
           if (url === "/api/administration-costs") {
-            throw new Error("Administration costs unavailable")
+            throw new ApiOperationError("Administration costs unavailable", 503)
           }
           if (url === "/api/quality-enhancements") {
             return { data: { qualityEnhancements: [], totalCount: 0 } }
@@ -621,7 +622,9 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         })
         const replicationRequests: string[] = []
         http.patch.mockImplementation(async (url) => {
-          if (url === "/api/child-care-spaces/41") throw new Error("Second Spaces update failed")
+          if (url === "/api/child-care-spaces/41") {
+            throw new ApiOperationError("Second Spaces update failed", 503)
+          }
           return { data: {} }
         })
         http.post.mockImplementation(async (url) => {
@@ -716,7 +719,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
               return pendingReplication.promise
             }
             if (failAdministration && url === "/api/administration-costs/60/replicate-estimates") {
-              throw new Error("Administration replication unavailable")
+              throw new ApiOperationError("Administration replication unavailable", 503)
             }
             return { data: undefined }
           })

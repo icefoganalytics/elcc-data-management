@@ -1,11 +1,13 @@
 import { isCancel } from "axios"
 import { onScopeDispose, reactive, ref, toRefs, unref, watch, type Ref } from "vue"
+
 import qualityEnhancementsApi, {
   type QualityEnhancementAsIndex,
   type QualityEnhancementFiltersOptions,
   type QualityEnhancementQueryOptions,
   type QualityEnhancementWhereOptions,
 } from "@/api/quality-enhancements-api"
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 
 export {
   type QualityEnhancementAsIndex,
@@ -54,7 +56,7 @@ export function useQualityEnhancements(
         return state.qualityEnhancements
       }
 
-      console.error(`Failed to fetch Quality Enhancements: ${error}`, { error })
+      console.error(`Failed to fetch Quality Enhancements: ${error}`)
       state.isErrored = true
       throw error
     } finally {
@@ -78,8 +80,8 @@ export function useQualityEnhancements(
 
       try {
         await fetch()
-      } catch {
-        // fetch() preserves rejection for explicit callers; watcher failures use isErrored.
+      } catch (error) {
+        rethrowUnexpectedError(error)
       }
     },
     { deep: true, immediate: true }

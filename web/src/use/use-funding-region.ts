@@ -37,6 +37,7 @@ export function useFundingRegion(fundingRegionId: Ref<number | null | undefined>
 
       return fundingRegion
     } catch (error) {
+      console.error(`Failed to fetch funding region: ${error}`)
       state.isErrored = true
       throw error
     } finally {
@@ -67,6 +68,7 @@ export function useFundingRegion(fundingRegionId: Ref<number | null | undefined>
 
       return fundingRegion
     } catch (error) {
+      console.error(`Failed to save funding region: ${error}`)
       state.isErrored = true
       throw error
     } finally {

@@ -1,7 +1,10 @@
 import { createPinia } from "pinia"
 import { flushPromises, mount } from "@vue/test-utils"
+import { AxiosHeaders } from "axios"
 
 import httpClient from "@/api/http-client"
+import ApiOperationError from "@/api/errors/api-operation-error"
+import CloudflareChallengeError from "@/api/errors/cloudflare-challenge-error"
 import { mockRouter, mockVuetify } from "@/tests/support"
 import { childCareSpaceFactory, fundingSubmissionLineJsonFactory } from "@/tests/factories"
 
@@ -136,6 +139,67 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         ])
       })
 
+      test("when a parallel Spaces save is challenged, forwards the original error after writes settle", async () => {
+        // Arrange
+        const worksheet = fundingSubmissionLineJsonFactory.build({ id: 11, centreId: 1 })
+        const space1 = childCareSpaceFactory.build({ id: 1, categoryId: 9 })
+        const space2 = childCareSpaceFactory.build({ id: 2, categoryId: 10 })
+        const challenge = new CloudflareChallengeError({
+          config: {
+            method: "patch",
+            url: "/api/child-care-spaces/1",
+            headers: new AxiosHeaders(),
+          },
+          data: "<html>Browser verification</html>",
+          headers: new AxiosHeaders({ "cf-mitigated": "challenge" }),
+          status: 200,
+          statusText: "OK",
+        })
+        const pendingSave = Promise.withResolvers<{ data: { childCareSpace: typeof space2 } }>()
+        const pendingStarted = Promise.withResolvers<void>()
+        const http = vi.mocked(httpClient, true)
+        http.get.mockImplementation(async (url) => {
+          if (url === "/api/child-care-spaces") {
+            return { data: { childCareSpaces: [space1, space2], totalCount: 2 } }
+          }
+          return { data: { fundingSubmissionLineJson: worksheet } }
+        })
+        http.patch.mockImplementation(async (url) => {
+          if (url === "/api/child-care-spaces/1") throw challenge
+          if (url === "/api/child-care-spaces/2") {
+            pendingStarted.resolve()
+            return pendingSave.promise
+          }
+          return { data: { fundingSubmissionLineJson: worksheet } }
+        })
+        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+        await router.push("/")
+        await router.isReady()
+        const errorHandler = vi.fn()
+        const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
+          props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
+          global: {
+            config: { errorHandler },
+            plugins: [router, createPinia(), mockVuetify()],
+          },
+        })
+        await flushPromises()
+        const inputs = wrapper.findAll("tbody input")
+        await inputs[0].setValue("0.5")
+        await inputs[0].trigger("change")
+        await inputs[2].setValue("0.75")
+        await inputs[2].trigger("change")
+
+        // Act
+        await wrapper.get("button").trigger("click")
+        await pendingStarted.promise
+        pendingSave.resolve({ data: { childCareSpace: space2 } })
+        await flushPromises()
+
+        // Assert
+        expect(errorHandler.mock.calls[0]?.[0]).toBe(challenge)
+      })
+
       test("when a Spaces save fails, does not save dependent worksheet JSON", async () => {
         // Arrange
         const worksheet = fundingSubmissionLineJsonFactory.build({ id: 11, centreId: 1 })
@@ -151,7 +215,8 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           return { data: { fundingSubmissionLineJson: worksheet } }
         })
         http.patch.mockImplementation(async (url) => {
-          if (url === "/api/child-care-spaces/1") throw new Error("Spaces save failed")
+          if (url === "/api/child-care-spaces/1")
+            throw new ApiOperationError("Spaces save failed", 422)
           return saveJson()
         })
         const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
@@ -190,9 +255,13 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
           await router.push("/")
           await router.isReady()
+          const errorHandler = vi.fn()
           const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
             props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
-            global: { plugins: [router, createPinia(), mockVuetify()] },
+            global: {
+              config: { errorHandler },
+              plugins: [router, createPinia(), mockVuetify()],
+            },
           })
 
           // Act
@@ -220,9 +289,13 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
           await router.push("/")
           await router.isReady()
+          const errorHandler = vi.fn()
           const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
             props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
-            global: { plugins: [router, createPinia(), mockVuetify()] },
+            global: {
+              config: { errorHandler },
+              plugins: [router, createPinia(), mockVuetify()],
+            },
           })
           await flushPromises()
           const reload = wrapper

@@ -80,7 +80,7 @@ import { computed, reactive, ref, toRefs } from "vue"
 import { groupBy, isNil } from "lodash"
 
 import childCareSpacesApi, { CHILD_CARE_SPACES_SECTION_NAME } from "@/api/child-care-spaces-api"
-import ApiOperationError from "@/api/errors/api-operation-error"
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 import fundingSubmissionLineJsonsApi, {
   type FundingLineValue,
 } from "@/api/funding-submission-line-jsons-api"
@@ -186,15 +186,12 @@ async function reloadWorksheet() {
   try {
     await Promise.all([refreshChildCareSpaces(), refreshFundingSubmissionLineJson()])
   } catch (error) {
-    if (isExpectedApiFailure(error)) {
-      notificationStore.notify({
-        text: `Failed to load worksheet: ${error}`,
-        variant: "error",
-      })
-      return
-    }
+    rethrowUnexpectedError(error)
 
-    throw error
+    notificationStore.notify({
+      text: `Failed to load worksheet: ${error}`,
+      variant: "error",
+    })
   }
 }
 
@@ -248,16 +245,14 @@ async function saveFundingSubmissionLineJson(): Promise<boolean> {
     emit("update:fundingSubmissionLineJson", fundingSubmissionLineJsonId.value)
     return true
   } catch (error) {
-    if (isExpectedApiFailure(error)) {
-      console.error(`Failed to save worksheet: ${error}`, { error })
-      notificationStore.notify({
-        text: `Failed to save worksheet: ${error}`,
-        variant: "error",
-      })
-      return false
-    }
+    rethrowUnexpectedError(error)
 
-    throw error
+    console.error(`Failed to save worksheet: ${error}`)
+    notificationStore.notify({
+      text: `Failed to save worksheet: ${error}`,
+      variant: "error",
+    })
+    return false
   } finally {
     isSaving.value = false
     emit("saving", false)
@@ -271,16 +266,10 @@ async function awaitMutationSettlements(mutations: Promise<unknown>[]) {
   )
 
   if (failures.length > 0) {
-    throw new AggregateError(failures, failures.map(String).join("; "))
+    const error = new AggregateError(failures, failures.map(String).join("; "))
+    rethrowUnexpectedError(error)
+    throw error
   }
-}
-
-function isExpectedApiFailure(error: unknown): boolean {
-  if (error instanceof ApiOperationError) return true
-
-  if (!(error instanceof AggregateError)) return false
-
-  return error.errors.length > 0 && error.errors.every(isExpectedApiFailure)
 }
 
 async function replicateOwnEstimates(): Promise<void> {
@@ -297,8 +286,6 @@ async function replicateChildCareSpaceEstimates(): Promise<void> {
     await childCareSpacesApi.replicateEstimates(childCareSpace.id)
   }
 }
-
-
 
 function goToNextSection(sectionIndex: number, columnName: ColumnNames) {
   if (sectionIndex < sections.value.length - 1) {

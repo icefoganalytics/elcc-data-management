@@ -149,6 +149,7 @@ import { isNil } from "lodash"
 
 import { greaterThanOrEqualTo, required } from "@/utils/validators"
 
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 import useQualityEnhancementCategory from "@/use/use-quality-enhancement-category"
 import useFundingPeriod from "@/use/use-funding-period"
 import useSnack from "@/use/use-snack"
@@ -255,6 +256,8 @@ async function validateSaveAndNotify() {
     emit("saved", props.qualityEnhancementCategoryId)
     snack.success("Quality Enhancement category saved!")
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     console.error(`Failed to update Quality Enhancement category: ${error}`, { error })
     snack.error(`Failed to update Quality Enhancement category: ${error}`)
   } finally {

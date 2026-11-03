@@ -39,6 +39,7 @@ export function usePayments(
       state.totalCount = totalCount
       return payments
     } catch (error) {
+      console.error(`Failed to fetch payments: ${error}`)
       state.isErrored = true
       throw error
     } finally {

@@ -33,6 +33,7 @@ export function useUser(userId: Ref<number | null | undefined>) {
       state.policy = policy
       return user
     } catch (error) {
+      console.error(`Failed to fetch user: ${error}`)
       state.isErrored = true
       throw error
     } finally {
@@ -59,6 +60,7 @@ export function useUser(userId: Ref<number | null | undefined>) {
       state.policy = policy
       return user
     } catch (error) {
+      console.error(`Failed to save user: ${error}`)
       state.isErrored = true
       throw error
     } finally {

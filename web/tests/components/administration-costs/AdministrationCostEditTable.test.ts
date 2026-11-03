@@ -2,6 +2,7 @@ import { createPinia } from "pinia"
 import { flushPromises, mount } from "@vue/test-utils"
 
 import administrationCostsApi from "@/api/administration-costs-api"
+import ApiOperationError from "@/api/errors/api-operation-error"
 import { administrationCostFactory } from "@/tests/factories"
 import { mockVuetify } from "@/tests/support"
 import AdministrationCostEditTable from "@/components/administration-costs/AdministrationCostEditTable.vue"
@@ -19,7 +20,9 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
         vi.spyOn(administrationCostsApi, "list")
           .mockResolvedValueOnce({ administrationCosts: [record], totalCount: 1 })
           .mockReturnValueOnce(pendingReload.promise)
-        vi.spyOn(administrationCostsApi, "update").mockRejectedValue(new Error("Save unavailable"))
+        vi.spyOn(administrationCostsApi, "update").mockRejectedValue(
+          new ApiOperationError("Save unavailable", 503)
+        )
         const wrapper = mount(AdministrationCostEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
           global: { plugins: [createPinia(), mockVuetify()] },
@@ -79,7 +82,9 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
           administrationCosts: [record],
           totalCount: 1,
         })
-        vi.spyOn(administrationCostsApi, "update").mockRejectedValue(new Error("Save unavailable"))
+        vi.spyOn(administrationCostsApi, "update").mockRejectedValue(
+          new ApiOperationError("Save unavailable", 503)
+        )
         const wrapper = mount(AdministrationCostEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
           global: { plugins: [createPinia(), mockVuetify()] },
@@ -129,7 +134,7 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
           totalCount: 1,
         })
         vi.spyOn(administrationCostsApi, "replicateEstimates").mockRejectedValue(
-          new Error("Replication unavailable")
+          new ApiOperationError("Replication unavailable", 503)
         )
         const wrapper = mount(AdministrationCostEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
@@ -151,7 +156,7 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
         const record = administrationCostFactory.build()
         vi.spyOn(administrationCostsApi, "list")
           .mockResolvedValueOnce({ administrationCosts: [record], totalCount: 1 })
-          .mockRejectedValueOnce(new Error("Refresh unavailable"))
+          .mockRejectedValueOnce(new ApiOperationError("Refresh unavailable", 503))
         const replicate = vi.spyOn(administrationCostsApi, "replicateEstimates")
         const wrapper = mount(AdministrationCostEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
@@ -172,7 +177,7 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
         const record = administrationCostFactory.build()
         vi.spyOn(administrationCostsApi, "list")
           .mockResolvedValueOnce({ administrationCosts: [record], totalCount: 1 })
-          .mockRejectedValueOnce(new Error("Refresh unavailable"))
+          .mockRejectedValueOnce(new ApiOperationError("Refresh unavailable", 503))
           .mockResolvedValue({ administrationCosts: [record], totalCount: 1 })
         vi.spyOn(administrationCostsApi, "update").mockResolvedValue({
           administrationCost: { ...record, estimatedChildOccupancyRate: "0.25" },
@@ -208,7 +213,9 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
           administrationCosts: [record],
           totalCount: 1,
         })
-        vi.spyOn(administrationCostsApi, "update").mockRejectedValue(new Error("Write unavailable"))
+        vi.spyOn(administrationCostsApi, "update").mockRejectedValue(
+          new ApiOperationError("Write unavailable", 503)
+        )
         const wrapper = mount(AdministrationCostEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
           global: { plugins: [createPinia(), mockVuetify()] },
@@ -267,7 +274,7 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
           expect(remove).not.toHaveBeenCalled()
 
           if (failSave) {
-            write.reject(new Error("Write unavailable"))
+            write.reject(new ApiOperationError("Write unavailable", 503))
           } else {
             write.resolve({
               administrationCost: { ...first, estimatedChildOccupancyRate: "0.25" },

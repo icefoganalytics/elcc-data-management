@@ -39,6 +39,7 @@ export function useFundingPeriods(
       state.totalCount = totalCount
       return fundingPeriods
     } catch (error) {
+      console.error(`Failed to fetch funding periods: ${error}`)
       state.isErrored = true
       throw error
     } finally {

@@ -2,6 +2,7 @@ import { createPinia } from "pinia"
 import { flushPromises, mount } from "@vue/test-utils"
 
 import qualityEnhancementsApi from "@/api/quality-enhancements-api"
+import ApiOperationError from "@/api/errors/api-operation-error"
 import { qualityEnhancementFactory } from "@/tests/factories"
 import { mockVuetify } from "@/tests/support"
 import QualityEnhancementEditTable from "@/components/quality-enhancements/QualityEnhancementEditTable.vue"
@@ -19,7 +20,9 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         vi.spyOn(qualityEnhancementsApi, "list")
           .mockResolvedValueOnce({ qualityEnhancements: [record], totalCount: 1 })
           .mockReturnValueOnce(pendingReload.promise)
-        vi.spyOn(qualityEnhancementsApi, "update").mockRejectedValue(new Error("Save unavailable"))
+        vi.spyOn(qualityEnhancementsApi, "update").mockRejectedValue(
+          new ApiOperationError("Save unavailable", 503)
+        )
         const wrapper = mount(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
           global: { plugins: [createPinia(), mockVuetify()] },
@@ -79,7 +82,9 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
           qualityEnhancements: [record],
           totalCount: 1,
         })
-        vi.spyOn(qualityEnhancementsApi, "update").mockRejectedValue(new Error("Save unavailable"))
+        vi.spyOn(qualityEnhancementsApi, "update").mockRejectedValue(
+          new ApiOperationError("Save unavailable", 503)
+        )
         const wrapper = mount(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
           global: { plugins: [createPinia(), mockVuetify()] },
@@ -99,7 +104,7 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         const record = qualityEnhancementFactory.build()
         vi.spyOn(qualityEnhancementsApi, "list")
           .mockResolvedValueOnce({ qualityEnhancements: [record], totalCount: 1 })
-          .mockRejectedValueOnce(new Error("Refresh unavailable"))
+          .mockRejectedValueOnce(new ApiOperationError("Refresh unavailable", 503))
         const replicate = vi.spyOn(qualityEnhancementsApi, "replicateEstimates")
         const wrapper = mount(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
@@ -120,7 +125,7 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         const record = qualityEnhancementFactory.build()
         vi.spyOn(qualityEnhancementsApi, "list")
           .mockResolvedValueOnce({ qualityEnhancements: [record], totalCount: 1 })
-          .mockRejectedValueOnce(new Error("Refresh unavailable"))
+          .mockRejectedValueOnce(new ApiOperationError("Refresh unavailable", 503))
           .mockResolvedValue({ qualityEnhancements: [record], totalCount: 1 })
         vi.spyOn(qualityEnhancementsApi, "update").mockResolvedValue({
           qualityEnhancement: { ...record, estimatedChildOccupancyRate: "0.25" },
@@ -156,7 +161,9 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
           qualityEnhancements: [record],
           totalCount: 1,
         })
-        vi.spyOn(qualityEnhancementsApi, "update").mockRejectedValue(new Error("Write unavailable"))
+        vi.spyOn(qualityEnhancementsApi, "update").mockRejectedValue(
+          new ApiOperationError("Write unavailable", 503)
+        )
         const wrapper = mount(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
           global: { plugins: [createPinia(), mockVuetify()] },
@@ -215,7 +222,7 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
           expect(remove).not.toHaveBeenCalled()
 
           if (failSave) {
-            write.reject(new Error("Write unavailable"))
+            write.reject(new ApiOperationError("Write unavailable", 503))
           } else {
             write.resolve({
               qualityEnhancement: { ...first, estimatedChildOccupancyRate: "0.25" },

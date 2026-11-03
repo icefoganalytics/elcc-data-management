@@ -65,6 +65,7 @@ import { greaterThanOrEqualTo, required } from "@/utils/validators"
 import administrationCostsApi, {
   type AdministrationCostCreationAttributes,
 } from "@/api/administration-costs-api"
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 import useSnack from "@/use/use-snack"
 import HeaderActionsFormCard from "@/components/common/HeaderActionsFormCard.vue"
 import AdministrationCostCategorySearchableAutocomplete from "@/components/administration-cost-categories/AdministrationCostCategorySearchableAutocomplete.vue"
@@ -113,6 +114,8 @@ async function create() {
     emit("created", administrationCost.id)
     snack.success("Administration cost created successfully")
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     snack.error(`Failed to create administration cost: ${error}`)
   } finally {
     isCreating.value = false

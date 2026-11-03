@@ -39,6 +39,7 @@ export function useBuildingExpenses(
       state.totalCount = totalCount
       return buildingExpenses
     } catch (error) {
+      console.error(`Failed to fetch building expenses: ${error}`)
       state.isErrored = true
       throw error
     } finally {

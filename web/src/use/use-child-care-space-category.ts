@@ -49,6 +49,7 @@ export function useChildCareSpaceCategory(
       }
       return childCareSpaceCategory
     } catch (error) {
+      console.error(`Failed to fetch Child Care Space category: ${error}`)
       if (latestRequest === request) {
         state.isErrored = true
       }
@@ -98,6 +99,7 @@ export function useChildCareSpaceCategory(
       }
       return childCareSpaceCategory
     } catch (error) {
+      console.error(`Failed to save Child Care Space category: ${error}`)
       if (latestRequest === request) {
         state.isErrored = true
       }
