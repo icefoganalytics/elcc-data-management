@@ -89,6 +89,39 @@ describe("web/src/components/common/EditDataTableVirtual.vue", () => {
           expect(wrapper.emitted("update:cell")).toEqual([[{ id: 1, occupancy: "0.2500" }]])
         }
       )
+
+      test.each([
+        ["Enter", 1, "focusBeyondLastInColumn"],
+        ["Shift+Enter", 0, "focusBeyondFirstInColumn"],
+      ] as const)(
+        "when %s reaches a table boundary, emits the column boundary",
+        async (key, rowIndex, eventName) => {
+          // Arrange
+          const wrapper = mount(EditDataTableVirtual, {
+            props: {
+              headers: [{ title: "Occupancy", key: "occupancy" }],
+              items: [
+                { id: 1, occupancy: "0.0000" },
+                { id: 2, occupancy: "0.0000" },
+              ],
+              editableColumns: ["occupancy"],
+            },
+            global: { plugins: [mockVuetify()] },
+          })
+          await flushPromises()
+          await wrapper.findAll("tr.cursor-pointer")[rowIndex]?.trigger("click")
+          const input = wrapper.get("input")
+
+          // Act
+          await input.trigger("keydown", {
+            key: key.includes("Shift") ? "Enter" : key,
+            shiftKey: key.includes("Shift"),
+          })
+
+          // Assert
+          expect(wrapper.emitted(eventName)).toEqual([["occupancy"]])
+        }
+      )
     })
   })
 })

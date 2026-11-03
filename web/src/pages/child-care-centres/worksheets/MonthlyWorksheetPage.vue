@@ -61,7 +61,10 @@
         :is-workflow-busy="
           isWorksheetSaving || isReplicating || isLedgerMutating || isRefreshingLinked
         "
+        @focus-beyond-last-in-column="navigateBetweenSections(0, 1, $event)"
+        @focus-beyond-first-in-column="navigateBetweenSections(0, -1, $event)"
         @update:funding-submission-line-json="onJsonUpdated"
+        @child-care-space-changed="previewLinkedOccupancy"
       >
         <template #actions>
           <div class="d-flex flex-wrap justify-end ga-2">
@@ -90,56 +93,6 @@
       </FundingSubmissionLineJsonEditSheet>
       <section class="ma-4 mt-8">
         <h3 class="mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2">
-          Children with Diverse Needs
-        </h3>
-        <ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual
-          ref="childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual"
-          :where="worksheetWhere"
-          :is-replicating="
-            isReplicating ||
-            isWorksheetSaving ||
-            isRefreshingLinked ||
-            isCreatingChildrenWithDiverseNeedsFundingRecord
-          "
-        />
-        <v-row
-          v-if="!isNil(childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual)"
-          class="mt-0"
-        >
-          <v-col
-            v-if="!showChildrenWithDiverseNeedsFundingRecordCreateForm"
-            cols="12"
-            class="d-flex justify-end"
-          >
-            <v-btn
-              color="primary"
-              :disabled="isChildrenWithDiverseNeedsFundingRecordCreationUnavailable"
-              @click="openChildrenWithDiverseNeedsFundingRecordCreateForm"
-            >
-              Add Diverse Need
-            </v-btn>
-          </v-col>
-          <v-col
-            v-else
-            cols="12"
-          >
-            <ChildrenWithDiverseNeedsFundingRecordsCreateFormCard
-              :centre-id="centreId"
-              :fiscal-period-id="fiscalPeriod.id"
-              :funding-period-id="fiscalPeriod.fundingPeriodId"
-              :existing-category-ids="
-                childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.categoryIds
-              "
-              :is-workflow-busy="isReplicating || isWorksheetSaving || isRefreshingLinked"
-              @saving="trackChildrenWithDiverseNeedsFundingRecordCreation"
-              @created="closeChildrenWithDiverseNeedsFundingRecordCreateFormAndRefresh"
-              @cancel="closeChildrenWithDiverseNeedsFundingRecordCreateForm"
-            />
-          </v-col>
-        </v-row>
-      </section>
-      <section class="ma-4 mt-8">
-        <h3 class="mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2">
           Administration (10% of Spaces)
         </h3>
         <AdministrationCostEditTable
@@ -148,6 +101,8 @@
           :is-replicating="
             isReplicating || isWorksheetSaving || isRefreshingLinked || isCreatingAdministrationCost
           "
+          @focus-beyond-last-in-column="navigateBetweenSections(1, 1, $event)"
+          @focus-beyond-first-in-column="navigateBetweenSections(1, -1, $event)"
         />
         <v-row
           v-if="!isNil(administrationCostTable)"
@@ -193,6 +148,8 @@
           :is-replicating="
             isReplicating || isWorksheetSaving || isRefreshingLinked || isCreatingQualityEnhancement
           "
+          @focus-beyond-last-in-column="navigateBetweenSections(2, 1, $event)"
+          @focus-beyond-first-in-column="navigateBetweenSections(2, -1, $event)"
         />
         <v-row
           v-if="!isNil(qualityEnhancementTable)"
@@ -228,6 +185,58 @@
           </v-col>
         </v-row>
       </section>
+      <section class="ma-4 mt-8">
+        <h3 class="mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2">
+          Children with Diverse Needs
+        </h3>
+        <ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual
+          ref="childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual"
+          :where="worksheetWhere"
+          :is-replicating="
+            isReplicating ||
+            isWorksheetSaving ||
+            isRefreshingLinked ||
+            isCreatingChildrenWithDiverseNeedsFundingRecord
+          "
+          @focus-beyond-last-in-column="navigateBetweenSections(3, 1, $event)"
+          @focus-beyond-first-in-column="navigateBetweenSections(3, -1, $event)"
+        />
+        <v-row
+          v-if="!isNil(childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual)"
+          class="mt-0"
+        >
+          <v-col
+            v-if="!showChildrenWithDiverseNeedsFundingRecordCreateForm"
+            cols="12"
+            class="d-flex justify-end"
+          >
+            <v-btn
+              color="primary"
+              :disabled="isChildrenWithDiverseNeedsFundingRecordCreationUnavailable"
+              @click="openChildrenWithDiverseNeedsFundingRecordCreateForm"
+            >
+              Add Diverse Need
+            </v-btn>
+          </v-col>
+          <v-col
+            v-else
+            cols="12"
+          >
+            <ChildrenWithDiverseNeedsFundingRecordsCreateFormCard
+              :centre-id="centreId"
+              :fiscal-period-id="fiscalPeriod.id"
+              :funding-period-id="fiscalPeriod.fundingPeriodId"
+              :existing-category-ids="
+                childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.categoryIds
+              "
+              :is-workflow-busy="isReplicating || isWorksheetSaving || isRefreshingLinked"
+              @saving="trackChildrenWithDiverseNeedsFundingRecordCreation"
+              @created="closeChildrenWithDiverseNeedsFundingRecordCreateFormAndRefresh"
+              @cancel="closeChildrenWithDiverseNeedsFundingRecordCreateForm"
+            />
+          </v-col>
+        </v-row>
+      </section>
 
       <section class="ma-4 mt-8">
         <h3
@@ -247,6 +256,8 @@
         <BuildingExpensesEditTable
           ref="buildingExpensesEditTable"
           :where="worksheetWhere"
+          @focus-beyond-last-in-column="navigateBetweenSections(4, 1, $event)"
+          @focus-beyond-first-in-column="navigateBetweenSections(4, -1, $event)"
         />
 
         <v-row class="mt-0">
@@ -289,6 +300,7 @@ import { useHotkey } from "vuetify"
 import fiscalPeriodsApi, { type FiscalPeriod } from "@/api/fiscal-periods-api"
 import fundingSubmissionLineJsonsApi, {
   type FundingSubmissionLineJsonAsIndex,
+  type FundingLineValue,
 } from "@/api/funding-submission-line-jsons-api"
 import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 import sleepMs from "@/utils/sleep-ms"
@@ -422,6 +434,53 @@ const qualityEnhancementTable =
 const jsonSheet = useTemplateRef("jsonSheet")
 const buildingExpensesEditTable = useTemplateRef("buildingExpensesEditTable")
 const keyboardShortcutsModal = useTemplateRef("keyboardShortcutsModal")
+type WorksheetFocusTarget = {
+  focusOnFirstInColumn: (column: string) => boolean
+  focusOnLastInColumn: (column: string) => boolean
+  commitEdit?: () => Promise<boolean>
+  isLoading?: boolean
+  isErrored?: boolean
+}
+
+async function navigateBetweenSections(
+  currentIndex: number,
+  direction: 1 | -1,
+  columnName: "estimates" | "actuals"
+) {
+  const targets = [
+    jsonSheet.value,
+    administrationCostTable.value,
+    qualityEnhancementTable.value,
+    childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value,
+    buildingExpensesEditTable.value,
+  ] as unknown as Array<WorksheetFocusTarget | null>
+  const current = targets[currentIndex]
+
+  if (current?.commitEdit && !(await current.commitEdit())) return
+
+  for (
+    let index = currentIndex + direction;
+    index >= 0 && index < targets.length;
+    index += direction
+  ) {
+    const target = targets[index]
+    if (!target || target.isLoading || target.isErrored) continue
+
+    const column =
+      index === 0
+        ? columnName
+        : index === 4
+          ? columnName === "estimates"
+            ? "estimatedCost"
+            : "actualCost"
+          : columnName === "estimates"
+            ? "estimatedChildOccupancyRate"
+            : "actualChildOccupancyRate"
+    const didFocus =
+      direction === 1 ? target.focusOnFirstInColumn(column) : target.focusOnLastInColumn(column)
+    if (didFocus) return
+  }
+}
 const showBuildingExpenseCreateForm = ref(false)
 const isReplicating = ref(false)
 const isWorksheetSaving = ref(false)
@@ -538,6 +597,11 @@ async function refreshLinkedResources() {
   if (failures.length > 0) {
     throw new AggregateError(failures, failures.map(String).join("; "))
   }
+}
+
+function previewLinkedOccupancy(line: FundingLineValue) {
+  administrationCostTable.value?.previewSpaceOccupancy(line)
+  qualityEnhancementTable.value?.previewSpaceOccupancy(line)
 }
 
 function onJsonUpdated(fundingSubmissionLineJsonId: number) {
