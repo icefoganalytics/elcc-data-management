@@ -108,19 +108,28 @@ export class ChildrenWithDiverseNeedsFundingRecord extends BaseModel<
   // Associations
   @BelongsTo(() => Centre, {
     foreignKey: "centreId",
-    inverse: { as: "childrenWithDiverseNeedsFundingRecords", type: "hasMany" },
+    inverse: {
+      as: "childrenWithDiverseNeedsFundingRecords",
+      type: "hasMany",
+    },
   })
   declare centre?: NonAttribute<Centre>
 
   @BelongsTo(() => FiscalPeriod, {
     foreignKey: "fiscalPeriodId",
-    inverse: { as: "childrenWithDiverseNeedsFundingRecords", type: "hasMany" },
+    inverse: {
+      as: "childrenWithDiverseNeedsFundingRecords",
+      type: "hasMany",
+    },
   })
   declare fiscalPeriod?: NonAttribute<FiscalPeriod>
 
   @BelongsTo(() => ChildrenWithDiverseNeedsFundingCategory, {
     foreignKey: "categoryId",
-    inverse: { as: "childrenWithDiverseNeedsFundingRecords", type: "hasMany" },
+    inverse: {
+      as: "childrenWithDiverseNeedsFundingRecords",
+      type: "hasMany",
+    },
   })
   declare category?: NonAttribute<ChildrenWithDiverseNeedsFundingCategory>
 
@@ -144,7 +153,14 @@ export class ChildrenWithDiverseNeedsFundingRecord extends BaseModel<
       },
     }))
     this.addScope("byFiscalYear", (fiscalYear: string) => ({
-      include: [{ association: "fiscalPeriod", where: { fiscalYear } }],
+      include: [
+        {
+          association: "fiscalPeriod",
+          where: {
+            fiscalYear,
+          },
+        },
+      ],
     }))
   }
 }
