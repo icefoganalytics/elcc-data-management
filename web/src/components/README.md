@@ -72,4 +72,6 @@ The optional diagnostic preview cannot complete verification. Acknowledge the wa
 
 Keep recovery application-owned through the response-error plugin and captured challenge state, not notification causes or callback infrastructure. Only `cf-mitigated: challenge` permits challenge recovery and its bounded preview. Other HTML is an application error; never display its body. Ordinary `ApiOperationError` feedback stays local, authentication remains application-owned, and unknown errors reach the previous Vue error handler unchanged.
 
+Transport failures without a server response show application-level failure feedback before reaching the previous Vue error handler. An interrupted save is unconfirmed; check the current server state before retrying. Canceled requests do not show this feedback.
+
 Keep the preview opt-in, inert, and isolated: an opaque-origin sandbox, restrictive CSP, no navigation or resource requests, complete removal of hidden/control/media content, and a trusted warning outside the frame. Neither sanitization nor the preview's text establishes trust.
