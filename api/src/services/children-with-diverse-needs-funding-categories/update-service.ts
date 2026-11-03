@@ -1,20 +1,20 @@
 import type { Attributes } from "@sequelize/core"
-import { DiverseNeed } from "@/models"
+import { ChildrenWithDiverseNeedsFundingCategory } from "@/models"
 import BaseService from "@/services/base-service"
 
 type UpdateAttributes = Pick<
-  Attributes<DiverseNeed>,
-  "estimatedChildOccupancyRate" | "actualChildOccupancyRate"
+  Attributes<ChildrenWithDiverseNeedsFundingCategory>,
+  "categoryName" | "fromAge" | "toAge" | "monthlyAmount"
 >
 
 export class UpdateService extends BaseService {
   constructor(
-    private record: DiverseNeed,
+    private record: ChildrenWithDiverseNeedsFundingCategory,
     private attributes: Partial<UpdateAttributes>
   ) {
     super()
   }
-  async perform(): Promise<DiverseNeed> {
+  async perform(): Promise<ChildrenWithDiverseNeedsFundingCategory> {
     return this.record.update(this.attributes)
   }
 }

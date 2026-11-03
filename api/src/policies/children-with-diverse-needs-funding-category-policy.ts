@@ -1,10 +1,12 @@
 import { type Attributes, type FindOptions } from "@sequelize/core"
 
 import { type Path } from "@/utils/deep-pick"
-import { DiverseNeedCategory, User } from "@/models"
+import { ChildrenWithDiverseNeedsFundingCategory, User } from "@/models"
 import { ALL_RECORDS_SCOPE, PolicyFactory } from "@/policies/base-policy"
 
-export class DiverseNeedCategoryPolicy extends PolicyFactory(DiverseNeedCategory) {
+export class ChildrenWithDiverseNeedsFundingCategoryPolicy extends PolicyFactory(
+  ChildrenWithDiverseNeedsFundingCategory
+) {
   show(): boolean {
     return true
   }
@@ -29,9 +31,11 @@ export class DiverseNeedCategoryPolicy extends PolicyFactory(DiverseNeedCategory
     return ["fundingPeriodId", ...this.permittedAttributes()]
   }
 
-  static policyScope(_user: User): FindOptions<Attributes<DiverseNeedCategory>> {
+  static policyScope(
+    _user: User
+  ): FindOptions<Attributes<ChildrenWithDiverseNeedsFundingCategory>> {
     return ALL_RECORDS_SCOPE
   }
 }
 
-export default DiverseNeedCategoryPolicy
+export default ChildrenWithDiverseNeedsFundingCategoryPolicy

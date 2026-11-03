@@ -1,16 +1,26 @@
 import { isNil } from "lodash"
 import BaseController from "@/controllers/base-controller"
 import logger from "@/utils/logger"
-import { DiverseNeed } from "@/models"
-import { DiverseNeedPolicy } from "@/policies"
-import { CreateService, DestroyService, UpdateService } from "@/services/diverse-needs"
-import { IndexSerializer, ShowSerializer } from "@/serializers/diverse-needs"
+import { ChildrenWithDiverseNeedsFundingRecord } from "@/models"
+import { ChildrenWithDiverseNeedsFundingRecordPolicy } from "@/policies"
+import {
+  CreateService,
+  DestroyService,
+  UpdateService,
+} from "@/services/children-with-diverse-needs-funding-records"
+import {
+  IndexSerializer,
+  ShowSerializer,
+} from "@/serializers/children-with-diverse-needs-funding-records"
 
-export class DiverseNeedsController extends BaseController<DiverseNeed> {
+export class ChildrenWithDiverseNeedsFundingRecordsController extends BaseController<ChildrenWithDiverseNeedsFundingRecord> {
   async index() {
     try {
       const where = this.buildWhere()
-      const scoped = DiverseNeedPolicy.applyScope(this.buildFilterScopes(), this.currentUser)
+      const scoped = ChildrenWithDiverseNeedsFundingRecordPolicy.applyScope(
+        this.buildFilterScopes(),
+        this.currentUser
+      )
       const totalCount = await scoped.count({ where })
       const records = await scoped.findAll({
         where,
@@ -22,7 +32,7 @@ export class DiverseNeedsController extends BaseController<DiverseNeed> {
         offset: this.pagination.offset,
       })
       return this.response.json({
-        diverseNeeds: IndexSerializer.perform(records, this.currentUser),
+        childrenWithDiverseNeedsFundingRecords: IndexSerializer.perform(records, this.currentUser),
         totalCount,
       })
     } catch (error) {
@@ -40,7 +50,10 @@ export class DiverseNeedsController extends BaseController<DiverseNeed> {
         return this.response
           .status(403)
           .json({ message: "You are not authorized to view this Diverse Need" })
-      return this.response.json({ diverseNeed: ShowSerializer.perform(record), policy })
+      return this.response.json({
+        childrenWithDiverseNeedsFundingRecord: ShowSerializer.perform(record),
+        policy,
+      })
     } catch (error) {
       logger.error(`Error fetching Diverse Need: ${error}`, { error })
       return this.response.status(400).json({ message: `Error fetching Diverse Need: ${error}` })
@@ -56,7 +69,9 @@ export class DiverseNeedsController extends BaseController<DiverseNeed> {
       const record = await CreateService.perform(
         policy.permitAttributesForCreate(this.request.body)
       )
-      return this.response.status(201).json({ diverseNeed: ShowSerializer.perform(record), policy })
+      return this.response
+        .status(201)
+        .json({ childrenWithDiverseNeedsFundingRecord: ShowSerializer.perform(record), policy })
     } catch (error) {
       logger.error(`Error creating Diverse Need: ${error}`, { error })
       return this.response.status(422).json({ message: `Error creating Diverse Need: ${error}` })
@@ -76,7 +91,10 @@ export class DiverseNeedsController extends BaseController<DiverseNeed> {
         record,
         policy.permitAttributes(this.request.body)
       )
-      return this.response.json({ diverseNeed: ShowSerializer.perform(updated), policy })
+      return this.response.json({
+        childrenWithDiverseNeedsFundingRecord: ShowSerializer.perform(updated),
+        policy,
+      })
     } catch (error) {
       logger.error(`Error updating Diverse Need: ${error}`, { error })
       return this.response.status(422).json({ message: `Error updating Diverse Need: ${error}` })
@@ -100,9 +118,13 @@ export class DiverseNeedsController extends BaseController<DiverseNeed> {
     }
   }
   private load() {
-    return DiverseNeed.findByPk(this.params.diverseNeedId)
+    return ChildrenWithDiverseNeedsFundingRecord.findByPk(
+      this.params.childrenWithDiverseNeedsFundingRecordId
+    )
   }
-  private buildPolicy(record: DiverseNeed = DiverseNeed.build()) {
-    return new DiverseNeedPolicy(this.currentUser, record)
+  private buildPolicy(
+    record: ChildrenWithDiverseNeedsFundingRecord = ChildrenWithDiverseNeedsFundingRecord.build()
+  ) {
+    return new ChildrenWithDiverseNeedsFundingRecordPolicy(this.currentUser, record)
   }
 }

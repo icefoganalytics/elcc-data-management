@@ -1,16 +1,23 @@
 import { isNil } from "lodash"
 import BaseController from "@/controllers/base-controller"
 import logger from "@/utils/logger"
-import { DiverseNeedCategory } from "@/models"
-import { DiverseNeedCategoryPolicy } from "@/policies"
-import { CreateService, DestroyService, UpdateService } from "@/services/diverse-need-categories"
-import { IndexSerializer, ShowSerializer } from "@/serializers/diverse-need-categories"
+import { ChildrenWithDiverseNeedsFundingCategory } from "@/models"
+import { ChildrenWithDiverseNeedsFundingCategoryPolicy } from "@/policies"
+import {
+  CreateService,
+  DestroyService,
+  UpdateService,
+} from "@/services/children-with-diverse-needs-funding-categories"
+import {
+  IndexSerializer,
+  ShowSerializer,
+} from "@/serializers/children-with-diverse-needs-funding-categories"
 
-export class DiverseNeedCategoriesController extends BaseController<DiverseNeedCategory> {
+export class ChildrenWithDiverseNeedsFundingCategoriesController extends BaseController<ChildrenWithDiverseNeedsFundingCategory> {
   async index() {
     try {
       const where = this.buildWhere()
-      const scoped = DiverseNeedCategoryPolicy.applyScope(
+      const scoped = ChildrenWithDiverseNeedsFundingCategoryPolicy.applyScope(
         this.buildFilterScopes(),
         this.currentUser
       )
@@ -25,7 +32,10 @@ export class DiverseNeedCategoriesController extends BaseController<DiverseNeedC
         offset: this.pagination.offset,
       })
       return this.response.json({
-        diverseNeedCategories: IndexSerializer.perform(records, this.currentUser),
+        childrenWithDiverseNeedsFundingCategories: IndexSerializer.perform(
+          records,
+          this.currentUser
+        ),
         totalCount,
       })
     } catch (error) {
@@ -45,7 +55,10 @@ export class DiverseNeedCategoriesController extends BaseController<DiverseNeedC
         return this.response
           .status(403)
           .json({ message: "You are not authorized to view this category" })
-      return this.response.json({ diverseNeedCategory: ShowSerializer.perform(record), policy })
+      return this.response.json({
+        childrenWithDiverseNeedsFundingCategory: ShowSerializer.perform(record),
+        policy,
+      })
     } catch (error) {
       logger.error(`Error fetching diverse need category: ${error}`, { error })
       return this.response
@@ -65,7 +78,7 @@ export class DiverseNeedCategoriesController extends BaseController<DiverseNeedC
       )
       return this.response
         .status(201)
-        .json({ diverseNeedCategory: ShowSerializer.perform(record), policy })
+        .json({ childrenWithDiverseNeedsFundingCategory: ShowSerializer.perform(record), policy })
     } catch (error) {
       logger.error(`Error creating diverse need category: ${error}`, { error })
       return this.response
@@ -87,7 +100,10 @@ export class DiverseNeedCategoriesController extends BaseController<DiverseNeedC
         record,
         policy.permitAttributes(this.request.body)
       )
-      return this.response.json({ diverseNeedCategory: ShowSerializer.perform(updated), policy })
+      return this.response.json({
+        childrenWithDiverseNeedsFundingCategory: ShowSerializer.perform(updated),
+        policy,
+      })
     } catch (error) {
       logger.error(`Error updating diverse need category: ${error}`, { error })
       return this.response
@@ -115,9 +131,13 @@ export class DiverseNeedCategoriesController extends BaseController<DiverseNeedC
     }
   }
   private load() {
-    return DiverseNeedCategory.findByPk(this.params.diverseNeedCategoryId)
+    return ChildrenWithDiverseNeedsFundingCategory.findByPk(
+      this.params.childrenWithDiverseNeedsFundingCategoryId
+    )
   }
-  private buildPolicy(record: DiverseNeedCategory = DiverseNeedCategory.build()) {
-    return new DiverseNeedCategoryPolicy(this.currentUser, record)
+  private buildPolicy(
+    record: ChildrenWithDiverseNeedsFundingCategory = ChildrenWithDiverseNeedsFundingCategory.build()
+  ) {
+    return new ChildrenWithDiverseNeedsFundingCategoryPolicy(this.currentUser, record)
   }
 }

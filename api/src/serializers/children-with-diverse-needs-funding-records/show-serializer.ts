@@ -1,7 +1,7 @@
 import { pick } from "lodash"
-import { DiverseNeed } from "@/models"
+import { ChildrenWithDiverseNeedsFundingRecord } from "@/models"
 import BaseSerializer from "@/serializers/base-serializer"
-export class ShowSerializer extends BaseSerializer<DiverseNeed> {
+export class ShowSerializer extends BaseSerializer<ChildrenWithDiverseNeedsFundingRecord> {
   perform() {
     return pick(this.record, [
       "id",

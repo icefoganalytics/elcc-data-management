@@ -2,16 +2,16 @@ import { FiscalPeriod, User } from "@/models"
 
 import {
   centreFactory,
-  diverseNeedCategoryFactory,
+  childrenWithDiverseNeedsFundingCategoryFactory,
   fiscalPeriodFactory,
   fundingPeriodFactory,
   userFactory,
 } from "@/factories"
 import { mockCurrentUser, request } from "@/support"
 
-describe("api/src/controllers/diverse-needs-controller.ts", () => {
-  describe("DiverseNeedsController", () => {
-    describe("#create -> POST /api/diverse-needs", () => {
+describe("api/src/controllers/children-with-diverse-needs-funding-records-controller.ts", () => {
+  describe("ChildrenWithDiverseNeedsFundingRecordsController", () => {
+    describe("#create -> POST /api/children-with-diverse-needs-funding-records", () => {
       test("when an ordinary user creates a monthly record, returns its category snapshot and policy", async () => {
         // Arrange
         const currentUser = await userFactory.create({ roles: [User.Roles.USER] })
@@ -26,23 +26,25 @@ describe("api/src/controllers/diverse-needs-controller.ts", () => {
           dateStart: new Date("2025-04-01"),
           dateEnd: new Date("2025-04-30"),
         })
-        const category = await diverseNeedCategoryFactory
+        const category = await childrenWithDiverseNeedsFundingCategoryFactory
           .associations({ fundingPeriod })
           .create({ categoryName: "Toddlers", monthlyAmount: "54.9600" })
 
         // Act
-        const response = await request().post("/api/diverse-needs").send({
-          centreId: centre.id,
-          fiscalPeriodId: fiscalPeriod.id,
-          categoryId: category.id,
-          estimatedChildOccupancyRate: "0.5000",
-          actualChildOccupancyRate: "0.2500",
-        })
+        const response = await request()
+          .post("/api/children-with-diverse-needs-funding-records")
+          .send({
+            centreId: centre.id,
+            fiscalPeriodId: fiscalPeriod.id,
+            categoryId: category.id,
+            estimatedChildOccupancyRate: "0.5000",
+            actualChildOccupancyRate: "0.2500",
+          })
 
         // Assert
         expect(response.status).toEqual(201)
         expect(response.body).toEqual({
-          diverseNeed: {
+          childrenWithDiverseNeedsFundingRecord: {
             id: expect.any(Number),
             centreId: centre.id,
             fiscalPeriodId: fiscalPeriod.id,

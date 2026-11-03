@@ -1,15 +1,15 @@
-import DiverseNeed from "@/models/diverse-need"
+import ChildrenWithDiverseNeedsFundingRecord from "@/models/children-with-diverse-needs-funding-record"
 
 import {
   centreFactory,
-  diverseNeedCategoryFactory,
-  diverseNeedFactory,
+  childrenWithDiverseNeedsFundingCategoryFactory,
+  childrenWithDiverseNeedsFundingRecordFactory,
   fiscalPeriodFactory,
   fundingPeriodFactory,
 } from "@/factories"
-import { ReplicateEstimatesService } from "@/services/diverse-needs/replicate-estimates-service"
+import { ReplicateEstimatesService } from "@/services/children-with-diverse-needs-funding-records/replicate-estimates-service"
 
-describe("api/src/services/diverse-needs/replicate-estimates-service.ts", () => {
+describe("api/src/services/children-with-diverse-needs-funding-records/replicate-estimates-service.ts", () => {
   describe("ReplicateEstimatesService", () => {
     describe("#perform", () => {
       test("when a later row exists, updates its occupancy without repricing its snapshot", async () => {
@@ -26,11 +26,13 @@ describe("api/src/services/diverse-needs/replicate-estimates-service.ts", () => 
           dateStart: new Date("2025-06-01T00:00:00.000Z"),
           dateEnd: new Date("2025-06-30T23:59:59.000Z"),
         })
-        const category = await diverseNeedCategoryFactory.associations({ fundingPeriod }).create()
-        const source = await diverseNeedFactory
+        const category = await childrenWithDiverseNeedsFundingCategoryFactory
+          .associations({ fundingPeriod })
+          .create()
+        const source = await childrenWithDiverseNeedsFundingRecordFactory
           .associations({ centre, fiscalPeriod: sourcePeriod, category })
           .create({ estimatedChildOccupancyRate: "0.6250", actualChildOccupancyRate: "0.4000" })
-        const target = await diverseNeedFactory
+        const target = await childrenWithDiverseNeedsFundingRecordFactory
           .associations({ centre, fiscalPeriod: targetPeriod, category })
           .create({
             monthlyAmount: "20.0000",
@@ -42,7 +44,7 @@ describe("api/src/services/diverse-needs/replicate-estimates-service.ts", () => 
         await ReplicateEstimatesService.perform(source)
 
         // Assert
-        const updated = await DiverseNeed.findByPk(target.id)
+        const updated = await ChildrenWithDiverseNeedsFundingRecord.findByPk(target.id)
         expect(updated).toMatchObject({
           monthlyAmount: "20",
           estimatedChildOccupancyRate: "0.625",
