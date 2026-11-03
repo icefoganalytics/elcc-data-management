@@ -92,25 +92,30 @@
         <h3 class="mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2">
           Children with Diverse Needs
         </h3>
-        <DiverseNeedEditTable
-          ref="diverseNeedTable"
+        <ChildrenWithDiverseNeedsFundingRecordEditTable
+          ref="childrenWithDiverseNeedsFundingRecordTable"
           :where="worksheetWhere"
           :is-replicating="
-            isReplicating || isWorksheetSaving || isRefreshingLinked || isCreatingDiverseNeed
+            isReplicating ||
+            isWorksheetSaving ||
+            isRefreshingLinked ||
+            isCreatingChildrenWithDiverseNeedsFundingRecord
           "
         />
         <v-row class="mt-0">
           <v-col
-            v-if="!showDiverseNeedCreateForm"
+            v-if="!showChildrenWithDiverseNeedsFundingRecordCreateForm"
             cols="12"
             class="d-flex justify-end"
           >
             <v-btn
               color="primary"
               :disabled="
-                isWorkflowBusy || diverseNeedTable?.isLoading || diverseNeedTable?.isErrored
+                isWorkflowBusy ||
+                childrenWithDiverseNeedsFundingRecordTable?.isLoading ||
+                childrenWithDiverseNeedsFundingRecordTable?.isErrored
               "
-              @click="showDiverseNeedCreateForm = true"
+              @click="showChildrenWithDiverseNeedsFundingRecordCreateForm = true"
             >
               Add Diverse Need
             </v-btn>
@@ -119,15 +124,15 @@
             v-else
             cols="12"
           >
-            <DiverseNeedCreateFormCard
+            <ChildrenWithDiverseNeedsFundingRecordCreateFormCard
               :centre-id="centreId"
               :fiscal-period-id="fiscalPeriod.id"
               :funding-period-id="fiscalPeriod.fundingPeriodId"
-              :existing-category-ids="diverseNeedTable?.categoryIds ?? []"
+              :existing-category-ids="childrenWithDiverseNeedsFundingRecordTable?.categoryIds ?? []"
               :is-workflow-busy="isReplicating || isWorksheetSaving || isRefreshingLinked"
-              @saving="isCreatingDiverseNeed = $event"
-              @created="onDiverseNeedCreated"
-              @cancel="showDiverseNeedCreateForm = false"
+              @saving="isCreatingChildrenWithDiverseNeedsFundingRecord = $event"
+              @created="onChildrenWithDiverseNeedsFundingRecordCreated"
+              @cancel="showChildrenWithDiverseNeedsFundingRecordCreateForm = false"
             />
           </v-col>
         </v-row>
@@ -298,8 +303,8 @@ import AdministrationCostEditTable from "@/components/administration-costs/Admin
 import AdministrationCostCreateFormCard from "@/components/administration-costs/AdministrationCostCreateFormCard.vue"
 import QualityEnhancementEditTable from "@/components/quality-enhancements/QualityEnhancementEditTable.vue"
 import QualityEnhancementCreateFormCard from "@/components/quality-enhancements/QualityEnhancementCreateFormCard.vue"
-import DiverseNeedEditTable from "@/components/diverse-needs/DiverseNeedEditTable.vue"
-import DiverseNeedCreateFormCard from "@/components/diverse-needs/DiverseNeedCreateFormCard.vue"
+import ChildrenWithDiverseNeedsFundingRecordEditTable from "@/components/children-with-diverse-needs-funding-records/ChildrenWithDiverseNeedsFundingRecordEditTable.vue"
+import ChildrenWithDiverseNeedsFundingRecordCreateFormCard from "@/components/children-with-diverse-needs-funding-records/ChildrenWithDiverseNeedsFundingRecordCreateFormCard.vue"
 import useSnack from "@/use/use-snack"
 const props = defineProps<{
   centreId: number
@@ -318,8 +323,8 @@ const fiscalPeriod = ref<FiscalPeriod | null>(null)
 const isLoading = ref(true)
 const loadError = ref(false)
 let activeRequest = 0
-const showDiverseNeedCreateForm = ref(false)
-const isCreatingDiverseNeed = ref(false)
+const showChildrenWithDiverseNeedsFundingRecordCreateForm = ref(false)
+const isCreatingChildrenWithDiverseNeedsFundingRecord = ref(false)
 const showAdministrationCostCreateForm = ref(false)
 const showQualityEnhancementCreateForm = ref(false)
 const isCreatingAdministrationCost = ref(false)
@@ -328,8 +333,8 @@ const isCreatingQualityEnhancement = ref(false)
 async function loadWorksheet() {
   showAdministrationCostCreateForm.value = false
   showQualityEnhancementCreateForm.value = false
-  showDiverseNeedCreateForm.value = false
-  isCreatingDiverseNeed.value = false
+  showChildrenWithDiverseNeedsFundingRecordCreateForm.value = false
+  isCreatingChildrenWithDiverseNeedsFundingRecord.value = false
   isCreatingAdministrationCost.value = false
   isCreatingQualityEnhancement.value = false
   const requestId = ++activeRequest
@@ -392,8 +397,9 @@ const worksheetWhere = computed(() => ({
   centreId: props.centreId,
   fiscalPeriodId: fiscalPeriod.value?.id,
 }))
-const diverseNeedTable =
-  useTemplateRef<InstanceType<typeof DiverseNeedEditTable>>("diverseNeedTable")
+const childrenWithDiverseNeedsFundingRecordTable = useTemplateRef<
+  InstanceType<typeof ChildrenWithDiverseNeedsFundingRecordEditTable>
+>("childrenWithDiverseNeedsFundingRecordTable")
 const administrationCostTable =
   useTemplateRef<InstanceType<typeof AdministrationCostEditTable>>("administrationCostTable")
 const qualityEnhancementTable =
@@ -409,13 +415,13 @@ const isRefreshingLinked = ref(false)
 const snack = useSnack()
 const isLedgerMutating = computed(() =>
   Boolean(
-    diverseNeedTable.value?.isSaving ||
-      diverseNeedTable.value?.isDeleting ||
+    childrenWithDiverseNeedsFundingRecordTable.value?.isSaving ||
+      childrenWithDiverseNeedsFundingRecordTable.value?.isDeleting ||
       administrationCostTable.value?.isSaving ||
       administrationCostTable.value?.isDeleting ||
       qualityEnhancementTable.value?.isSaving ||
       qualityEnhancementTable.value?.isDeleting ||
-      isCreatingDiverseNeed.value ||
+      isCreatingChildrenWithDiverseNeedsFundingRecord.value ||
       isCreatingAdministrationCost.value ||
       isCreatingQualityEnhancement.value
   )
@@ -430,15 +436,15 @@ const isWorkflowBusy = computed(
 const isReplicationUnavailable = computed(() => {
   const sheet = jsonSheet.value
   const administration = administrationCostTable.value
-  const diverseNeed = diverseNeedTable.value
+  const childrenWithDiverseNeedsFundingRecord = childrenWithDiverseNeedsFundingRecordTable.value
   const quality = qualityEnhancementTable.value
   return (
     !sheet ||
     sheet.isLoading ||
     sheet.isErrored ||
-    !diverseNeed ||
-    diverseNeed.isLoading ||
-    diverseNeed.isErrored ||
+    !childrenWithDiverseNeedsFundingRecord ||
+    childrenWithDiverseNeedsFundingRecord.isLoading ||
+    childrenWithDiverseNeedsFundingRecord.isErrored ||
     !administration ||
     administration.isLoading ||
     administration.isErrored ||
@@ -473,7 +479,7 @@ async function closeCreateFormAndRefresh() {
 async function refreshLinkedResources() {
   const results = await Promise.allSettled([
     administrationCostTable.value?.refresh(),
-    diverseNeedTable.value?.refresh(),
+    childrenWithDiverseNeedsFundingRecordTable.value?.refresh(),
     qualityEnhancementTable.value?.refresh(),
   ])
   const failures = results.flatMap((result) =>
@@ -493,18 +499,27 @@ async function saveWorksheet(): Promise<boolean> {
 
   const sheet = jsonSheet.value
   const administration = administrationCostTable.value
-  const diverseNeed = diverseNeedTable.value
+  const childrenWithDiverseNeedsFundingRecord = childrenWithDiverseNeedsFundingRecordTable.value
   const quality = qualityEnhancementTable.value
-  if (!sheet || !administration || !diverseNeed || !quality) return false
+  if (!sheet || !administration || !childrenWithDiverseNeedsFundingRecord || !quality) return false
 
   try {
     isWorksheetSaving.value = true
-    const [administrationCommitted, diverseNeedCommitted, qualityCommitted] = await Promise.all([
+    const [
+      administrationCommitted,
+      childrenWithDiverseNeedsFundingRecordCommitted,
+      qualityCommitted,
+    ] = await Promise.all([
       administration.commitEdit(),
-      diverseNeed.commitEdit(),
+      childrenWithDiverseNeedsFundingRecord.commitEdit(),
       quality.commitEdit(),
     ])
-    if (!administrationCommitted || !diverseNeedCommitted || !qualityCommitted) return false
+    if (
+      !administrationCommitted ||
+      !childrenWithDiverseNeedsFundingRecordCommitted ||
+      !qualityCommitted
+    )
+      return false
 
     let wasSaved = false
     try {
@@ -535,10 +550,10 @@ async function onAdministrationCostCreated() {
   }
 }
 
-async function onDiverseNeedCreated() {
-  showDiverseNeedCreateForm.value = false
+async function onChildrenWithDiverseNeedsFundingRecordCreated() {
+  showChildrenWithDiverseNeedsFundingRecordCreateForm.value = false
   try {
-    await diverseNeedTable.value?.refresh()
+    await childrenWithDiverseNeedsFundingRecordTable.value?.refresh()
   } catch (error) {
     snack.error(`Failed to refresh diverse needs: ${error}`)
   }
@@ -570,9 +585,9 @@ async function replicateEstimatesForward() {
 
   const sheet = jsonSheet.value
   const administration = administrationCostTable.value
-  const diverseNeed = diverseNeedTable.value
+  const childrenWithDiverseNeedsFundingRecord = childrenWithDiverseNeedsFundingRecordTable.value
   const quality = qualityEnhancementTable.value
-  if (!sheet || !administration || !diverseNeed || !quality) return
+  if (!sheet || !administration || !childrenWithDiverseNeedsFundingRecord || !quality) return
 
   const savedWorksheet = saveWorksheet()
   isReplicating.value = true
@@ -590,7 +605,7 @@ async function replicateEstimatesForward() {
     const results = await Promise.allSettled([
       sheet.replicateOwnEstimates(),
       administration.replicateEstimates(),
-      diverseNeed.replicateEstimates(),
+      childrenWithDiverseNeedsFundingRecord.replicateEstimates(),
       quality.replicateEstimates(),
     ])
     const failures = results.flatMap((result) =>

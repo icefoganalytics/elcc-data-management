@@ -11,7 +11,7 @@ import {
   childCareSpaceFactory,
   fiscalPeriodFactory,
   fundingSubmissionLineJsonFactory,
-  diverseNeedFactory,
+  childrenWithDiverseNeedsFundingRecordFactory,
   qualityEnhancementFactory,
 } from "@/tests/factories"
 import { mockRouter, mockVuetify } from "@/tests/support"
@@ -95,8 +95,8 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
           }
 
-          if (url === "/api/diverse-needs") {
-            return { data: { diverseNeeds: [], totalCount: 0 } }
+          if (url === "/api/children-with-diverse-needs-funding-records") {
+            return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
           }
           if (url === "/api/quality-enhancements") {
             return { data: { qualityEnhancements: [qualityEnhancement], totalCount: 1 } }
@@ -276,8 +276,8 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             }
           }
 
-          if (url === "/api/diverse-needs") {
-            return { data: { diverseNeeds: [], totalCount: 0 } }
+          if (url === "/api/children-with-diverse-needs-funding-records") {
+            return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
           }
           if (url === "/api/quality-enhancements") {
             return { data: { qualityEnhancements: [], totalCount: 0 } }
@@ -384,8 +384,8 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           if (url === "/api/administration-costs") {
             throw new Error("Administration costs unavailable")
           }
-          if (url === "/api/diverse-needs") {
-            return { data: { diverseNeeds: [], totalCount: 0 } }
+          if (url === "/api/children-with-diverse-needs-funding-records") {
+            return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
           }
           if (url === "/api/quality-enhancements") {
             return { data: { qualityEnhancements: [], totalCount: 0 } }
@@ -449,12 +449,13 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             },
           ],
         })
-        const diverseNeed = diverseNeedFactory.build({
-          id: 91,
-          centreId: 1,
-          fiscalPeriodId: 4,
-          categoryId: 90,
-        })
+        const childrenWithDiverseNeedsFundingRecord =
+          childrenWithDiverseNeedsFundingRecordFactory.build({
+            id: 91,
+            centreId: 1,
+            fiscalPeriodId: 4,
+            categoryId: 90,
+          })
         const fiscalPeriod = fiscalPeriodFactory.build({
           id: 4,
           fundingPeriodId: 1,
@@ -475,8 +476,13 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           if (url === "/api/administration-costs") {
             return { data: { administrationCosts: [], totalCount: 0 } }
           }
-          if (url === "/api/diverse-needs") {
-            return { data: { diverseNeeds: [diverseNeed], totalCount: 1 } }
+          if (url === "/api/children-with-diverse-needs-funding-records") {
+            return {
+              data: {
+                childrenWithDiverseNeedsFundingRecords: [childrenWithDiverseNeedsFundingRecord],
+                totalCount: 1,
+              },
+            }
           }
           if (url === "/api/quality-enhancements") {
             return { data: { qualityEnhancements: [], totalCount: 0 } }
@@ -508,7 +514,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         expect(
           get.mock.calls.some(
             ([url, config]) =>
-              url === "/api/diverse-needs" &&
+              url === "/api/children-with-diverse-needs-funding-records" &&
               config?.params?.where?.centreId === 1 &&
               config.params.where.fiscalPeriodId === 4
           )
@@ -553,8 +559,8 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             if (url === "/api/administration-costs") {
               return { data: { administrationCosts: [], totalCount: 0 } }
             }
-            if (url === "/api/diverse-needs") {
-              return { data: { diverseNeeds: [], totalCount: 0 } }
+            if (url === "/api/children-with-diverse-needs-funding-records") {
+              return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
             }
             if (url === "/api/quality-enhancements") {
               return { data: { qualityEnhancements: [quality], totalCount: 1 } }
@@ -644,8 +650,8 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             administrationRequests += 1
             return { data: { administrationCosts: [], totalCount: 0 } }
           }
-          if (url === "/api/diverse-needs") {
-            return { data: { diverseNeeds: [], totalCount: 0 } }
+          if (url === "/api/children-with-diverse-needs-funding-records") {
+            return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
           }
           if (url === "/api/quality-enhancements") {
             qualityRequests += 1
@@ -738,8 +744,8 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             if (url === "/api/administration-costs") {
               return { data: { administrationCosts: [administration], totalCount: 1 } }
             }
-            if (url === "/api/diverse-needs") {
-              return { data: { diverseNeeds: [], totalCount: 0 } }
+            if (url === "/api/children-with-diverse-needs-funding-records") {
+              return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
             }
             if (url === "/api/quality-enhancements") {
               return { data: { qualityEnhancements: [quality], totalCount: 1 } }
@@ -829,8 +835,8 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             if (url === "/api/administration-costs") {
               return { data: { administrationCosts: [], totalCount: 0 } }
             }
-            if (url === "/api/diverse-needs") {
-              return { data: { diverseNeeds: [], totalCount: 0 } }
+            if (url === "/api/children-with-diverse-needs-funding-records") {
+              return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
             }
             if (url === "/api/quality-enhancements") {
               return { data: { qualityEnhancements: [], totalCount: 0 } }
@@ -901,12 +907,13 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           fiscalYear: "2024-25",
           month: FiscalPeriodMonths.APRIL,
         })
-        const diverseNeed = diverseNeedFactory.build({
-          id: 91,
-          centreId: 1,
-          fiscalPeriodId: 4,
-          categoryId: 90,
-        })
+        const childrenWithDiverseNeedsFundingRecord =
+          childrenWithDiverseNeedsFundingRecordFactory.build({
+            id: 91,
+            centreId: 1,
+            fiscalPeriodId: 4,
+            categoryId: 90,
+          })
         const http = vi.mocked(httpClient, true)
         const pendingReplication = Promise.withResolvers<{ data: undefined }>()
         const replicationRequests: string[] = []
@@ -923,8 +930,13 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           if (url === "/api/administration-costs") {
             return { data: { administrationCosts: [], totalCount: 0 } }
           }
-          if (url === "/api/diverse-needs") {
-            return { data: { diverseNeeds: [diverseNeed], totalCount: 1 } }
+          if (url === "/api/children-with-diverse-needs-funding-records") {
+            return {
+              data: {
+                childrenWithDiverseNeedsFundingRecords: [childrenWithDiverseNeedsFundingRecord],
+                totalCount: 1,
+              },
+            }
           }
           if (url === "/api/quality-enhancements") {
             return { data: { qualityEnhancements: [], totalCount: 0 } }
@@ -933,7 +945,10 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         })
         http.patch.mockResolvedValue({ data: {} })
         http.post.mockImplementation(async (url) => {
-          if (url === `/api/diverse-needs/${diverseNeed.id}/replicate-estimates`) {
+          if (
+            url ===
+            `/api/children-with-diverse-needs-funding-records/${childrenWithDiverseNeedsFundingRecord.id}/replicate-estimates`
+          ) {
             replicationRequests.push(url)
             return pendingReplication.promise
           }
@@ -963,7 +978,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
 
         // Assert
         expect(replicationRequests).toEqual([
-          `/api/diverse-needs/${diverseNeed.id}/replicate-estimates`,
+          `/api/children-with-diverse-needs-funding-records/${childrenWithDiverseNeedsFundingRecord.id}/replicate-estimates`,
         ])
       })
     })

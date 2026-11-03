@@ -3,7 +3,7 @@ import {
   AdministrationCostCategory,
   BuildingExpense,
   Centre,
-  DiverseNeed,
+  ChildrenWithDiverseNeedsFundingRecord,
   EmployeeBenefit,
   FundingReconciliation,
   FundingReconciliationAdjustment,
@@ -19,8 +19,8 @@ import {
   administrationCostFactory,
   buildingExpenseFactory,
   centreFactory,
-  diverseNeedCategoryFactory,
-  diverseNeedFactory,
+  childrenWithDiverseNeedsFundingCategoryFactory,
+  childrenWithDiverseNeedsFundingRecordFactory,
   employeeBenefitFactory,
   employeeWageTierFactory,
   fiscalPeriodFactory,
@@ -47,19 +47,28 @@ describe("api/src/services/centres/destroy-service.ts", () => {
         const otherCentre = await centreFactory.create()
         const fundingPeriod = await fundingPeriodFactory.create()
         const fiscalPeriod = await fiscalPeriodFactory.associations({ fundingPeriod }).create()
-        const category = await diverseNeedCategoryFactory.associations({ fundingPeriod }).create()
-        await diverseNeedFactory.associations({ centre, fiscalPeriod, category }).create()
-        const otherDiverseNeed = await diverseNeedFactory
-          .associations({ centre: otherCentre, fiscalPeriod, category })
+        const category = await childrenWithDiverseNeedsFundingCategoryFactory
+          .associations({ fundingPeriod })
           .create()
+        await childrenWithDiverseNeedsFundingRecordFactory
+          .associations({ centre, fiscalPeriod, category })
+          .create()
+        const otherChildrenWithDiverseNeedsFundingRecord =
+          await childrenWithDiverseNeedsFundingRecordFactory
+            .associations({ centre: otherCentre, fiscalPeriod, category })
+            .create()
 
         // Act
         await DestroyService.perform(centre, currentUser)
 
         // Assert
-        const remainingDiverseNeeds = await DiverseNeed.findAll()
-        expect(remainingDiverseNeeds).toEqual([
-          expect.objectContaining({ id: otherDiverseNeed.id, centreId: otherCentre.id }),
+        const remainingChildrenWithDiverseNeedsFundingRecords =
+          await ChildrenWithDiverseNeedsFundingRecord.findAll()
+        expect(remainingChildrenWithDiverseNeedsFundingRecords).toEqual([
+          expect.objectContaining({
+            id: otherChildrenWithDiverseNeedsFundingRecord.id,
+            centreId: otherCentre.id,
+          }),
         ])
       })
 

@@ -1,7 +1,11 @@
 import { type CreationAttributes } from "@sequelize/core"
 import { isEmpty } from "lodash"
 
-import { DiverseNeed, DiverseNeedCategory, FiscalPeriod } from "@/models"
+import {
+  ChildrenWithDiverseNeedsFundingRecord,
+  ChildrenWithDiverseNeedsFundingCategory,
+  FiscalPeriod,
+} from "@/models"
 import Centre from "@/models/centre"
 import FundingPeriod from "@/models/funding-period"
 import BaseService from "@/services/base-service"
@@ -14,20 +18,20 @@ export class BulkCreateService extends BaseService {
     super()
   }
 
-  async perform(): Promise<DiverseNeed[]> {
+  async perform(): Promise<ChildrenWithDiverseNeedsFundingRecord[]> {
     const periods = await FiscalPeriod.findAll({
       attributes: ["id"],
       where: { fundingPeriodId: this.fundingPeriod.id },
       order: [["id", "ASC"]],
     })
     if (isEmpty(periods)) throw new Error("No fiscal periods found for the given funding period.")
-    const categories = await DiverseNeedCategory.findAll({
+    const categories = await ChildrenWithDiverseNeedsFundingCategory.findAll({
       where: { fundingPeriodId: this.fundingPeriod.id },
       order: [["id", "ASC"]],
     })
     if (isEmpty(categories)) return []
 
-    const existing = await DiverseNeed.findAll({
+    const existing = await ChildrenWithDiverseNeedsFundingRecord.findAll({
       attributes: ["fiscalPeriodId", "categoryId"],
       where: { centreId: this.centre.id, fiscalPeriodId: periods.map(({ id }) => id) },
       paranoid: false,
@@ -35,7 +39,7 @@ export class BulkCreateService extends BaseService {
     const existingKeys = new Set(
       existing.map(({ fiscalPeriodId, categoryId }) => `${fiscalPeriodId}:${categoryId}`)
     )
-    const attributes: CreationAttributes<DiverseNeed>[] = []
+    const attributes: CreationAttributes<ChildrenWithDiverseNeedsFundingRecord>[] = []
     for (const period of periods) {
       for (const category of categories) {
         const key = `${period.id}:${category.id}`
@@ -54,7 +58,7 @@ export class BulkCreateService extends BaseService {
         })
       }
     }
-    return DiverseNeed.bulkCreate(attributes)
+    return ChildrenWithDiverseNeedsFundingRecord.bulkCreate(attributes)
   }
 }
 

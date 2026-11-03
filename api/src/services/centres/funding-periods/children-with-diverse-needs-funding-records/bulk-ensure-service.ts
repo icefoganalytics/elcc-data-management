@@ -1,8 +1,13 @@
 import { isEmpty } from "lodash"
 
-import { DiverseNeed, Centre, FiscalPeriod, FundingPeriod } from "@/models"
+import {
+  ChildrenWithDiverseNeedsFundingRecord,
+  Centre,
+  FiscalPeriod,
+  FundingPeriod,
+} from "@/models"
 import BaseService from "@/services/base-service"
-import BulkCreateService from "@/services/centres/funding-periods/diverse-needs/bulk-create-service"
+import BulkCreateService from "@/services/centres/funding-periods/children-with-diverse-needs-funding-records/bulk-create-service"
 
 export class BulkEnsureService extends BaseService {
   constructor(
@@ -13,13 +18,13 @@ export class BulkEnsureService extends BaseService {
     super()
   }
 
-  async perform(): Promise<DiverseNeed[]> {
+  async perform(): Promise<ChildrenWithDiverseNeedsFundingRecord[]> {
     const fiscalPeriods = await FiscalPeriod.findAll({
       attributes: ["id"],
       where: { fundingPeriodId: this.fundingPeriod.id },
     })
     const fiscalPeriodIds = fiscalPeriods.map(({ id }) => id)
-    const existing = await DiverseNeed.findAll({
+    const existing = await ChildrenWithDiverseNeedsFundingRecord.findAll({
       where: {
         centreId: this.centre.id,
         fiscalPeriodId: fiscalPeriodIds,
@@ -27,7 +32,7 @@ export class BulkEnsureService extends BaseService {
       paranoid: false,
     })
     if (!isEmpty(existing) || !this.isInitialProvisioning) {
-      return DiverseNeed.findAll({
+      return ChildrenWithDiverseNeedsFundingRecord.findAll({
         where: {
           centreId: this.centre.id,
           fiscalPeriodId: fiscalPeriodIds,
