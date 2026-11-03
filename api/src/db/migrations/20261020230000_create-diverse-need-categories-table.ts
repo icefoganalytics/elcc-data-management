@@ -12,9 +12,9 @@ export async function up(knex: Knex): Promise<void> {
     table.integer("from_age")
     table.integer("to_age")
     table.decimal("monthly_amount", 15, 4).notNullable()
-    table.specificType("created_at", "DATETIME2").notNullable().defaultTo(knex.raw("GETUTCDATE()"))
-    table.specificType("updated_at", "DATETIME2").notNullable().defaultTo(knex.raw("GETUTCDATE()"))
-    table.specificType("deleted_at", "DATETIME2")
+    table.timestamp("created_at").notNullable().defaultTo(knex.raw("GETUTCDATE()"))
+    table.timestamp("updated_at").notNullable().defaultTo(knex.raw("GETUTCDATE()"))
+    table.timestamp("deleted_at").nullable()
 
     table.foreign("funding_period_id").references("funding_periods.id")
     table.unique(["funding_period_id", "category_name"], {
