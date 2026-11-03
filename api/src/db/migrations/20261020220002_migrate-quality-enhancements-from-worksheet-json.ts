@@ -165,7 +165,6 @@ export async function up(knex: Knex): Promise<void> {
       fiscalPeriod.fundingPeriodId,
       fiscalPeriod.fiscalPeriodId,
       categoryId,
-      sourceConfiguration,
       spaceCategories
     )
   })
@@ -856,7 +855,6 @@ function ledgerAttributesFor(
   fundingPeriodId: number,
   fiscalPeriodId: number,
   categoryId: number,
-  sourceConfiguration: SourceConfiguration,
   spaceCategories: SpaceCategory[]
 ): LedgerAttributes {
   const monthlyAmount = decimalForDatabase(
@@ -914,12 +912,7 @@ function ledgerAttributesFor(
           `worksheet ${line.worksheetId} line ${line.lineIndex} actual total`
         )
 
-  const explicitSpaceCategoryId = parseSpaceCategoryId(line)
-  const childCareSpaceCategoryId =
-    explicitSpaceCategoryId === undefined
-      ? (sourceConfiguration.childCareSpaceCategoryId ??
-        findConfigurationSpaceCategoryId(sourceConfiguration, fundingPeriodId, spaceCategories))
-      : explicitSpaceCategoryId
+  const childCareSpaceCategoryId = parseSpaceCategoryId(line)
   if (
     childCareSpaceCategoryId !== null &&
     !spaceCategories.some(
@@ -965,9 +958,9 @@ function ledgerAttributesFor(
   }
 }
 
-function parseSpaceCategoryId(line: WorksheetEnhancement): number | null | undefined {
+function parseSpaceCategoryId(line: WorksheetEnhancement): number | null {
   if (line.childCareSpaceCategoryIdCount === 0) {
-    return undefined
+    return null
   }
   if (line.childCareSpaceCategoryIdType === 0) {
     return null
