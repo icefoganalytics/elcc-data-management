@@ -7,9 +7,11 @@ import type {
   ChildrenWithDiverseNeedsFundingCategoryAsIndex,
   ChildrenWithDiverseNeedsFundingCategoryQueryOptions,
 } from "@/api/children-with-diverse-needs-funding-categories-api"
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 
 export function useChildrenWithDiverseNeedsFundingCategories(
-  queryOptions: Ref<ChildrenWithDiverseNeedsFundingCategoryQueryOptions>
+  queryOptions: Ref<ChildrenWithDiverseNeedsFundingCategoryQueryOptions>,
+  { skipWatchIf = () => false }: { skipWatchIf?: () => boolean } = {}
 ) {
   const state = reactive<{
     childrenWithDiverseNeedsFundingCategories: ChildrenWithDiverseNeedsFundingCategoryAsIndex[]
@@ -22,13 +24,17 @@ export function useChildrenWithDiverseNeedsFundingCategories(
     isLoading: false,
     isErrored: false,
   })
+
   let requestController: AbortController | undefined
 
   async function fetch(): Promise<ChildrenWithDiverseNeedsFundingCategoryAsIndex[]> {
     requestController?.abort()
+
     const controller = new AbortController()
     requestController = controller
     state.isLoading = true
+    state.isErrored = false
+
     try {
       const response = await childrenWithDiverseNeedsFundingCategoriesApi.list(
         unref(queryOptions),
@@ -48,6 +54,7 @@ export function useChildrenWithDiverseNeedsFundingCategories(
         return state.childrenWithDiverseNeedsFundingCategories
 
       state.isErrored = true
+      console.error("Failed to fetch Children with Diverse Needs funding categories", { error })
       throw error
     } finally {
       if (!controller.signal.aborted) state.isLoading = false
@@ -55,20 +62,37 @@ export function useChildrenWithDiverseNeedsFundingCategories(
   }
 
   watch(
-    queryOptions,
-    async () => {
+    () => [skipWatchIf(), unref(queryOptions)],
+    async ([skip]) => {
+      state.childrenWithDiverseNeedsFundingCategories = []
+      state.totalCount = 0
+      state.isErrored = false
+      state.isLoading = false
+      if (skip) {
+        requestController?.abort()
+        return
+      }
+
       try {
         await fetch()
-      } catch {
-        // Explicit refresh callers receive the rejection; watched failures use isErrored.
+      } catch (error) {
+        rethrowUnexpectedError(error)
       }
     },
-    { deep: true, immediate: true }
+    {
+      deep: true,
+      immediate: true,
+    }
   )
 
-  onScopeDispose(() => requestController?.abort())
+  onScopeDispose(() => {
+    requestController?.abort()
+  })
 
-  return { ...toRefs(state), fetch }
+  return {
+    ...toRefs(state),
+    fetch,
+  }
 }
 
 export default useChildrenWithDiverseNeedsFundingCategories

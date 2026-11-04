@@ -20,7 +20,7 @@
       density="compact"
       role="alert"
     >
-      Diverse needs could not be loaded.
+      Children with Diverse Needs could not be loaded.
       <v-btn
         variant="text"
         @click="reload"
@@ -28,7 +28,8 @@
       >
     </v-alert>
     <EditDataTableVirtual
-      ref="editTable"
+      v-else
+      ref="editDataTableVirtual"
       :busy="isBlocked"
       :headers="headers"
       :items="displayedNeeds"
@@ -105,36 +106,52 @@
 import { computed, ref, useTemplateRef } from "vue"
 import { keyBy, pick } from "lodash"
 
-import childrenWithDiverseNeedsFundingRecordsApi from "@/api/children-with-diverse-needs-funding-records-api"
-import type {
-  ChildrenWithDiverseNeedsFundingRecordAsIndex,
-  ChildrenWithDiverseNeedsFundingRecordOccupancyAttributes,
-} from "@/api/children-with-diverse-needs-funding-records-api"
 import { MAX_PER_PAGE } from "@/api/base-api"
+import childrenWithDiverseNeedsFundingRecordsApi, {
+  type ChildrenWithDiverseNeedsFundingRecordAsIndex,
+  type ChildrenWithDiverseNeedsFundingRecordOccupancyAttributes,
+} from "@/api/children-with-diverse-needs-funding-records-api"
+import { replicateEstimatesApi } from "@/api/children-with-diverse-needs-funding-records"
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
+
 import useChildrenWithDiverseNeedsFundingRecords from "@/use/use-children-with-diverse-needs-funding-records"
 import useSnack from "@/use/use-snack"
+
+import blockedToTrueConfirm from "@/utils/blocked-to-true-confirm"
 import { formatDecimal, formatMoney } from "@/utils/formatters"
 import sumByDecimal from "@/utils/sum-by-decimal"
-import blockedToTrueConfirm from "@/utils/blocked-to-true-confirm"
+
 import EditDataTableVirtual from "@/components/common/EditDataTableVirtual.vue"
-import { replicateEstimatesApi } from "@/api/children-with-diverse-needs-funding-records"
 
 const props = withDefaults(
   defineProps<{
-    where?: { centreId?: number; fiscalPeriodId?: number }
+    where?: {
+      centreId?: number
+      fiscalPeriodId?: number
+    }
     isReplicating?: boolean
   }>(),
-  { where: () => ({}), isReplicating: false }
+  {
+    where: () => ({}),
+    isReplicating: false,
+  }
 )
+
 const emit = defineEmits<{
   updated: []
   mutationSettled: []
   focusBeyondLastInColumn: [column: "estimates" | "actuals"]
   focusBeyondFirstInColumn: [column: "estimates" | "actuals"]
 }>()
-const query = computed(() => ({ where: props.where, perPage: MAX_PER_PAGE }))
+
+const query = computed(() => ({
+  where: props.where,
+  perPage: MAX_PER_PAGE,
+}))
+
 const { childrenWithDiverseNeedsFundingRecords, isLoading, isErrored, fetch } =
   useChildrenWithDiverseNeedsFundingRecords(query)
+
 const displayedNeeds = computed(() =>
   childrenWithDiverseNeedsFundingRecords.value.map((record) => ({
     ...record,
@@ -142,6 +159,7 @@ const displayedNeeds = computed(() =>
     actualChildOccupancyRate: formatDecimal(record.actualChildOccupancyRate),
   }))
 )
+
 const headers = [
   { title: "Category", key: "categoryId" },
   { title: "Per Child", key: "monthlyAmount" },
@@ -151,16 +169,20 @@ const headers = [
   { title: "Act Total", key: "actualComputedTotal" },
   { title: "Actions", key: "actions", sortable: false },
 ]
+
 const editableColumns: (keyof ChildrenWithDiverseNeedsFundingRecordOccupancyAttributes)[] = [
   "estimatedChildOccupancyRate",
   "actualChildOccupancyRate",
 ]
+
 const totalEstimated = computed(() =>
   sumByDecimal(childrenWithDiverseNeedsFundingRecords.value, "estimatedComputedTotal").toFixed(4)
 )
+
 const totalActual = computed(() =>
   sumByDecimal(childrenWithDiverseNeedsFundingRecords.value, "actualComputedTotal").toFixed(4)
 )
+
 const totalEstimatedOccupancy = computed(() =>
   formatDecimal(
     sumByDecimal(
@@ -169,6 +191,7 @@ const totalEstimatedOccupancy = computed(() =>
     ).toFixed(4)
   )
 )
+
 const totalActualOccupancy = computed(() =>
   formatDecimal(
     sumByDecimal(childrenWithDiverseNeedsFundingRecords.value, "actualChildOccupancyRate").toFixed(
@@ -176,42 +199,43 @@ const totalActualOccupancy = computed(() =>
     )
   )
 )
+
 const byId = computed(() => keyBy(childrenWithDiverseNeedsFundingRecords.value, "id"))
-const editTable = useTemplateRef<{
-  commitEdit: () => void
-  focusOnFirstInColumn: (
-    column: keyof ChildrenWithDiverseNeedsFundingRecordOccupancyAttributes
-  ) => boolean
-  focusOnLastInColumn: (
-    column: keyof ChildrenWithDiverseNeedsFundingRecordOccupancyAttributes
-  ) => boolean
-  cancelPendingFocus: () => void
-}>("editTable")
+
+const editDataTableVirtual = useTemplateRef("editDataTableVirtual")
+
 let currentSave: Promise<boolean> | null = null
 const isSaving = ref(false)
 const isDeleting = ref(false)
 const deletingId = ref<number | null>(null)
 const saveError = ref("")
+
 const isBlocked = computed(
   () =>
     props.isReplicating || isSaving.value || isDeleting.value || isLoading.value || isErrored.value
 )
+
 const snack = useSnack()
 
 function trackSave(record: ChildrenWithDiverseNeedsFundingRecordAsIndex) {
   if (isSaving.value) return
+
   currentSave = saveIfDirty(record)
+  return currentSave
 }
 
 async function commitEdit(): Promise<boolean> {
-  editTable.value?.commitEdit()
+  editDataTableVirtual.value?.commitEdit()
   const save = currentSave
   try {
     const saved = (save === null || (await save)) && !isErrored.value
-    if (!saved) editTable.value?.cancelPendingFocus()
+    if (!saved) editDataTableVirtual.value?.cancelPendingFocus()
+
     return saved
-  } catch {
-    editTable.value?.cancelPendingFocus()
+  } catch (error) {
+    editDataTableVirtual.value?.cancelPendingFocus()
+    rethrowUnexpectedError(error)
+
     return false
   } finally {
     if (currentSave === save) currentSave = null
@@ -221,10 +245,12 @@ async function commitEdit(): Promise<boolean> {
 async function saveIfDirty(record: ChildrenWithDiverseNeedsFundingRecordAsIndex) {
   const current = byId.value[record.id]
   if (!current || isBlocked.value) return false
+
   const changed = editableColumns.filter(
     (field) => formatDecimal(current[field]) !== formatDecimal(record[field])
   )
   if (!changed.length) return true
+
   isSaving.value = true
   saveError.value = ""
   try {
@@ -238,17 +264,22 @@ async function saveIfDirty(record: ChildrenWithDiverseNeedsFundingRecordAsIndex)
         ...current,
         ...childrenWithDiverseNeedsFundingRecord,
       })
-    snack.success("Diverse need saved!")
+
+    snack.success("Children with Diverse Needs funding record saved!")
     emit("updated")
     return true
   } catch (error) {
+    editDataTableVirtual.value?.cancelPendingFocus()
+    rethrowUnexpectedError(error)
+
     saveError.value = `Failed to save Children with Diverse Needs: ${String(error)}. Retry your edit after reloading.`
     try {
       await refresh()
-    } catch {
+    } catch (error) {
+      rethrowUnexpectedError(error)
+
       // Preserve the save failure if reload also fails.
     }
-    editTable.value?.cancelPendingFocus()
     snack.error(saveError.value)
     return false
   } finally {
@@ -261,9 +292,12 @@ async function deleteRecord(record: ChildrenWithDiverseNeedsFundingRecordAsIndex
   if (
     !record.policy.destroy ||
     isBlocked.value ||
-    !blockedToTrueConfirm("Are you sure you want to remove this Children with Diverse Needs?")
+    !blockedToTrueConfirm(
+      "Are you sure you want to remove this Children with Diverse Needs funding record?"
+    )
   )
     return
+
   if (!(await commitEdit())) return
 
   isDeleting.value = true
@@ -271,9 +305,11 @@ async function deleteRecord(record: ChildrenWithDiverseNeedsFundingRecordAsIndex
   try {
     await childrenWithDiverseNeedsFundingRecordsApi.delete(record.id)
     await refresh()
-    snack.success("Diverse need deleted!")
+    snack.success("Children with Diverse Needs funding record deleted!")
     emit("updated")
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     snack.error(`Failed to delete Children with Diverse Needs: ${error}`)
   } finally {
     deletingId.value = null
@@ -292,12 +328,15 @@ async function reload() {
     saveError.value = ""
     currentSave = null
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     snack.error(`Failed to load Children with Diverse Needs: ${error}`)
   }
 }
 
 async function replicateEstimates() {
   if (isSaving.value || isDeleting.value || isLoading.value || isErrored.value) return
+
   isSaving.value = true
   const failures: unknown[] = []
   try {
@@ -315,8 +354,11 @@ async function replicateEstimates() {
     }
     if (failures.length) {
       const message = `Failed to replicate Children with Diverse Needs estimates: ${failures.map(String).join("; ")}`
+      const aggregateError = new AggregateError(failures, message)
+      rethrowUnexpectedError(aggregateError)
+
       snack.error(message)
-      throw new AggregateError(failures, message)
+      throw aggregateError
     }
   } finally {
     isSaving.value = false
@@ -336,13 +378,13 @@ function emitBoundary(
 function focusOnFirstInColumn(
   column: keyof ChildrenWithDiverseNeedsFundingRecordOccupancyAttributes
 ): boolean {
-  return editTable.value?.focusOnFirstInColumn(column) ?? false
+  return editDataTableVirtual.value?.focusOnFirstInColumn(column) ?? false
 }
 
 function focusOnLastInColumn(
   column: keyof ChildrenWithDiverseNeedsFundingRecordOccupancyAttributes
 ): boolean {
-  return editTable.value?.focusOnLastInColumn(column) ?? false
+  return editDataTableVirtual.value?.focusOnLastInColumn(column) ?? false
 }
 
 defineExpose({
