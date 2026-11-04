@@ -40,7 +40,9 @@ export function useChildrenWithDiverseNeedsFundingCategories(
         await childrenWithDiverseNeedsFundingCategoriesApi.list(unref(queryOptions), {
           signal: controller.signal,
         })
-      if (controller.signal.aborted) return state.childrenWithDiverseNeedsFundingCategories
+      if (controller.signal.aborted) {
+        return state.childrenWithDiverseNeedsFundingCategories
+      }
 
       state.childrenWithDiverseNeedsFundingCategories = childrenWithDiverseNeedsFundingCategories
       state.totalCount = totalCount

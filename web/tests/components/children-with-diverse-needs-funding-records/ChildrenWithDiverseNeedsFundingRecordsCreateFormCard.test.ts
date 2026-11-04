@@ -5,7 +5,10 @@ import childrenWithDiverseNeedsFundingCategoriesApi from "@/api/children-with-di
 import childrenWithDiverseNeedsFundingRecordsApi from "@/api/children-with-diverse-needs-funding-records-api"
 import AuthenticationRequiredError from "@/api/errors/authentication-required-error"
 
-import { childrenWithDiverseNeedsFundingRecordFactory } from "@/tests/factories"
+import {
+  childrenWithDiverseNeedsFundingCategoryFactory,
+  childrenWithDiverseNeedsFundingRecordFactory,
+} from "@/tests/factories"
 import { mockVuetify } from "@/tests/support"
 
 import ChildrenWithDiverseNeedsFundingCategorySearchableAutocomplete from "@/components/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategorySearchableAutocomplete.vue"
@@ -17,17 +20,11 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
       test("when valid occupancies are submitted, preserves decimal strings in the creation payload", async () => {
         // Arrange
         const record = childrenWithDiverseNeedsFundingRecordFactory.build()
-        const category = {
+        const category = childrenWithDiverseNeedsFundingCategoryFactory.build({
           id: record.categoryId,
           fundingPeriodId: 3,
           categoryName: "Toddlers",
-          fromAge: null,
-          toAge: null,
-          monthlyAmount: "54.9600",
-          createdAt: "2026-01-01T00:00:00.000Z",
-          updatedAt: "2026-01-01T00:00:00.000Z",
-          policy: { show: true, create: true, update: true, destroy: false },
-        }
+        })
         vi.spyOn(childrenWithDiverseNeedsFundingCategoriesApi, "list").mockResolvedValue({
           childrenWithDiverseNeedsFundingCategories: [category],
           totalCount: 1,
@@ -78,17 +75,11 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
       test("when creation requires authentication, forwards the original error to Vue", async () => {
         // Arrange
         const record = childrenWithDiverseNeedsFundingRecordFactory.build()
-        const category = {
+        const category = childrenWithDiverseNeedsFundingCategoryFactory.build({
           id: record.categoryId,
           fundingPeriodId: 3,
           categoryName: "Toddlers",
-          fromAge: null,
-          toAge: null,
-          monthlyAmount: "54.9600",
-          createdAt: "2026-01-01T00:00:00.000Z",
-          updatedAt: "2026-01-01T00:00:00.000Z",
-          policy: { show: true, create: true, update: true, destroy: false },
-        }
+        })
         vi.spyOn(childrenWithDiverseNeedsFundingCategoriesApi, "list").mockResolvedValue({
           childrenWithDiverseNeedsFundingCategories: [category],
           totalCount: 1,

@@ -70,14 +70,6 @@ export const childrenWithDiverseNeedsFundingRecordsApi = {
     return data
   },
 
-  async create(attributes: ChildrenWithDiverseNeedsFundingRecordCreationAttributes): Promise<{
-    childrenWithDiverseNeedsFundingRecord: ChildrenWithDiverseNeedsFundingRecordAsShow
-    policy: ChildrenWithDiverseNeedsFundingRecordPolicy
-  }> {
-    const { data } = await http.post("/api/children-with-diverse-needs-funding-records", attributes)
-    return data
-  },
-
   async get(
     childrenWithDiverseNeedsFundingRecordId: number,
     { signal }: { signal?: AbortSignal } = {}
@@ -89,6 +81,14 @@ export const childrenWithDiverseNeedsFundingRecordsApi = {
       `/api/children-with-diverse-needs-funding-records/${childrenWithDiverseNeedsFundingRecordId}`,
       { signal }
     )
+    return data
+  },
+
+  async create(attributes: ChildrenWithDiverseNeedsFundingRecordCreationAttributes): Promise<{
+    childrenWithDiverseNeedsFundingRecord: ChildrenWithDiverseNeedsFundingRecordAsShow
+    policy: ChildrenWithDiverseNeedsFundingRecordPolicy
+  }> {
+    const { data } = await http.post("/api/children-with-diverse-needs-funding-records", attributes)
     return data
   },
 
