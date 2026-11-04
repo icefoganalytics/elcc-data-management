@@ -20,10 +20,13 @@ export type ChildrenWithDiverseNeedsFundingRecord = {
 }
 
 export type ChildrenWithDiverseNeedsFundingRecordPolicy = Policy
+
 export type ChildrenWithDiverseNeedsFundingRecordAsIndex = ChildrenWithDiverseNeedsFundingRecord & {
   policy: ChildrenWithDiverseNeedsFundingRecordPolicy
 }
+
 export type ChildrenWithDiverseNeedsFundingRecordAsShow = ChildrenWithDiverseNeedsFundingRecord
+
 export type ChildrenWithDiverseNeedsFundingRecordCreationAttributes = Pick<
   ChildrenWithDiverseNeedsFundingRecord,
   | "centreId"
@@ -31,15 +34,20 @@ export type ChildrenWithDiverseNeedsFundingRecordCreationAttributes = Pick<
   | "categoryId"
   | "estimatedChildOccupancyRate"
   | "actualChildOccupancyRate"
-> & { applyToCurrentAndFutureFiscalPeriods?: boolean }
+> & {
+  applyToCurrentAndFutureFiscalPeriods?: boolean
+}
+
 export type ChildrenWithDiverseNeedsFundingRecordWhereOptions = WhereOptions<
   ChildrenWithDiverseNeedsFundingRecord,
   "id" | "centreId" | "fiscalPeriodId" | "categoryId"
 >
+
 export type ChildrenWithDiverseNeedsFundingRecordQueryOptions = QueryOptions<
   ChildrenWithDiverseNeedsFundingRecordWhereOptions,
   never
 >
+
 export type ChildrenWithDiverseNeedsFundingRecordOccupancyAttributes = Partial<
   Pick<
     ChildrenWithDiverseNeedsFundingRecord,
@@ -61,6 +69,7 @@ export const childrenWithDiverseNeedsFundingRecordsApi = {
     })
     return data
   },
+
   async create(attributes: ChildrenWithDiverseNeedsFundingRecordCreationAttributes): Promise<{
     childrenWithDiverseNeedsFundingRecord: ChildrenWithDiverseNeedsFundingRecordAsShow
     policy: ChildrenWithDiverseNeedsFundingRecordPolicy
@@ -68,6 +77,7 @@ export const childrenWithDiverseNeedsFundingRecordsApi = {
     const { data } = await http.post("/api/children-with-diverse-needs-funding-records", attributes)
     return data
   },
+
   async get(
     childrenWithDiverseNeedsFundingRecordId: number,
     { signal }: { signal?: AbortSignal } = {}
@@ -81,6 +91,7 @@ export const childrenWithDiverseNeedsFundingRecordsApi = {
     )
     return data
   },
+
   async update(
     childrenWithDiverseNeedsFundingRecordId: number,
     attributes: ChildrenWithDiverseNeedsFundingRecordOccupancyAttributes
@@ -94,6 +105,7 @@ export const childrenWithDiverseNeedsFundingRecordsApi = {
     )
     return data
   },
+
   async delete(childrenWithDiverseNeedsFundingRecordId: number): Promise<void> {
     const { data } = await http.delete(
       `/api/children-with-diverse-needs-funding-records/${childrenWithDiverseNeedsFundingRecordId}`
