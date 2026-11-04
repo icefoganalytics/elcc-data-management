@@ -92,8 +92,8 @@
         <h3 class="mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2">
           Children with Diverse Needs
         </h3>
-        <ChildrenWithDiverseNeedsFundingRecordsEditTable
-          ref="childrenWithDiverseNeedsFundingRecordTable"
+        <ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual
+          ref="childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual"
           :where="worksheetWhere"
           :is-replicating="
             isReplicating ||
@@ -112,8 +112,8 @@
               color="primary"
               :disabled="
                 isWorkflowBusy ||
-                childrenWithDiverseNeedsFundingRecordTable?.isLoading ||
-                childrenWithDiverseNeedsFundingRecordTable?.isErrored
+                childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual?.isLoading ||
+                childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual?.isErrored
               "
               @click="showChildrenWithDiverseNeedsFundingRecordCreateForm = true"
             >
@@ -128,7 +128,9 @@
               :centre-id="centreId"
               :fiscal-period-id="fiscalPeriod.id"
               :funding-period-id="fiscalPeriod.fundingPeriodId"
-              :existing-category-ids="childrenWithDiverseNeedsFundingRecordTable?.categoryIds ?? []"
+              :existing-category-ids="
+                childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual?.categoryIds ?? []
+              "
               :is-workflow-busy="isReplicating || isWorksheetSaving || isRefreshingLinked"
               @saving="isCreatingChildrenWithDiverseNeedsFundingRecord = $event"
               @created="onChildrenWithDiverseNeedsFundingRecordCreated"
@@ -304,7 +306,7 @@ import AdministrationCostEditTable from "@/components/administration-costs/Admin
 import AdministrationCostCreateFormCard from "@/components/administration-costs/AdministrationCostCreateFormCard.vue"
 import QualityEnhancementEditTable from "@/components/quality-enhancements/QualityEnhancementEditTable.vue"
 import QualityEnhancementCreateFormCard from "@/components/quality-enhancements/QualityEnhancementCreateFormCard.vue"
-import ChildrenWithDiverseNeedsFundingRecordsEditTable from "@/components/children-with-diverse-needs-funding-records/ChildrenWithDiverseNeedsFundingRecordsEditTable.vue"
+import ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual from "@/components/children-with-diverse-needs-funding-records/ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.vue"
 import ChildrenWithDiverseNeedsFundingRecordsCreateFormCard from "@/components/children-with-diverse-needs-funding-records/ChildrenWithDiverseNeedsFundingRecordsCreateFormCard.vue"
 import useSnack from "@/use/use-snack"
 const props = defineProps<{
@@ -412,9 +414,9 @@ const worksheetWhere = computed(() => ({
   centreId: props.centreId,
   fiscalPeriodId: fiscalPeriod.value?.id,
 }))
-const childrenWithDiverseNeedsFundingRecordTable = useTemplateRef<
-  InstanceType<typeof ChildrenWithDiverseNeedsFundingRecordsEditTable>
->("childrenWithDiverseNeedsFundingRecordTable")
+const childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual = useTemplateRef<
+  InstanceType<typeof ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual>
+>("childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual")
 const administrationCostTable =
   useTemplateRef<InstanceType<typeof AdministrationCostEditTable>>("administrationCostTable")
 const qualityEnhancementTable =
@@ -430,8 +432,8 @@ const isRefreshingLinked = ref(false)
 const snack = useSnack()
 const isLedgerMutating = computed(() =>
   Boolean(
-    childrenWithDiverseNeedsFundingRecordTable.value?.isSaving ||
-      childrenWithDiverseNeedsFundingRecordTable.value?.isDeleting ||
+    childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value?.isSaving ||
+      childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value?.isDeleting ||
       administrationCostTable.value?.isSaving ||
       administrationCostTable.value?.isDeleting ||
       qualityEnhancementTable.value?.isSaving ||
@@ -451,7 +453,8 @@ const isWorkflowBusy = computed(
 const isReplicationUnavailable = computed(() => {
   const sheet = jsonSheet.value
   const administration = administrationCostTable.value
-  const childrenWithDiverseNeedsFundingRecord = childrenWithDiverseNeedsFundingRecordTable.value
+  const childrenWithDiverseNeedsFundingRecord =
+    childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value
   const quality = qualityEnhancementTable.value
   return (
     !sheet ||
@@ -494,7 +497,7 @@ async function closeCreateFormAndRefresh() {
 async function refreshLinkedResources() {
   const results = await Promise.allSettled([
     administrationCostTable.value?.refresh(),
-    childrenWithDiverseNeedsFundingRecordTable.value?.refresh(),
+    childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value?.refresh(),
     qualityEnhancementTable.value?.refresh(),
   ])
   const failures = results.flatMap((result) =>
@@ -514,7 +517,8 @@ async function saveWorksheet(): Promise<boolean> {
 
   const sheet = jsonSheet.value
   const administration = administrationCostTable.value
-  const childrenWithDiverseNeedsFundingRecord = childrenWithDiverseNeedsFundingRecordTable.value
+  const childrenWithDiverseNeedsFundingRecord =
+    childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value
   const quality = qualityEnhancementTable.value
   if (!sheet || !administration || !childrenWithDiverseNeedsFundingRecord || !quality) return false
 
@@ -568,7 +572,7 @@ async function onAdministrationCostCreated() {
 async function onChildrenWithDiverseNeedsFundingRecordCreated() {
   showChildrenWithDiverseNeedsFundingRecordCreateForm.value = false
   try {
-    await childrenWithDiverseNeedsFundingRecordTable.value?.refresh()
+    await childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value?.refresh()
   } catch (error) {
     snack.error(`Failed to refresh diverse needs: ${error}`)
   }
@@ -602,7 +606,8 @@ async function replicateEstimatesForward() {
 
   const sheet = jsonSheet.value
   const administration = administrationCostTable.value
-  const childrenWithDiverseNeedsFundingRecord = childrenWithDiverseNeedsFundingRecordTable.value
+  const childrenWithDiverseNeedsFundingRecord =
+    childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value
   const quality = qualityEnhancementTable.value
   if (!sheet || !administration || !childrenWithDiverseNeedsFundingRecord || !quality) return
 
