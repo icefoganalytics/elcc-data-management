@@ -305,12 +305,9 @@ async function replicateChildCareSpaceEstimates(): Promise<void> {
 }
 
 function goToNextSection(sectionIndex: number, columnName: ColumnNames) {
-  for (
-    let index = sectionIndex + 1;
-    index < fundingSubmissionLineJsonSectionTables.value.length;
-    index++
-  ) {
-    const nextSection = fundingSubmissionLineJsonSectionTables.value[index]
+  const sectionTables = fundingSubmissionLineJsonSectionTables.value
+  for (let index = sectionIndex + 1; index < (sectionTables?.length ?? 0); index++) {
+    const nextSection = sectionTables?.[index]
     if (nextSection?.focusOnFirstInColumn(columnName)) return
   }
 
@@ -318,8 +315,9 @@ function goToNextSection(sectionIndex: number, columnName: ColumnNames) {
 }
 
 function goToPreviousSection(sectionIndex: number, columnName: ColumnNames) {
+  const sectionTables = fundingSubmissionLineJsonSectionTables.value
   for (let index = sectionIndex - 1; index >= 0; index--) {
-    const previousSection = fundingSubmissionLineJsonSectionTables.value[index]
+    const previousSection = sectionTables?.[index]
     if (previousSection?.focusOnLastInColumn(columnName)) return
   }
 
@@ -327,17 +325,21 @@ function goToPreviousSection(sectionIndex: number, columnName: ColumnNames) {
 }
 
 function focusOnFirstInColumn(columnName: ColumnNames): boolean {
-  if (isWorkflowRunning.value) return false
-  for (const section of fundingSubmissionLineJsonSectionTables.value) {
+  const sectionTables = fundingSubmissionLineJsonSectionTables.value
+  if (isWorkflowRunning.value || isNil(sectionTables)) return false
+
+  for (const section of sectionTables) {
     if (section.focusOnFirstInColumn(columnName)) return true
   }
   return false
 }
 
 function focusOnLastInColumn(columnName: ColumnNames): boolean {
-  if (isWorkflowRunning.value) return false
-  for (let index = fundingSubmissionLineJsonSectionTables.value.length - 1; index >= 0; index--) {
-    const section = fundingSubmissionLineJsonSectionTables.value[index]
+  const sectionTables = fundingSubmissionLineJsonSectionTables.value
+  if (isWorkflowRunning.value || isNil(sectionTables)) return false
+
+  for (let index = sectionTables.length - 1; index >= 0; index--) {
+    const section = sectionTables[index]
     if (section?.focusOnLastInColumn(columnName)) return true
   }
   return false
