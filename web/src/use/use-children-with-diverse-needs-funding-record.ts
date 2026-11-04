@@ -137,6 +137,7 @@ export function useChildrenWithDiverseNeedsFundingRecord(
   return {
     ...toRefs(state),
     fetch,
+    refresh: fetch,
     save,
   }
 }
