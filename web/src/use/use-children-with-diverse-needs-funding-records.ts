@@ -83,6 +83,7 @@ export function useChildrenWithDiverseNeedsFundingRecords(
   return {
     ...toRefs(state),
     fetch,
+    refresh: fetch,
   }
 }
 
