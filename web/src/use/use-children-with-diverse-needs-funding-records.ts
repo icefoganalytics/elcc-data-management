@@ -35,18 +35,20 @@ export function useChildrenWithDiverseNeedsFundingRecords(
     state.isErrored = false
 
     try {
-      const response = await childrenWithDiverseNeedsFundingRecordsApi.list(unref(queryOptions), {
-        signal: controller.signal,
-      })
+      const { childrenWithDiverseNeedsFundingRecords, totalCount } =
+        await childrenWithDiverseNeedsFundingRecordsApi.list(unref(queryOptions), {
+          signal: controller.signal,
+        })
       if (controller.signal.aborted) return state.childrenWithDiverseNeedsFundingRecords
 
-      state.childrenWithDiverseNeedsFundingRecords = response.childrenWithDiverseNeedsFundingRecords
-      state.totalCount = response.totalCount
+      state.childrenWithDiverseNeedsFundingRecords = childrenWithDiverseNeedsFundingRecords
+      state.totalCount = totalCount
       state.isErrored = false
-      return response.childrenWithDiverseNeedsFundingRecords
+      return childrenWithDiverseNeedsFundingRecords
     } catch (error) {
-      if (controller.signal.aborted || isCancel(error))
+      if (controller.signal.aborted || isCancel(error)) {
         return state.childrenWithDiverseNeedsFundingRecords
+      }
 
       state.isErrored = true
       console.error("Failed to fetch Children with Diverse Needs funding records", { error })
