@@ -1,4 +1,4 @@
-import { isEmpty } from "lodash"
+import { isNil } from "lodash"
 
 import { ChildrenWithDiverseNeedsFundingCategory, FundingPeriod } from "@/models"
 import BaseService from "@/services/base-service"
@@ -10,11 +10,12 @@ export class BulkEnsureService extends BaseService {
   }
 
   async perform(): Promise<ChildrenWithDiverseNeedsFundingCategory[]> {
-    const historicalCategories = await ChildrenWithDiverseNeedsFundingCategory.findAll({
+    const historicalCategory = await ChildrenWithDiverseNeedsFundingCategory.findOne({
+      attributes: ["id"],
       where: { fundingPeriodId: this.fundingPeriod.id },
       paranoid: false,
     })
-    if (!isEmpty(historicalCategories)) {
+    if (!isNil(historicalCategory)) {
       return ChildrenWithDiverseNeedsFundingCategory.findAll({
         where: { fundingPeriodId: this.fundingPeriod.id },
       })

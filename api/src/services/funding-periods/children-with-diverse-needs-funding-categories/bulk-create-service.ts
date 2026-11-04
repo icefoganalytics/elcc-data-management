@@ -5,10 +5,10 @@ import { ChildrenWithDiverseNeedsFundingCategory, FundingPeriod } from "@/models
 import BaseService from "@/services/base-service"
 
 const DEFAULT_CATEGORIES = [
-  { categoryName: "Toddlers", fromAge: 2, toAge: 3, monthlyAmount: "54.96" },
-  { categoryName: "Preschool", fromAge: 4, toAge: 5, monthlyAmount: "91.6" },
-  { categoryName: "Kindergarten", fromAge: 5, toAge: 6, monthlyAmount: "91.6" },
-  { categoryName: "School Age", fromAge: 5, toAge: 6, monthlyAmount: "114.5" },
+  { categoryName: "Toddlers", fromAge: 2, toAge: 3, monthlyAmount: "54.9600" },
+  { categoryName: "Preschool", fromAge: 4, toAge: 5, monthlyAmount: "91.6000" },
+  { categoryName: "Kindergarten", fromAge: 5, toAge: 6, monthlyAmount: "91.6000" },
+  { categoryName: "School Age", fromAge: 5, toAge: 6, monthlyAmount: "114.5000" },
 ]
 
 export class BulkCreateService extends BaseService {
