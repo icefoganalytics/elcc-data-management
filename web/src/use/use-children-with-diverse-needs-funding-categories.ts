@@ -36,22 +36,20 @@ export function useChildrenWithDiverseNeedsFundingCategories(
     state.isErrored = false
 
     try {
-      const response = await childrenWithDiverseNeedsFundingCategoriesApi.list(
-        unref(queryOptions),
-        {
+      const { childrenWithDiverseNeedsFundingCategories, totalCount } =
+        await childrenWithDiverseNeedsFundingCategoriesApi.list(unref(queryOptions), {
           signal: controller.signal,
-        }
-      )
+        })
       if (controller.signal.aborted) return state.childrenWithDiverseNeedsFundingCategories
 
-      state.childrenWithDiverseNeedsFundingCategories =
-        response.childrenWithDiverseNeedsFundingCategories
-      state.totalCount = response.totalCount
+      state.childrenWithDiverseNeedsFundingCategories = childrenWithDiverseNeedsFundingCategories
+      state.totalCount = totalCount
       state.isErrored = false
-      return response.childrenWithDiverseNeedsFundingCategories
+      return childrenWithDiverseNeedsFundingCategories
     } catch (error) {
-      if (controller.signal.aborted || isCancel(error))
+      if (controller.signal.aborted || isCancel(error)) {
         return state.childrenWithDiverseNeedsFundingCategories
+      }
 
       state.isErrored = true
       console.error("Failed to fetch Children with Diverse Needs funding categories", { error })
