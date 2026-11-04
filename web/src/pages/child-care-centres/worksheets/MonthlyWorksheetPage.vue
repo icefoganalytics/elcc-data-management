@@ -93,55 +93,6 @@
       </FundingSubmissionLineJsonEditSheet>
       <section class="ma-4 mt-8">
         <h3 class="mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2">
-          Children with Diverse Needs
-        </h3>
-        <ChildrenWithDiverseNeedsFundingRecordEditTable
-          ref="childrenWithDiverseNeedsFundingRecordTable"
-          :where="worksheetWhere"
-          :is-replicating="
-            isReplicating ||
-            isWorksheetSaving ||
-            isRefreshingLinked ||
-            isCreatingChildrenWithDiverseNeedsFundingRecord
-          "
-        />
-        <v-row class="mt-0">
-          <v-col
-            v-if="!showChildrenWithDiverseNeedsFundingRecordCreateForm"
-            cols="12"
-            class="d-flex justify-end"
-          >
-            <v-btn
-              color="primary"
-              :disabled="
-                isWorkflowBusy ||
-                childrenWithDiverseNeedsFundingRecordTable?.isLoading ||
-                childrenWithDiverseNeedsFundingRecordTable?.isErrored
-              "
-              @click="showChildrenWithDiverseNeedsFundingRecordCreateForm = true"
-            >
-              Add Diverse Need
-            </v-btn>
-          </v-col>
-          <v-col
-            v-else
-            cols="12"
-          >
-            <ChildrenWithDiverseNeedsFundingRecordCreateFormCard
-              :centre-id="centreId"
-              :fiscal-period-id="fiscalPeriod.id"
-              :funding-period-id="fiscalPeriod.fundingPeriodId"
-              :existing-category-ids="childrenWithDiverseNeedsFundingRecordTable?.categoryIds ?? []"
-              :is-workflow-busy="isReplicating || isWorksheetSaving || isRefreshingLinked"
-              @saving="isCreatingChildrenWithDiverseNeedsFundingRecord = $event"
-              @created="onChildrenWithDiverseNeedsFundingRecordCreated"
-              @cancel="showChildrenWithDiverseNeedsFundingRecordCreateForm = false"
-            />
-          </v-col>
-        </v-row>
-      </section>
-      <section class="ma-4 mt-8">
-        <h3 class="mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2">
           Administration (10% of Spaces)
         </h3>
         <AdministrationCostEditTable
