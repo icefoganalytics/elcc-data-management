@@ -179,6 +179,7 @@ async function reset() {
     try {
       await reloadCategories()
     } catch (error) {
+      console.error("Failed to reset diverse need categories", { error })
       rethrowUnexpectedError(error)
     }
   }
@@ -192,7 +193,9 @@ async function reload() {
     .filter((result) => result.status === "rejected")
     .map((result) => result.reason)
   if (failures.length) {
-    rethrowUnexpectedError(new AggregateError(failures, "Failed to reload diverse need categories"))
+    const error = new AggregateError(failures, "Failed to reload diverse need categories")
+    console.error("Failed to reload diverse need categories", { error })
+    rethrowUnexpectedError(error)
   }
 }
 

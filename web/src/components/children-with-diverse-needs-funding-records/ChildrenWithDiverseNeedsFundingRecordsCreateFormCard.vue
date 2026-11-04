@@ -143,6 +143,7 @@ async function create() {
     emit("created", childrenWithDiverseNeedsFundingRecord.id)
     snack.success("Diverse need created successfully")
   } catch (error) {
+    console.error("Failed to create diverse need", { error })
     rethrowUnexpectedError(error)
 
     snack.error(`Failed to create diverse need: ${error}`)
