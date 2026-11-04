@@ -12,6 +12,8 @@ Watcher callbacks should await `fetch()` directly. Fetch actions may record load
 
 Always return both `fetch` and `refresh: fetch` from model composables. `refresh` is an alias of the same fetch function, not a separate implementation or wrapper.
 
+Destructure named fields from API responses at the `await` boundary, such as `const { childrenWithDiverseNeedsFundingRecord, policy } = await ...`. Assign and return those values directly instead of retaining an opaque `response` object.
+
 ## Singular Composables
 
 Use `use-model.ts` for one record identified by an id.
