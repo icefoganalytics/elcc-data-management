@@ -797,7 +797,9 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           })
           const replicationRequests: string[] = []
           http.patch.mockImplementation(async (url) => {
-            if (url === "/api/child-care-spaces/41") throw new Error("Second Spaces update failed")
+            if (url === "/api/child-care-spaces/41") {
+              throw new ApiOperationError("Second Spaces update failed", 503)
+            }
             return { data: {} }
           })
           http.post.mockImplementation(async (url) => {

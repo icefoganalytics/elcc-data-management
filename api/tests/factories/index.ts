@@ -4,8 +4,6 @@ export { buildingExpenseCategoryFactory } from "./building-expense-category-fact
 export { buildingExpenseFactory } from "./building-expense-factory"
 export { centreFactory } from "./centre-factory"
 export { childCareSpaceCategoryFactory } from "./child-care-space-category-factory"
-export { childrenWithDiverseNeedsFundingCategoryFactory } from "./children-with-diverse-needs-funding-category-factory"
-export { childrenWithDiverseNeedsFundingRecordFactory } from "./children-with-diverse-needs-funding-record-factory"
 export { childCareSpaceFactory } from "./child-care-space-factory"
 export { childrenWithDiverseNeedsFundingCategoryFactory } from "./children-with-diverse-needs-funding-category-factory"
 export { childrenWithDiverseNeedsFundingRecordFactory } from "./children-with-diverse-needs-funding-record-factory"
