@@ -189,13 +189,18 @@ const totalActual = computed(() =>
 
 const totalEstimatedOccupancy = computed(() =>
   formatDecimal(
-    sumByDecimal(childrenWithDiverseNeedsFundingRecords.value, "estimatedChildOccupancyRate").toFixed(4)
+    sumByDecimal(
+      childrenWithDiverseNeedsFundingRecords.value,
+      "estimatedChildOccupancyRate"
+    ).toFixed(4)
   )
 )
 
 const totalActualOccupancy = computed(() =>
   formatDecimal(
-    sumByDecimal(childrenWithDiverseNeedsFundingRecords.value, "actualChildOccupancyRate").toFixed(4)
+    sumByDecimal(childrenWithDiverseNeedsFundingRecords.value, "actualChildOccupancyRate").toFixed(
+      4
+    )
   )
 )
 
