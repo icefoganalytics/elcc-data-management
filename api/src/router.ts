@@ -13,16 +13,19 @@ import { checkJwt, autheticateAndLoadUser } from "@/middleware/authz.middleware"
 import { centreRouter, fundingPeriodRouter, submissionLineRouter } from "@/routes"
 
 import {
-  BuildingExpenseCategoriesController,
   AdministrationCostCategoriesController,
   AdministrationCosts,
   AdministrationCostsController,
+  BuildingExpenseCategoriesController,
   BuildingExpensesController,
   Centres,
   CentresController,
   ChildCareSpaceCategoriesController,
   ChildCareSpaces,
   ChildCareSpacesController,
+  ChildrenWithDiverseNeedsFundingCategoriesController,
+  ChildrenWithDiverseNeedsFundingRecords,
+  ChildrenWithDiverseNeedsFundingRecordsController,
   CurrentUserController,
   EmployeeBenefitsController,
   EmployeeWageTiersController,
@@ -147,6 +150,35 @@ router
 router
   .route("/api/child-care-spaces/:childCareSpaceId/replicate-estimates")
   .post(ChildCareSpaces.ReplicateEstimatesController.create)
+
+router
+  .route("/api/children-with-diverse-needs-funding-categories")
+  .get(ChildrenWithDiverseNeedsFundingCategoriesController.index)
+  .post(ChildrenWithDiverseNeedsFundingCategoriesController.create)
+router
+  .route(
+    "/api/children-with-diverse-needs-funding-categories/:childrenWithDiverseNeedsFundingCategoryId"
+  )
+  .get(ChildrenWithDiverseNeedsFundingCategoriesController.show)
+  .patch(ChildrenWithDiverseNeedsFundingCategoriesController.update)
+  .delete(ChildrenWithDiverseNeedsFundingCategoriesController.destroy)
+
+router
+  .route("/api/children-with-diverse-needs-funding-records")
+  .get(ChildrenWithDiverseNeedsFundingRecordsController.index)
+  .post(ChildrenWithDiverseNeedsFundingRecordsController.create)
+router
+  .route(
+    "/api/children-with-diverse-needs-funding-records/:childrenWithDiverseNeedsFundingRecordId"
+  )
+  .get(ChildrenWithDiverseNeedsFundingRecordsController.show)
+  .patch(ChildrenWithDiverseNeedsFundingRecordsController.update)
+  .delete(ChildrenWithDiverseNeedsFundingRecordsController.destroy)
+router
+  .route(
+    "/api/children-with-diverse-needs-funding-records/:childrenWithDiverseNeedsFundingRecordId/replicate-estimates"
+  )
+  .post(ChildrenWithDiverseNeedsFundingRecords.ReplicateEstimatesController.create)
 
 router
   .route("/api/administration-costs")
