@@ -7,6 +7,7 @@ import type {
   ChildrenWithDiverseNeedsFundingRecordAsIndex,
   ChildrenWithDiverseNeedsFundingRecordQueryOptions,
 } from "@/api/children-with-diverse-needs-funding-records-api"
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 
 export function useChildrenWithDiverseNeedsFundingRecords(
   queryOptions: Ref<ChildrenWithDiverseNeedsFundingRecordQueryOptions>
@@ -22,13 +23,17 @@ export function useChildrenWithDiverseNeedsFundingRecords(
     isLoading: false,
     isErrored: false,
   })
+
   let requestController: AbortController | undefined
 
   async function fetch(): Promise<ChildrenWithDiverseNeedsFundingRecordAsIndex[]> {
     requestController?.abort()
+
     const controller = new AbortController()
     requestController = controller
     state.isLoading = true
+    state.isErrored = false
+
     try {
       const response = await childrenWithDiverseNeedsFundingRecordsApi.list(unref(queryOptions), {
         signal: controller.signal,
@@ -44,6 +49,7 @@ export function useChildrenWithDiverseNeedsFundingRecords(
         return state.childrenWithDiverseNeedsFundingRecords
 
       state.isErrored = true
+      console.error("Failed to fetch Children with Diverse Needs funding records", { error })
       throw error
     } finally {
       if (!controller.signal.aborted) {
@@ -52,15 +58,23 @@ export function useChildrenWithDiverseNeedsFundingRecords(
     }
   }
 
-  watch(queryOptions, fetchWithoutSurfacingWatchFailure, { deep: true, immediate: true })
+  watch(
+    queryOptions,
+    async () => {
+      state.childrenWithDiverseNeedsFundingRecords = []
+      state.totalCount = 0
 
-  async function fetchWithoutSurfacingWatchFailure() {
-    try {
-      await fetch()
-    } catch {
-      // Explicit refresh callers receive the rejection; watched failures use isErrored.
+      try {
+        await fetch()
+      } catch (error) {
+        rethrowUnexpectedError(error)
+      }
+    },
+    {
+      deep: true,
+      immediate: true,
     }
-  }
+  )
 
   onScopeDispose(() => {
     requestController?.abort()

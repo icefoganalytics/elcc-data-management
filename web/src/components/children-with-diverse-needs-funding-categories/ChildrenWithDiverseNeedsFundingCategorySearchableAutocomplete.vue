@@ -1,12 +1,25 @@
 <template>
   <div>
+    <v-alert
+      v-if="hasError"
+      type="error"
+      density="compact"
+      role="alert"
+    >
+      Diverse need categories could not be loaded.
+      <v-btn
+        variant="text"
+        @click="reload"
+        >Retry</v-btn
+      >
+    </v-alert>
     <v-autocomplete
+      v-else
       v-bind="$attrs"
       :model-value="modelValue"
       :loading="isLoading || isLoadingSelectedCategory"
       :items="allCategories"
       :disabled="disabled"
-      :error-messages="errorMessages"
       label="Diverse Need Category"
       hint="Search for a diverse need category."
       no-data-text="No diverse need categories available"
@@ -43,19 +56,6 @@
         <v-divider />
       </template>
     </v-autocomplete>
-    <v-alert
-      v-if="hasError"
-      type="error"
-      density="compact"
-      role="alert"
-    >
-      Diverse need categories could not be loaded.
-      <v-btn
-        variant="text"
-        @click="reload"
-        >Retry</v-btn
-      >
-    </v-alert>
   </div>
 </template>
 
@@ -63,13 +63,15 @@
 import { computed, onScopeDispose, ref, watch } from "vue"
 import { debounce, isEmpty, isNil, uniqBy } from "lodash"
 
-import useChildrenWithDiverseNeedsFundingCategory from "@/use/use-children-with-diverse-needs-funding-category"
-import useChildrenWithDiverseNeedsFundingCategories from "@/use/use-children-with-diverse-needs-funding-categories"
 import type {
-  ChildrenWithDiverseNeedsFundingCategoryAsIndex,
+  ChildrenWithDiverseNeedsFundingCategoryAsShow,
   ChildrenWithDiverseNeedsFundingCategoryFiltersOptions,
   ChildrenWithDiverseNeedsFundingCategoryQueryOptions,
 } from "@/api/children-with-diverse-needs-funding-categories-api"
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
+
+import useChildrenWithDiverseNeedsFundingCategory from "@/use/use-children-with-diverse-needs-funding-category"
+import useChildrenWithDiverseNeedsFundingCategories from "@/use/use-children-with-diverse-needs-funding-categories"
 
 defineOptions({ inheritAttrs: false })
 
@@ -80,8 +82,12 @@ const props = withDefaults(
     excludingCategoryIds?: number[]
     disabled?: boolean
   }>(),
-  { excludingCategoryIds: () => [], disabled: false }
+  {
+    excludingCategoryIds: () => [],
+    disabled: false,
+  }
 )
+
 const emit = defineEmits<{
   "update:modelValue": [categoryId: number | null]
 }>()
@@ -93,29 +99,39 @@ const {
   isErrored: isSelectedCategoryErrored,
   fetch: reloadSelectedCategory,
 } = useChildrenWithDiverseNeedsFundingCategory(selectedCategoryId)
+
 const searchToken = ref("")
 const page = ref(1)
 const perPage = computed(() => (isEmpty(searchToken.value) ? 100 : 20))
 const searchFilters = computed<ChildrenWithDiverseNeedsFundingCategoryFiltersOptions>(() => {
   if (isEmpty(searchToken.value)) return {}
 
-  return { search: searchToken.value.trim().split(" ") }
+  return {
+    search: searchToken.value.trim().split(" "),
+  }
 })
+
 const query = computed<ChildrenWithDiverseNeedsFundingCategoryQueryOptions>(() => ({
-  where: { fundingPeriodId: props.fundingPeriodId },
+  where: {
+    fundingPeriodId: props.fundingPeriodId,
+  },
   filters: searchFilters.value,
   order: [["categoryName", "ASC"]],
   perPage: perPage.value,
   page: page.value,
 }))
+
 const {
   childrenWithDiverseNeedsFundingCategories,
   totalCount,
   isLoading,
   isErrored,
   fetch: reloadCategories,
-} = useChildrenWithDiverseNeedsFundingCategories(query)
-const allCategories = computed<ChildrenWithDiverseNeedsFundingCategoryAsIndex[]>(() => {
+} = useChildrenWithDiverseNeedsFundingCategories(query, {
+  skipWatchIf: () => props.disabled,
+})
+
+const allCategories = computed<ChildrenWithDiverseNeedsFundingCategoryAsShow[]>(() => {
   if (props.disabled) return []
 
   const availableCategories = childrenWithDiverseNeedsFundingCategories.value.filter(
@@ -131,19 +147,13 @@ const allCategories = computed<ChildrenWithDiverseNeedsFundingCategoryAsIndex[]>
 
   return uniqBy([...availableCategories, selectedCategory.value], "id")
 })
-const errorMessages = computed(() => {
-  if (props.disabled) return []
-  if (isErrored.value || (!isNil(props.modelValue) && isSelectedCategoryErrored.value)) {
-    return ["Failed to load diverse need categories."]
-  }
 
-  return []
-})
 const hasError = computed(
   () =>
     !props.disabled &&
     (isErrored.value || (!isNil(props.modelValue) && isSelectedCategoryErrored.value))
 )
+
 const hasMore = computed(() => !props.disabled && page.value * perPage.value < totalCount.value)
 
 function updateSearchToken(value: string) {
@@ -165,13 +175,25 @@ async function reset() {
   debouncedUpdateSearchToken.cancel()
   searchToken.value = ""
   page.value = 1
-  if (!props.disabled) await reloadCategories()
+  if (!props.disabled) {
+    try {
+      await reloadCategories()
+    } catch (error) {
+      rethrowUnexpectedError(error)
+    }
+  }
 }
 
 async function reload() {
   const requests: Promise<unknown>[] = [reloadCategories()]
   if (!isNil(props.modelValue)) requests.push(reloadSelectedCategory())
-  await Promise.allSettled(requests)
+  const results = await Promise.allSettled(requests)
+  const failures = results
+    .filter((result) => result.status === "rejected")
+    .map((result) => result.reason)
+  if (failures.length) {
+    rethrowUnexpectedError(new AggregateError(failures, "Failed to reload diverse need categories"))
+  }
 }
 
 watch(
@@ -180,17 +202,23 @@ watch(
     debouncedUpdateSearchToken.cancel()
     updateSearchToken("")
   },
-  { deep: true }
+  {
+    deep: true,
+  }
 )
 
 watch(
   () => props.modelValue,
-  (modelValue) => {
-    if (isNil(modelValue)) void reset()
+  async (modelValue) => {
+    if (isNil(modelValue)) await reset()
   }
 )
 
-onScopeDispose(() => debouncedUpdateSearchToken.cancel())
+onScopeDispose(() => {
+  debouncedUpdateSearchToken.cancel()
+})
 
-defineExpose({ reset })
+defineExpose({
+  reset,
+})
 </script>
