@@ -639,7 +639,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         } else if (outcome === "preserves independent Children with Diverse Needs occupancy") {
           expect(
             wrapper
-              .findComponent({ name: "ChildrenWithDiverseNeedsFundingRecordsEditTable" })
+              .findComponent({ name: "ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual" })
               .get("tbody tr.cursor-pointer")
               .findAll("td")[2]
               .text()
