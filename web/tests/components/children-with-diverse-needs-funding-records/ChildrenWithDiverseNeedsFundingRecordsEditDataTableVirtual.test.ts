@@ -8,10 +8,10 @@ import childrenWithDiverseNeedsFundingRecordsApi from "@/api/children-with-diver
 import { childrenWithDiverseNeedsFundingRecordFactory } from "@/tests/factories"
 import { mockVuetify } from "@/tests/support"
 
-import ChildrenWithDiverseNeedsFundingRecordsEditTable from "@/components/children-with-diverse-needs-funding-records/ChildrenWithDiverseNeedsFundingRecordsEditTable.vue"
+import ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual from "@/components/children-with-diverse-needs-funding-records/ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.vue"
 
-describe("web/src/components/children-with-diverse-needs-funding-records/ChildrenWithDiverseNeedsFundingRecordsEditTable.vue", () => {
-  describe("ChildrenWithDiverseNeedsFundingRecordsEditTable", () => {
+describe("web/src/components/children-with-diverse-needs-funding-records/ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.vue", () => {
+  describe("ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual", () => {
     describe("#commitEdit", () => {
       test("when estimated occupancy is edited and committed, persists it through the diverse needs API", async () => {
         // Arrange
@@ -31,7 +31,7 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
             },
             policy: childrenWithDiverseNeedsFundingRecord.policy,
           })
-        const wrapper = mount(ChildrenWithDiverseNeedsFundingRecordsEditTable, {
+        const wrapper = mount(ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual, {
           props: {
             where: {
               centreId: childrenWithDiverseNeedsFundingRecord.centreId,
@@ -67,7 +67,7 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
         vi.spyOn(childrenWithDiverseNeedsFundingRecordsApi, "update").mockRejectedValue(
           authenticationError
         )
-        const wrapper = mount(ChildrenWithDiverseNeedsFundingRecordsEditTable, {
+        const wrapper = mount(ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual, {
           props: {
             where: {
               centreId: record.centreId,
@@ -107,7 +107,7 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
         vi.spyOn(childrenWithDiverseNeedsFundingRecordsApi, "update").mockRejectedValue(
           new ApiOperationError("Occupancy is not permitted", 422)
         )
-        const wrapper = mount(ChildrenWithDiverseNeedsFundingRecordsEditTable, {
+        const wrapper = mount(ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual, {
           global: {
             plugins: [createPinia(), mockVuetify()],
             config: { errorHandler },
@@ -139,7 +139,7 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
         vi.spyOn(childrenWithDiverseNeedsFundingRecordsApi, "update").mockReturnValue(
           new Promise(() => {})
         )
-        const wrapper = mount(ChildrenWithDiverseNeedsFundingRecordsEditTable, {
+        const wrapper = mount(ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual, {
           global: { plugins: [createPinia(), mockVuetify()] },
         })
         await flushPromises()
@@ -153,6 +153,54 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
 
         // Assert
         expect(wrapper.get("button").attributes("disabled")).toBeDefined()
+      })
+    })
+
+    describe("load recovery", () => {
+      test("when a failed load is retried, displays the returned funding records", async () => {
+        // Arrange
+        const record = childrenWithDiverseNeedsFundingRecordFactory.build({
+          lineName: "Historical support",
+        })
+        vi.spyOn(childrenWithDiverseNeedsFundingRecordsApi, "list")
+          .mockRejectedValueOnce(new ApiOperationError("Unavailable", 503))
+          .mockResolvedValueOnce({
+            childrenWithDiverseNeedsFundingRecords: [record],
+            totalCount: 1,
+          })
+        const wrapper = mount(ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual, {
+          global: { plugins: [createPinia(), mockVuetify()] },
+        })
+        await flushPromises()
+
+        // Act
+        await wrapper.get('[role="alert"] button').trigger("click")
+        await flushPromises()
+
+        // Assert
+        expect(wrapper.get("tbody tr.cursor-pointer").text()).toContain("Historical support")
+      })
+
+      test("when refreshing loaded records fails, hides the stale editable rows", async () => {
+        // Arrange
+        const record = childrenWithDiverseNeedsFundingRecordFactory.build()
+        vi.spyOn(childrenWithDiverseNeedsFundingRecordsApi, "list")
+          .mockResolvedValueOnce({
+            childrenWithDiverseNeedsFundingRecords: [record],
+            totalCount: 1,
+          })
+          .mockRejectedValueOnce(new ApiOperationError("Unavailable", 503))
+        const wrapper = mount(ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual, {
+          global: { plugins: [createPinia(), mockVuetify()] },
+        })
+        await flushPromises()
+
+        // Act
+        await expect(wrapper.vm.refresh()).rejects.toThrow("Unavailable")
+        await flushPromises()
+
+        // Assert
+        expect(wrapper.findAll("tbody tr.cursor-pointer")).toEqual([])
       })
     })
   })
