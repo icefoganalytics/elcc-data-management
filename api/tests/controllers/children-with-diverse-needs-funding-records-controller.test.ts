@@ -3,6 +3,7 @@ import { FiscalPeriod, User } from "@/models"
 import {
   centreFactory,
   childrenWithDiverseNeedsFundingCategoryFactory,
+  childrenWithDiverseNeedsFundingRecordFactory,
   fiscalPeriodFactory,
   fundingPeriodFactory,
   userFactory,
@@ -59,6 +60,73 @@ describe("api/src/controllers/children-with-diverse-needs-funding-records-contro
             updatedAt: expect.any(String),
           },
           policy: { show: true, create: true, update: true, destroy: false },
+        })
+      })
+    })
+
+    describe("#update -> PATCH /api/children-with-diverse-needs-funding-records/:childrenWithDiverseNeedsFundingRecordId", () => {
+      test("when an ordinary user submits snapshot changes, changes only occupancy", async () => {
+        // Arrange
+        const currentUser = await userFactory.create({ roles: [User.Roles.USER] })
+        mockCurrentUser(currentUser)
+        const fundingRecord = await childrenWithDiverseNeedsFundingRecordFactory.create({
+          lineName: "Historical Support",
+          monthlyAmount: "54.9600",
+          estimatedChildOccupancyRate: "0.5000",
+          actualChildOccupancyRate: "0.2500",
+        })
+
+        // Act
+        const response = await request()
+          .patch(`/api/children-with-diverse-needs-funding-records/${fundingRecord.id}`)
+          .send({
+            centreId: 99999,
+            fiscalPeriodId: 99999,
+            categoryId: 99999,
+            lineName: "Spoofed Support",
+            monthlyAmount: "1.0000",
+            estimatedChildOccupancyRate: "0.6250",
+          })
+
+        // Assert
+        expect(response.status).toEqual(200)
+        expect(response.body).toEqual({
+          childrenWithDiverseNeedsFundingRecord: {
+            id: fundingRecord.id,
+            centreId: fundingRecord.centreId,
+            fiscalPeriodId: fundingRecord.fiscalPeriodId,
+            categoryId: fundingRecord.categoryId,
+            lineName: "Historical Support",
+            monthlyAmount: "54.9600",
+            estimatedChildOccupancyRate: "0.6250",
+            actualChildOccupancyRate: "0.2500",
+            estimatedComputedTotal: "34.3500",
+            actualComputedTotal: "13.7400",
+            createdAt: fundingRecord.createdAt.toISOString(),
+            updatedAt: expect.any(String),
+          },
+          policy: { show: true, create: true, update: true, destroy: false },
+        })
+      })
+    })
+
+    describe("#destroy -> DELETE /api/children-with-diverse-needs-funding-records/:childrenWithDiverseNeedsFundingRecordId", () => {
+      test("when an ordinary user deletes a monthly record, denies the request", async () => {
+        // Arrange
+        const currentUser = await userFactory.create({ roles: [User.Roles.USER] })
+        mockCurrentUser(currentUser)
+        const fundingRecord = await childrenWithDiverseNeedsFundingRecordFactory.create()
+
+        // Act
+        const response = await request().delete(
+          `/api/children-with-diverse-needs-funding-records/${fundingRecord.id}`
+        )
+
+        // Assert
+        expect(response.status).toEqual(403)
+        expect(response.body).toEqual({
+          message:
+            "You are not authorized to delete this Children with Diverse Needs funding record",
         })
       })
     })
