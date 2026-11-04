@@ -13,25 +13,36 @@ export type ChildrenWithDiverseNeedsFundingCategory = {
 }
 
 export type ChildrenWithDiverseNeedsFundingCategoryPolicy = Policy
-export type ChildrenWithDiverseNeedsFundingCategoryAsIndex = ChildrenWithDiverseNeedsFundingCategory
+
+export type ChildrenWithDiverseNeedsFundingCategoryAsIndex =
+  ChildrenWithDiverseNeedsFundingCategory & {
+    policy: ChildrenWithDiverseNeedsFundingCategoryPolicy
+  }
+
 export type ChildrenWithDiverseNeedsFundingCategoryAsShow = ChildrenWithDiverseNeedsFundingCategory
+
 export type ChildrenWithDiverseNeedsFundingCategoryCreationAttributes = Pick<
   ChildrenWithDiverseNeedsFundingCategory,
-  "fundingPeriodId" | "categoryName" | "fromAge" | "toAge" | "monthlyAmount"
->
+  "fundingPeriodId" | "categoryName" | "monthlyAmount"
+> &
+  Partial<Pick<ChildrenWithDiverseNeedsFundingCategory, "fromAge" | "toAge">>
+
 export type ChildrenWithDiverseNeedsFundingCategoryUpdateAttributes = Partial<
   Pick<
     ChildrenWithDiverseNeedsFundingCategory,
     "categoryName" | "fromAge" | "toAge" | "monthlyAmount"
   >
 >
+
 export type ChildrenWithDiverseNeedsFundingCategoryWhereOptions = WhereOptions<
   ChildrenWithDiverseNeedsFundingCategory,
   "id" | "fundingPeriodId" | "categoryName" | "fromAge" | "toAge"
 >
+
 export type ChildrenWithDiverseNeedsFundingCategoryFiltersOptions = FiltersOptions<{
   search: string | string[]
 }>
+
 export type ChildrenWithDiverseNeedsFundingCategoryQueryOptions = QueryOptions<
   ChildrenWithDiverseNeedsFundingCategoryWhereOptions,
   ChildrenWithDiverseNeedsFundingCategoryFiltersOptions
@@ -51,6 +62,7 @@ export const childrenWithDiverseNeedsFundingCategoriesApi = {
     })
     return data
   },
+
   async get(
     childrenWithDiverseNeedsFundingCategoryId: number,
     { signal }: { signal?: AbortSignal } = {}
@@ -66,6 +78,7 @@ export const childrenWithDiverseNeedsFundingCategoriesApi = {
     )
     return data
   },
+
   async create(attributes: ChildrenWithDiverseNeedsFundingCategoryCreationAttributes): Promise<{
     childrenWithDiverseNeedsFundingCategory: ChildrenWithDiverseNeedsFundingCategoryAsShow
     policy: ChildrenWithDiverseNeedsFundingCategoryPolicy
@@ -76,6 +89,7 @@ export const childrenWithDiverseNeedsFundingCategoriesApi = {
     )
     return data
   },
+
   async update(
     childrenWithDiverseNeedsFundingCategoryId: number,
     attributes: ChildrenWithDiverseNeedsFundingCategoryUpdateAttributes
@@ -89,6 +103,7 @@ export const childrenWithDiverseNeedsFundingCategoriesApi = {
     )
     return data
   },
+
   async delete(childrenWithDiverseNeedsFundingCategoryId: number): Promise<void> {
     const { data } = await http.delete(
       `/api/children-with-diverse-needs-funding-categories/${childrenWithDiverseNeedsFundingCategoryId}`
