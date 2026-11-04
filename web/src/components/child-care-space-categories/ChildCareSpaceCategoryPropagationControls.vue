@@ -58,6 +58,7 @@ import { isNil, upperFirst } from "lodash"
 
 import { MAX_PER_PAGE } from "@/api/base-api"
 import fiscalPeriodsApi, { type FiscalPeriod } from "@/api/fiscal-periods-api"
+import ApiOperationError from "@/api/errors/api-operation-error"
 
 const props = defineProps<{
   fundingPeriodId: number | null | undefined
@@ -113,7 +114,7 @@ let latestFiscalPeriodsRequest = 0
 
 watch(
   [() => props.fundingPeriodId, () => props.applyToFutureMonths],
-  ([fundingPeriodId, applyToFutureMonths]) => {
+  async ([fundingPeriodId, applyToFutureMonths]) => {
     const requestId = ++latestFiscalPeriodsRequest
 
     if (!applyToFutureMonths || isNil(fundingPeriodId)) {
@@ -123,7 +124,7 @@ watch(
       return
     }
 
-    void loadFiscalPeriods(fundingPeriodId, requestId)
+    await loadFiscalPeriods(fundingPeriodId, requestId)
   },
   { immediate: true }
 )
@@ -151,14 +152,23 @@ async function loadFiscalPeriods(fundingPeriodId: number, requestId: number) {
 
     fiscalPeriods.value = loadedFiscalPeriods
   } catch (error) {
-    if (requestId !== latestFiscalPeriodsRequest) {
+    if (requestId === latestFiscalPeriodsRequest) {
+      isFiscalPeriodsErrored.value = true
+    }
+
+    if (error instanceof ApiOperationError) {
+      if (requestId !== latestFiscalPeriodsRequest) return
+
+      console.error(
+        `Failed to load fiscal months for funding period ${fundingPeriodId}: ${error}`,
+        {
+          error,
+        }
+      )
       return
     }
 
-    console.error(`Failed to load fiscal months for funding period ${fundingPeriodId}: ${error}`, {
-      error,
-    })
-    isFiscalPeriodsErrored.value = true
+    throw error
   } finally {
     if (requestId === latestFiscalPeriodsRequest) {
       isLoadingFiscalPeriods.value = false

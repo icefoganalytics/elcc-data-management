@@ -129,6 +129,8 @@
 import { computed, ref, toRefs } from "vue"
 import { isNil } from "lodash"
 
+import { ApiOperationError } from "@/api/errors/api-operation-error"
+
 import { type ChildCareSpaceCategoryPropagationOptions } from "@/api/child-care-space-categories-api"
 import { greaterThan, greaterThanOrEqualTo, required } from "@/utils/validators"
 
@@ -263,8 +265,13 @@ async function validateSaveAndNotify() {
     emit("saved", props.childCareSpaceCategoryId)
     snack.success("Child Care Space category saved!")
   } catch (error) {
-    console.error(`Failed to update Child Care Space category: ${error}`, { error })
-    snack.error(`Failed to update Child Care Space category: ${error}`)
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to update Child Care Space category: ${error}`, { error })
+      snack.error(`Failed to update Child Care Space category: ${error}`)
+      return
+    }
+
+    throw error
   } finally {
     isSaving.value = false
   }

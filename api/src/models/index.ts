@@ -9,8 +9,8 @@ import BuildingExpenseCategory from "@/models/building-expense-category"
 import Centre from "@/models/centre"
 import ChildCareSpace from "@/models/child-care-space"
 import ChildCareSpaceCategory from "@/models/child-care-space-category"
-import ChildrenWithDiverseNeedsFundingRecord from "@/models/children-with-diverse-needs-funding-record"
 import ChildrenWithDiverseNeedsFundingCategory from "@/models/children-with-diverse-needs-funding-category"
+import ChildrenWithDiverseNeedsFundingRecord from "@/models/children-with-diverse-needs-funding-record"
 import EmployeeBenefit from "@/models/employee-benefit"
 import EmployeeWageTier from "@/models/employee-wage-tier"
 import FiscalPeriod from "@/models/fiscal-period"
@@ -35,8 +35,8 @@ db.addModels([
   Centre,
   ChildCareSpace,
   ChildCareSpaceCategory,
-  ChildrenWithDiverseNeedsFundingRecord,
   ChildrenWithDiverseNeedsFundingCategory,
+  ChildrenWithDiverseNeedsFundingRecord,
   EmployeeBenefit,
   EmployeeWageTier,
   FiscalPeriod,
@@ -61,8 +61,8 @@ BuildingExpenseCategory.establishScopes()
 Centre.establishScopes()
 ChildCareSpace.establishScopes()
 ChildCareSpaceCategory.establishScopes()
-ChildrenWithDiverseNeedsFundingRecord.establishScopes()
 ChildrenWithDiverseNeedsFundingCategory.establishScopes()
+ChildrenWithDiverseNeedsFundingRecord.establishScopes()
 EmployeeBenefit.establishScopes()
 EmployeeWageTier.establishScopes()
 FiscalPeriod.establishScopes()
@@ -87,8 +87,8 @@ export {
   Centre,
   ChildCareSpace,
   ChildCareSpaceCategory,
-  ChildrenWithDiverseNeedsFundingRecord,
   ChildrenWithDiverseNeedsFundingCategory,
+  ChildrenWithDiverseNeedsFundingRecord,
   EmployeeBenefit,
   EmployeeWageTier,
   FiscalPeriod,

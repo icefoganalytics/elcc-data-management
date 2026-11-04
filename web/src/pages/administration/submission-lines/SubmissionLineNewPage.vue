@@ -144,6 +144,8 @@ import {
 import fundingSubmissionLinesApi, {
   type FundingSubmissionLine,
 } from "@/api/funding-submission-lines-api"
+import ApiOperationError from "@/api/errors/api-operation-error"
+
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useSnack from "@/use/use-snack"
 
@@ -219,8 +221,13 @@ async function createFundingSubmissionLine() {
       name: "administration/AdministrationSubmissionLinesPage",
     })
   } catch (error) {
-    console.error(error)
-    snack.error(`Failed to create submission line: ${error}`)
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to create submission line: ${error}`, { error })
+      snack.error(`Failed to create submission line: ${error}`)
+      return
+    }
+
+    throw error
   } finally {
     isLoading.value = false
   }

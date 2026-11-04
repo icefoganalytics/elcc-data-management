@@ -1,0 +1,10 @@
+{
+  "lint": {
+    "commands": {
+      "javascript": {
+        "tool": "eslint",
+        "command": ["../bin/dev", "lint", "web"]
+      }
+    }
+  }
+}

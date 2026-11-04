@@ -74,7 +74,7 @@ export const useSubmissionLinesStore = defineStore("linesAdmin", {
           })
 
         m.notify({ text: "Submission Line saved", variant: "success" })
-        this.getAllSubmissionLines()
+        await this.getAllSubmissionLines()
       }
     },
     startNewFiscal() {

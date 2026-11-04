@@ -1,10 +1,12 @@
 import { isCancel } from "axios"
 import { isNil } from "lodash"
 import { onScopeDispose, reactive, toRefs, unref, watch, type Ref } from "vue"
+
 import qualityEnhancementCategoriesApi, {
   type QualityEnhancementCategoryAsShow,
   type QualityEnhancementCategoryPolicy,
 } from "@/api/quality-enhancement-categories-api"
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 
 export { type QualityEnhancementCategoryAsShow }
 
@@ -136,8 +138,8 @@ export function useQualityEnhancementCategory(
 
       try {
         await fetch()
-      } catch {
-        // fetch() preserves rejection for explicit callers; watcher failures use isErrored.
+      } catch (error) {
+        rethrowUnexpectedError(error)
       }
     },
     { immediate: true }

@@ -2,6 +2,7 @@ import { flushPromises, mount } from "@vue/test-utils"
 import Big from "big.js"
 
 import employeeWageTiersApi from "@/api/employee-wage-tiers-api"
+import ApiOperationError from "@/api/errors/api-operation-error"
 import wageEnhancementsApi, {
   type WageEnhancementAsShow,
   type WageEnhancementPolicy,
@@ -275,7 +276,7 @@ describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", (
           totalCount: 1,
         })
         vi.spyOn(wageEnhancementsApi, "update")
-          .mockRejectedValueOnce(new Error("network unavailable"))
+          .mockRejectedValueOnce(new ApiOperationError("network unavailable", 503))
           .mockReturnValueOnce(retry.promise)
         const wrapper = mount(WageEnhancementsEditTable, {
           props: { centreId: 1, fiscalPeriodId: employeeWageTier.fiscalPeriodId },
@@ -320,7 +321,7 @@ describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", (
           totalCount: 1,
         })
         vi.spyOn(wageEnhancementsApi, "update")
-          .mockRejectedValueOnce(new Error("network unavailable"))
+          .mockRejectedValueOnce(new ApiOperationError("network unavailable", 503))
           .mockReturnValueOnce(retry.promise)
         const wrapper = mount(WageEnhancementsEditTable, {
           props: { centreId: 1, fiscalPeriodId: employeeWageTier.fiscalPeriodId },
@@ -365,7 +366,7 @@ describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", (
           totalCount: 1,
         })
         vi.spyOn(wageEnhancementsApi, "update")
-          .mockRejectedValueOnce(new Error("network unavailable"))
+          .mockRejectedValueOnce(new ApiOperationError("network unavailable", 503))
           .mockResolvedValue({ wageEnhancement, policy })
         const wrapper = mount(WageEnhancementsEditTable, {
           props: { centreId: 1, fiscalPeriodId: employeeWageTier.fiscalPeriodId },
@@ -410,7 +411,7 @@ describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", (
           totalCount: 1,
         })
         vi.spyOn(wageEnhancementsApi, "update")
-          .mockRejectedValueOnce(new Error("network unavailable"))
+          .mockRejectedValueOnce(new ApiOperationError("network unavailable", 503))
           .mockResolvedValue({ wageEnhancement, policy })
         const wrapper = mount(WageEnhancementsEditTable, {
           props: { centreId: 1, fiscalPeriodId: employeeWageTier.fiscalPeriodId },
@@ -592,7 +593,9 @@ describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", (
           wageEnhancements: [wageEnhancement],
           totalCount: 1,
         })
-        vi.spyOn(wageEnhancementsApi, "update").mockRejectedValue(new Error("offline"))
+        vi.spyOn(wageEnhancementsApi, "update").mockRejectedValue(
+          new ApiOperationError("offline", 503)
+        )
         vi.spyOn(wageEnhancementsApi, "create").mockResolvedValue({
           wageEnhancement: createdWageEnhancement,
           policy: { show: true, create: true, update: true, destroy: true },
@@ -641,7 +644,9 @@ describe("web/src/components/wage-enhancements/WageEnhancementsEditTable.vue", (
           wageEnhancements: [wageEnhancement],
           totalCount: 1,
         })
-        vi.spyOn(wageEnhancementsApi, "update").mockRejectedValue(new Error("offline"))
+        vi.spyOn(wageEnhancementsApi, "update").mockRejectedValue(
+          new ApiOperationError("offline", 503)
+        )
         vi.spyOn(wageEnhancementsApi, "create").mockResolvedValue({
           wageEnhancement: createdWageEnhancement,
           policy: { show: true, create: true, update: true, destroy: true },

@@ -34,7 +34,7 @@ export function useUsers(
       state.totalCount = totalCount
       return users
     } catch (error) {
-      console.error("Failed to fetch users:", error)
+      console.error(`Failed to fetch users: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {

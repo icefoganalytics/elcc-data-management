@@ -2,6 +2,7 @@ import { flushPromises, mount } from "@vue/test-utils"
 import Big from "big.js"
 
 import employeeBenefitsApi from "@/api/employee-benefits-api"
+import ApiOperationError from "@/api/errors/api-operation-error"
 import { employeeBenefitFactory } from "@/tests/factories"
 import { mockVuetify } from "@/tests/support"
 
@@ -155,7 +156,7 @@ describe("web/src/components/employee-benefits/EmployeeBenefitEditTable.vue", ()
           policy: { show: true, create: true, update: true, destroy: true },
         })
         vi.spyOn(employeeBenefitsApi, "update")
-          .mockRejectedValueOnce(new Error("offline"))
+          .mockRejectedValueOnce(new ApiOperationError("offline", 503))
           .mockReturnValueOnce(retry.promise)
         const wrapper = mount(EmployeeBenefitEditTable, {
           props: { employeeBenefitId: 62 },
@@ -188,7 +189,7 @@ describe("web/src/components/employee-benefits/EmployeeBenefitEditTable.vue", ()
           policy: { show: true, create: true, update: true, destroy: true },
         })
         vi.spyOn(employeeBenefitsApi, "update")
-          .mockRejectedValueOnce(new Error("offline"))
+          .mockRejectedValueOnce(new ApiOperationError("offline", 503))
           .mockReturnValueOnce(retry.promise)
         const wrapper = mount(EmployeeBenefitEditTable, {
           props: { employeeBenefitId: 62 },

@@ -83,6 +83,7 @@ import Big from "big.js"
 import { formatDecimal } from "@/utils/formatters"
 
 import childCareSpacesApi, { CHILD_CARE_SPACES_SECTION_NAME } from "@/api/child-care-spaces-api"
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 import fundingSubmissionLineJsonsApi, {
   type FundingLineValue,
 } from "@/api/funding-submission-line-jsons-api"
@@ -194,8 +195,10 @@ const notificationStore = useNotificationStore()
 
 async function reloadWorksheet() {
   try {
-    await Promise.all([refreshChildCareSpaces(), refreshFundingSubmissionLineJson()])
+    await awaitRequestSettlements([refreshChildCareSpaces(), refreshFundingSubmissionLineJson()])
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     notificationStore.notify({
       text: `Failed to load worksheet: ${error}`,
       variant: "error",
@@ -249,16 +252,18 @@ async function saveFundingSubmissionLineJson(): Promise<boolean> {
     const mutations = childCareSpaceUpdates.map(({ id, update }) =>
       childCareSpacesApi.update(id, update)
     )
-    await awaitMutationSettlements(mutations)
+    await awaitRequestSettlements(mutations)
     await fundingSubmissionLineJsonsApi.update(fundingSubmissionLineJsonId.value, {
       lines: jsonLines,
     })
-    await Promise.all([refreshChildCareSpaces(), refreshFundingSubmissionLineJson()])
+    await awaitRequestSettlements([refreshChildCareSpaces(), refreshFundingSubmissionLineJson()])
 
     emit("update:fundingSubmissionLineJson", fundingSubmissionLineJsonId.value)
     return true
   } catch (error) {
-    console.error(error)
+    rethrowUnexpectedError(error)
+
+    console.error(`Failed to save worksheet: ${error}`, { error })
     notificationStore.notify({
       text: `Failed to save worksheet: ${error}`,
       variant: "error",
@@ -270,23 +275,25 @@ async function saveFundingSubmissionLineJson(): Promise<boolean> {
   }
 }
 
-async function awaitMutationSettlements(mutations: Promise<unknown>[]) {
-  const results = await Promise.allSettled(mutations)
+async function awaitRequestSettlements(requests: Promise<unknown>[]) {
+  const results = await Promise.allSettled(requests)
   const failures = results.flatMap((result) =>
     result.status === "rejected" ? [result.reason] : []
   )
 
   if (failures.length > 0) {
-    throw new AggregateError(failures, failures.map(String).join("; "))
+    const error = new AggregateError(failures, failures.map(String).join("; "))
+    rethrowUnexpectedError(error)
+    throw error
   }
 }
 
 async function replicateOwnEstimates(): Promise<void> {
-  await awaitMutationSettlements([
+  await awaitRequestSettlements([
     fundingSubmissionLineJsonsApi.replicateEstimates(fundingSubmissionLineJsonId.value),
     replicateChildCareSpaceEstimates(),
   ])
-  await Promise.all([refreshChildCareSpaces(), refreshFundingSubmissionLineJson()])
+  await awaitRequestSettlements([refreshChildCareSpaces(), refreshFundingSubmissionLineJson()])
   emit("update:fundingSubmissionLineJson", fundingSubmissionLineJsonId.value)
 }
 

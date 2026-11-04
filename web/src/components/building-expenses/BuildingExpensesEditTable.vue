@@ -101,7 +101,9 @@ import { formatDecimal, formatMoney } from "@/utils/formatters"
 import blockedToTrueConfirm from "@/utils/blocked-to-true-confirm"
 import sumByDecimal from "@/utils/sum-by-decimal"
 
+import { ApiOperationError } from "@/api/errors/api-operation-error"
 import { MAX_PER_PAGE } from "@/api/base-api"
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 import buildingExpensesApi, {
   BuildingExpenseAsIndex,
   type BuildingExpense,
@@ -240,8 +242,10 @@ async function commitEdit(): Promise<boolean> {
     const saved = save === null || (await save)
     if (!saved) editTable.value?.cancelPendingFocus()
     return saved
-  } catch {
+  } catch (error) {
     editTable.value?.cancelPendingFocus()
+    rethrowUnexpectedError(error)
+
     return false
   } finally {
     if (currentSave === save) currentSave = null
@@ -277,12 +281,16 @@ async function saveBuildingExpenseIfDirty(buildingExpense: BuildingExpense): Pro
     snack.success("Building expense saved!")
     return true
   } catch (error) {
-    await refresh()
     editTable.value?.cancelPendingFocus()
+    if (error instanceof ApiOperationError) {
+      await refresh()
 
-    console.error(`Failed to save building expense: ${error}`, { error })
-    snack.error(`Failed to save building expense: ${error}`)
-    return false
+      console.error(`Failed to save building expense: ${error}`, { error })
+      snack.error(`Failed to save building expense: ${error}`)
+      return false
+    }
+
+    throw error
   } finally {
     isSaving.value = false
   }
@@ -302,6 +310,8 @@ async function deleteBuildingExpense(buildingExpense: BuildingExpense) {
     await refresh()
     snack.success("Building expense deleted!")
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     console.error(`Failed to delete building expense: ${error}`, { error })
     snack.error(`Failed to delete building expense: ${error}`)
   } finally {

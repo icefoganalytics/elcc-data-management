@@ -1,5 +1,7 @@
 import { type Ref, reactive, toRefs, ref, unref, watch } from "vue"
 
+import ApiOperationError from "@/api/errors/api-operation-error"
+
 import sectionNamesApi, {
   type SectionNamesFiltersOptions,
   type SectionNamesWhereOptions,
@@ -34,7 +36,12 @@ export function useSectionNames(
       state.sectionNames = sectionNames
       return sectionNames
     } catch (error) {
-      console.error(`Failed to fetch funding submission line section names: ${error}`, { error })
+      if (error instanceof ApiOperationError) {
+        console.error(`Failed to fetch funding submission line section names: ${error}`, { error })
+        state.isErrored = true
+        return []
+      }
+
       state.isErrored = true
       throw error
     } finally {

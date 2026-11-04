@@ -65,6 +65,7 @@ import { greaterThanOrEqualTo, required } from "@/utils/validators"
 import qualityEnhancementsApi, {
   type QualityEnhancementCreationAttributes,
 } from "@/api/quality-enhancements-api"
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 import useSnack from "@/use/use-snack"
 import HeaderActionsFormCard from "@/components/common/HeaderActionsFormCard.vue"
 import QualityEnhancementCategorySearchableAutocomplete from "@/components/quality-enhancement-categories/QualityEnhancementCategorySearchableAutocomplete.vue"
@@ -113,6 +114,8 @@ async function create() {
     emit("created", qualityEnhancement.id)
     snack.success("Quality enhancement created successfully")
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     snack.error(`Failed to create quality enhancement: ${error}`)
   } finally {
     isCreating.value = false

@@ -139,6 +139,8 @@ import { greaterThanOrEqualTo, required } from "@/utils/validators"
 import qualityEnhancementCategoriesApi, {
   type QualityEnhancementCategoryCreationAttributes,
 } from "@/api/quality-enhancement-categories-api"
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
+
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useCurrentUser from "@/use/use-current-user"
 import useFundingPeriods, { type FundingPeriodQueryOptions } from "@/use/use-funding-periods"
@@ -262,6 +264,8 @@ async function createQualityEnhancementCategory() {
       },
     })
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     console.error(`Failed to create Quality Enhancement category: ${error}`, { error })
     snack.error(`Failed to create Quality Enhancement category: ${error}`)
   } finally {

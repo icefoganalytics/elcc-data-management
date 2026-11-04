@@ -2,6 +2,9 @@ import { createPinia } from "pinia"
 import { flushPromises, mount } from "@vue/test-utils"
 
 import httpClient from "@/api/http-client"
+import ApiOperationError from "@/api/errors/api-operation-error"
+import AuthenticationRequiredError from "@/api/errors/authentication-required-error"
+import CloudflareChallengeError from "@/api/errors/cloudflare-challenge-error"
 import { type FiscalPeriod } from "@/api/fiscal-periods-api"
 import { type FundingSubmissionLineJsonAsIndex } from "@/api/funding-submission-line-jsons-api"
 import { FiscalPeriodMonths } from "@/use/use-fiscal-periods"
@@ -20,6 +23,71 @@ import MonthlyWorksheetPage from "@/pages/child-care-centres/worksheets/MonthlyW
 describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue", () => {
   describe("MonthlyWorksheetPage", () => {
     describe("worksheet navigation", () => {
+      test("when one worksheet read fails while another is pending, keeps loading", async () => {
+        // Arrange
+        const fiscalPeriods = Promise.withResolvers<{
+          data: { fiscalPeriods: FiscalPeriod[]; totalCount: number }
+        }>()
+        vi.mocked(httpClient, true).get.mockImplementation(async (url) => {
+          if (url === "/api/funding-submission-line-jsons") {
+            throw new ApiOperationError("Worksheet unavailable", 503)
+          }
+          return fiscalPeriods.promise
+        })
+        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+        await router.push("/")
+        await router.isReady()
+
+        // Act
+        const wrapper = mount(MonthlyWorksheetPage, {
+          props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
+          global: { plugins: [router, createPinia(), mockVuetify()] },
+        })
+        await flushPromises()
+
+        // Assert
+        expect(wrapper.text()).toContain("Loading worksheets")
+      })
+
+      test.each([
+        ["authentication", AuthenticationRequiredError],
+        ["challenge", CloudflareChallengeError],
+      ] as const)(
+        "when a delayed %s failure follows an expected worksheet failure, forwards the original recovery error",
+        async (_kind, RecoveryError) => {
+          // Arrange
+          const fiscalPeriods = Promise.withResolvers<{
+            data: { fiscalPeriods: FiscalPeriod[]; totalCount: number }
+          }>()
+          const recoveryError = new RecoveryError()
+          vi.mocked(httpClient, true).get.mockImplementation(async (url) => {
+            if (url === "/api/funding-submission-line-jsons") {
+              throw new ApiOperationError("Worksheet unavailable", 503)
+            }
+            return fiscalPeriods.promise
+          })
+          const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+          await router.push("/")
+          await router.isReady()
+          const errorHandler = vi.fn()
+          mount(MonthlyWorksheetPage, {
+            props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
+            global: {
+              config: { errorHandler },
+              plugins: [router, createPinia(), mockVuetify()],
+            },
+          })
+          await flushPromises()
+
+          // Act
+          fiscalPeriods.reject(recoveryError)
+          await flushPromises()
+
+          // Assert
+          expect(errorHandler.mock.calls[0]?.[0]).toBe(recoveryError)
+        }
+      )
+
       test("when an older month request finishes last, saves only the selected month's worksheet", async () => {
         // Arrange
         const aprilWorksheetList = Promise.withResolvers<{
@@ -382,7 +450,10 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             }
           }
           if (url === "/api/administration-costs") {
-            throw new Error("Administration costs unavailable")
+            throw new ApiOperationError("Administration costs unavailable", 503)
+          }
+          if (url === "/api/children-with-diverse-needs-funding-records") {
+            return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
           }
           if (url === "/api/children-with-diverse-needs-funding-records") {
             return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
@@ -500,6 +571,14 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           }
           if (url === "/api/children-with-diverse-needs-funding-records") {
             return { data: { childrenWithDiverseNeedsFundingRecords: [childrenWithDiverseNeedsFundingRecord], totalCount: 1 } }
+          }
+          if (url === "/api/children-with-diverse-needs-funding-records") {
+            return {
+              data: {
+                childrenWithDiverseNeedsFundingRecords: [childrenWithDiverseNeedsFundingRecord],
+                totalCount: 1,
+              },
+            }
           }
           if (url === "/api/quality-enhancements") {
             return { data: { qualityEnhancements: [quality], totalCount: 1 } }
@@ -694,7 +773,9 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         })
         const replicationRequests: string[] = []
         http.patch.mockImplementation(async (url) => {
-          if (url === "/api/child-care-spaces/41") throw new Error("Second Spaces update failed")
+          if (url === "/api/child-care-spaces/41") {
+            throw new ApiOperationError("Second Spaces update failed", 503)
+          }
           return { data: {} }
         })
         http.post.mockImplementation(async (url) => {
@@ -792,7 +873,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
               return pendingReplication.promise
             }
             if (failAdministration && url === "/api/administration-costs/60/replicate-estimates") {
-              throw new Error("Administration replication unavailable")
+              throw new ApiOperationError("Administration replication unavailable", 503)
             }
             return { data: undefined }
           })
