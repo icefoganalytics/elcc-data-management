@@ -10,6 +10,8 @@ Use Vue's default watcher scheduling to batch related state changes. Do not use 
 
 Watcher callbacks should await `fetch()` directly. Fetch actions may record load errors before rethrowing; do not add catch-and-ignore wrappers merely because the error state was updated.
 
+Always return both `fetch` and `refresh: fetch` from model composables. `refresh` is an alias of the same fetch function, not a separate implementation or wrapper.
+
 ## Singular Composables
 
 Use `use-model.ts` for one record identified by an id.
