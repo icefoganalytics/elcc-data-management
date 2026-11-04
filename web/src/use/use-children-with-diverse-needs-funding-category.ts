@@ -41,8 +41,9 @@ export function useChildrenWithDiverseNeedsFundingCategory(
     const staticChildrenWithDiverseNeedsFundingCategoryId = unref(
       childrenWithDiverseNeedsFundingCategoryId
     )
-    if (isNil(staticChildrenWithDiverseNeedsFundingCategoryId))
+    if (isNil(staticChildrenWithDiverseNeedsFundingCategoryId)) {
       throw new Error("childrenWithDiverseNeedsFundingCategoryId is required")
+    }
 
     requestController?.abort()
 
@@ -52,10 +53,11 @@ export function useChildrenWithDiverseNeedsFundingCategory(
     state.isErrored = false
 
     try {
-      const response = await childrenWithDiverseNeedsFundingCategoriesApi.get(
-        staticChildrenWithDiverseNeedsFundingCategoryId,
-        { signal: controller.signal }
-      )
+      const { childrenWithDiverseNeedsFundingCategory, policy } =
+        await childrenWithDiverseNeedsFundingCategoriesApi.get(
+          staticChildrenWithDiverseNeedsFundingCategoryId,
+          { signal: controller.signal }
+        )
       if (
         controller.signal.aborted ||
         unref(childrenWithDiverseNeedsFundingCategoryId) !==
@@ -64,14 +66,14 @@ export function useChildrenWithDiverseNeedsFundingCategory(
         return state.childrenWithDiverseNeedsFundingCategory
       }
 
-      state.childrenWithDiverseNeedsFundingCategory =
-        response.childrenWithDiverseNeedsFundingCategory
-      state.policy = response.policy
+      state.childrenWithDiverseNeedsFundingCategory = childrenWithDiverseNeedsFundingCategory
+      state.policy = policy
       state.isErrored = false
-      return response.childrenWithDiverseNeedsFundingCategory
+      return childrenWithDiverseNeedsFundingCategory
     } catch (error) {
-      if (controller.signal.aborted || isCancel(error))
+      if (controller.signal.aborted || isCancel(error)) {
         return state.childrenWithDiverseNeedsFundingCategory
+      }
 
       console.error("Failed to fetch Children with Diverse Needs funding category", { error })
       if (
@@ -98,8 +100,9 @@ export function useChildrenWithDiverseNeedsFundingCategory(
     const staticChildrenWithDiverseNeedsFundingCategoryId = unref(
       childrenWithDiverseNeedsFundingCategoryId
     )
-    if (isNil(staticChildrenWithDiverseNeedsFundingCategoryId))
+    if (isNil(staticChildrenWithDiverseNeedsFundingCategoryId)) {
       throw new Error("childrenWithDiverseNeedsFundingCategoryId is required")
+    }
 
     if (
       state.childrenWithDiverseNeedsFundingCategory?.id !==
@@ -115,22 +118,22 @@ export function useChildrenWithDiverseNeedsFundingCategory(
     try {
       const { categoryName, fromAge, toAge, monthlyAmount } =
         state.childrenWithDiverseNeedsFundingCategory
-      const response = await childrenWithDiverseNeedsFundingCategoriesApi.update(
-        staticChildrenWithDiverseNeedsFundingCategoryId,
-        {
-          categoryName,
-          fromAge,
-          toAge,
-          monthlyAmount,
-          ...attributes,
-        }
-      )
+      const { childrenWithDiverseNeedsFundingCategory, policy } =
+        await childrenWithDiverseNeedsFundingCategoriesApi.update(
+          staticChildrenWithDiverseNeedsFundingCategoryId,
+          {
+            categoryName,
+            fromAge,
+            toAge,
+            monthlyAmount,
+            ...attributes,
+          }
+        )
       if (!signal?.aborted) {
-        state.childrenWithDiverseNeedsFundingCategory =
-          response.childrenWithDiverseNeedsFundingCategory
-        state.policy = response.policy
+        state.childrenWithDiverseNeedsFundingCategory = childrenWithDiverseNeedsFundingCategory
+        state.policy = policy
       }
-      return response.childrenWithDiverseNeedsFundingCategory
+      return childrenWithDiverseNeedsFundingCategory
     } catch (error) {
       console.error("Failed to save Children with Diverse Needs funding category", { error })
       if (!signal?.aborted) {

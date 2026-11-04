@@ -41,8 +41,9 @@ export function useChildrenWithDiverseNeedsFundingRecord(
     const staticChildrenWithDiverseNeedsFundingRecordId = unref(
       childrenWithDiverseNeedsFundingRecordId
     )
-    if (isNil(staticChildrenWithDiverseNeedsFundingRecordId))
+    if (isNil(staticChildrenWithDiverseNeedsFundingRecordId)) {
       throw new Error("childrenWithDiverseNeedsFundingRecordId is required")
+    }
 
     requestController?.abort()
 
@@ -52,10 +53,11 @@ export function useChildrenWithDiverseNeedsFundingRecord(
     state.isErrored = false
 
     try {
-      const response = await childrenWithDiverseNeedsFundingRecordsApi.get(
-        staticChildrenWithDiverseNeedsFundingRecordId,
-        { signal: controller.signal }
-      )
+      const { childrenWithDiverseNeedsFundingRecord, policy } =
+        await childrenWithDiverseNeedsFundingRecordsApi.get(
+          staticChildrenWithDiverseNeedsFundingRecordId,
+          { signal: controller.signal }
+        )
       if (
         controller.signal.aborted ||
         unref(childrenWithDiverseNeedsFundingRecordId) !==
@@ -64,13 +66,14 @@ export function useChildrenWithDiverseNeedsFundingRecord(
         return state.childrenWithDiverseNeedsFundingRecord
       }
 
-      state.childrenWithDiverseNeedsFundingRecord = response.childrenWithDiverseNeedsFundingRecord
-      state.policy = response.policy
+      state.childrenWithDiverseNeedsFundingRecord = childrenWithDiverseNeedsFundingRecord
+      state.policy = policy
       state.isErrored = false
-      return response.childrenWithDiverseNeedsFundingRecord
+      return childrenWithDiverseNeedsFundingRecord
     } catch (error) {
-      if (controller.signal.aborted || isCancel(error))
+      if (controller.signal.aborted || isCancel(error)) {
         return state.childrenWithDiverseNeedsFundingRecord
+      }
 
       console.error("Failed to fetch Children with Diverse Needs funding record", { error })
       if (
@@ -97,8 +100,9 @@ export function useChildrenWithDiverseNeedsFundingRecord(
     const staticChildrenWithDiverseNeedsFundingRecordId = unref(
       childrenWithDiverseNeedsFundingRecordId
     )
-    if (isNil(staticChildrenWithDiverseNeedsFundingRecordId))
+    if (isNil(staticChildrenWithDiverseNeedsFundingRecordId)) {
       throw new Error("childrenWithDiverseNeedsFundingRecordId is required")
+    }
 
     if (
       state.childrenWithDiverseNeedsFundingRecord?.id !==
@@ -112,15 +116,16 @@ export function useChildrenWithDiverseNeedsFundingRecord(
     state.isErrored = false
 
     try {
-      const response = await childrenWithDiverseNeedsFundingRecordsApi.update(
-        staticChildrenWithDiverseNeedsFundingRecordId,
-        attributes
-      )
+      const { childrenWithDiverseNeedsFundingRecord, policy } =
+        await childrenWithDiverseNeedsFundingRecordsApi.update(
+          staticChildrenWithDiverseNeedsFundingRecordId,
+          attributes
+        )
       if (!signal?.aborted) {
-        state.childrenWithDiverseNeedsFundingRecord = response.childrenWithDiverseNeedsFundingRecord
-        state.policy = response.policy
+        state.childrenWithDiverseNeedsFundingRecord = childrenWithDiverseNeedsFundingRecord
+        state.policy = policy
       }
-      return response.childrenWithDiverseNeedsFundingRecord
+      return childrenWithDiverseNeedsFundingRecord
     } catch (error) {
       console.error("Failed to save Children with Diverse Needs funding record", { error })
       if (!signal?.aborted) {
