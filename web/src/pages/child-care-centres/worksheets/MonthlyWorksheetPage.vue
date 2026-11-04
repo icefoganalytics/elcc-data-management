@@ -309,6 +309,7 @@ import QualityEnhancementCreateFormCard from "@/components/quality-enhancements/
 import ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual from "@/components/children-with-diverse-needs-funding-records/ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.vue"
 import ChildrenWithDiverseNeedsFundingRecordsCreateFormCard from "@/components/children-with-diverse-needs-funding-records/ChildrenWithDiverseNeedsFundingRecordsCreateFormCard.vue"
 import useSnack from "@/use/use-snack"
+
 const props = defineProps<{
   centreId: number
   fiscalYearSlug: string
@@ -372,22 +373,22 @@ async function loadWorksheet() {
       throw new AggregateError(failures, failures.map(String).join("; "))
     }
 
-    const worksheetResponse = worksheetResult.value
-    const fiscalPeriodResponse = fiscalPeriodResult.value
+    const { fundingSubmissionLineJsons } = worksheetResult.value
+    const { fiscalPeriods } = fiscalPeriodResult.value
 
     if (requestId !== activeRequest) {
       return
     }
 
     fundingSubmissionLineJson.value =
-      worksheetResponse.fundingSubmissionLineJsons.find(
+      fundingSubmissionLineJsons.find(
         (worksheet) =>
           worksheet.centreId === props.centreId &&
           worksheet.fiscalYear === fiscalYear.value &&
           worksheet.dateName === monthAsDateName.value
       ) ?? null
     fiscalPeriod.value =
-      fiscalPeriodResponse.fiscalPeriods.find(
+      fiscalPeriods.find(
         (period) => period.fiscalYear === props.fiscalYearSlug && period.month === props.month
       ) ?? null
   } catch (error) {
@@ -421,8 +422,7 @@ const administrationCostTable =
   useTemplateRef<InstanceType<typeof AdministrationCostEditTable>>("administrationCostTable")
 const qualityEnhancementTable =
   useTemplateRef<InstanceType<typeof QualityEnhancementEditTable>>("qualityEnhancementTable")
-const jsonSheet =
-  useTemplateRef<InstanceType<typeof FundingSubmissionLineJsonEditSheet>>("jsonSheet")
+const jsonSheet = useTemplateRef("jsonSheet")
 const buildingExpensesEditTable = useTemplateRef("buildingExpensesEditTable")
 const keyboardShortcutsModal = useTemplateRef("keyboardShortcutsModal")
 const showBuildingExpenseCreateForm = ref(false)
@@ -503,24 +503,32 @@ async function refreshLinkedResources() {
   const failures = results.flatMap((result) =>
     result.status === "rejected" ? [result.reason] : []
   )
-  if (failures.length > 0) throw new AggregateError(failures, failures.map(String).join("; "))
+  if (failures.length > 0) {
+    throw new AggregateError(failures, failures.map(String).join("; "))
+  }
 }
 
 function onJsonUpdated(fundingSubmissionLineJsonId: number) {
-  if (fundingSubmissionLineJson.value?.id !== fundingSubmissionLineJsonId) return
+  if (fundingSubmissionLineJson.value?.id !== fundingSubmissionLineJsonId) {
+    return
+  }
 
   emit("update:fundingSubmissionLineJson", fundingSubmissionLineJsonId)
 }
 
 async function saveWorksheet(): Promise<boolean> {
-  if (isWorkflowBusy.value || isReplicationUnavailable.value) return false
+  if (isWorkflowBusy.value || isReplicationUnavailable.value) {
+    return false
+  }
 
   const sheet = jsonSheet.value
   const administration = administrationCostTable.value
   const childrenWithDiverseNeedsFundingRecord =
     childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value
   const quality = qualityEnhancementTable.value
-  if (!sheet || !administration || !childrenWithDiverseNeedsFundingRecord || !quality) return false
+  if (!sheet || !administration || !childrenWithDiverseNeedsFundingRecord || !quality) {
+    return false
+  }
 
   try {
     isWorksheetSaving.value = true
@@ -537,8 +545,9 @@ async function saveWorksheet(): Promise<boolean> {
       !administrationCommitted ||
       !childrenWithDiverseNeedsFundingRecordCommitted ||
       !qualityCommitted
-    )
+    ) {
       return false
+    }
 
     const wasSaved = await sheet.saveFundingSubmissionLineJson()
     isRefreshingLinked.value = true
@@ -574,6 +583,8 @@ async function onChildrenWithDiverseNeedsFundingRecordCreated() {
   try {
     await childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value?.refresh()
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     snack.error(`Failed to refresh diverse needs: ${error}`)
   }
 }
@@ -609,7 +620,9 @@ async function replicateEstimatesForward() {
   const childrenWithDiverseNeedsFundingRecord =
     childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value
   const quality = qualityEnhancementTable.value
-  if (!sheet || !administration || !childrenWithDiverseNeedsFundingRecord || !quality) return
+  if (!sheet || !administration || !childrenWithDiverseNeedsFundingRecord || !quality) {
+    return
+  }
 
   const savedWorksheet = saveWorksheet()
   isReplicating.value = true
@@ -633,7 +646,9 @@ async function replicateEstimatesForward() {
     const failures = results.flatMap((result) =>
       result.status === "rejected" ? [result.reason] : []
     )
-    if (failures.length > 0) throw new AggregateError(failures, failures.map(String).join("; "))
+    if (failures.length > 0) {
+      throw new AggregateError(failures, failures.map(String).join("; "))
+    }
 
     snack.success("Estimates replicated successfully!")
   } catch (error) {
