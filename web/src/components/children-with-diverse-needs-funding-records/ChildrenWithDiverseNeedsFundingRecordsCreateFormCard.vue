@@ -1,6 +1,6 @@
 <template>
   <HeaderActionsFormCard
-    ref="form"
+    ref="headerActionsFormCard"
     @submit.prevent="create"
   >
     <template #header><h4>Add Diverse Need</h4></template>
@@ -72,9 +72,15 @@
 <script setup lang="ts">
 import { ref, useTemplateRef } from "vue"
 
-import childrenWithDiverseNeedsFundingRecordsApi from "@/api/children-with-diverse-needs-funding-records-api"
-import { greaterThanOrEqualTo, required } from "@/utils/validators"
+import childrenWithDiverseNeedsFundingRecordsApi, {
+  type ChildrenWithDiverseNeedsFundingRecordCreationAttributes,
+} from "@/api/children-with-diverse-needs-funding-records-api"
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
+
 import useSnack from "@/use/use-snack"
+
+import { greaterThanOrEqualTo, required } from "@/utils/validators"
+
 import ChildrenWithDiverseNeedsFundingCategorySearchableAutocomplete from "@/components/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategorySearchableAutocomplete.vue"
 import HeaderActionsFormCard from "@/components/common/HeaderActionsFormCard.vue"
 
@@ -86,27 +92,44 @@ const props = withDefaults(
     existingCategoryIds: number[]
     isWorkflowBusy?: boolean
   }>(),
-  { isWorkflowBusy: false }
+  {
+    isWorkflowBusy: false,
+  }
 )
-const emit = defineEmits<{ created: [id: number]; cancel: []; saving: [value: boolean] }>()
-const attributes = ref({
-  categoryId: null as number | null,
+
+const emit = defineEmits<{
+  created: [id: number]
+  cancel: []
+  saving: [value: boolean]
+}>()
+
+const attributes = ref<
+  Omit<
+    ChildrenWithDiverseNeedsFundingRecordCreationAttributes,
+    "centreId" | "fiscalPeriodId" | "categoryId"
+  > & {
+    categoryId: ChildrenWithDiverseNeedsFundingRecordCreationAttributes["categoryId"] | null
+  }
+>({
+  categoryId: null,
   estimatedChildOccupancyRate: "0",
   actualChildOccupancyRate: "0",
   applyToCurrentAndFutureFiscalPeriods: false,
 })
+
 const isCreating = ref(false)
-const form = useTemplateRef("form")
+const headerActionsFormCard = useTemplateRef("headerActionsFormCard")
 const snack = useSnack()
 
 async function create() {
-  if (!form.value || props.isWorkflowBusy || isCreating.value) return
+  if (!headerActionsFormCard.value || props.isWorkflowBusy || isCreating.value) return
 
   isCreating.value = true
   emit("saving", true)
   try {
-    const { valid } = await form.value.validate()
+    const { valid } = await headerActionsFormCard.value.validate()
     if (!valid || attributes.value.categoryId === null) return
+
     const { childrenWithDiverseNeedsFundingRecord } =
       await childrenWithDiverseNeedsFundingRecordsApi.create({
         centreId: props.centreId,
@@ -116,9 +139,12 @@ async function create() {
         actualChildOccupancyRate: attributes.value.actualChildOccupancyRate,
         applyToCurrentAndFutureFiscalPeriods: attributes.value.applyToCurrentAndFutureFiscalPeriods,
       })
+
     emit("created", childrenWithDiverseNeedsFundingRecord.id)
     snack.success("Diverse need created successfully")
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     snack.error(`Failed to create diverse need: ${error}`)
   } finally {
     isCreating.value = false

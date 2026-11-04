@@ -191,7 +191,7 @@
         <h3 class="mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2">
           Children with Diverse Needs
         </h3>
-        <ChildrenWithDiverseNeedsFundingRecordEditTable
+        <ChildrenWithDiverseNeedsFundingRecordsEditTable
           ref="childrenWithDiverseNeedsFundingRecordTable"
           :where="worksheetWhere"
           :is-replicating="
@@ -220,7 +220,7 @@
             v-else
             cols="12"
           >
-            <ChildrenWithDiverseNeedsFundingRecordCreateFormCard
+            <ChildrenWithDiverseNeedsFundingRecordsCreateFormCard
               :centre-id="centreId"
               :fiscal-period-id="fiscalPeriod.id"
               :funding-period-id="fiscalPeriod.fundingPeriodId"
@@ -311,8 +311,8 @@ import AdministrationCostEditTable from "@/components/administration-costs/Admin
 import AdministrationCostCreateFormCard from "@/components/administration-costs/AdministrationCostCreateFormCard.vue"
 import QualityEnhancementEditTable from "@/components/quality-enhancements/QualityEnhancementEditTable.vue"
 import QualityEnhancementCreateFormCard from "@/components/quality-enhancements/QualityEnhancementCreateFormCard.vue"
-import ChildrenWithDiverseNeedsFundingRecordEditTable from "@/components/children-with-diverse-needs-funding-records/ChildrenWithDiverseNeedsFundingRecordEditTable.vue"
-import ChildrenWithDiverseNeedsFundingRecordCreateFormCard from "@/components/children-with-diverse-needs-funding-records/ChildrenWithDiverseNeedsFundingRecordCreateFormCard.vue"
+import ChildrenWithDiverseNeedsFundingRecordsEditTable from "@/components/children-with-diverse-needs-funding-records/ChildrenWithDiverseNeedsFundingRecordsEditTable.vue"
+import ChildrenWithDiverseNeedsFundingRecordsCreateFormCard from "@/components/children-with-diverse-needs-funding-records/ChildrenWithDiverseNeedsFundingRecordsCreateFormCard.vue"
 import useSnack from "@/use/use-snack"
 const props = defineProps<{
   centreId: number
@@ -419,8 +419,9 @@ const worksheetWhere = computed(() => ({
   centreId: props.centreId,
   fiscalPeriodId: fiscalPeriod.value?.id,
 }))
-const childrenWithDiverseNeedsFundingRecordTable =
-  useTemplateRef<InstanceType<typeof ChildrenWithDiverseNeedsFundingRecordEditTable>>("childrenWithDiverseNeedsFundingRecordTable")
+const childrenWithDiverseNeedsFundingRecordTable = useTemplateRef<
+  InstanceType<typeof ChildrenWithDiverseNeedsFundingRecordsEditTable>
+>("childrenWithDiverseNeedsFundingRecordTable")
 const administrationCostTable =
   useTemplateRef<InstanceType<typeof AdministrationCostEditTable>>("administrationCostTable")
 const qualityEnhancementTable =

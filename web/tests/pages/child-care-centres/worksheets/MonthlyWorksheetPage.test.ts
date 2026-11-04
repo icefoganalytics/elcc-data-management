@@ -625,7 +625,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         expect(qualityCells[3].text()).toEqual("$17.5")
         expect(
           wrapper
-            .findComponent({ name: "ChildrenWithDiverseNeedsFundingRecordEditTable" })
+            .findComponent({ name: "ChildrenWithDiverseNeedsFundingRecordsEditTable" })
             .get("tbody tr.cursor-pointer")
             .findAll("td")[2]
             .text()
