@@ -46,4 +46,5 @@ Keep query watchers focused on awaiting `fetch()`. Let `fetch()` publish the col
 
 - Use singular names for single-record composables: `useUser`
 - Use plural names for collection composables: `useEmployeeBenefits`
+- Prefix an unwrapped id captured for an async operation with `static`, such as `staticChildrenWithDiverseNeedsFundingCategoryId`, to distinguish the snapshot from its reactive ref.
 - Keep exported types near the composable when they come from the matching API module

@@ -38,8 +38,11 @@ export function useChildrenWithDiverseNeedsFundingRecord(
   }
 
   async function fetch(): Promise<ChildrenWithDiverseNeedsFundingRecordAsShow | null> {
-    const id = unref(childrenWithDiverseNeedsFundingRecordId)
-    if (isNil(id)) throw new Error("childrenWithDiverseNeedsFundingRecordId is required")
+    const staticChildrenWithDiverseNeedsFundingRecordId = unref(
+      childrenWithDiverseNeedsFundingRecordId
+    )
+    if (isNil(staticChildrenWithDiverseNeedsFundingRecordId))
+      throw new Error("childrenWithDiverseNeedsFundingRecordId is required")
 
     requestController?.abort()
 
@@ -49,10 +52,15 @@ export function useChildrenWithDiverseNeedsFundingRecord(
     state.isErrored = false
 
     try {
-      const response = await childrenWithDiverseNeedsFundingRecordsApi.get(id, {
-        signal: controller.signal,
-      })
-      if (controller.signal.aborted || unref(childrenWithDiverseNeedsFundingRecordId) !== id) {
+      const response = await childrenWithDiverseNeedsFundingRecordsApi.get(
+        staticChildrenWithDiverseNeedsFundingRecordId,
+        { signal: controller.signal }
+      )
+      if (
+        controller.signal.aborted ||
+        unref(childrenWithDiverseNeedsFundingRecordId) !==
+          staticChildrenWithDiverseNeedsFundingRecordId
+      ) {
         return state.childrenWithDiverseNeedsFundingRecord
       }
 
@@ -65,12 +73,19 @@ export function useChildrenWithDiverseNeedsFundingRecord(
         return state.childrenWithDiverseNeedsFundingRecord
 
       console.error("Failed to fetch Children with Diverse Needs funding record", { error })
-      if (unref(childrenWithDiverseNeedsFundingRecordId) === id) {
+      if (
+        unref(childrenWithDiverseNeedsFundingRecordId) ===
+        staticChildrenWithDiverseNeedsFundingRecordId
+      ) {
         state.isErrored = true
       }
       throw error
     } finally {
-      if (!controller.signal.aborted && unref(childrenWithDiverseNeedsFundingRecordId) === id) {
+      if (
+        !controller.signal.aborted &&
+        unref(childrenWithDiverseNeedsFundingRecordId) ===
+          staticChildrenWithDiverseNeedsFundingRecordId
+      ) {
         state.isLoading = false
       }
     }
@@ -79,35 +94,41 @@ export function useChildrenWithDiverseNeedsFundingRecord(
   async function save(
     attributes: ChildrenWithDiverseNeedsFundingRecordOccupancyAttributes
   ): Promise<ChildrenWithDiverseNeedsFundingRecordAsShow> {
-    const id = unref(childrenWithDiverseNeedsFundingRecordId)
-    if (isNil(id)) throw new Error("childrenWithDiverseNeedsFundingRecordId is required")
+    const staticChildrenWithDiverseNeedsFundingRecordId = unref(
+      childrenWithDiverseNeedsFundingRecordId
+    )
+    if (isNil(staticChildrenWithDiverseNeedsFundingRecordId))
+      throw new Error("childrenWithDiverseNeedsFundingRecordId is required")
 
-    if (state.childrenWithDiverseNeedsFundingRecord?.id !== id) {
+    if (
+      state.childrenWithDiverseNeedsFundingRecord?.id !==
+      staticChildrenWithDiverseNeedsFundingRecordId
+    ) {
       throw new Error("The requested Children with Diverse Needs funding record is not loaded")
     }
 
-    requestController?.abort()
-
-    const controller = new AbortController()
-    requestController = controller
+    const signal = requestController?.signal
     state.isLoading = true
     state.isErrored = false
 
     try {
-      const response = await childrenWithDiverseNeedsFundingRecordsApi.update(id, attributes)
-      if (!controller.signal.aborted && unref(childrenWithDiverseNeedsFundingRecordId) === id) {
+      const response = await childrenWithDiverseNeedsFundingRecordsApi.update(
+        staticChildrenWithDiverseNeedsFundingRecordId,
+        attributes
+      )
+      if (!signal?.aborted) {
         state.childrenWithDiverseNeedsFundingRecord = response.childrenWithDiverseNeedsFundingRecord
         state.policy = response.policy
       }
       return response.childrenWithDiverseNeedsFundingRecord
     } catch (error) {
       console.error("Failed to save Children with Diverse Needs funding record", { error })
-      if (!controller.signal.aborted && unref(childrenWithDiverseNeedsFundingRecordId) === id) {
+      if (!signal?.aborted) {
         state.isErrored = true
       }
       throw error
     } finally {
-      if (!controller.signal.aborted && unref(childrenWithDiverseNeedsFundingRecordId) === id) {
+      if (!signal?.aborted) {
         state.isLoading = false
       }
     }
