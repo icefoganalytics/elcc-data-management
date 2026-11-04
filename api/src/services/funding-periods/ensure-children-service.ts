@@ -3,8 +3,8 @@ import { FundingPeriods } from "@/services"
 import BaseService from "@/services/base-service"
 import {
   ChildCareSpaceCategories,
-  QualityEnhancementCategories,
   ChildrenWithDiverseNeedsFundingCategories,
+  QualityEnhancementCategories,
 } from "@/services/funding-periods"
 
 export class EnsureChildrenService extends BaseService {
