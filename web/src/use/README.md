@@ -10,6 +10,10 @@ Use Vue's default watcher scheduling to batch related state changes. Do not use 
 
 Watcher callbacks should await `fetch()` directly. Fetch actions may record load errors before rethrowing; do not add catch-and-ignore wrappers merely because the error state was updated.
 
+Always return both `fetch` and `refresh: fetch` from model composables. `refresh` is an alias of the same fetch function, not a separate implementation or wrapper.
+
+Destructure named fields from API responses at the `await` boundary, such as `const { childrenWithDiverseNeedsFundingRecord, policy } = await ...`. Assign and return those values directly instead of retaining an opaque `response` object.
+
 ## Singular Composables
 
 Use `use-model.ts` for one record identified by an id.
@@ -44,4 +48,5 @@ Keep query watchers focused on awaiting `fetch()`. Let `fetch()` publish the col
 
 - Use singular names for single-record composables: `useUser`
 - Use plural names for collection composables: `useEmployeeBenefits`
+- Prefix an unwrapped id captured for an async operation with `static`, such as `staticChildrenWithDiverseNeedsFundingCategoryId`, to distinguish the snapshot from its reactive ref.
 - Keep exported types near the composable when they come from the matching API module
