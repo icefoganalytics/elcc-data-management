@@ -153,8 +153,12 @@ const query = computed(() => ({
   perPage: MAX_PER_PAGE,
 }))
 
-const { childrenWithDiverseNeedsFundingRecords, isLoading, isErrored, fetch } =
-  useChildrenWithDiverseNeedsFundingRecords(query)
+const {
+  childrenWithDiverseNeedsFundingRecords,
+  isLoading,
+  isErrored,
+  fetch: refresh,
+} = useChildrenWithDiverseNeedsFundingRecords(query)
 
 const displayedNeeds = computed(() =>
   childrenWithDiverseNeedsFundingRecords.value.map((record) => ({
@@ -239,6 +243,7 @@ async function commitEdit(): Promise<boolean> {
     return saved
   } catch (error) {
     editDataTableVirtual.value?.cancelPendingFocus()
+    console.error("Failed to commit diverse need edit", { error })
     rethrowUnexpectedError(error)
 
     return false
@@ -264,23 +269,26 @@ async function saveIfDirty(record: ChildrenWithDiverseNeedsFundingRecordAsIndex)
     const index = childrenWithDiverseNeedsFundingRecords.value.findIndex(
       (item) => item.id === record.id
     )
-    if (index >= 0)
+    if (index >= 0) {
       childrenWithDiverseNeedsFundingRecords.value.splice(index, 1, {
         ...current,
         ...childrenWithDiverseNeedsFundingRecord,
       })
+    }
 
     snack.success("Diverse need saved!")
     emit("updated")
     return true
   } catch (error) {
     editDataTableVirtual.value?.cancelPendingFocus()
+    console.error("Failed to save diverse need", { error })
     rethrowUnexpectedError(error)
 
     saveError.value = `Failed to save diverse need: ${String(error)}. Retry your edit after reloading.`
     try {
       await refresh()
     } catch (error) {
+      console.error("Failed to reload diverse needs after save failure", { error })
       rethrowUnexpectedError(error)
 
       // Preserve the save failure if reload also fails.
@@ -298,8 +306,9 @@ async function deleteRecord(record: ChildrenWithDiverseNeedsFundingRecordAsIndex
     !record.policy.destroy ||
     isBlocked.value ||
     !blockedToTrueConfirm("Are you sure you want to remove this diverse need?")
-  )
+  ) {
     return
+  }
 
   if (!(await commitEdit())) return
 
@@ -311,6 +320,7 @@ async function deleteRecord(record: ChildrenWithDiverseNeedsFundingRecordAsIndex
     snack.success("Diverse need deleted!")
     emit("updated")
   } catch (error) {
+    console.error("Failed to delete diverse need", { error })
     rethrowUnexpectedError(error)
 
     snack.error(`Failed to delete diverse need: ${error}`)
@@ -321,16 +331,13 @@ async function deleteRecord(record: ChildrenWithDiverseNeedsFundingRecordAsIndex
   }
 }
 
-async function refresh() {
-  return await fetch()
-}
-
 async function reload() {
   try {
     await refresh()
     saveError.value = ""
     currentSave = null
   } catch (error) {
+    console.error("Failed to load diverse needs", { error })
     rethrowUnexpectedError(error)
 
     snack.error(`Failed to load diverse needs: ${error}`)
@@ -358,6 +365,7 @@ async function replicateEstimates() {
     if (failures.length) {
       const message = `Failed to replicate diverse need estimates: ${failures.map(String).join("; ")}`
       const aggregateError = new AggregateError(failures, message)
+      console.error("Failed to replicate diverse need estimates", { error: aggregateError })
       rethrowUnexpectedError(aggregateError)
 
       snack.error(message)
