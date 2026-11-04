@@ -100,6 +100,8 @@ import { isNil } from "lodash"
 
 import { required } from "@/utils/validators"
 
+import ApiOperationError from "@/api/errors/api-operation-error"
+
 import useAdministrationCostCategory from "@/use/use-administration-cost-category"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useFundingPeriods from "@/use/use-funding-periods"
@@ -154,7 +156,13 @@ async function saveCategory() {
     await save()
     snack.success("Administration cost category updated successfully!")
   } catch (error) {
-    snack.error(`Failed to update Administration cost category: ${error}`)
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to update Administration cost category: ${error}`, { error })
+      snack.error(`Failed to update Administration cost category: ${error}`)
+      return
+    }
+
+    throw error
   } finally {
     isSaving.value = false
   }

@@ -126,6 +126,8 @@ import { blockedToTrueConfirm } from "@/utils/blocked-to-true-confirm"
 
 import administrationCostCategoriesApi from "@/api/administration-cost-categories-api"
 
+import ApiOperationError from "@/api/errors/api-operation-error"
+
 import useAdministrationCostCategory from "@/use/use-administration-cost-category"
 import useSnack from "@/use/use-snack"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
@@ -177,7 +179,13 @@ async function deleteCategory(administrationCostCategoryId: number) {
       name: "administration/AdministrationCostCategoriesPage",
     })
   } catch (error) {
-    snack.error(`Failed to delete Administration cost category: ${error}`)
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to delete Administration cost category: ${error}`, { error })
+      snack.error(`Failed to delete Administration cost category: ${error}`)
+      return
+    }
+
+    throw error
   } finally {
     isDeleting.value = false
   }

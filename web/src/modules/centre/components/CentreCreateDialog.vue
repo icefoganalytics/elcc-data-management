@@ -115,6 +115,8 @@ import { type VForm } from "vuetify/components"
 import { booleanTransformer } from "@/utils/use-route-query-transformers"
 import { required } from "@/utils/validators"
 
+import { ApiOperationError } from "@/api/errors/api-operation-error"
+
 import centresApi, { CentreStatuses, type Centre } from "@/api/centres-api"
 
 import FundingRegionAutocomplete from "@/components/funding-regions/FundingRegionAutocomplete.vue"
@@ -175,8 +177,13 @@ async function validateSaveAndClose() {
     emit("created", centre.id)
     snack.success("Centre created!")
   } catch (error) {
-    console.error(`Failed to create centre ${error}`, { error })
-    snack.error(`Failed to create centre ${error}`)
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to create centre ${error}`, { error })
+      snack.error(`Failed to create centre ${error}`)
+      return
+    }
+
+    throw error
   } finally {
     isLoading.value = false
   }

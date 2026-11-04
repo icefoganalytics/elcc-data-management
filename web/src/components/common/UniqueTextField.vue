@@ -37,9 +37,12 @@
 
 <script setup lang="ts">
 import { ref } from "vue"
-import { debounce, isEmpty, isNil } from "lodash"
+import { useDebounceFn } from "@vueuse/shared"
+import { isEmpty, isNil } from "lodash"
 
 import { type VTextField } from "vuetify/components"
+
+import ApiOperationError from "@/api/errors/api-operation-error"
 
 const props = withDefaults(
   defineProps<{
@@ -83,14 +86,18 @@ async function checkValueIsUnique(value: string | null | undefined) {
     await textField.value?.validate(false)
     return result
   } catch (error) {
-    console.error(error)
-    return false
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to check availability: ${error}`, { error })
+      return false
+    }
+
+    throw error
   } finally {
     isCheckingUniqueness.value = false
   }
 }
 
-const debouncedCheckValueIsUnique = debounce(checkValueIsUnique, 500)
+const debouncedCheckValueIsUnique = useDebounceFn(checkValueIsUnique, 500)
 
 function valueMustBeUnique() {
   if (isUniqueValue.value === true || isUniqueValue.value === null) return true

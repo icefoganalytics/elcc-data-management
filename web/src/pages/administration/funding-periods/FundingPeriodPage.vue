@@ -84,6 +84,8 @@ import blockedToTrueConfirm from "@/utils/blocked-to-true-confirm"
 
 import fundingPeriodsApi from "@/api/funding-periods-api"
 
+import ApiOperationError from "@/api/errors/api-operation-error"
+
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useFundingPeriod from "@/use/use-funding-period"
 import useSnack from "@/use/use-snack"
@@ -116,8 +118,13 @@ async function deleteFundingPeriod(fundingPeriodId: number) {
       name: "administration/FundingPeriodsPage",
     })
   } catch (error) {
-    console.error(`Failed to delete funding period: ${error}`, { error })
-    snack.error(`Failed to delete funding period: ${error}`)
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to delete funding period: ${error}`, { error })
+      snack.error(`Failed to delete funding period: ${error}`)
+      return
+    }
+
+    throw error
   } finally {
     isDeleting.value = false
   }

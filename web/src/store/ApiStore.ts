@@ -1,7 +1,7 @@
 import { defineStore, acceptHMRUpdate } from "pinia"
-import { useNotificationStore } from "@/store/NotificationStore"
 import { useAuth0 } from "@auth0/auth0-vue"
-import { SecureAPICall } from "./helpers/axiosAPIConfig"
+import { SecureAPICall } from "@/store/helpers/axiosAPIConfig"
+import { AuthenticationRequiredError } from "@/api/errors/authentication-required-error"
 
 // refs are reactive variables
 // computed are reactive variables that are derived from other reactive variables
@@ -10,50 +10,27 @@ import { SecureAPICall } from "./helpers/axiosAPIConfig"
 export const useApiStore = defineStore("api", () => {
   const auth = useAuth0()
 
-  const m = useNotificationStore()
+  async function secureCall(method: string, url: string, data?: unknown) {
+    let token: string
+    try {
+      token = await auth.getAccessTokenSilently()
+    } catch (error) {
+      if (
+        error &&
+        typeof error === "object" &&
+        "error" in error &&
+        error.error === "login_required"
+      ) {
+        throw new AuthenticationRequiredError()
+      }
 
-  function doApiErrorMessage(err: any) {
-    let status_code = 500
-    let text = err.message
-
-    if (err.response) {
-      status_code = err.response.status || 500
-      if (err.response.data && err.response.data.message) text = err.response.data.message
+      throw error
     }
-
-    const message = {
-      status_code: status_code,
-      text,
-      icon: "mdi-error",
-      variant: "error",
-    }
-    m.notify(message)
-  }
-
-  async function secureCall(method: string, url: string, data?: any) {
-    let response
-    /* if (!auth.isAuthenticated.value) {
-      console.log("Not Authenticated");
-      response = { error: "Not Authenticated" };
-      return;
-    } */
-    response = await auth.getAccessTokenSilently().then(async (token) => {
-      return await SecureAPICall(method, token)
-        .request({ url, data })
-        .then((res) => {
-          return res.data
-        })
-        .catch((err) => {
-          doApiErrorMessage(err)
-          return { error: err }
-        })
-    })
-
-    return response
+    const response = await SecureAPICall(method, token).request({ url, data })
+    return response.data
   }
   return {
     secureCall,
-    doApiErrorMessage,
   }
 })
 

@@ -9,6 +9,7 @@ import type {
   AdministrationCostCategoryQueryOptions,
   AdministrationCostCategoryWhereOptions,
 } from "@/api/administration-cost-categories-api"
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 
 export {
   type AdministrationCostCategoryAsIndex,
@@ -51,9 +52,7 @@ export function useAdministrationCostCategories(
     } catch (error) {
       if (controller.signal.aborted || isCancel(error)) return state.administrationCostCategories
 
-      console.error(`Failed to fetch Administration categories: ${error}`, {
-        error,
-      })
+      console.error(`Failed to fetch Administration categories: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {
@@ -68,8 +67,8 @@ export function useAdministrationCostCategories(
     async () => {
       try {
         await fetch()
-      } catch {
-        // Explicit refresh callers receive the rejection; watched failures use isErrored.
+      } catch (error) {
+        rethrowUnexpectedError(error)
       }
     },
     {

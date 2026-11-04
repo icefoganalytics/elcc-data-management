@@ -68,6 +68,8 @@ import DateTimeUtils from "@/utils/date-time-utils"
 import { normalizeFiscalYearToLongForm } from "@/utils/fiscal-year"
 import { dateBetween, greaterThan, required } from "@/utils/validators"
 
+import { ApiOperationError } from "@/api/errors/api-operation-error"
+
 import paymentsApi, { PAYMENT_NAMES, type Payment } from "@/api/payments-api"
 
 import useSnack from "@/use/use-snack"
@@ -95,7 +97,6 @@ const paymentAttributes = ref<Partial<Payment>>({
   amount: "0",
   paidOn: undefined,
 })
-
 
 const paymentsQueryOptions = computed(() => ({
   where: {
@@ -144,7 +145,6 @@ const paidOnDateRangeValidator = computed(() =>
   })
 )
 
-
 const isCreating = ref(false)
 const snack = useSnack()
 const headerActionsFormCard = useTemplateRef("headerActionsFormCard")
@@ -161,8 +161,13 @@ async function createPayment() {
     emit("created", payment.id)
     snack.success("Payment created successfully")
   } catch (error) {
-    console.error(`Failed to create payment: ${error}`, { error })
-    snack.error(`Failed to create payment: ${error}`)
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to create payment: ${error}`, { error })
+      snack.error(`Failed to create payment: ${error}`)
+      return
+    }
+
+    throw error
   } finally {
     isCreating.value = false
   }

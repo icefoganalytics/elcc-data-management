@@ -43,6 +43,7 @@
 import { onMounted, reactive, ref } from "vue"
 
 import http from "@/api/http-client"
+import ApiOperationError from "@/api/errors/api-operation-error"
 
 const environment = reactive({
   releaseTag: "not-set",
@@ -56,16 +57,10 @@ onMounted(async () => {
 })
 
 async function fetchVersion() {
-  return http
-    .get("/_status")
-    .then(({ data }) => {
-      environment.releaseTag = data.RELEASE_TAG
-      environment.gitCommitHash = data.GIT_COMMIT_HASH
-      return data
-    })
-    .catch((error: unknown) => {
-      console.error(`Error fetching version: ${error}`)
-    })
+  const { data } = await http.get("/_status")
+  environment.releaseTag = data.RELEASE_TAG
+  environment.gitCommitHash = data.GIT_COMMIT_HASH
+  return data
 }
 
 async function refresh() {
@@ -73,7 +68,12 @@ async function refresh() {
   try {
     await fetchVersion()
   } catch (error) {
-    console.error(`Error fetching version: ${error}`)
+    if (error instanceof ApiOperationError) {
+      console.error(`Error fetching version: ${error}`, { error })
+      return
+    }
+
+    throw error
   } finally {
     isLoading.value = false
   }

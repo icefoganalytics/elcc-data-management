@@ -114,6 +114,7 @@ import { formatMoney } from "@/utils/formatters"
 import { normalizeFiscalYearToLongForm } from "@/utils/fiscal-year"
 
 import api from "@/api"
+import ApiOperationError from "@/api/errors/api-operation-error"
 
 import useFiscalPeriods from "@/use/use-fiscal-periods"
 import useFundingReconciliations from "@/use/use-funding-reconciliations"
@@ -202,9 +203,14 @@ async function refreshFundingReconciliation(newFundingReconciliationId: number) 
       await refreshFundingReconciliationAdjustments()
     }
   } catch (error) {
-    console.error(`Failed to refresh funding reconciliation ${newFundingReconciliationId}`, {
-      error,
-    })
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to refresh funding reconciliation ${newFundingReconciliationId}`, {
+        error,
+      })
+      return
+    }
+
+    throw error
   } finally {
     isRefreshing.value = false
   }

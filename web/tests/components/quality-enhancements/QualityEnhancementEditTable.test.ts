@@ -1,14 +1,52 @@
 import { createPinia } from "pinia"
-import { flushPromises, mount } from "@vue/test-utils"
+import { DOMWrapper, flushPromises, mount } from "@vue/test-utils"
+import { AxiosError } from "axios"
 
 import qualityEnhancementsApi from "@/api/quality-enhancements-api"
+import ApiOperationError from "@/api/errors/api-operation-error"
+import apiResponseErrorPlugin from "@/plugins/api-response-error-plugin"
+import useSnack from "@/use/use-snack"
 import { qualityEnhancementFactory } from "@/tests/factories"
-import { mockVuetify } from "@/tests/support"
+import { mockRouter, mockVuetify } from "@/tests/support"
 import QualityEnhancementEditTable from "@/components/quality-enhancements/QualityEnhancementEditTable.vue"
+import AppSnackbar from "@/components/layouts/AppSnackbar.vue"
 
 describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vue", () => {
   describe("QualityEnhancementEditTable", () => {
     describe("#commitEdit", () => {
+      test("when an autosave loses its network connection, shows unconfirmed-save feedback", async () => {
+        // Arrange
+        vi.stubGlobal("visualViewport", undefined)
+        const snack = useSnack()
+        snack.reset()
+        const record = qualityEnhancementFactory.build()
+        vi.spyOn(qualityEnhancementsApi, "list").mockResolvedValue({
+          qualityEnhancements: [record],
+          totalCount: 1,
+        })
+        vi.spyOn(qualityEnhancementsApi, "update").mockRejectedValue(
+          new AxiosError("Network unavailable", "ERR_NETWORK")
+        )
+        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+        await router.push("/")
+        await router.isReady()
+        mount(AppSnackbar, { global: { plugins: [mockVuetify()] }, attachTo: document.body })
+        const wrapper = mount(QualityEnhancementEditTable, {
+          props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
+          global: { plugins: [router, createPinia(), mockVuetify(), apiResponseErrorPlugin] },
+        })
+        await flushPromises()
+        await wrapper.get("tr.cursor-pointer").trigger("click")
+        await wrapper.get('input[inputmode="decimal"]').setValue("0.25")
+
+        // Act
+        await wrapper.get('input[inputmode="decimal"]').trigger("keydown", { key: "Tab" })
+        await flushPromises()
+
+        // Assert
+        expect(new DOMWrapper(document.body).get(".v-snackbar").isVisible()).toBe(true)
+      })
+
       test("when a failed save is still reloading, keeps the table busy until recovery settles", async () => {
         // Arrange
         const record = qualityEnhancementFactory.build()
@@ -19,7 +57,9 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         vi.spyOn(qualityEnhancementsApi, "list")
           .mockResolvedValueOnce({ qualityEnhancements: [record], totalCount: 1 })
           .mockReturnValueOnce(pendingReload.promise)
-        vi.spyOn(qualityEnhancementsApi, "update").mockRejectedValue(new Error("Save unavailable"))
+        vi.spyOn(qualityEnhancementsApi, "update").mockRejectedValue(
+          new ApiOperationError("Save unavailable", 503)
+        )
         const wrapper = mount(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
           global: { plugins: [createPinia(), mockVuetify()] },
@@ -79,7 +119,9 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
           qualityEnhancements: [record],
           totalCount: 1,
         })
-        vi.spyOn(qualityEnhancementsApi, "update").mockRejectedValue(new Error("Save unavailable"))
+        vi.spyOn(qualityEnhancementsApi, "update").mockRejectedValue(
+          new ApiOperationError("Save unavailable", 503)
+        )
         const wrapper = mount(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
           global: { plugins: [createPinia(), mockVuetify()] },
@@ -99,7 +141,7 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         const record = qualityEnhancementFactory.build()
         vi.spyOn(qualityEnhancementsApi, "list")
           .mockResolvedValueOnce({ qualityEnhancements: [record], totalCount: 1 })
-          .mockRejectedValueOnce(new Error("Refresh unavailable"))
+          .mockRejectedValueOnce(new ApiOperationError("Refresh unavailable", 503))
         const replicate = vi.spyOn(qualityEnhancementsApi, "replicateEstimates")
         const wrapper = mount(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
@@ -120,7 +162,7 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         const record = qualityEnhancementFactory.build()
         vi.spyOn(qualityEnhancementsApi, "list")
           .mockResolvedValueOnce({ qualityEnhancements: [record], totalCount: 1 })
-          .mockRejectedValueOnce(new Error("Refresh unavailable"))
+          .mockRejectedValueOnce(new ApiOperationError("Refresh unavailable", 503))
           .mockResolvedValue({ qualityEnhancements: [record], totalCount: 1 })
         vi.spyOn(qualityEnhancementsApi, "update").mockResolvedValue({
           qualityEnhancement: { ...record, estimatedChildOccupancyRate: "0.25" },
@@ -156,7 +198,9 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
           qualityEnhancements: [record],
           totalCount: 1,
         })
-        vi.spyOn(qualityEnhancementsApi, "update").mockRejectedValue(new Error("Write unavailable"))
+        vi.spyOn(qualityEnhancementsApi, "update").mockRejectedValue(
+          new ApiOperationError("Write unavailable", 503)
+        )
         const wrapper = mount(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
           global: { plugins: [createPinia(), mockVuetify()] },
@@ -215,7 +259,7 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
           expect(remove).not.toHaveBeenCalled()
 
           if (failSave) {
-            write.reject(new Error("Write unavailable"))
+            write.reject(new ApiOperationError("Write unavailable", 503))
           } else {
             write.resolve({
               qualityEnhancement: { ...first, estimatedChildOccupancyRate: "0.25" },

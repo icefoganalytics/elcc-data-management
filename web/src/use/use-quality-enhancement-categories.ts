@@ -1,11 +1,13 @@
 import { isCancel } from "axios"
 import { onScopeDispose, reactive, ref, toRefs, unref, watch, type Ref } from "vue"
+
 import qualityEnhancementCategoriesApi, {
   type QualityEnhancementCategoryAsIndex,
   type QualityEnhancementCategoryFiltersOptions,
   type QualityEnhancementCategoryQueryOptions,
   type QualityEnhancementCategoryWhereOptions,
 } from "@/api/quality-enhancement-categories-api"
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 
 export {
   type QualityEnhancementCategoryAsIndex,
@@ -78,8 +80,8 @@ export function useQualityEnhancementCategories(
 
       try {
         await fetch()
-      } catch {
-        // fetch() preserves rejection for explicit callers; watcher failures use isErrored.
+      } catch (error) {
+        rethrowUnexpectedError(error)
       }
     },
     { deep: true, immediate: true }

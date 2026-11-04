@@ -7,6 +7,7 @@ import childCareSpaceCategoriesApi, {
   type ChildCareSpaceCategoryWhereOptions,
 } from "@/api/child-care-space-categories-api"
 
+import { ApiOperationError } from "@/api/errors/api-operation-error"
 export {
   type ChildCareSpaceCategoryAsIndex,
   type ChildCareSpaceCategoryFiltersOptions,
@@ -66,8 +67,10 @@ export function useChildCareSpaceCategories(
 
       try {
         await fetch()
-      } catch {
-        // fetch() preserves rejection for explicit callers; watcher requests are expected to fail.
+      } catch (error) {
+        if (error instanceof ApiOperationError) return
+
+        throw error
       }
     },
     { deep: true, immediate: true }

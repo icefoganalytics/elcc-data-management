@@ -93,6 +93,55 @@
       </FundingSubmissionLineJsonEditSheet>
       <section class="ma-4 mt-8">
         <h3 class="mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2">
+          Children with Diverse Needs
+        </h3>
+        <ChildrenWithDiverseNeedsFundingRecordEditTable
+          ref="childrenWithDiverseNeedsFundingRecordTable"
+          :where="worksheetWhere"
+          :is-replicating="
+            isReplicating ||
+            isWorksheetSaving ||
+            isRefreshingLinked ||
+            isCreatingChildrenWithDiverseNeedsFundingRecord
+          "
+        />
+        <v-row class="mt-0">
+          <v-col
+            v-if="!showChildrenWithDiverseNeedsFundingRecordCreateForm"
+            cols="12"
+            class="d-flex justify-end"
+          >
+            <v-btn
+              color="primary"
+              :disabled="
+                isWorkflowBusy ||
+                childrenWithDiverseNeedsFundingRecordTable?.isLoading ||
+                childrenWithDiverseNeedsFundingRecordTable?.isErrored
+              "
+              @click="showChildrenWithDiverseNeedsFundingRecordCreateForm = true"
+            >
+              Add Diverse Need
+            </v-btn>
+          </v-col>
+          <v-col
+            v-else
+            cols="12"
+          >
+            <ChildrenWithDiverseNeedsFundingRecordCreateFormCard
+              :centre-id="centreId"
+              :fiscal-period-id="fiscalPeriod.id"
+              :funding-period-id="fiscalPeriod.fundingPeriodId"
+              :existing-category-ids="childrenWithDiverseNeedsFundingRecordTable?.categoryIds ?? []"
+              :is-workflow-busy="isReplicating || isWorksheetSaving || isRefreshingLinked"
+              @saving="isCreatingChildrenWithDiverseNeedsFundingRecord = $event"
+              @created="onChildrenWithDiverseNeedsFundingRecordCreated"
+              @cancel="showChildrenWithDiverseNeedsFundingRecordCreateForm = false"
+            />
+          </v-col>
+        </v-row>
+      </section>
+      <section class="ma-4 mt-8">
+        <h3 class="mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2">
           Administration (10% of Spaces)
         </h3>
         <AdministrationCostEditTable
@@ -303,6 +352,7 @@ import fundingSubmissionLineJsonsApi, {
   type FundingSubmissionLineJsonAsIndex,
   type FundingLineValue,
 } from "@/api/funding-submission-line-jsons-api"
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 import sleepMs from "@/utils/sleep-ms"
 import { FiscalPeriodMonths } from "@/use/use-fiscal-periods"
 
@@ -356,7 +406,7 @@ async function loadWorksheet() {
   fiscalPeriod.value = null
 
   try {
-    const [worksheetResponse, fiscalPeriodResponse] = await Promise.all([
+    const [worksheetResult, fiscalPeriodResult] = await Promise.allSettled([
       fundingSubmissionLineJsonsApi.list({
         where: {
           centreId: props.centreId,
@@ -373,6 +423,16 @@ async function loadWorksheet() {
         perPage: 1,
       }),
     ])
+
+    if (worksheetResult.status === "rejected" || fiscalPeriodResult.status === "rejected") {
+      const failures = [worksheetResult, fiscalPeriodResult].flatMap((result) =>
+        result.status === "rejected" ? [result.reason] : []
+      )
+      throw new AggregateError(failures, failures.map(String).join("; "))
+    }
+
+    const worksheetResponse = worksheetResult.value
+    const fiscalPeriodResponse = fiscalPeriodResult.value
 
     if (requestId !== activeRequest) {
       return
@@ -391,8 +451,12 @@ async function loadWorksheet() {
       ) ?? null
   } catch (error) {
     if (requestId === activeRequest) {
-      console.error("Failed to load worksheet:", error)
       loadError.value = true
+    }
+
+    rethrowUnexpectedError(error)
+    if (requestId === activeRequest) {
+      console.error(`Failed to load worksheet: ${error}`, { error })
     }
   } finally {
     if (requestId === activeRequest) {
@@ -585,19 +649,17 @@ async function saveWorksheet(): Promise<boolean> {
     )
       return false
 
-    let wasSaved = false
+    const wasSaved = await sheet.saveFundingSubmissionLineJson()
+    isRefreshingLinked.value = true
     try {
-      wasSaved = await sheet.saveFundingSubmissionLineJson()
+      await refreshLinkedResources()
     } finally {
-      isRefreshingLinked.value = true
-      try {
-        await refreshLinkedResources()
-      } finally {
-        isRefreshingLinked.value = false
-      }
+      isRefreshingLinked.value = false
     }
     return wasSaved
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     snack.error(`Failed to save worksheet: ${error}`)
     return false
   } finally {
@@ -610,6 +672,8 @@ async function onAdministrationCostCreated() {
   try {
     await administrationCostTable.value?.refresh()
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     snack.error(`Failed to refresh administration costs: ${error}`)
   }
 }
@@ -628,6 +692,8 @@ async function onQualityEnhancementCreated() {
   try {
     await qualityEnhancementTable.value?.refresh()
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     snack.error(`Failed to refresh Quality Enhancements: ${error}`)
   }
 }
@@ -679,6 +745,8 @@ async function replicateEstimatesForward() {
 
     snack.success("Estimates replicated successfully!")
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     snack.error(`Failed to replicate estimates: ${error}`)
   } finally {
     isReplicating.value = false

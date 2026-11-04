@@ -84,6 +84,8 @@ import administrationCostCategoriesApi, {
   type AdministrationCostCategory,
 } from "@/api/administration-cost-categories-api"
 
+import ApiOperationError from "@/api/errors/api-operation-error"
+
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useSnack from "@/use/use-snack"
 
@@ -137,7 +139,13 @@ async function createCategory() {
       },
     })
   } catch (error) {
-    snack.error(`Failed to create Administration cost category: ${error}`)
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to create Administration cost category: ${error}`, { error })
+      snack.error(`Failed to create Administration cost category: ${error}`)
+      return
+    }
+
+    throw error
   } finally {
     isSaving.value = false
   }

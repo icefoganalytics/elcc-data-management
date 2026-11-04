@@ -12,6 +12,8 @@
 <script setup lang="ts">
 import { ref } from "vue"
 
+import { ApiOperationError } from "@/api/errors/api-operation-error"
+
 import wageEnhancementsApi from "@/api/wage-enhancements-api"
 import useSnack from "@/use/use-snack"
 
@@ -32,8 +34,13 @@ async function replicateEstimatesForward() {
     })
     snack.success("Wage enhancement estimates replicated forward.")
   } catch (error) {
-    console.error(`Failed to replicate wage enhancement estimates: ${error}`, { error })
-    snack.error(`Failed to replicate wage enhancement estimates: ${error}`)
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to replicate wage enhancement estimates: ${error}`, { error })
+      snack.error(`Failed to replicate wage enhancement estimates: ${error}`)
+      return
+    }
+
+    throw error
   } finally {
     isReplicatingEstimates.value = false
   }

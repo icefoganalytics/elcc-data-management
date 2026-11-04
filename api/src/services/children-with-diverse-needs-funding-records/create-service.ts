@@ -3,21 +3,14 @@ import { isNil } from "lodash"
 
 import db, {
   Centre,
-  ChildrenWithDiverseNeedsFundingRecord,
   ChildrenWithDiverseNeedsFundingCategory,
+  ChildrenWithDiverseNeedsFundingRecord,
   FiscalPeriod,
 } from "@/models"
 import BaseService from "@/services/base-service"
 
 export type ChildrenWithDiverseNeedsFundingRecordCreationAttributes = Partial<
-  Pick<
-    CreationAttributes<ChildrenWithDiverseNeedsFundingRecord>,
-    | "centreId"
-    | "fiscalPeriodId"
-    | "categoryId"
-    | "estimatedChildOccupancyRate"
-    | "actualChildOccupancyRate"
-  >
+  CreationAttributes<ChildrenWithDiverseNeedsFundingRecord>
 > & {
   applyToCurrentAndFutureFiscalPeriods?: boolean
 }
@@ -38,7 +31,9 @@ export class CreateService extends BaseService {
     } = this.attributes
     if (isNil(centreId)) throw new Error("Centre ID is required")
     if (isNil(fiscalPeriodId)) throw new Error("Fiscal period ID is required")
-    if (isNil(categoryId)) throw new Error("Children with Diverse Needs category ID is required")
+    if (isNil(categoryId)) {
+      throw new Error("Children with Diverse Needs funding category ID is required")
+    }
     if (isNil(estimatedChildOccupancyRate)) {
       throw new Error("Estimated child occupancy rate is required")
     }
@@ -58,7 +53,7 @@ export class CreateService extends BaseService {
       })
       if (isNil(category)) {
         throw new Error(
-          "Children with Diverse Needs category must be active in the same funding period"
+          "Children with Diverse Needs funding category must be active in the same funding period"
         )
       }
 
@@ -86,12 +81,12 @@ export class CreateService extends BaseService {
           order: [["dateStart", "ASC"]],
         },
         async (futureFiscalPeriod) => {
-          const existing = await ChildrenWithDiverseNeedsFundingRecord.findOne({
+          const existingFundingRecord = await ChildrenWithDiverseNeedsFundingRecord.findOne({
             attributes: ["id"],
             where: { centreId, categoryId, fiscalPeriodId: futureFiscalPeriod.id },
             paranoid: false,
           })
-          if (!isNil(existing)) return
+          if (!isNil(existingFundingRecord)) return
 
           await ChildrenWithDiverseNeedsFundingRecord.create({
             centreId,

@@ -2,6 +2,7 @@ import { defineComponent, ref } from "vue"
 import { flushPromises, mount, type VueWrapper } from "@vue/test-utils"
 
 import httpClient from "@/api/http-client"
+import ApiOperationError from "@/api/errors/api-operation-error"
 import ChildCareSpaceCategoryPropagationControls from "@/components/child-care-space-categories/ChildCareSpaceCategoryPropagationControls.vue"
 import { mockVuetify } from "@/tests/support"
 
@@ -209,7 +210,9 @@ describe("web/src/components/child-care-space-categories/ChildCareSpaceCategoryP
 
       test("when months fail to load, prevents saving", async () => {
         // Arrange
-        vi.mocked(httpClient, true).get.mockRejectedValue(new Error("Network error"))
+        vi.mocked(httpClient, true).get.mockRejectedValue(
+          new ApiOperationError("Network error", 503)
+        )
         const wrapper = await mountPropagationForm()
         await enablePropagation(wrapper)
 

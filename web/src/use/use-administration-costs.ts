@@ -7,6 +7,7 @@ import type {
   AdministrationCostAsIndex,
   AdministrationCostQueryOptions,
 } from "@/api/administration-costs-api"
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 
 export function useAdministrationCosts(queryOptions: Ref<AdministrationCostQueryOptions>) {
   const state = reactive<{
@@ -40,9 +41,7 @@ export function useAdministrationCosts(queryOptions: Ref<AdministrationCostQuery
     } catch (error) {
       if (controller.signal.aborted || isCancel(error)) return state.administrationCosts
 
-      console.error(`Failed to fetch Administration costs: ${error}`, {
-        error,
-      })
+      console.error(`Failed to fetch Administration costs: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {
@@ -57,8 +56,8 @@ export function useAdministrationCosts(queryOptions: Ref<AdministrationCostQuery
     async () => {
       try {
         await fetch()
-      } catch {
-        // Explicit refresh callers receive the rejection; watched failures use isErrored.
+      } catch (error) {
+        rethrowUnexpectedError(error)
       }
     },
     {

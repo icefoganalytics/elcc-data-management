@@ -38,7 +38,7 @@ export function useFundingReconciliationAdjustment(
       state.policy = policy
       return fundingReconciliationAdjustment
     } catch (error) {
-      console.error("Failed to fetch funding reconciliation adjustment:", error)
+      console.error(`Failed to fetch funding reconciliation adjustment: ${error}`, { error })
       state.isErrored = true
       throw error
     } finally {

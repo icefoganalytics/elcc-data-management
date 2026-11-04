@@ -75,9 +75,9 @@ describe("api/src/controllers/funding-submission-line-jsons-controller.ts", () =
 
           // Act
           await request().post("/api/funding-submission-line-jsons").send(payload)
-          const worksheets = await FundingSubmissionLineJson.findAll()
 
           // Assert
+          const worksheets = await FundingSubmissionLineJson.findAll()
           expect(worksheets).toEqual([])
         }
       )

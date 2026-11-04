@@ -171,6 +171,7 @@ import { computed, onActivated, reactive, ref } from "vue"
 import { isNil, keyBy, mapValues } from "lodash"
 import Big from "big.js"
 
+import { ApiOperationError } from "@/api/errors/api-operation-error"
 import { MAX_PER_PAGE } from "@/api/base-api"
 import wageEnhancementsApi, {
   EI_CPP_WCB_RATE,
@@ -314,9 +315,13 @@ async function persist(id: number) {
     } catch (error) {
       if (!pendingChanges.has(id)) pendingChanges.set(id, attributes)
       errorsById.set(id, String(error))
-      console.error(`Failed to save wage enhancement: ${error}`, { error })
-      snack.error(`Failed to save wage enhancement: ${error}`)
-      return
+      if (error instanceof ApiOperationError) {
+        console.error(`Failed to save wage enhancement: ${error}`, { error })
+        snack.error(`Failed to save wage enhancement: ${error}`)
+        return
+      }
+
+      throw error
     }
   }
 }
@@ -339,8 +344,13 @@ async function create(employeeWageTierId: number) {
     }
     snack.success("Wage enhancement created")
   } catch (error) {
-    console.error(`Failed to create wage enhancement: ${error}`, { error })
-    snack.error(`Failed to create wage enhancement: ${error}`)
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to create wage enhancement: ${error}`, { error })
+      snack.error(`Failed to create wage enhancement: ${error}`)
+      return
+    }
+
+    throw error
   } finally {
     isCreating.value = false
   }
@@ -359,8 +369,13 @@ async function remove(id: number) {
     errorsById.delete(id)
     snack.success("Wage enhancement deleted.")
   } catch (error) {
-    console.error(`Failed to delete wage enhancement: ${error}`, { error })
-    snack.error(`Failed to delete wage enhancement: ${error}`)
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to delete wage enhancement: ${error}`, { error })
+      snack.error(`Failed to delete wage enhancement: ${error}`)
+      return
+    }
+
+    throw error
   } finally {
     deletingIds.delete(id)
   }

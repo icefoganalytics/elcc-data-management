@@ -19,6 +19,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
 - Administration (10% of Spaces) now has annual category configuration and per-centre, per-month records. Historical rates, occupancy, totals, and optional Spaces links are preserved even when configuration moves funding years. Initial Administration setup works independently of pre-existing Spaces records; worksheets, estimate replication, and reconciliations use the dedicated records. Stale clients cannot restore either retired Administration label to shared configuration or worksheet JSON.
 - Children with Diverse Needs now uses annual categories and independent monthly records for each centre. Occupancy edits save immediately; adding, deleting, and replicating rows preserve historical monthly snapshots. The cutover retains historical names, rates, totals, and retirement state, rejects ambiguous or lossy data, and removes the old JSON owner so reconciliation counts the section once. Dedicated category administration provides funding-period filtering and exact four-decimal rates without repricing existing monthly records. Funding amounts and occupancy rates reject excess precision during validation while preserving insignificant trailing zeros.
 - Children with Diverse Needs funding now has explicitly named funding-category and funding-record resources, distinguishing centre/month calculations from individual child records. Existing categories and monthly records are preserved during the rename.
+- Children with Diverse Needs funding APIs now support annual category management with optional age bounds and monthly occupancy editing. Category changes and estimate replication preserve historical monthly rates; only administrators can change annual configuration or delete monthly records.
 - Keyboard navigation in Administration and Quality Enhancement resumes at the intended cell after occupancy saving finishes, without allowing edits while the table is busy.
 - Monthly worksheets retain their original section order and preview Spaces counts in linked Administration and Quality Enhancement rows before saving. Enter and Shift+Enter continue through worksheet section boundaries. Amounts and occupancy hide unused decimal zeros without dropping meaningful financial digits.
 - Administration and Quality Enhancement worksheet sections now work like Building Expenses: occupancy edits save immediately, categories can be added for the current or future months, and administrators can delete monthly rows. Spaces occupancy saves update linked rows without changing their historical rates. Estimate replication skips intentionally absent rows, and changing months during creation does not lock the new worksheet. Monthly sections retain consistent margins and compact Add-button spacing. Replicate Estimates remains beside the month heading, while immediate-save sections have no Save button. Pending creation keeps existing rows locked through refresh.
@@ -30,9 +31,11 @@ Changes since v2025.11.24.1 that will be included in the next release.
 - Improved administration pages for funding lines, funding periods, and funding submission lines, with dedicated read pages and a shared fiscal year selector.
   Why? To make administration tasks easier, more consistent, and more usable on mobile devices.
 - Development startup now prints the checkout's browser URL from the shared local gateway.
+- Development linting now has API and Vue-aware web commands with explicit OMP Verifier bindings, so checks run through Docker without starting application dependencies.
 
 ### Changed
 
+- Audit timestamps now use UTC `DATETIME2(7)` consistently, preserving existing instants and fractional seconds while discarding original timezone-offset labels.
 - API model test factories now use Factory Shark for declarative related-record setup, with Sequelize core and the SQL Server dialect aligned to its supported release. Plain JSON and frontend fixtures remain on Fishery.
 - Administration category browsing now uses server-side pagination and sorting, with explicit View actions and funding-period filtering.
 - Agent guidance resolves shared authoring, review, testing, delivery, and browser-QA standards directly while retaining ELCC's financial, security, API, and development/test requirements locally. Packaged workflows remain the base when no local override exists; requested PR screenshots follow the shared capture/upload procedure with ELCC-specific login and data prerequisites.
@@ -69,6 +72,8 @@ Changes since v2025.11.24.1 that will be included in the next release.
 
 ### Fixed
 
+- JSON API requests now distinguish backend errors from intermediary HTML. Cloudflare challenges offer explicit reload/verification and an opt-in, isolated diagnostic preview; other HTML reaches the application-error page. Recovery never automatically replays a write.
+- Inactive ELCC accounts now receive a stable access-denied response instead of repeatedly restarting sign-in.
 - Funding-period selections retain their fiscal-year labels when earlier lookup requests finish late.
 - Failed Administration category loads now show a dedicated error state instead of an empty table or indefinite skeleton. Category details and edit pages offer Retry.
 - Administration category forms now use searchable funding-period and linked Child Care Space category inputs, retaining selected labels across result pages and excluding previous-period options during loading.

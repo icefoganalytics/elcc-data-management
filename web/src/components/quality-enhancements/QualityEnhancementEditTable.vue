@@ -110,6 +110,7 @@ import qualityEnhancementsApi, {
   type QualityEnhancementAsIndex,
   type QualityEnhancementUpdateAttributes,
 } from "@/api/quality-enhancements-api"
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 import useQualityEnhancements from "@/use/use-quality-enhancements"
 import useSnack from "@/use/use-snack"
 import EditDataTableVirtual from "@/components/common/EditDataTableVirtual.vue"
@@ -190,6 +191,7 @@ function trackSave(record: QualityEnhancementAsIndex) {
   if (isSaving.value) return
 
   currentSave = saveIfDirty(record)
+  return currentSave
 }
 
 async function commitEdit(): Promise<boolean> {
@@ -199,8 +201,10 @@ async function commitEdit(): Promise<boolean> {
     const saved = (save === null || (await save)) && !isErrored.value
     if (!saved) editTable.value?.cancelPendingFocus()
     return saved
-  } catch {
+  } catch (error) {
     editTable.value?.cancelPendingFocus()
+    rethrowUnexpectedError(error)
+
     return false
   } finally {
     if (currentSave === save) currentSave = null
@@ -237,10 +241,14 @@ async function saveIfDirty(record: QualityEnhancementAsIndex) {
     emit("updated")
     return true
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     saveError.value = `Failed to save quality enhancement: ${String(error)}. Retry your edit after reloading.`
     try {
       await refresh()
-    } catch {
+    } catch (error) {
+      rethrowUnexpectedError(error)
+
       /* Preserve the save failure if reload also fails. */
     }
     editTable.value?.cancelPendingFocus()
@@ -273,6 +281,8 @@ async function deleteRecord(record: QualityEnhancementAsIndex) {
     snack.success("Quality enhancement deleted!")
     emit("updated")
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     snack.error(`Failed to delete quality enhancement: ${error}`)
   } finally {
     deletingId.value = null
@@ -293,6 +303,8 @@ async function reload() {
     saveError.value = ""
     currentSave = null
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     snack.error(`Failed to load Quality Enhancements: ${error}`)
   }
 }
@@ -316,8 +328,10 @@ async function replicateEstimates() {
     }
     if (failures.length) {
       const message = `Failed to replicate quality enhancement estimates: ${failures.map(String).join("; ")}`
+      const aggregateError = new AggregateError(failures, message)
+      rethrowUnexpectedError(aggregateError)
       snack.error(message)
-      throw new AggregateError(failures, message)
+      throw aggregateError
     }
   } finally {
     isSaving.value = false

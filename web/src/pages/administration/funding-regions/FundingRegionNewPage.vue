@@ -70,6 +70,8 @@ import { isNil } from "lodash"
 import { required } from "@/utils/validators"
 
 import fundingRegionsApi, { type FundingRegion } from "@/api/funding-regions-api"
+import ApiOperationError from "@/api/errors/api-operation-error"
+
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useSnack from "@/use/use-snack"
 
@@ -105,8 +107,13 @@ async function createFundingRegion() {
       },
     })
   } catch (error) {
-    console.error(`Failed to create funding region: ${error}`, { error })
-    snack.error(`Failed to create funding region: ${error}`)
+    if (error instanceof ApiOperationError) {
+      console.error(`Failed to create funding region: ${error}`, { error })
+      snack.error(`Failed to create funding region: ${error}`)
+      return
+    }
+
+    throw error
   } finally {
     isLoading.value = false
   }
