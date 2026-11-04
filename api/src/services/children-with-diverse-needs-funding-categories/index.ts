@@ -3,4 +3,7 @@ export {
   type ChildrenWithDiverseNeedsFundingCategoryCreationAttributes,
 } from "./create-service"
 export { DestroyService } from "./destroy-service"
-export { UpdateService } from "./update-service"
+export {
+  UpdateService,
+  type ChildrenWithDiverseNeedsFundingCategoryUpdateAttributes,
+} from "./update-service"
