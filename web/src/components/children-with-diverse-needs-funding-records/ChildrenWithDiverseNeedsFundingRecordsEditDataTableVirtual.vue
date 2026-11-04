@@ -1,97 +1,101 @@
 <template>
-  <div>
-    <v-alert
-      v-if="saveError"
-      type="error"
-      density="compact"
-      role="alert"
-    >
-      {{ saveError }}
-      <v-btn
-        variant="text"
-        :disabled="isSaving || isDeleting"
-        @click="reload"
-        >Reload</v-btn
+  <EditDataTableVirtual
+    ref="editDataTableVirtual"
+    :busy="isBusy"
+    :headers="headers"
+    :items="childrenWithDiverseNeedsFundingRecords"
+    :loading="isLoading || isSaving || isDeleting"
+    :editable-columns="editableColumns"
+    :hide-default-body="isErrored"
+    fixed-footer
+    disable-sort
+    @update:cell="trackSave"
+  >
+    <template #top>
+      <v-alert
+        v-if="saveError"
+        type="error"
+        density="compact"
+        role="alert"
       >
-    </v-alert>
-    <v-alert
-      v-if="isErrored"
-      type="error"
-      density="compact"
-      role="alert"
-    >
-      Diverse needs could not be loaded.
-      <v-btn
-        variant="text"
-        @click="reload"
-        >Retry</v-btn
-      >
-    </v-alert>
-    <EditDataTableVirtual
-      v-else
-      ref="editDataTableVirtual"
-      :busy="isBlocked"
-      :headers="headers"
-      :items="childrenWithDiverseNeedsFundingRecords"
-      :loading="isLoading || isSaving || isDeleting"
-      :editable-columns="editableColumns"
-      fixed-footer
-      disable-sort
-      @update:cell="trackSave"
-    >
-      <template #item.categoryId="{ item }">{{ item.lineName }}</template>
-      <template #item.monthlyAmount="{ item }">{{ formatMoney(item.monthlyAmount) }}</template>
-      <template #item.estimatedComputedTotal="{ item }">{{
-        formatMoney(item.estimatedComputedTotal)
-      }}</template>
-      <template #item.actualComputedTotal="{ item }">{{
-        formatMoney(item.actualComputedTotal)
-      }}</template>
-      <template #item.estimatedChildOccupancyRate.edit="{ item }">
-        <v-text-field
-          v-model="item.estimatedChildOccupancyRate"
-          type="text"
-          inputmode="decimal"
-          :disabled="isBlocked"
-          hide-details
-        />
-      </template>
-      <template #item.actualChildOccupancyRate.edit="{ item }">
-        <v-text-field
-          v-model="item.actualChildOccupancyRate"
-          type="text"
-          inputmode="decimal"
-          :disabled="isBlocked"
-          hide-details
-        />
-      </template>
-      <template #item.actions="{ item }">
+        {{ saveError }}
         <v-btn
-          v-if="item.policy.destroy"
-          color="error"
-          variant="outlined"
-          size="small"
-          :loading="deletingId === item.id"
-          :disabled="isBlocked"
-          @click.stop="deleteRecord(item)"
-          >Delete</v-btn
+          variant="text"
+          :disabled="isBusy"
+          @click="reload"
+          >Reload</v-btn
         >
-      </template>
-      <template #tfoot>
-        <tfoot>
-          <tr class="bg-grey-lighten-3 font-weight-medium">
-            <td>SECTION TOTAL</td>
-            <td></td>
-            <td>{{ totalEstimatedOccupancy }}</td>
-            <td>{{ formatMoney(totalEstimated) }}</td>
-            <td>{{ totalActualOccupancy }}</td>
-            <td>{{ formatMoney(totalActual) }}</td>
-            <td></td>
-          </tr>
-        </tfoot>
-      </template>
-    </EditDataTableVirtual>
-  </div>
+      </v-alert>
+      <v-alert
+        v-if="isErrored"
+        type="error"
+        density="compact"
+        role="alert"
+      >
+        Diverse needs could not be loaded.
+        <v-btn
+          variant="text"
+          :disabled="isBusy"
+          @click="reload"
+          >Retry</v-btn
+        >
+      </v-alert>
+    </template>
+    <template #item.categoryId="{ item }">{{ item.lineName }}</template>
+    <template #item.monthlyAmount="{ item }">{{ formatMoney(item.monthlyAmount) }}</template>
+    <template #item.estimatedComputedTotal="{ item }">{{
+      formatMoney(item.estimatedComputedTotal)
+    }}</template>
+    <template #item.actualComputedTotal="{ item }">{{
+      formatMoney(item.actualComputedTotal)
+    }}</template>
+    <template #item.estimatedChildOccupancyRate.edit="{ item }">
+      <v-text-field
+        v-model="item.estimatedChildOccupancyRate"
+        type="text"
+        inputmode="decimal"
+        :disabled="isBlocked"
+        hide-details
+      />
+    </template>
+    <template #item.actualChildOccupancyRate.edit="{ item }">
+      <v-text-field
+        v-model="item.actualChildOccupancyRate"
+        type="text"
+        inputmode="decimal"
+        :disabled="isBlocked"
+        hide-details
+      />
+    </template>
+    <template #item.actions="{ item }">
+      <v-btn
+        v-if="item.policy.destroy"
+        color="error"
+        variant="outlined"
+        size="small"
+        :loading="deletingId === item.id"
+        :disabled="isBlocked"
+        @click.stop="deleteRecord(item)"
+        >Delete</v-btn
+      >
+    </template>
+    <template
+      v-if="!isErrored"
+      #tfoot
+    >
+      <tfoot>
+        <tr class="bg-grey-lighten-3 font-weight-medium">
+          <td>SECTION TOTAL</td>
+          <td></td>
+          <td>{{ totalEstimatedOccupancy }}</td>
+          <td>{{ formatMoney(totalEstimated) }}</td>
+          <td>{{ totalActualOccupancy }}</td>
+          <td>{{ formatMoney(totalActual) }}</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </template>
+  </EditDataTableVirtual>
 </template>
 
 <script setup lang="ts">
@@ -185,10 +189,11 @@ const isDeleting = ref(false)
 const deletingId = ref<number | null>(null)
 const saveError = ref("")
 
-const isBlocked = computed(
-  () =>
-    props.isReplicating || isSaving.value || isDeleting.value || isLoading.value || isErrored.value
+const isBusy = computed(
+  () => props.isReplicating || isSaving.value || isDeleting.value || isLoading.value
 )
+
+const isBlocked = computed(() => isBusy.value || isErrored.value)
 
 const snack = useSnack()
 
