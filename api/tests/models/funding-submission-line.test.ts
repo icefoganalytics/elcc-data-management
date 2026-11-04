@@ -67,8 +67,9 @@ describe("api/src/models/funding-submission-line.ts", () => {
           }).findAll()
 
           // Assert
-          const fundingSubmissionLineIds = fundingSubmissionLines.map(({ id }) => id)
-          expect(fundingSubmissionLineIds).toEqual([fundingSubmissionLine1.id])
+          expect(fundingSubmissionLines).toEqual([
+            expect.objectContaining({ id: fundingSubmissionLine1.id }),
+          ])
         })
 
         test("when funding period does not exist, returns no results", async () => {
@@ -86,8 +87,7 @@ describe("api/src/models/funding-submission-line.ts", () => {
           }).findAll()
 
           // Assert
-          const fundingSubmissionLineIds = fundingSubmissionLines.map(({ id }) => id)
-          expect(fundingSubmissionLineIds).toEqual([])
+          expect(fundingSubmissionLines).toEqual([])
         })
 
         test("when multiple funding submission lines match fiscal year, includes all matching entities", async () => {
@@ -121,10 +121,9 @@ describe("api/src/models/funding-submission-line.ts", () => {
           }).findAll()
 
           // Assert
-          const fundingSubmissionLineIds = fundingSubmissionLines.map(({ id }) => id)
-          expect(fundingSubmissionLineIds).toEqual([
-            fundingSubmissionLine1.id,
-            fundingSubmissionLine2.id,
+          expect(fundingSubmissionLines).toEqual([
+            expect.objectContaining({ id: fundingSubmissionLine1.id }),
+            expect.objectContaining({ id: fundingSubmissionLine2.id }),
           ])
         })
 
@@ -147,8 +146,9 @@ describe("api/src/models/funding-submission-line.ts", () => {
           }).findAll()
 
           // Assert
-          const fundingSubmissionLineIds = fundingSubmissionLines.map(({ id }) => id)
-          expect(fundingSubmissionLineIds).toEqual([fundingSubmissionLine1.id])
+          expect(fundingSubmissionLines).toEqual([
+            expect.objectContaining({ id: fundingSubmissionLine1.id }),
+          ])
         })
 
         test("when using withScope and destroy with empty where, deletes only scoped records", async () => {

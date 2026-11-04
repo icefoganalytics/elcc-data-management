@@ -2,8 +2,8 @@ import { type CreationAttributes } from "@sequelize/core"
 import { isEmpty } from "lodash"
 
 import {
-  ChildrenWithDiverseNeedsFundingRecord,
   ChildrenWithDiverseNeedsFundingCategory,
+  ChildrenWithDiverseNeedsFundingRecord,
   FiscalPeriod,
 } from "@/models"
 import Centre from "@/models/centre"
@@ -24,20 +24,23 @@ export class BulkCreateService extends BaseService {
       where: { fundingPeriodId: this.fundingPeriod.id },
       order: [["id", "ASC"]],
     })
-    if (isEmpty(periods)) throw new Error("No fiscal periods found for the given funding period.")
+    if (isEmpty(periods)) {
+      throw new Error("No fiscal periods found for the given funding period.")
+    }
+
     const categories = await ChildrenWithDiverseNeedsFundingCategory.findAll({
       where: { fundingPeriodId: this.fundingPeriod.id },
       order: [["id", "ASC"]],
     })
     if (isEmpty(categories)) return []
 
-    const existing = await ChildrenWithDiverseNeedsFundingRecord.findAll({
+    const existingRecords = await ChildrenWithDiverseNeedsFundingRecord.findAll({
       attributes: ["fiscalPeriodId", "categoryId"],
       where: { centreId: this.centre.id, fiscalPeriodId: periods.map(({ id }) => id) },
       paranoid: false,
     })
     const existingKeys = new Set(
-      existing.map(({ fiscalPeriodId, categoryId }) => `${fiscalPeriodId}:${categoryId}`)
+      existingRecords.map(({ fiscalPeriodId, categoryId }) => `${fiscalPeriodId}:${categoryId}`)
     )
     const attributes: CreationAttributes<ChildrenWithDiverseNeedsFundingRecord>[] = []
     for (const period of periods) {
@@ -58,6 +61,7 @@ export class BulkCreateService extends BaseService {
         })
       }
     }
+
     return ChildrenWithDiverseNeedsFundingRecord.bulkCreate(attributes)
   }
 }

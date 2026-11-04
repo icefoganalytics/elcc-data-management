@@ -128,15 +128,21 @@ export async function down(_knex: Knex): Promise<void> {
 }
 
 async function validateWorksheetDocuments(knex: Knex): Promise<void> {
-  const invalid = await knex.raw<{ id: number }[]>(`
-    SELECT id
-    FROM funding_submission_line_jsons
-    WHERE (
+  const invalid = await knex.raw<{ id: number }[]>(/* sql */ `
+    SELECT
+      id
+    FROM
+      funding_submission_line_jsons
+    WHERE
+      (
         ISJSON([values]) <> 1
         OR LEFT(LTRIM(COALESCE([values], N'')), 1) <> N'['
       )
       AND CHARINDEX(N'sectionName', COALESCE([values], N'')) > 0
-      AND CHARINDEX(N'Children with Diverse Needs', COALESCE([values], N'')) > 0
+      AND CHARINDEX(
+        N'Children with Diverse Needs',
+        COALESCE([values], N'')
+      ) > 0
   `)
   if (invalid.length > 0) {
     throw new Error(
@@ -146,7 +152,7 @@ async function validateWorksheetDocuments(knex: Knex): Promise<void> {
 }
 
 async function findConfigurations(knex: Knex): Promise<SourceConfig[]> {
-  return knex.raw<SourceConfig[]>(`
+  return knex.raw<SourceConfig[]>(/* sql */ `
     SELECT
       funding_submission_lines.id,
       funding_periods.id AS fundingPeriodId,
@@ -154,79 +160,333 @@ async function findConfigurations(knex: Knex): Promise<SourceConfig[]> {
       funding_submission_lines.line_name AS categoryName,
       funding_submission_lines.from_age AS fromAge,
       funding_submission_lines.to_age AS toAge,
-      CONVERT(NVARCHAR(40), funding_submission_lines.monthly_amount) AS monthlyAmount,
-      CONVERT(NVARCHAR(33), funding_submission_lines.created_at, 126) AS createdAt,
-      CONVERT(NVARCHAR(33), funding_submission_lines.updated_at, 126) AS updatedAt,
-      CONVERT(NVARCHAR(33), funding_submission_lines.deleted_at, 126) AS deletedAt
-    FROM funding_submission_lines
-    LEFT JOIN funding_periods
-      ON funding_submission_lines.fiscal_year COLLATE Latin1_General_100_BIN2
-        = LEFT(funding_periods.fiscal_year, 4) + '/' + RIGHT(funding_periods.fiscal_year, 2)
-          COLLATE Latin1_General_100_BIN2
-      AND DATALENGTH(funding_submission_lines.fiscal_year)
-        = DATALENGTH(LEFT(funding_periods.fiscal_year, 4) + '/' + RIGHT(funding_periods.fiscal_year, 2))
-    WHERE funding_submission_lines.section_name COLLATE Latin1_General_100_BIN2 = N'Children with Diverse Needs'
-      AND DATALENGTH(funding_submission_lines.section_name) = DATALENGTH(N'Children with Diverse Needs')
+      CONVERT(
+        NVARCHAR(40),
+        funding_submission_lines.monthly_amount
+      ) AS monthlyAmount,
+      CONVERT(
+        NVARCHAR(33),
+        funding_submission_lines.created_at,
+        126
+      ) AS createdAt,
+      CONVERT(
+        NVARCHAR(33),
+        funding_submission_lines.updated_at,
+        126
+      ) AS updatedAt,
+      CONVERT(
+        NVARCHAR(33),
+        funding_submission_lines.deleted_at,
+        126
+      ) AS deletedAt
+    FROM
+      funding_submission_lines
+      LEFT JOIN funding_periods ON funding_submission_lines.fiscal_year
+    COLLATE Latin1_General_100_BIN2 = LEFT(funding_periods.fiscal_year, 4) + '/' + RIGHT(funding_periods.fiscal_year, 2)
+    COLLATE Latin1_General_100_BIN2
+    AND DATALENGTH(funding_submission_lines.fiscal_year) = DATALENGTH(
+      LEFT(funding_periods.fiscal_year, 4) + '/' + RIGHT(funding_periods.fiscal_year, 2)
+    )
+    WHERE
+      funding_submission_lines.section_name
+    COLLATE Latin1_General_100_BIN2 = N'Children with Diverse Needs'
+    AND DATALENGTH(funding_submission_lines.section_name) = DATALENGTH(N'Children with Diverse Needs')
   `)
 }
 
 async function findWorksheetLines(knex: Knex): Promise<WorksheetLine[]> {
-  return knex.raw<WorksheetLine[]>(`
+  return knex.raw<WorksheetLine[]>(/* sql */ `
     SELECT
       worksheets.id AS worksheetId,
       worksheets.centre_id AS centreId,
       worksheets.fiscal_year AS fiscalYear,
       worksheets.date_name AS monthName,
       TRY_CONVERT(INT, lines.[key]) AS lineIndex,
-      (SELECT COUNT(*) FROM OPENJSON(lines.value) p WHERE p.[key] COLLATE Latin1_General_100_BIN2 = N'sectionName' AND DATALENGTH(p.[key]) = DATALENGTH(N'sectionName')) AS sectionCount,
-      fields.submissionLineIdCount, fields.submissionLineIdType, fields.submissionLineId,
-      fields.lineNameCount, fields.lineNameType, fields.lineName,
-      fields.monthlyAmountCount, fields.monthlyAmountType, fields.monthlyAmount,
-      fields.estimatedRateCount, fields.estimatedRateType, fields.estimatedRate,
-      fields.actualRateCount, fields.actualRateType, fields.actualRate,
-      fields.estimatedTotalCount, fields.estimatedTotalType, fields.estimatedTotal,
-      fields.actualTotalCount, fields.actualTotalType, fields.actualTotal,
+      (
+        SELECT
+          COUNT(*)
+        FROM
+          OPENJSON (lines.value) p
+        WHERE
+          p.[key]
+        COLLATE Latin1_General_100_BIN2 = N'sectionName'
+        AND DATALENGTH(p.[key]) = DATALENGTH(N'sectionName')
+      ) AS sectionCount,
+      fields.submissionLineIdCount,
+      fields.submissionLineIdType,
+      fields.submissionLineId,
+      fields.lineNameCount,
+      fields.lineNameType,
+      fields.lineName,
+      fields.monthlyAmountCount,
+      fields.monthlyAmountType,
+      fields.monthlyAmount,
+      fields.estimatedRateCount,
+      fields.estimatedRateType,
+      fields.estimatedRate,
+      fields.actualRateCount,
+      fields.actualRateType,
+      fields.actualRate,
+      fields.estimatedTotalCount,
+      fields.estimatedTotalType,
+      fields.estimatedTotal,
+      fields.actualTotalCount,
+      fields.actualTotalType,
+      fields.actualTotal,
       fields.unknownPropertyCount,
       CONVERT(NVARCHAR(33), worksheets.created_at, 126) AS createdAt,
       CONVERT(NVARCHAR(33), worksheets.updated_at, 126) AS updatedAt,
       CONVERT(NVARCHAR(33), worksheets.deleted_at, 126) AS deletedAt
-    FROM funding_submission_line_jsons worksheets
-    CROSS APPLY OPENJSON(CASE WHEN ISJSON(worksheets.[values]) = 1 THEN worksheets.[values] ELSE N'[]' END) lines
-    OUTER APPLY (
-      SELECT
-        SUM(CASE WHEN allowed.property_name IS NULL THEN 1 ELSE 0 END) AS unknownPropertyCount,
-        COUNT(CASE WHEN [key] COLLATE Latin1_General_100_BIN2 = N'submissionLineId' AND DATALENGTH([key]) = DATALENGTH(N'submissionLineId') THEN 1 END) AS submissionLineIdCount,
-        MAX(CASE WHEN [key] COLLATE Latin1_General_100_BIN2 = N'submissionLineId' AND DATALENGTH([key]) = DATALENGTH(N'submissionLineId') THEN type END) AS submissionLineIdType,
-        MAX(CASE WHEN [key] COLLATE Latin1_General_100_BIN2 = N'submissionLineId' AND DATALENGTH([key]) = DATALENGTH(N'submissionLineId') THEN value END) AS submissionLineId,
-        COUNT(CASE WHEN [key] COLLATE Latin1_General_100_BIN2 = N'lineName' AND DATALENGTH([key]) = DATALENGTH(N'lineName') THEN 1 END) AS lineNameCount,
-        MAX(CASE WHEN [key] COLLATE Latin1_General_100_BIN2 = N'lineName' AND DATALENGTH([key]) = DATALENGTH(N'lineName') THEN type END) AS lineNameType,
-        MAX(CASE WHEN [key] COLLATE Latin1_General_100_BIN2 = N'lineName' AND DATALENGTH([key]) = DATALENGTH(N'lineName') THEN value END) AS lineName,
-        COUNT(CASE WHEN [key] COLLATE Latin1_General_100_BIN2 = N'monthlyAmount' AND DATALENGTH([key]) = DATALENGTH(N'monthlyAmount') THEN 1 END) AS monthlyAmountCount,
-        MAX(CASE WHEN [key] COLLATE Latin1_General_100_BIN2 = N'monthlyAmount' AND DATALENGTH([key]) = DATALENGTH(N'monthlyAmount') THEN type END) AS monthlyAmountType,
-        MAX(CASE WHEN [key] COLLATE Latin1_General_100_BIN2 = N'monthlyAmount' AND DATALENGTH([key]) = DATALENGTH(N'monthlyAmount') THEN value END) AS monthlyAmount,
-        COUNT(CASE WHEN [key] COLLATE Latin1_General_100_BIN2 = N'estimatedChildOccupancyRate' AND DATALENGTH([key]) = DATALENGTH(N'estimatedChildOccupancyRate') THEN 1 END) AS estimatedRateCount,
-        MAX(CASE WHEN [key] COLLATE Latin1_General_100_BIN2 = N'estimatedChildOccupancyRate' AND DATALENGTH([key]) = DATALENGTH(N'estimatedChildOccupancyRate') THEN type END) AS estimatedRateType,
-        MAX(CASE WHEN [key] COLLATE Latin1_General_100_BIN2 = N'estimatedChildOccupancyRate' AND DATALENGTH([key]) = DATALENGTH(N'estimatedChildOccupancyRate') THEN value END) AS estimatedRate,
-        COUNT(CASE WHEN [key] COLLATE Latin1_General_100_BIN2 = N'actualChildOccupancyRate' AND DATALENGTH([key]) = DATALENGTH(N'actualChildOccupancyRate') THEN 1 END) AS actualRateCount,
-        MAX(CASE WHEN [key] COLLATE Latin1_General_100_BIN2 = N'actualChildOccupancyRate' AND DATALENGTH([key]) = DATALENGTH(N'actualChildOccupancyRate') THEN type END) AS actualRateType,
-        MAX(CASE WHEN [key] COLLATE Latin1_General_100_BIN2 = N'actualChildOccupancyRate' AND DATALENGTH([key]) = DATALENGTH(N'actualChildOccupancyRate') THEN value END) AS actualRate,
-        COUNT(CASE WHEN [key] COLLATE Latin1_General_100_BIN2 = N'estimatedComputedTotal' AND DATALENGTH([key]) = DATALENGTH(N'estimatedComputedTotal') THEN 1 END) AS estimatedTotalCount,
-        MAX(CASE WHEN [key] COLLATE Latin1_General_100_BIN2 = N'estimatedComputedTotal' AND DATALENGTH([key]) = DATALENGTH(N'estimatedComputedTotal') THEN type END) AS estimatedTotalType,
-        MAX(CASE WHEN [key] COLLATE Latin1_General_100_BIN2 = N'estimatedComputedTotal' AND DATALENGTH([key]) = DATALENGTH(N'estimatedComputedTotal') THEN value END) AS estimatedTotal,
-        COUNT(CASE WHEN [key] COLLATE Latin1_General_100_BIN2 = N'actualComputedTotal' AND DATALENGTH([key]) = DATALENGTH(N'actualComputedTotal') THEN 1 END) AS actualTotalCount,
-        MAX(CASE WHEN [key] COLLATE Latin1_General_100_BIN2 = N'actualComputedTotal' AND DATALENGTH([key]) = DATALENGTH(N'actualComputedTotal') THEN type END) AS actualTotalType,
-        MAX(CASE WHEN [key] COLLATE Latin1_General_100_BIN2 = N'actualComputedTotal' AND DATALENGTH([key]) = DATALENGTH(N'actualComputedTotal') THEN value END) AS actualTotal
-      FROM OPENJSON(CASE WHEN lines.type = 5 THEN lines.value ELSE N'{}' END) AS property
-      LEFT JOIN (
-        VALUES (N'sectionName'), (N'submissionLineId'), (N'lineName'), (N'monthlyAmount'),
-          (N'estimatedChildOccupancyRate'), (N'actualChildOccupancyRate'),
-          (N'estimatedComputedTotal'), (N'actualComputedTotal')
-      ) AS allowed(property_name)
-        ON property.[key] COLLATE Latin1_General_100_BIN2 = allowed.property_name COLLATE Latin1_General_100_BIN2
+    FROM
+      funding_submission_line_jsons worksheets
+      CROSS APPLY OPENJSON (
+        CASE
+          WHEN ISJSON(worksheets.[values]) = 1 THEN worksheets.[values]
+          ELSE N'[]'
+        END
+      ) lines
+      OUTER APPLY (
+        SELECT
+          SUM(
+            CASE
+              WHEN allowed.property_name IS NULL THEN 1
+              ELSE 0
+            END
+          ) AS unknownPropertyCount,
+          COUNT(
+            CASE
+              WHEN (
+                property.[key]
+                COLLATE Latin1_General_100_BIN2
+              ) = N'submissionLineId'
+              AND DATALENGTH(property.[key]) = DATALENGTH(N'submissionLineId') THEN 1
+            END
+          ) AS submissionLineIdCount,
+          MAX(
+            CASE
+              WHEN (
+                property.[key]
+                COLLATE Latin1_General_100_BIN2
+              ) = N'submissionLineId'
+              AND DATALENGTH(property.[key]) = DATALENGTH(N'submissionLineId') THEN property.[type]
+            END
+          ) AS submissionLineIdType,
+          MAX(
+            CASE
+              WHEN (
+                property.[key]
+                COLLATE Latin1_General_100_BIN2
+              ) = N'submissionLineId'
+              AND DATALENGTH(property.[key]) = DATALENGTH(N'submissionLineId') THEN property.[value]
+            END
+          ) AS submissionLineId,
+          COUNT(
+            CASE
+              WHEN (
+                property.[key]
+                COLLATE Latin1_General_100_BIN2
+              ) = N'lineName'
+              AND DATALENGTH(property.[key]) = DATALENGTH(N'lineName') THEN 1
+            END
+          ) AS lineNameCount,
+          MAX(
+            CASE
+              WHEN (
+                property.[key]
+                COLLATE Latin1_General_100_BIN2
+              ) = N'lineName'
+              AND DATALENGTH(property.[key]) = DATALENGTH(N'lineName') THEN property.[type]
+            END
+          ) AS lineNameType,
+          MAX(
+            CASE
+              WHEN (
+                property.[key]
+                COLLATE Latin1_General_100_BIN2
+              ) = N'lineName'
+              AND DATALENGTH(property.[key]) = DATALENGTH(N'lineName') THEN property.[value]
+            END
+          ) AS lineName,
+          COUNT(
+            CASE
+              WHEN (
+                property.[key]
+                COLLATE Latin1_General_100_BIN2
+              ) = N'monthlyAmount'
+              AND DATALENGTH(property.[key]) = DATALENGTH(N'monthlyAmount') THEN 1
+            END
+          ) AS monthlyAmountCount,
+          MAX(
+            CASE
+              WHEN (
+                property.[key]
+                COLLATE Latin1_General_100_BIN2
+              ) = N'monthlyAmount'
+              AND DATALENGTH(property.[key]) = DATALENGTH(N'monthlyAmount') THEN property.[type]
+            END
+          ) AS monthlyAmountType,
+          MAX(
+            CASE
+              WHEN (
+                property.[key]
+                COLLATE Latin1_General_100_BIN2
+              ) = N'monthlyAmount'
+              AND DATALENGTH(property.[key]) = DATALENGTH(N'monthlyAmount') THEN property.[value]
+            END
+          ) AS monthlyAmount,
+          COUNT(
+            CASE
+              WHEN (
+                property.[key]
+                COLLATE Latin1_General_100_BIN2
+              ) = N'estimatedChildOccupancyRate'
+              AND DATALENGTH(property.[key]) = DATALENGTH(N'estimatedChildOccupancyRate') THEN 1
+            END
+          ) AS estimatedRateCount,
+          MAX(
+            CASE
+              WHEN (
+                property.[key]
+                COLLATE Latin1_General_100_BIN2
+              ) = N'estimatedChildOccupancyRate'
+              AND DATALENGTH(property.[key]) = DATALENGTH(N'estimatedChildOccupancyRate') THEN property.[type]
+            END
+          ) AS estimatedRateType,
+          MAX(
+            CASE
+              WHEN (
+                property.[key]
+                COLLATE Latin1_General_100_BIN2
+              ) = N'estimatedChildOccupancyRate'
+              AND DATALENGTH(property.[key]) = DATALENGTH(N'estimatedChildOccupancyRate') THEN property.[value]
+            END
+          ) AS estimatedRate,
+          COUNT(
+            CASE
+              WHEN (
+                property.[key]
+                COLLATE Latin1_General_100_BIN2
+              ) = N'actualChildOccupancyRate'
+              AND DATALENGTH(property.[key]) = DATALENGTH(N'actualChildOccupancyRate') THEN 1
+            END
+          ) AS actualRateCount,
+          MAX(
+            CASE
+              WHEN (
+                property.[key]
+                COLLATE Latin1_General_100_BIN2
+              ) = N'actualChildOccupancyRate'
+              AND DATALENGTH(property.[key]) = DATALENGTH(N'actualChildOccupancyRate') THEN property.[type]
+            END
+          ) AS actualRateType,
+          MAX(
+            CASE
+              WHEN (
+                property.[key]
+                COLLATE Latin1_General_100_BIN2
+              ) = N'actualChildOccupancyRate'
+              AND DATALENGTH(property.[key]) = DATALENGTH(N'actualChildOccupancyRate') THEN property.[value]
+            END
+          ) AS actualRate,
+          COUNT(
+            CASE
+              WHEN (
+                property.[key]
+                COLLATE Latin1_General_100_BIN2
+              ) = N'estimatedComputedTotal'
+              AND DATALENGTH(property.[key]) = DATALENGTH(N'estimatedComputedTotal') THEN 1
+            END
+          ) AS estimatedTotalCount,
+          MAX(
+            CASE
+              WHEN (
+                property.[key]
+                COLLATE Latin1_General_100_BIN2
+              ) = N'estimatedComputedTotal'
+              AND DATALENGTH(property.[key]) = DATALENGTH(N'estimatedComputedTotal') THEN property.[type]
+            END
+          ) AS estimatedTotalType,
+          MAX(
+            CASE
+              WHEN (
+                property.[key]
+                COLLATE Latin1_General_100_BIN2
+              ) = N'estimatedComputedTotal'
+              AND DATALENGTH(property.[key]) = DATALENGTH(N'estimatedComputedTotal') THEN property.[value]
+            END
+          ) AS estimatedTotal,
+          COUNT(
+            CASE
+              WHEN (
+                property.[key]
+                COLLATE Latin1_General_100_BIN2
+              ) = N'actualComputedTotal'
+              AND DATALENGTH(property.[key]) = DATALENGTH(N'actualComputedTotal') THEN 1
+            END
+          ) AS actualTotalCount,
+          MAX(
+            CASE
+              WHEN (
+                property.[key]
+                COLLATE Latin1_General_100_BIN2
+              ) = N'actualComputedTotal'
+              AND DATALENGTH(property.[key]) = DATALENGTH(N'actualComputedTotal') THEN property.[type]
+            END
+          ) AS actualTotalType,
+          MAX(
+            CASE
+              WHEN (
+                property.[key]
+                COLLATE Latin1_General_100_BIN2
+              ) = N'actualComputedTotal'
+              AND DATALENGTH(property.[key]) = DATALENGTH(N'actualComputedTotal') THEN property.[value]
+            END
+          ) AS actualTotal
+        FROM
+          OPENJSON (
+            CASE
+              WHEN lines.type = 5 THEN lines.value
+              ELSE N'{}'
+            END
+          ) AS property
+          LEFT JOIN (
+            VALUES
+              (N'sectionName'),
+              (N'submissionLineId'),
+              (N'lineName'),
+              (N'monthlyAmount'),
+              (N'estimatedChildOccupancyRate'),
+              (N'actualChildOccupancyRate'),
+              (N'estimatedComputedTotal'),
+              (N'actualComputedTotal')
+          ) AS allowed (property_name) ON property.[key]
+        COLLATE Latin1_General_100_BIN2 = allowed.property_name
+        COLLATE Latin1_General_100_BIN2
         AND DATALENGTH(property.[key]) = DATALENGTH(allowed.property_name)
-    ) fields
-    WHERE EXISTS (SELECT 1 FROM OPENJSON(CASE WHEN lines.type = 5 THEN lines.value ELSE N'{}' END) section WHERE section.[key] COLLATE Latin1_General_100_BIN2 = N'sectionName' AND DATALENGTH(section.[key]) = DATALENGTH(N'sectionName') AND section.type = 1 AND section.value COLLATE Latin1_General_100_BIN2 = N'Children with Diverse Needs' AND DATALENGTH(section.value) = DATALENGTH(N'Children with Diverse Needs'))
-    ORDER BY worksheets.id, TRY_CONVERT(INT, lines.[key])
+      ) fields
+    WHERE
+      EXISTS (
+        SELECT
+          1
+        FROM
+          OPENJSON (
+            CASE
+              WHEN lines.type = 5 THEN lines.value
+              ELSE N'{}'
+            END
+          ) section
+        WHERE
+          section.[key]
+        COLLATE Latin1_General_100_BIN2 = N'sectionName'
+        AND DATALENGTH(section.[key]) = DATALENGTH(N'sectionName')
+        AND section.type = 1
+        AND section.value
+        COLLATE Latin1_General_100_BIN2 = N'Children with Diverse Needs'
+        AND DATALENGTH(section.value) = DATALENGTH(N'Children with Diverse Needs')
+      )
+    ORDER BY
+      worksheets.id,
+      TRY_CONVERT(INT, lines.[key])
   `)
 }
 
@@ -237,23 +497,24 @@ async function findFiscalPeriodMatches(
   if (lines.length === 0) return []
   const worksheets = [...new Set(lines.map((line) => line.worksheetId))]
   const rawRows = await knex.raw<FiscalPeriodMatch[]>(
-    `
-    SELECT DISTINCT
-      TRY_CONVERT(INT, source.value) AS worksheetId,
-      funding_periods.id AS fundingPeriodId,
-      fiscal_periods.id AS fiscalPeriodId
-    FROM OPENJSON(:worksheetIds) source
-    JOIN funding_submission_line_jsons worksheets
-      ON worksheets.id = TRY_CONVERT(INT, source.value)
-    JOIN fiscal_periods ON fiscal_periods.month = worksheets.date_name
-      AND CONVERT(DATE, worksheets.date_start) = CONVERT(DATE, fiscal_periods.date_start)
-      AND CONVERT(DATE, worksheets.date_end) = CONVERT(DATE, fiscal_periods.date_end)
-    JOIN funding_periods ON funding_periods.id = fiscal_periods.funding_period_id
-      AND worksheets.fiscal_year COLLATE Latin1_General_100_BIN2
-        = LEFT(funding_periods.fiscal_year, 4) + '/' + RIGHT(funding_periods.fiscal_year, 2)
-          COLLATE Latin1_General_100_BIN2
-      AND DATALENGTH(worksheets.fiscal_year)
-        = DATALENGTH(LEFT(funding_periods.fiscal_year, 4) + '/' + RIGHT(funding_periods.fiscal_year, 2))
+    /* sql */ `
+      SELECT DISTINCT
+        TRY_CONVERT(INT, source.value) AS worksheetId,
+        funding_periods.id AS fundingPeriodId,
+        fiscal_periods.id AS fiscalPeriodId
+      FROM
+        OPENJSON (:worksheetIds) source
+        JOIN funding_submission_line_jsons worksheets ON worksheets.id = TRY_CONVERT(INT, source.value)
+        JOIN fiscal_periods ON fiscal_periods.month = worksheets.date_name
+        AND CONVERT(DATE, worksheets.date_start) = CONVERT(DATE, fiscal_periods.date_start)
+        AND CONVERT(DATE, worksheets.date_end) = CONVERT(DATE, fiscal_periods.date_end)
+        JOIN funding_periods ON funding_periods.id = fiscal_periods.funding_period_id
+        AND worksheets.fiscal_year
+      COLLATE Latin1_General_100_BIN2 = LEFT(funding_periods.fiscal_year, 4) + '/' + RIGHT(funding_periods.fiscal_year, 2)
+      COLLATE Latin1_General_100_BIN2
+      AND DATALENGTH(worksheets.fiscal_year) = DATALENGTH(
+        LEFT(funding_periods.fiscal_year, 4) + '/' + RIGHT(funding_periods.fiscal_year, 2)
+      )
     `,
     { worksheetIds: JSON.stringify(worksheets) }
   )
@@ -292,7 +553,7 @@ async function migrateCategories(
       const claimed = claimedIds.get(claimKey) ?? new Set<number>()
       claimedIds.set(claimKey, claimed)
       const matches = await knex.raw<Category[]>(
-        `
+        /* sql */ `
           SELECT
             id,
             funding_period_id AS fundingPeriodId,
@@ -303,15 +564,22 @@ async function migrateCategories(
             CONVERT(NVARCHAR(33), created_at, 126) AS createdAt,
             CONVERT(NVARCHAR(33), updated_at, 126) AS updatedAt,
             CONVERT(NVARCHAR(33), deleted_at, 126) AS deletedAt
-          FROM children_with_diverse_needs_funding_categories
-          WHERE funding_period_id = :fundingPeriodId
-            AND category_name COLLATE Latin1_General_100_BIN2 = :categoryName
-            AND DATALENGTH(category_name) = DATALENGTH(:categoryName)
-            AND (
-              (deleted_at IS NULL AND :deletedAt IS NULL)
-              OR deleted_at = CONVERT(DATETIME2, :deletedAt, 126)
+          FROM
+            children_with_diverse_needs_funding_categories
+          WHERE
+            funding_period_id = :fundingPeriodId
+            AND category_name
+          COLLATE Latin1_General_100_BIN2 = :categoryName
+          AND DATALENGTH(category_name) = DATALENGTH(:categoryName)
+          AND (
+            (
+              deleted_at IS NULL
+              AND :deletedAt IS NULL
             )
-          ORDER BY id
+            OR deleted_at = CONVERT(DATETIME2, :deletedAt, 126)
+          )
+          ORDER BY
+            id
         `,
         {
           fundingPeriodId,
@@ -368,9 +636,24 @@ function categoryKey(configurationId: number, fundingPeriodId: number): string {
 }
 
 async function findExistingLedger(knex: Knex): Promise<ExistingLedger[]> {
-  return knex.raw<ExistingLedger[]>(
-    `SELECT id, centre_id AS centreId, fiscal_period_id AS fiscalPeriodId, category_id AS categoryId, line_name AS lineName, CONVERT(NVARCHAR(40), monthly_amount) AS monthlyAmount, CONVERT(NVARCHAR(40), estimated_child_occupancy_rate) AS estimatedRate, CONVERT(NVARCHAR(40), actual_child_occupancy_rate) AS actualRate, CONVERT(NVARCHAR(40), estimated_computed_total) AS estimatedTotal, CONVERT(NVARCHAR(40), actual_computed_total) AS actualTotal, CONVERT(NVARCHAR(33), created_at, 126) AS createdAt, CONVERT(NVARCHAR(33), updated_at, 126) AS updatedAt, CONVERT(NVARCHAR(33), deleted_at, 126) AS deletedAt FROM children_with_diverse_needs_funding_records`
-  )
+  return knex.raw<ExistingLedger[]>(/* sql */ `
+    SELECT
+      id,
+      centre_id AS centreId,
+      fiscal_period_id AS fiscalPeriodId,
+      category_id AS categoryId,
+      line_name AS lineName,
+      CONVERT(NVARCHAR(40), monthly_amount) AS monthlyAmount,
+      CONVERT(NVARCHAR(40), estimated_child_occupancy_rate) AS estimatedRate,
+      CONVERT(NVARCHAR(40), actual_child_occupancy_rate) AS actualRate,
+      CONVERT(NVARCHAR(40), estimated_computed_total) AS estimatedTotal,
+      CONVERT(NVARCHAR(40), actual_computed_total) AS actualTotal,
+      CONVERT(NVARCHAR(33), created_at, 126) AS createdAt,
+      CONVERT(NVARCHAR(33), updated_at, 126) AS updatedAt,
+      CONVERT(NVARCHAR(33), deleted_at, 126) AS deletedAt
+    FROM
+      children_with_diverse_needs_funding_records
+  `)
 }
 
 function findConfiguration(
@@ -673,37 +956,91 @@ async function migrateLedger(
 }
 
 async function removeChildrenWithDiverseNeedsFundingRecordsJson(knex: Knex): Promise<void> {
-  const invalid = await knex.raw<{ worksheetId: number }[]>(`
-    SELECT worksheets.id AS worksheetId
-    FROM funding_submission_line_jsons worksheets
-    CROSS APPLY OPENJSON(CASE WHEN ISJSON(worksheets.[values]) = 1 THEN worksheets.[values] ELSE N'[]' END) lines
-    WHERE EXISTS (SELECT 1 FROM OPENJSON(CASE WHEN lines.type = 5 THEN lines.value ELSE N'{}' END) p WHERE p.[key] COLLATE Latin1_General_100_BIN2 = N'sectionName' AND DATALENGTH(p.[key]) = DATALENGTH(N'sectionName') AND p.type = 1 AND p.value COLLATE Latin1_General_100_BIN2 = N'Children with Diverse Needs' AND DATALENGTH(p.value) = DATALENGTH(N'Children with Diverse Needs'))
-      AND lines.type <> 5
-  `)
-  if (invalid.length > 0)
-    throw new Error(
-      `Diverse Needs worksheets contain unresolved non-object section rows: ${invalid.map((row) => row.worksheetId).join(", ")}.`
-    )
-  await knex.raw(`
+  await knex.raw(/* sql */ `
     UPDATE worksheets
-    SET [values] = CASE WHEN retained.remainingValues IS NULL THEN N'[]' ELSE N'[' + retained.remainingValues + N']' END
-    FROM funding_submission_line_jsons worksheets
-    CROSS APPLY (
-      SELECT STRING_AGG(
-        CONVERT(
-          NVARCHAR(MAX),
-          CASE
-            WHEN lines.type = 0 THEN N'null'
-            WHEN lines.type = 1 THEN N'"' + STRING_ESCAPE(lines.value, 'json') + N'"'
-            ELSE lines.value
-          END
-        ),
-        N','
-      ) WITHIN GROUP (ORDER BY TRY_CONVERT(INT, lines.[key])) AS remainingValues
-      FROM OPENJSON(CASE WHEN ISJSON(worksheets.[values]) = 1 THEN worksheets.[values] ELSE N'[]' END) lines
-      WHERE NOT EXISTS (SELECT 1 FROM OPENJSON(CASE WHEN lines.type = 5 THEN lines.value ELSE N'{}' END) p WHERE p.[key] COLLATE Latin1_General_100_BIN2 = N'sectionName' AND DATALENGTH(p.[key]) = DATALENGTH(N'sectionName') AND p.type = 1 AND p.value COLLATE Latin1_General_100_BIN2 = N'Children with Diverse Needs' AND DATALENGTH(p.value) = DATALENGTH(N'Children with Diverse Needs'))
-    ) retained
-    WHERE EXISTS (SELECT 1 FROM OPENJSON(CASE WHEN ISJSON(worksheets.[values]) = 1 THEN worksheets.[values] ELSE N'[]' END) lines WHERE EXISTS (SELECT 1 FROM OPENJSON(CASE WHEN lines.type = 5 THEN lines.value ELSE N'{}' END) p WHERE p.[key] COLLATE Latin1_General_100_BIN2 = N'sectionName' AND DATALENGTH(p.[key]) = DATALENGTH(N'sectionName') AND p.type = 1 AND p.value COLLATE Latin1_General_100_BIN2 = N'Children with Diverse Needs' AND DATALENGTH(p.value) = DATALENGTH(N'Children with Diverse Needs')))
+    SET
+      [values] = CASE
+        WHEN retained.remainingValues IS NULL THEN N'[]'
+        ELSE N'[' + retained.remainingValues + N']'
+      END
+    FROM
+      funding_submission_line_jsons worksheets
+      CROSS APPLY (
+        SELECT
+          STRING_AGG(
+            CONVERT(
+              NVARCHAR(MAX),
+              CASE
+                WHEN lines.type = 0 THEN N'null'
+                WHEN lines.type = 1 THEN N'"' + STRING_ESCAPE(lines.value, 'json') + N'"'
+                ELSE lines.value
+              END
+            ),
+            N','
+          ) WITHIN GROUP (
+            ORDER BY
+              TRY_CONVERT(INT, lines.[key])
+          ) AS remainingValues
+        FROM
+          OPENJSON (
+            CASE
+              WHEN ISJSON(worksheets.[values]) = 1 THEN worksheets.[values]
+              ELSE N'[]'
+            END
+          ) lines
+        WHERE
+          NOT EXISTS (
+            SELECT
+              1
+            FROM
+              OPENJSON (
+                CASE
+                  WHEN lines.type = 5 THEN lines.value
+                  ELSE N'{}'
+                END
+              ) p
+            WHERE
+              p.[key]
+            COLLATE Latin1_General_100_BIN2 = N'sectionName'
+            AND DATALENGTH(p.[key]) = DATALENGTH(N'sectionName')
+            AND p.type = 1
+            AND p.value
+            COLLATE Latin1_General_100_BIN2 = N'Children with Diverse Needs'
+            AND DATALENGTH(p.value) = DATALENGTH(N'Children with Diverse Needs')
+          )
+      ) retained
+    WHERE
+      EXISTS (
+        SELECT
+          1
+        FROM
+          OPENJSON (
+            CASE
+              WHEN ISJSON(worksheets.[values]) = 1 THEN worksheets.[values]
+              ELSE N'[]'
+            END
+          ) lines
+        WHERE
+          EXISTS (
+            SELECT
+              1
+            FROM
+              OPENJSON (
+                CASE
+                  WHEN lines.type = 5 THEN lines.value
+                  ELSE N'{}'
+                END
+              ) p
+            WHERE
+              p.[key]
+            COLLATE Latin1_General_100_BIN2 = N'sectionName'
+            AND DATALENGTH(p.[key]) = DATALENGTH(N'sectionName')
+            AND p.type = 1
+            AND p.value
+            COLLATE Latin1_General_100_BIN2 = N'Children with Diverse Needs'
+            AND DATALENGTH(p.value) = DATALENGTH(N'Children with Diverse Needs')
+          )
+      )
   `)
 }
 

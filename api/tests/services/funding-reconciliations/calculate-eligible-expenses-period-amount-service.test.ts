@@ -7,10 +7,10 @@ import {
   centreFactory,
   childCareSpaceCategoryFactory,
   childCareSpaceFactory,
-  fiscalPeriodFactory,
-  fundingPeriodFactory,
   childrenWithDiverseNeedsFundingCategoryFactory,
   childrenWithDiverseNeedsFundingRecordFactory,
+  fiscalPeriodFactory,
+  fundingPeriodFactory,
   fundingSubmissionLineJsonFactory,
   qualityEnhancementCategoryFactory,
   qualityEnhancementFactory,
@@ -156,6 +156,54 @@ describe("api/src/services/funding-reconciliations/calculate-eligible-expenses-p
 
         // Assert
         expect(result).toBe("52.5000")
+      })
+
+      test("when reconciling a centre and month, includes only their active Diverse Needs actuals at four-decimal precision", async () => {
+        // Arrange
+        const centre = await centreFactory.create()
+        const otherCentre = await centreFactory.create()
+        const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2026-2027" })
+        const fiscalPeriod = await fiscalPeriodFactory.associations({ fundingPeriod }).create({
+          fiscalYear: "2026-27",
+          month: FiscalPeriod.Months.APRIL,
+          dateStart: new Date("2026-04-01"),
+        })
+        const otherFiscalPeriod = await fiscalPeriodFactory.associations({ fundingPeriod }).create({
+          fiscalYear: "2026-27",
+          month: FiscalPeriod.Months.MAY,
+          dateStart: new Date("2026-05-01"),
+        })
+        const category = await childrenWithDiverseNeedsFundingCategoryFactory
+          .associations({ fundingPeriod })
+          .create({ categoryName: "Fractional monthly rate", monthlyAmount: "19.9999" })
+        await childrenWithDiverseNeedsFundingRecordFactory
+          .associations({ centre, category, fiscalPeriod })
+          .create({
+            estimatedChildOccupancyRate: "100.0000",
+            actualChildOccupancyRate: "0.3333",
+          })
+        await childrenWithDiverseNeedsFundingRecordFactory
+          .associations({ centre: otherCentre, category, fiscalPeriod })
+          .create({ actualChildOccupancyRate: "9.0000" })
+        await childrenWithDiverseNeedsFundingRecordFactory
+          .associations({ centre, category, fiscalPeriod: otherFiscalPeriod })
+          .create({ actualChildOccupancyRate: "9.0000" })
+        const retiredCategory = await childrenWithDiverseNeedsFundingCategoryFactory
+          .associations({ fundingPeriod })
+          .create({ categoryName: "Retired monthly row", monthlyAmount: "100.0000" })
+        const retiredRecord = await childrenWithDiverseNeedsFundingRecordFactory
+          .associations({ centre, category: retiredCategory, fiscalPeriod })
+          .create({ actualChildOccupancyRate: "9.0000" })
+        await retiredRecord.destroy()
+
+        // Act
+        const result = await CalculateEligibleExpensesPeriodAmountService.perform(
+          centre.id,
+          fiscalPeriod.id
+        )
+
+        // Assert
+        expect(result).toEqual("6.6660")
       })
 
       test("when there are no eligible expenses, returns zero", async () => {

@@ -77,7 +77,7 @@
 
 <script setup lang="ts">
 import { DateTime } from "luxon"
-import { computed, reactive, ref, toRefs } from "vue"
+import { computed, reactive, ref, toRefs, useTemplateRef } from "vue"
 import { groupBy, isNil } from "lodash"
 import Big from "big.js"
 import { formatDecimal } from "@/utils/formatters"
@@ -188,9 +188,9 @@ const sections = computed<{ sectionName: string; lines: FundingLineValue[] }[]>(
     ...Object.entries(sectionGroups).map(([sectionName, lines]) => ({ sectionName, lines })),
   ]
 })
-const fundingSubmissionLineJsonSectionTables = ref<
+const fundingSubmissionLineJsonSectionTables = useTemplateRef<
   InstanceType<typeof FundingSubmissionLineJsonSectionTable>[]
->([])
+>("fundingSubmissionLineJsonSectionTables")
 const notificationStore = useNotificationStore()
 
 async function reloadWorksheet() {
@@ -235,8 +235,9 @@ async function saveFundingSubmissionLineJson(): Promise<boolean> {
       if (
         Big(childCareSpace.estimatedChildOccupancyRate).eq(line.estimatedChildOccupancyRate) &&
         Big(childCareSpace.actualChildOccupancyRate).eq(line.actualChildOccupancyRate)
-      )
+      ) {
         continue
+      }
       childCareSpaceUpdates.push({
         id: childCareSpace.id,
         update: {
@@ -342,7 +343,7 @@ function focusOnLastInColumn(columnName: ColumnNames): boolean {
   return false
 }
 
-const keyboardShortcutsModal = ref<InstanceType<typeof KeyboardShortcutsModal> | null>(null)
+const keyboardShortcutsModal = useTemplateRef("keyboardShortcutsModal")
 
 function activateKeyboardShortcutsModalIfCorrectEvent(event: KeyboardEvent) {
   if (event.shiftKey && event.key === "?") {
@@ -357,6 +358,7 @@ function showKeyboardShortcutsModal() {
 
   keyboardShortcutsModal.value.open()
 }
+
 defineExpose({
   saveFundingSubmissionLineJson,
   replicateOwnEstimates,

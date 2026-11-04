@@ -1,8 +1,8 @@
-import { isEmpty } from "lodash"
+import { isNil } from "lodash"
 
 import {
-  ChildrenWithDiverseNeedsFundingRecord,
   Centre,
+  ChildrenWithDiverseNeedsFundingRecord,
   FiscalPeriod,
   FundingPeriod,
 } from "@/models"
@@ -24,14 +24,15 @@ export class BulkEnsureService extends BaseService {
       where: { fundingPeriodId: this.fundingPeriod.id },
     })
     const fiscalPeriodIds = fiscalPeriods.map(({ id }) => id)
-    const existing = await ChildrenWithDiverseNeedsFundingRecord.findAll({
+    const historicalRecord = await ChildrenWithDiverseNeedsFundingRecord.findOne({
+      attributes: ["id"],
       where: {
         centreId: this.centre.id,
         fiscalPeriodId: fiscalPeriodIds,
       },
       paranoid: false,
     })
-    if (!isEmpty(existing) || !this.isInitialProvisioning) {
+    if (!isNil(historicalRecord) || !this.isInitialProvisioning) {
       return ChildrenWithDiverseNeedsFundingRecord.findAll({
         where: {
           centreId: this.centre.id,
