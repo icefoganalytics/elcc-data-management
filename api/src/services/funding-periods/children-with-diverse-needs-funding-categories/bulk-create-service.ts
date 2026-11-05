@@ -1,4 +1,4 @@
-import { Op } from "@sequelize/core"
+import { Op, sql } from "@sequelize/core"
 import { isNil } from "lodash"
 
 import { ChildrenWithDiverseNeedsFundingCategory, FundingPeriod } from "@/models"
@@ -20,6 +20,16 @@ export class BulkCreateService extends BaseService {
     const previousFundingPeriod = await FundingPeriod.findOne({
       attributes: ["id"],
       where: {
+        id: {
+          [Op.in]: sql`
+            (
+              SELECT
+                funding_period_id
+              FROM
+                children_with_diverse_needs_funding_categories
+            )
+          `,
+        },
         fiscalYear: { [Op.lt]: this.fundingPeriod.fiscalYear },
       },
       order: [
