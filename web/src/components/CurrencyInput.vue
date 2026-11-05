@@ -14,7 +14,7 @@
 <script setup lang="ts">
 import Big from "big.js"
 import { ref, watch, computed } from "vue"
-import { useCurrencyInput, type CurrencyInputOptions, CurrencyDisplay } from "vue-currency-input"
+import { useCurrencyInput, type CurrencyInputOptions } from "vue-currency-input"
 import { isNil, isString } from "lodash"
 
 type ValidationRule = (value: unknown) => boolean | string
@@ -22,8 +22,7 @@ type ValidationRule = (value: unknown) => boolean | string
 const DEFAULT_OPTIONS = {
   currency: "CAD",
   locale: "en-CA",
-  currencyDisplay: CurrencyDisplay.symbol,
-  precision: 4,
+  precision: { min: 0, max: 4 },
   // accountingSign: true,
   hideCurrencySymbolOnFocus: true,
 }

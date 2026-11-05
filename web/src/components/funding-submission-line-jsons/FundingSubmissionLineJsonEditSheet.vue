@@ -55,6 +55,7 @@
           :readonly="isWorkflowRunning"
           @focus-beyond-last-in-column="goToNextSection(sectionIndex, $event)"
           @focus-beyond-first-in-column="goToPreviousSection(sectionIndex, $event)"
+          @line-changed="onLineChanged"
         />
         <div class="d-flex justify-end mt-3">
           <slot name="section-actions">
@@ -78,6 +79,8 @@
 import { DateTime } from "luxon"
 import { computed, reactive, ref, toRefs, useTemplateRef } from "vue"
 import { groupBy, isNil } from "lodash"
+import Big from "big.js"
+import { formatDecimal } from "@/utils/formatters"
 
 import childCareSpacesApi, { CHILD_CARE_SPACES_SECTION_NAME } from "@/api/child-care-spaces-api"
 import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
@@ -105,7 +108,10 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   "update:fundingSubmissionLineJson": [fundingSubmissionLineJsonId: number]
+  childCareSpaceChanged: [line: FundingLineValue]
   saving: [value: boolean]
+  focusBeyondLastInColumn: [column: ColumnNames]
+  focusBeyondFirstInColumn: [column: ColumnNames]
 }>()
 
 const { fundingSubmissionLineJsonId } = toRefs(props)
@@ -159,8 +165,8 @@ const childCareSpacesAsFundingLineValues = computed<FundingLineValue[]>(() => {
       sectionName: CHILD_CARE_SPACES_SECTION_NAME,
       lineName: childCareSpace.lineName,
       monthlyAmount: childCareSpace.monthlyAmount,
-      estimatedChildOccupancyRate: childCareSpace.estimatedChildOccupancyRate,
-      actualChildOccupancyRate: childCareSpace.actualChildOccupancyRate,
+      estimatedChildOccupancyRate: formatDecimal(childCareSpace.estimatedChildOccupancyRate),
+      actualChildOccupancyRate: formatDecimal(childCareSpace.actualChildOccupancyRate),
       estimatedComputedTotal: childCareSpace.estimatedComputedTotal,
       actualComputedTotal: childCareSpace.actualComputedTotal,
     })
@@ -200,6 +206,11 @@ async function reloadWorksheet() {
   }
 }
 
+function onLineChanged({ line }: { line: FundingLineValue }) {
+  if (line.sectionName === CHILD_CARE_SPACES_SECTION_NAME) {
+    emit("childCareSpaceChanged", line)
+  }
+}
 async function saveFundingSubmissionLineJson(): Promise<boolean> {
   if (isSaving.value || isLoading.value || isErrored.value) {
     return false
@@ -222,8 +233,8 @@ async function saveFundingSubmissionLineJson(): Promise<boolean> {
         throw new Error(`Child Care Space for category ${line.submissionLineId} is missing`)
       }
       if (
-        childCareSpace.estimatedChildOccupancyRate === line.estimatedChildOccupancyRate &&
-        childCareSpace.actualChildOccupancyRate === line.actualChildOccupancyRate
+        Big(childCareSpace.estimatedChildOccupancyRate).eq(line.estimatedChildOccupancyRate) &&
+        Big(childCareSpace.actualChildOccupancyRate).eq(line.actualChildOccupancyRate)
       ) {
         continue
       }
@@ -294,27 +305,44 @@ async function replicateChildCareSpaceEstimates(): Promise<void> {
 }
 
 function goToNextSection(sectionIndex: number, columnName: ColumnNames) {
-  if (sectionIndex < sections.value.length - 1) {
-    const nextIndex = sectionIndex + 1
-    const nextSection = fundingSubmissionLineJsonSectionTables.value?.[nextIndex]
-    if (isNil(nextSection)) {
-      return
-    }
-
-    nextSection.focusOnFirstInColumn(columnName)
+  const sectionTables = fundingSubmissionLineJsonSectionTables.value
+  for (let index = sectionIndex + 1; index < (sectionTables?.length ?? 0); index++) {
+    const nextSection = sectionTables?.[index]
+    if (nextSection?.focusOnFirstInColumn(columnName)) return
   }
+
+  emit("focusBeyondLastInColumn", columnName)
 }
 
 function goToPreviousSection(sectionIndex: number, columnName: ColumnNames) {
-  if (sectionIndex > 0) {
-    const previousIndex = sectionIndex - 1
-    const previousSection = fundingSubmissionLineJsonSectionTables.value?.[previousIndex]
-    if (isNil(previousSection)) {
-      return
-    }
-
-    previousSection.focusOnLastInColumn(columnName)
+  const sectionTables = fundingSubmissionLineJsonSectionTables.value
+  for (let index = sectionIndex - 1; index >= 0; index--) {
+    const previousSection = sectionTables?.[index]
+    if (previousSection?.focusOnLastInColumn(columnName)) return
   }
+
+  emit("focusBeyondFirstInColumn", columnName)
+}
+
+function focusOnFirstInColumn(columnName: ColumnNames): boolean {
+  const sectionTables = fundingSubmissionLineJsonSectionTables.value
+  if (isWorkflowRunning.value || isNil(sectionTables)) return false
+
+  for (const section of sectionTables) {
+    if (section.focusOnFirstInColumn(columnName)) return true
+  }
+  return false
+}
+
+function focusOnLastInColumn(columnName: ColumnNames): boolean {
+  const sectionTables = fundingSubmissionLineJsonSectionTables.value
+  if (isWorkflowRunning.value || isNil(sectionTables)) return false
+
+  for (let index = sectionTables.length - 1; index >= 0; index--) {
+    const section = sectionTables[index]
+    if (section?.focusOnLastInColumn(columnName)) return true
+  }
+  return false
 }
 
 const keyboardShortcutsModal = useTemplateRef("keyboardShortcutsModal")
@@ -336,7 +364,10 @@ function showKeyboardShortcutsModal() {
 defineExpose({
   saveFundingSubmissionLineJson,
   replicateOwnEstimates,
+  focusOnFirstInColumn,
+  focusOnLastInColumn,
   isLoading,
   isErrored,
+  isWorkflowRunning,
 })
 </script>

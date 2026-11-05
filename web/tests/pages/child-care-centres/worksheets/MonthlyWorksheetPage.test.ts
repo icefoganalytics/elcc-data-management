@@ -459,6 +459,9 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           if (url === "/api/children-with-diverse-needs-funding-records") {
             return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
           }
+          if (url === "/api/children-with-diverse-needs-funding-records") {
+            return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
+          }
           if (url === "/api/quality-enhancements") {
             return { data: { qualityEnhancements: [], totalCount: 0 } }
           }
@@ -502,7 +505,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         expect(replicate?.attributes("disabled")).toEqual("")
       })
 
-      test("when the worksheet loads, renders ledger-owned Diverse Needs in section order", async () => {
+      test("when Spaces occupancy changes, previews linked totals in the original section order without changing Diverse Needs", async () => {
         // Arrange
         const worksheet = fundingSubmissionLineJsonFactory.build({
           id: 44,
@@ -529,6 +532,29 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             categoryId: 90,
             lineName: "Ledger Diverse Needs",
           })
+        const space = childCareSpaceFactory.build({
+          id: 51,
+          centreId: 1,
+          fiscalPeriodId: 4,
+          categoryId: 8,
+          lineName: "Toddlers",
+        })
+        const administration = administrationCostFactory.build({
+          id: 61,
+          centreId: 1,
+          fiscalPeriodId: 4,
+          childCareSpaceCategoryId: 8,
+          lineName: "Renamed Administration",
+          monthlyAmount: "70.0000",
+        })
+        const quality = qualityEnhancementFactory.build({
+          id: 71,
+          centreId: 1,
+          fiscalPeriodId: 4,
+          childCareSpaceCategoryId: 8,
+          lineName: "Renamed Quality Enhancement",
+          monthlyAmount: "7.0000",
+        })
         const fiscalPeriod = fiscalPeriodFactory.build({
           id: 4,
           fundingPeriodId: 1,
@@ -543,10 +569,18 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
           }
           if (url === "/api/child-care-spaces") {
-            return { data: { childCareSpaces: [], totalCount: 0 } }
+            return { data: { childCareSpaces: [space], totalCount: 1 } }
           }
           if (url === "/api/administration-costs") {
-            return { data: { administrationCosts: [], totalCount: 0 } }
+            return { data: { administrationCosts: [administration], totalCount: 1 } }
+          }
+          if (url === "/api/children-with-diverse-needs-funding-records") {
+            return {
+              data: {
+                childrenWithDiverseNeedsFundingRecords: [childrenWithDiverseNeedsFundingRecord],
+                totalCount: 1,
+              },
+            }
           }
           if (
             url === "/api/children-with-diverse-needs-funding-records" &&
@@ -561,7 +595,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             }
           }
           if (url === "/api/quality-enhancements") {
-            return { data: { qualityEnhancements: [], totalCount: 0 } }
+            return { data: { qualityEnhancements: [quality], totalCount: 1 } }
           }
           return { data: { fundingSubmissionLineJson: worksheet } }
         })
@@ -578,16 +612,39 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
 
         // Act
         await flushPromises()
+        const estimatedSpaces = wrapper.get("input")
+        await estimatedSpaces.setValue("2.5000")
+        await estimatedSpaces.trigger("change")
+        await flushPromises()
 
         // Assert
         expect(wrapper.findAll("h3").map((heading) => heading.text())).toEqual([
           "Child Care Spaces",
-          "Children with Diverse Needs",
           "Administration (10% of Spaces)",
           "Quality Enhancement Program",
+          "Children with Diverse Needs",
           "Building Expenses",
         ])
-        expect(wrapper.text()).toContain("Ledger Diverse Needs")
+        const administrationCells = wrapper
+          .findComponent({ name: "AdministrationCostEditTable" })
+          .get("tbody tr.cursor-pointer")
+          .findAll("td")
+        const qualityCells = wrapper
+          .findComponent({ name: "QualityEnhancementEditTable" })
+          .get("tbody tr.cursor-pointer")
+          .findAll("td")
+        expect(administrationCells[2].text()).toEqual("2.5")
+        expect(administrationCells[3].text()).toEqual("$175")
+        expect(qualityCells[2].text()).toEqual("2.5")
+        expect(qualityCells[3].text()).toEqual("$17.5")
+        expect(
+          wrapper
+            .findComponent({ name: "ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual" })
+            .get("tbody tr.cursor-pointer")
+            .findAll("td")[2]
+            .text()
+        ).toEqual("0")
+        expect(vi.mocked(httpClient, true).patch).not.toHaveBeenCalled()
       })
 
       test.each(["Save", "Replicate Estimates"])(

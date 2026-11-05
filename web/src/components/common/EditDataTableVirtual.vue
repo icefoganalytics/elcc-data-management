@@ -116,10 +116,15 @@ const props = defineProps<{
 const emit = defineEmits<{
   "update:cell": [item: Item]
   cancel: [void]
+  focusBeyondLastInColumn: [column: ColumnKey]
+  focusBeyondFirstInColumn: [column: ColumnKey]
 }>()
 
 defineExpose({
   commitEdit: emitInputAndCancel,
+  focusOnFirstInColumn,
+  focusOnLastInColumn,
+  cancelPendingFocus,
 })
 
 const itemClones = ref<Item[]>([])
@@ -193,9 +198,32 @@ function registerInputElement(columnKey: ColumnKey, rowIndex: number, element: u
   inputElementRefsByAlphaNumericIndex.value[cellKey] = input
 }
 
+function focusOnFirstInColumn(columnKey: ColumnKey): boolean {
+  return focusOnRowInColumn(0, 1, columnKey)
+}
+
+function focusOnLastInColumn(columnKey: ColumnKey): boolean {
+  return focusOnRowInColumn(props.items.length - 1, -1, columnKey)
+}
+
+function focusOnRowInColumn(rowIndex: number, direction: 1 | -1, columnKey: ColumnKey): boolean {
+  if (!isEditableColumn(columnKey) || props.busy) return false
+
+  for (let index = rowIndex; index >= 0 && index < props.items.length; index += direction) {
+    if (isNil(props.items[index])) continue
+    void startEditingRow(index, columnKey)
+    return true
+  }
+
+  return false
+}
 function focusOnField(columnKey: ColumnKey, rowIndex: number): void {
   pendingFocus.value = { columnKey, rowIndex }
   void resumePendingFocus()
+}
+
+function cancelPendingFocus(): void {
+  resetActiveRow()
 }
 
 async function resumePendingFocus(): Promise<void> {
@@ -261,6 +289,7 @@ async function goToNextRow(rowIndex: number, columnKey: ColumnKey): Promise<void
 
   const nextRowIndex = rowIndex + 1
   if (nextRowIndex >= props.items.length) {
+    emit("focusBeyondLastInColumn", columnKey)
     resetActiveRow()
     return
   }
@@ -272,6 +301,7 @@ async function goToPreviousRow(rowIndex: number, columnKey: ColumnKey): Promise<
   emitInputAndCancel()
 
   if (rowIndex <= 0) {
+    emit("focusBeyondFirstInColumn", columnKey)
     resetActiveRow()
     return
   }
