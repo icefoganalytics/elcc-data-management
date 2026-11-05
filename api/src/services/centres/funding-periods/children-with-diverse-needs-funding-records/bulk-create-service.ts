@@ -2,12 +2,12 @@ import { type CreationAttributes } from "@sequelize/core"
 import { isEmpty } from "lodash"
 
 import {
+  Centre,
   ChildrenWithDiverseNeedsFundingCategory,
   ChildrenWithDiverseNeedsFundingRecord,
   FiscalPeriod,
+  FundingPeriod,
 } from "@/models"
-import Centre from "@/models/centre"
-import FundingPeriod from "@/models/funding-period"
 import BaseService from "@/services/base-service"
 
 export class BulkCreateService extends BaseService {
