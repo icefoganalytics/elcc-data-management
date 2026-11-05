@@ -21,7 +21,7 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
     )
     const qualityEnhancementsTotalAmount = await this.calculateQualityEnhancements()
     const childrenWithDiverseNeedsFundingRecordsTotalAmount =
-      await this.calculateChildrenWithDiverseNeedsFundingRecords()
+      await this.calculateChildrenWithDiverseNeedsFundingRecord()
     const administrationCostsTotalAmount = await this.calculateAdministrationCosts()
     const buildingExpensesTotalAmount = await this.calculateBuildingExpenses()
     const totalEligibleExpenses = Big(fundingSubmissionExpensesAmount)
@@ -146,7 +146,7 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
     return Big(qualityEnhancementsResult.qualityEnhancementsTotalAmount).toFixed(4)
   }
 
-  private async calculateChildrenWithDiverseNeedsFundingRecords(): Promise<string> {
+  private async calculateChildrenWithDiverseNeedsFundingRecord(): Promise<string> {
     const [childrenWithDiverseNeedsFundingRecordsResult] = await db.query<{
       childrenWithDiverseNeedsFundingRecordsTotalAmount: string
     }>(

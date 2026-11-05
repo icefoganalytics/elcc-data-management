@@ -8,7 +8,7 @@
     class="ma-5"
     icon="mdi-alert-circle-outline"
     headline="Unable to Load Category"
-    title="Diverse need category could not be loaded."
+    title="Children with Diverse Needs category could not be loaded."
   >
     <template #actions>
       <v-btn
@@ -76,9 +76,9 @@ async function saveCategory() {
   isSaving.value = true
   try {
     await save()
-    snack.success("Diverse need category updated successfully!")
+    snack.success("Children with Diverse Needs category updated successfully!")
   } catch (error) {
-    snack.error(`Failed to update diverse need category: ${error}`)
+    snack.error(`Failed to update Children with Diverse Needs category: ${error}`)
   } finally {
     isSaving.value = false
   }
@@ -91,10 +91,10 @@ async function cancelEditing() {
   })
 }
 
-useBreadcrumbs("Edit Diverse Need Category", [
+useBreadcrumbs("Edit Children with Diverse Needs Category", [
   { title: "Administration", to: { name: "AdministrationPage" } },
   {
-    title: "Diverse Need Categories",
+    title: "Children with Diverse Needs Categories",
     to: { name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage" },
   },
   {

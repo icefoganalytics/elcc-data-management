@@ -27,7 +27,8 @@
     density="comfortable"
     class="row-clickable"
     @dblclick:row="
-      (_event: unknown, { item }: ChildrenWithDiverseNeedsFundingCategoryTableRow) => goToChildrenWithDiverseNeedsFundingCategory(item)
+      (_event: unknown, { item }: ChildrenWithDiverseNeedsFundingCategoryTableRow) =>
+        goToChildrenWithDiverseNeedsFundingCategory(item)
     "
     @update:page="updatePage"
   >
@@ -132,16 +133,22 @@ function updatePage(newPage: number) {
 }
 
 const router = useRouter()
-type ChildrenWithDiverseNeedsFundingCategoryTableRow = { item: ChildrenWithDiverseNeedsFundingCategoryAsIndex }
+type ChildrenWithDiverseNeedsFundingCategoryTableRow = {
+  item: ChildrenWithDiverseNeedsFundingCategoryAsIndex
+}
 
-function buildChildrenWithDiverseNeedsFundingCategoryTo(item: ChildrenWithDiverseNeedsFundingCategoryAsIndex) {
+function buildChildrenWithDiverseNeedsFundingCategoryTo(
+  item: ChildrenWithDiverseNeedsFundingCategoryAsIndex
+) {
   return {
     name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
     params: { childrenWithDiverseNeedsFundingCategoryId: item.id },
   }
 }
 
-function goToChildrenWithDiverseNeedsFundingCategory(item: ChildrenWithDiverseNeedsFundingCategoryAsIndex) {
+function goToChildrenWithDiverseNeedsFundingCategory(
+  item: ChildrenWithDiverseNeedsFundingCategoryAsIndex
+) {
   router.push(buildChildrenWithDiverseNeedsFundingCategoryTo(item))
 }
 </script>

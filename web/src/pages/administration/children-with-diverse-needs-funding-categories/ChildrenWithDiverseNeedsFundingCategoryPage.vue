@@ -8,7 +8,7 @@
     class="ma-5"
     icon="mdi-alert-circle-outline"
     headline="Unable to Load Category"
-    title="Diverse need category could not be loaded."
+    title="Children with Diverse Needs category could not be loaded."
   >
     <template #actions>
       <v-btn
@@ -20,7 +20,7 @@
   </v-empty-state>
   <HeaderActionsCard
     v-else-if="childrenWithDiverseNeedsFundingCategory"
-    title="Diverse Need Category Details"
+    title="Children with Diverse Needs Category Details"
   >
     <template #header-actions>
       <v-btn
@@ -162,26 +162,28 @@ async function retireCategory() {
   if (
     !policy.value?.destroy ||
     isDeleting.value ||
-    !blockedToTrueConfirm("Are you sure you want to retire this diverse need category?")
+    !blockedToTrueConfirm(
+      "Are you sure you want to retire this Children with Diverse Needs category?"
+    )
   )
     return
 
   isDeleting.value = true
   try {
     await childrenWithDiverseNeedsFundingCategoriesApi.delete(categoryId.value)
-    snack.success("Diverse need category retired successfully!")
+    snack.success("Children with Diverse Needs category retired successfully!")
     await router.push({ name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage" })
   } catch (error) {
-    snack.error(`Failed to retire diverse need category: ${error}`)
+    snack.error(`Failed to retire Children with Diverse Needs category: ${error}`)
   } finally {
     isDeleting.value = false
   }
 }
 
-useBreadcrumbs("Diverse Need Category Details", [
+useBreadcrumbs("Children with Diverse Needs Category Details", [
   { title: "Administration", to: { name: "AdministrationPage" } },
   {
-    title: "Diverse Need Categories",
+    title: "Children with Diverse Needs Categories",
     to: { name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage" },
   },
   {

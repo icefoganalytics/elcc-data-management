@@ -40,7 +40,7 @@ import DestroyService from "@/services/centres/destroy-service"
 describe("api/src/services/centres/destroy-service.ts", () => {
   describe("DestroyService", () => {
     describe("#perform", () => {
-      test("when deleting a centre, retires only its Diverse Needs rows", async () => {
+      test("when deleting a centre, retires only its Children with Diverse Needs rows", async () => {
         // Arrange
         const currentUser = await userFactory.create()
         const centre = await centreFactory.create()
@@ -62,9 +62,9 @@ describe("api/src/services/centres/destroy-service.ts", () => {
         await DestroyService.perform(centre, currentUser)
 
         // Assert
-        const remainingChildrenWithDiverseNeedsFundingRecords =
+        const remainingChildrenWithDiverseNeedsFundingRecord =
           await ChildrenWithDiverseNeedsFundingRecord.findAll()
-        expect(remainingChildrenWithDiverseNeedsFundingRecords).toEqual([
+        expect(remainingChildrenWithDiverseNeedsFundingRecord).toEqual([
           expect.objectContaining({
             id: otherChildrenWithDiverseNeedsFundingRecord.id,
             centreId: otherCentre.id,

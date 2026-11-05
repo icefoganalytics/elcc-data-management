@@ -347,9 +347,10 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           await flushPromises()
 
           // Assert
-          expect(wrapper.findAll("tbody tr > td:first-child").map((cell) => cell.text())).toEqual([
-            "Renamed Infant Cohort",
-          ])
+          const occupancy = wrapper.get<HTMLInputElement>(
+            "tbody tr:first-child td:nth-child(3) input"
+          )
+          expect(occupancy.element.disabled || occupancy.element.readOnly).toBe(false)
         }
       )
     })

@@ -1,7 +1,7 @@
 <template>
   <HeaderActionsFormCard
     ref="form"
-    title="Edit Diverse Need Category"
+    title="Edit Children with Diverse Needs Category"
     @submit.prevent="submit"
   >
     <v-text-field
@@ -75,9 +75,10 @@ import CurrencyInput from "@/components/CurrencyInput.vue"
 import HeaderActionsFormCard from "@/components/common/HeaderActionsFormCard.vue"
 import NumberTextField from "@/components/common/NumberTextField.vue"
 
-const childrenWithDiverseNeedsFundingCategory = defineModel<ChildrenWithDiverseNeedsFundingCategory>("childrenWithDiverseNeedsFundingCategory", {
-  required: true,
-})
+const childrenWithDiverseNeedsFundingCategory =
+  defineModel<ChildrenWithDiverseNeedsFundingCategory>("childrenWithDiverseNeedsFundingCategory", {
+    required: true,
+  })
 
 defineProps<{
   fundingPeriodDescription: string
