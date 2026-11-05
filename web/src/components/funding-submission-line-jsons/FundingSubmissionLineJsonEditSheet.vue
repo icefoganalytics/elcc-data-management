@@ -76,7 +76,7 @@
 
 <script setup lang="ts">
 import { DateTime } from "luxon"
-import { computed, reactive, ref, toRefs } from "vue"
+import { computed, reactive, ref, toRefs, useTemplateRef } from "vue"
 import { groupBy, isNil } from "lodash"
 
 import childCareSpacesApi, { CHILD_CARE_SPACES_SECTION_NAME } from "@/api/child-care-spaces-api"
@@ -168,7 +168,12 @@ const childCareSpacesAsFundingLineValues = computed<FundingLineValue[]>(() => {
 })
 
 const sections = computed<{ sectionName: string; lines: FundingLineValue[] }[]>(() => {
-  const sectionGroups = groupBy(fundingSubmissionLineJson.value?.lines ?? [], "sectionName")
+  const sectionGroups = groupBy(
+    (fundingSubmissionLineJson.value?.lines ?? []).filter(
+      ({ sectionName }) => sectionName !== "Children with Diverse Needs"
+    ),
+    "sectionName"
+  )
   return [
     {
       sectionName: CHILD_CARE_SPACES_SECTION_NAME,
@@ -177,9 +182,9 @@ const sections = computed<{ sectionName: string; lines: FundingLineValue[] }[]>(
     ...Object.entries(sectionGroups).map(([sectionName, lines]) => ({ sectionName, lines })),
   ]
 })
-const fundingSubmissionLineJsonSectionTables = ref<
+const fundingSubmissionLineJsonSectionTables = useTemplateRef<
   InstanceType<typeof FundingSubmissionLineJsonSectionTable>[]
->([])
+>("fundingSubmissionLineJsonSectionTables")
 const notificationStore = useNotificationStore()
 
 async function reloadWorksheet() {
@@ -219,8 +224,9 @@ async function saveFundingSubmissionLineJson(): Promise<boolean> {
       if (
         childCareSpace.estimatedChildOccupancyRate === line.estimatedChildOccupancyRate &&
         childCareSpace.actualChildOccupancyRate === line.actualChildOccupancyRate
-      )
+      ) {
         continue
+      }
       childCareSpaceUpdates.push({
         id: childCareSpace.id,
         update: {
@@ -290,7 +296,7 @@ async function replicateChildCareSpaceEstimates(): Promise<void> {
 function goToNextSection(sectionIndex: number, columnName: ColumnNames) {
   if (sectionIndex < sections.value.length - 1) {
     const nextIndex = sectionIndex + 1
-    const nextSection = fundingSubmissionLineJsonSectionTables.value[nextIndex]
+    const nextSection = fundingSubmissionLineJsonSectionTables.value?.[nextIndex]
     if (isNil(nextSection)) {
       return
     }
@@ -302,7 +308,7 @@ function goToNextSection(sectionIndex: number, columnName: ColumnNames) {
 function goToPreviousSection(sectionIndex: number, columnName: ColumnNames) {
   if (sectionIndex > 0) {
     const previousIndex = sectionIndex - 1
-    const previousSection = fundingSubmissionLineJsonSectionTables.value[previousIndex]
+    const previousSection = fundingSubmissionLineJsonSectionTables.value?.[previousIndex]
     if (isNil(previousSection)) {
       return
     }
@@ -311,7 +317,7 @@ function goToPreviousSection(sectionIndex: number, columnName: ColumnNames) {
   }
 }
 
-const keyboardShortcutsModal = ref<InstanceType<typeof KeyboardShortcutsModal> | null>(null)
+const keyboardShortcutsModal = useTemplateRef("keyboardShortcutsModal")
 
 function activateKeyboardShortcutsModalIfCorrectEvent(event: KeyboardEvent) {
   if (event.shiftKey && event.key === "?") {
@@ -326,6 +332,7 @@ function showKeyboardShortcutsModal() {
 
   keyboardShortcutsModal.value.open()
 }
+
 defineExpose({
   saveFundingSubmissionLineJson,
   replicateOwnEstimates,

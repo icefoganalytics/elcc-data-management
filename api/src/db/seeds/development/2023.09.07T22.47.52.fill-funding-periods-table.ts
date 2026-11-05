@@ -8,6 +8,7 @@ import { FundingPeriods } from "@/services"
 import {
   AdministrationCostCategories,
   ChildCareSpaceCategories,
+  ChildrenWithDiverseNeedsFundingCategories,
   QualityEnhancementCategories,
 } from "@/services/funding-periods"
 
@@ -59,6 +60,7 @@ export async function seed(_knex: Knex): Promise<void> {
   await FundingPeriod.findEach(async (fundingPeriod) => {
     await ChildCareSpaceCategories.BulkEnsureService.perform(fundingPeriod)
     await QualityEnhancementCategories.BulkEnsureService.perform(fundingPeriod)
+    await ChildrenWithDiverseNeedsFundingCategories.BulkEnsureService.perform(fundingPeriod)
     await AdministrationCostCategories.BulkEnsureService.perform(fundingPeriod)
   })
 }

@@ -9,6 +9,7 @@ describe("api/src/services/funding-submission-lines/update-service.ts", () => {
     describe("#perform", () => {
       test.each([
         "Child Care Spaces",
+        "Children with Diverse Needs",
         "Administration",
         "Administration (10% of Spaces)",
         "Quality Enhancement Program",

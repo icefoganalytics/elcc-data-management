@@ -20,11 +20,14 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
       this.fiscalPeriodId
     )
     const qualityEnhancementsTotalAmount = await this.calculateQualityEnhancements()
+    const childrenWithDiverseNeedsFundingRecordsTotalAmount =
+      await this.calculateChildrenWithDiverseNeedsFundingRecords()
     const administrationCostsTotalAmount = await this.calculateAdministrationCosts()
     const buildingExpensesTotalAmount = await this.calculateBuildingExpenses()
     const totalEligibleExpenses = Big(fundingSubmissionExpensesAmount)
       .plus(childCareSpacesTotalAmount)
       .plus(qualityEnhancementsTotalAmount)
+      .plus(childrenWithDiverseNeedsFundingRecordsTotalAmount)
       .plus(administrationCostsTotalAmount)
       .plus(buildingExpensesTotalAmount)
 
@@ -141,6 +144,37 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
     )
 
     return Big(qualityEnhancementsResult.qualityEnhancementsTotalAmount).toFixed(4)
+  }
+
+  private async calculateChildrenWithDiverseNeedsFundingRecords(): Promise<string> {
+    const [childrenWithDiverseNeedsFundingRecordsResult] = await db.query<{
+      childrenWithDiverseNeedsFundingRecordsTotalAmount: string
+    }>(
+      /* sql */ `
+        SELECT
+          CONVERT(
+            VARCHAR(50),
+            COALESCE(SUM(actual_computed_total), 0)
+          ) AS childrenWithDiverseNeedsFundingRecordsTotalAmount
+        FROM
+          children_with_diverse_needs_funding_records
+        WHERE
+          centre_id = :centreId
+          AND fiscal_period_id = :fiscalPeriodId
+          AND deleted_at IS NULL
+      `,
+      {
+        type: QueryTypes.SELECT,
+        replacements: {
+          centreId: this.centreId,
+          fiscalPeriodId: this.fiscalPeriodId,
+        },
+      }
+    )
+
+    return Big(
+      childrenWithDiverseNeedsFundingRecordsResult.childrenWithDiverseNeedsFundingRecordsTotalAmount
+    ).toFixed(4)
   }
 
   private async calculateAdministrationCosts(): Promise<string> {

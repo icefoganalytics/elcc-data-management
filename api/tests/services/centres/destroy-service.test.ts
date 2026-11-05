@@ -3,6 +3,7 @@ import {
   AdministrationCostCategory,
   BuildingExpense,
   Centre,
+  ChildrenWithDiverseNeedsFundingRecord,
   EmployeeBenefit,
   FundingReconciliation,
   FundingReconciliationAdjustment,
@@ -18,6 +19,8 @@ import {
   administrationCostFactory,
   buildingExpenseFactory,
   centreFactory,
+  childrenWithDiverseNeedsFundingCategoryFactory,
+  childrenWithDiverseNeedsFundingRecordFactory,
   employeeBenefitFactory,
   employeeWageTierFactory,
   fiscalPeriodFactory,
@@ -37,6 +40,38 @@ import DestroyService from "@/services/centres/destroy-service"
 describe("api/src/services/centres/destroy-service.ts", () => {
   describe("DestroyService", () => {
     describe("#perform", () => {
+      test("when deleting a centre, retires only its Diverse Needs rows", async () => {
+        // Arrange
+        const currentUser = await userFactory.create()
+        const centre = await centreFactory.create()
+        const otherCentre = await centreFactory.create()
+        const fundingPeriod = await fundingPeriodFactory.create()
+        const fiscalPeriod = await fiscalPeriodFactory.associations({ fundingPeriod }).create()
+        const category = await childrenWithDiverseNeedsFundingCategoryFactory
+          .associations({ fundingPeriod })
+          .create()
+        await childrenWithDiverseNeedsFundingRecordFactory
+          .associations({ centre, fiscalPeriod, category })
+          .create()
+        const otherChildrenWithDiverseNeedsFundingRecord =
+          await childrenWithDiverseNeedsFundingRecordFactory
+            .associations({ centre: otherCentre, fiscalPeriod, category })
+            .create()
+
+        // Act
+        await DestroyService.perform(centre, currentUser)
+
+        // Assert
+        const remainingChildrenWithDiverseNeedsFundingRecords =
+          await ChildrenWithDiverseNeedsFundingRecord.findAll()
+        expect(remainingChildrenWithDiverseNeedsFundingRecords).toEqual([
+          expect.objectContaining({
+            id: otherChildrenWithDiverseNeedsFundingRecord.id,
+            centreId: otherCentre.id,
+          }),
+        ])
+      })
+
       test("when centre has no dependents, destroys the centre", async () => {
         // Arrange
         const currentUser = await userFactory.create()
