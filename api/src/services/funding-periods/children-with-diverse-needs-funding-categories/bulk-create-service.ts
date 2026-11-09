@@ -10,6 +10,16 @@ export class BulkCreateService extends BaseService {
   }
 
   async perform(): Promise<ChildrenWithDiverseNeedsFundingCategory[]> {
+    const categories = await this.buildCategories(this.fundingPeriod.fiscalYear)
+    const attributes = categories.map((category) => ({
+      ...category,
+      fundingPeriodId: this.fundingPeriod.id,
+    }))
+
+    return ChildrenWithDiverseNeedsFundingCategory.bulkCreate(attributes)
+  }
+
+  private async buildCategories(fiscalYear: string) {
     const previousFundingPeriod = await FundingPeriod.findOne({
       attributes: ["id"],
       where: {
@@ -23,7 +33,9 @@ export class BulkCreateService extends BaseService {
             )
           `,
         },
-        fiscalYear: { [Op.lt]: this.fundingPeriod.fiscalYear },
+        fiscalYear: {
+          [Op.lt]: fiscalYear,
+        },
       },
       order: [
         ["fiscalYear", "DESC"],
@@ -31,26 +43,24 @@ export class BulkCreateService extends BaseService {
         ["id", "DESC"],
       ],
     })
-    const previousCategories = isNil(previousFundingPeriod)
-      ? []
-      : await ChildrenWithDiverseNeedsFundingCategory.findAll({
-          attributes: ["categoryName", "fromAge", "toAge", "monthlyAmount"],
-          where: { fundingPeriodId: previousFundingPeriod.id },
-          order: [["id", "ASC"]],
-        })
+    if (isNil(previousFundingPeriod)) {
+      return ChildrenWithDiverseNeedsFundingCategory.DEFAULTS
+    }
 
-    const categories = isNil(previousFundingPeriod)
-      ? ChildrenWithDiverseNeedsFundingCategory.DEFAULTS
-      : previousCategories.map(({ categoryName, fromAge, toAge, monthlyAmount }) => ({
-          categoryName,
-          fromAge,
-          toAge,
-          monthlyAmount,
-        }))
+    const previousCategories = await ChildrenWithDiverseNeedsFundingCategory.findAll({
+      attributes: ["categoryName", "fromAge", "toAge", "monthlyAmount"],
+      where: {
+        fundingPeriodId: previousFundingPeriod.id,
+      },
+      order: [["id", "ASC"]],
+    })
 
-    return ChildrenWithDiverseNeedsFundingCategory.bulkCreate(
-      categories.map((category) => ({ ...category, fundingPeriodId: this.fundingPeriod.id }))
-    )
+    return previousCategories.map(({ categoryName, fromAge, toAge, monthlyAmount }) => ({
+      categoryName,
+      fromAge,
+      toAge,
+      monthlyAmount,
+    }))
   }
 }
 
