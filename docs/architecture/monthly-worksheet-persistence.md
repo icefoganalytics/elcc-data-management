@@ -62,6 +62,8 @@ Missing funding-period mappings or conflicting category references abort the bac
 
 `children_with_diverse_needs_funding_categories` owns annual names, optional age ranges, and monthly amounts. Its API permits only system administrators to create, edit, and retire configuration, and keeps the funding period immutable after creation. Editing or retiring annual configuration leaves existing monthly snapshots unchanged.
 
+`ChildrenWithDiverseNeedsFundingCategory.DEFAULTS` owns the initial Diverse Needs catalog. `FundingSubmissionLine` still owns sections not yet individualized; its now-empty defaults catalog, model property, and provisioning fallback remain wired until the remaining shared model and its consumers are retired together.
+
 Each `children_with_diverse_needs_funding_records` row snapshots its category name and rate for one centre and fiscal month. Decimal arithmetic computes totals from the two occupancy inputs. Annual provisioning copies the latest configured earlier period, including retired history so intentionally emptied years stay empty. Initial monthly provisioning uses active categories; later ensures do not recreate missing or retired rows. Centre and funding-period deletion retire their monthly rows, and funding-period deletion also retires its annual categories.
 
 Monthly provisioning iterates fiscal periods and active categories in bounded batches and returns only completion, not a collection of created records. Its transaction rolls back newly created snapshots if provisioning fails; existing active and retired snapshots remain untouched.
