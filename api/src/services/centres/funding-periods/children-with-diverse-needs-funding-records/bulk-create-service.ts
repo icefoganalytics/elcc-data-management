@@ -1,6 +1,6 @@
-import { type CreationAttributes } from "@sequelize/core"
-import { isEmpty } from "lodash"
+import { isNil } from "lodash"
 
+import db from "@/db/db-client"
 import {
   Centre,
   ChildrenWithDiverseNeedsFundingCategory,
@@ -18,52 +18,56 @@ export class BulkCreateService extends BaseService {
     super()
   }
 
-  async perform(): Promise<ChildrenWithDiverseNeedsFundingRecord[]> {
-    const periods = await FiscalPeriod.findAll({
-      attributes: ["id"],
-      where: { fundingPeriodId: this.fundingPeriod.id },
-      order: [["id", "ASC"]],
-    })
-    if (isEmpty(periods)) {
-      throw new Error("No fiscal periods found for the given funding period.")
-    }
+  async perform(): Promise<void> {
+    await db.transaction(async () => {
+      let hasFiscalPeriods = false
+      await FiscalPeriod.findEach(
+        {
+          attributes: ["id"],
+          where: { fundingPeriodId: this.fundingPeriod.id },
+          order: [["id", "ASC"]],
+        },
+        async (fiscalPeriod) => {
+          hasFiscalPeriods = true
+          await ChildrenWithDiverseNeedsFundingCategory.findEach(
+            {
+              attributes: ["id", "categoryName", "monthlyAmount"],
+              where: { fundingPeriodId: this.fundingPeriod.id },
+              order: [["id", "ASC"]],
+            },
+            async (category) => {
+              const existingRecord = await ChildrenWithDiverseNeedsFundingRecord.findOne({
+                attributes: ["id"],
+                where: {
+                  centreId: this.centre.id,
+                  fiscalPeriodId: fiscalPeriod.id,
+                  categoryId: category.id,
+                },
+                paranoid: false,
+              })
+              if (!isNil(existingRecord)) {
+                return
+              }
 
-    const categories = await ChildrenWithDiverseNeedsFundingCategory.findAll({
-      attributes: ["id", "categoryName", "monthlyAmount"],
-      where: { fundingPeriodId: this.fundingPeriod.id },
-      order: [["id", "ASC"]],
-    })
-    if (isEmpty(categories)) return []
-
-    const existingRecords = await ChildrenWithDiverseNeedsFundingRecord.findAll({
-      attributes: ["fiscalPeriodId", "categoryId"],
-      where: { centreId: this.centre.id, fiscalPeriodId: periods.map(({ id }) => id) },
-      paranoid: false,
-    })
-    const existingKeys = new Set(
-      existingRecords.map(({ fiscalPeriodId, categoryId }) => `${fiscalPeriodId}:${categoryId}`)
-    )
-    const attributes: CreationAttributes<ChildrenWithDiverseNeedsFundingRecord>[] = []
-    for (const period of periods) {
-      for (const category of categories) {
-        const key = `${period.id}:${category.id}`
-        if (existingKeys.has(key)) continue
-
-        attributes.push({
-          centreId: this.centre.id,
-          fiscalPeriodId: period.id,
-          categoryId: category.id,
-          lineName: category.categoryName,
-          monthlyAmount: category.monthlyAmount,
-          estimatedChildOccupancyRate: "0.0000",
-          actualChildOccupancyRate: "0.0000",
-          estimatedComputedTotal: "0.0000",
-          actualComputedTotal: "0.0000",
-        })
+              await ChildrenWithDiverseNeedsFundingRecord.create({
+                centreId: this.centre.id,
+                fiscalPeriodId: fiscalPeriod.id,
+                categoryId: category.id,
+                lineName: category.categoryName,
+                monthlyAmount: category.monthlyAmount,
+                estimatedChildOccupancyRate: "0.0000",
+                actualChildOccupancyRate: "0.0000",
+                estimatedComputedTotal: "0.0000",
+                actualComputedTotal: "0.0000",
+              })
+            }
+          )
+        }
+      )
+      if (!hasFiscalPeriods) {
+        throw new Error("No fiscal periods found for the given funding period.")
       }
-    }
-
-    return ChildrenWithDiverseNeedsFundingRecord.bulkCreate(attributes)
+    })
   }
 }
 

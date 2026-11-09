@@ -1,11 +1,6 @@
 import { isNil } from "lodash"
 
-import {
-  Centre,
-  ChildrenWithDiverseNeedsFundingRecord,
-  FiscalPeriod,
-  FundingPeriod,
-} from "@/models"
+import { Centre, ChildrenWithDiverseNeedsFundingRecord, FundingPeriod } from "@/models"
 import { Centres } from "@/services"
 import BaseService from "@/services/base-service"
 
@@ -18,30 +13,23 @@ export class BulkEnsureService extends BaseService {
     super()
   }
 
-  async perform(): Promise<ChildrenWithDiverseNeedsFundingRecord[]> {
-    const fiscalPeriods = await FiscalPeriod.findAll({
-      attributes: ["id"],
-      where: { fundingPeriodId: this.fundingPeriod.id },
-    })
-    const fiscalPeriodIds = fiscalPeriods.map(({ id }) => id)
-    const historicalRecord = await ChildrenWithDiverseNeedsFundingRecord.findOne({
-      attributes: ["id"],
-      where: {
-        centreId: this.centre.id,
-        fiscalPeriodId: fiscalPeriodIds,
-      },
-      paranoid: false,
-    })
-    if (!isNil(historicalRecord) || !this.isInitialProvisioning) {
-      return ChildrenWithDiverseNeedsFundingRecord.findAll({
-        where: {
-          centreId: this.centre.id,
-          fiscalPeriodId: fiscalPeriodIds,
-        },
-      })
+  async perform(): Promise<void> {
+    if (!this.isInitialProvisioning) {
+      return
     }
 
-    return Centres.FundingPeriods.ChildrenWithDiverseNeedsFundingRecords.BulkCreateService.perform(
+    const historicalRecord = await ChildrenWithDiverseNeedsFundingRecord.withScope({
+      method: ["byFundingPeriod", this.fundingPeriod.id],
+    }).findOne({
+      attributes: ["id"],
+      where: { centreId: this.centre.id },
+      paranoid: false,
+    })
+    if (!isNil(historicalRecord)) {
+      return
+    }
+
+    await Centres.FundingPeriods.ChildrenWithDiverseNeedsFundingRecords.BulkCreateService.perform(
       this.centre,
       this.fundingPeriod
     )
