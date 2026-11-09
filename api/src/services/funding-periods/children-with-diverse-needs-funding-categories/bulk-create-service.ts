@@ -10,16 +10,21 @@ export class BulkCreateService extends BaseService {
   }
 
   async perform(): Promise<ChildrenWithDiverseNeedsFundingCategory[]> {
-    const categories = await this.buildCategories(this.fundingPeriod.fiscalYear)
-    const attributes = categories.map((category) => ({
-      ...category,
-      fundingPeriodId: this.fundingPeriod.id,
-    }))
+    const childrenWithDiverseNeedsFundingCategoriesAttributes =
+      await this.buildChildrenWithDiverseNeedsFundingCategoriesAttributes(
+        this.fundingPeriod.id,
+        this.fundingPeriod.fiscalYear
+      )
 
-    return ChildrenWithDiverseNeedsFundingCategory.bulkCreate(attributes)
+    return ChildrenWithDiverseNeedsFundingCategory.bulkCreate(
+      childrenWithDiverseNeedsFundingCategoriesAttributes
+    )
   }
 
-  private async buildCategories(fiscalYear: string) {
+  private async buildChildrenWithDiverseNeedsFundingCategoriesAttributes(
+    fundingPeriodId: number,
+    fiscalYear: string
+  ) {
     const previousFundingPeriod = await FundingPeriod.findOne({
       attributes: ["id"],
       where: {
@@ -44,23 +49,30 @@ export class BulkCreateService extends BaseService {
       ],
     })
     if (isNil(previousFundingPeriod)) {
-      return ChildrenWithDiverseNeedsFundingCategory.DEFAULTS
+      return ChildrenWithDiverseNeedsFundingCategory.DEFAULTS.map((categoryAttributes) => ({
+        ...categoryAttributes,
+        fundingPeriodId,
+      }))
     }
 
-    const previousCategories = await ChildrenWithDiverseNeedsFundingCategory.findAll({
-      attributes: ["categoryName", "fromAge", "toAge", "monthlyAmount"],
-      where: {
-        fundingPeriodId: previousFundingPeriod.id,
-      },
-      order: [["id", "ASC"]],
-    })
+    const previousChildrenWithDiverseNeedsFundingCategories =
+      await ChildrenWithDiverseNeedsFundingCategory.findAll({
+        attributes: ["categoryName", "fromAge", "toAge", "monthlyAmount"],
+        where: {
+          fundingPeriodId: previousFundingPeriod.id,
+        },
+        order: [["id", "ASC"]],
+      })
 
-    return previousCategories.map(({ categoryName, fromAge, toAge, monthlyAmount }) => ({
-      categoryName,
-      fromAge,
-      toAge,
-      monthlyAmount,
-    }))
+    return previousChildrenWithDiverseNeedsFundingCategories.map(
+      ({ categoryName, fromAge, toAge, monthlyAmount }) => ({
+        fundingPeriodId,
+        categoryName,
+        fromAge,
+        toAge,
+        monthlyAmount,
+      })
+    )
   }
 }
 
