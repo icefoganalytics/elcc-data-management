@@ -1,5 +1,3 @@
-import { type Attributes } from "@sequelize/core"
-
 import { ChildrenWithDiverseNeedsFundingCategory } from "@/models"
 
 import { childrenWithDiverseNeedsFundingCategoryFactory, fundingPeriodFactory } from "@/factories"
@@ -17,7 +15,7 @@ describe("api/src/services/funding-periods/children-with-diverse-needs-funding-c
         await fundingPeriodFactory.create({ fiscalYear: "2024-2025" })
         const targetFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2025-2026" })
         const futureFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2026-2027" })
-        await childrenWithDiverseNeedsFundingCategoryFactory
+        const configuredFundingCategory = await childrenWithDiverseNeedsFundingCategoryFactory
           .associations({ fundingPeriod: configuredFundingPeriod })
           .create({
             categoryName: "Additional support",
@@ -25,16 +23,13 @@ describe("api/src/services/funding-periods/children-with-diverse-needs-funding-c
             toAge: 5,
             monthlyAmount: "123.4567",
           })
-        await childrenWithDiverseNeedsFundingCategoryFactory
+        const futureFundingCategory = await childrenWithDiverseNeedsFundingCategoryFactory
           .associations({ fundingPeriod: futureFundingPeriod })
-          .create({ categoryName: "Future support", monthlyAmount: "999.0000" })
-        const fundingCategoryFields: (keyof Attributes<ChildrenWithDiverseNeedsFundingCategory>)[] =
-          ["fundingPeriodId", "categoryName", "fromAge", "toAge", "monthlyAmount", "deletedAt"]
-        const originalChildrenWithDiverseNeedsFundingCategories =
-          await ChildrenWithDiverseNeedsFundingCategory.findAll({
-            attributes: fundingCategoryFields,
-            paranoid: false,
-            raw: true,
+          .create({
+            categoryName: "Future support",
+            fromAge: 3,
+            toAge: 6,
+            monthlyAmount: "999.0000",
           })
 
         // Act
@@ -43,20 +38,35 @@ describe("api/src/services/funding-periods/children-with-diverse-needs-funding-c
         // Assert
         const childrenWithDiverseNeedsFundingCategories =
           await ChildrenWithDiverseNeedsFundingCategory.findAll({
-            attributes: fundingCategoryFields,
             paranoid: false,
-            raw: true,
           })
-        expect(childrenWithDiverseNeedsFundingCategories).to.have.deep.members([
-          ...originalChildrenWithDiverseNeedsFundingCategories,
-          {
+        expect(childrenWithDiverseNeedsFundingCategories).toEqual([
+          expect.objectContaining({
+            id: configuredFundingCategory.id,
+            fundingPeriodId: configuredFundingPeriod.id,
+            categoryName: "Additional support",
+            fromAge: 2,
+            toAge: 5,
+            monthlyAmount: "123.4567",
+            deletedAt: null,
+          }),
+          expect.objectContaining({
+            id: futureFundingCategory.id,
+            fundingPeriodId: futureFundingPeriod.id,
+            categoryName: "Future support",
+            fromAge: 3,
+            toAge: 6,
+            monthlyAmount: "999",
+            deletedAt: null,
+          }),
+          expect.objectContaining({
             fundingPeriodId: targetFundingPeriod.id,
             categoryName: "Additional support",
             fromAge: 2,
             toAge: 5,
             monthlyAmount: "123.4567",
             deletedAt: null,
-          },
+          }),
         ])
       })
 
@@ -65,19 +75,24 @@ describe("api/src/services/funding-periods/children-with-diverse-needs-funding-c
         const olderFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2023-2024" })
         const emptiedFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2024-2025" })
         const targetFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2025-2026" })
-        await childrenWithDiverseNeedsFundingCategoryFactory
+        const olderFundingCategory = await childrenWithDiverseNeedsFundingCategoryFactory
           .associations({ fundingPeriod: olderFundingPeriod })
-          .create({ categoryName: "Older support", monthlyAmount: "100.0000" })
+          .create({
+            categoryName: "Older support",
+            fromAge: 2,
+            toAge: 3,
+            monthlyAmount: "100.0000",
+          })
         const retiredChildrenWithDiverseNeedsFundingCategory =
           await childrenWithDiverseNeedsFundingCategoryFactory
             .associations({ fundingPeriod: emptiedFundingPeriod })
-            .create({ categoryName: "Retired support", monthlyAmount: "150.0000" })
+            .create({
+              categoryName: "Retired support",
+              fromAge: 2,
+              toAge: 3,
+              monthlyAmount: "150.0000",
+            })
         await retiredChildrenWithDiverseNeedsFundingCategory.destroy()
-        const originalChildrenWithDiverseNeedsFundingCategories =
-          await ChildrenWithDiverseNeedsFundingCategory.findAll({
-            paranoid: false,
-            raw: true,
-          })
 
         // Act
         await BulkCreateService.perform(targetFundingPeriod)
@@ -86,11 +101,27 @@ describe("api/src/services/funding-periods/children-with-diverse-needs-funding-c
         const childrenWithDiverseNeedsFundingCategories =
           await ChildrenWithDiverseNeedsFundingCategory.findAll({
             paranoid: false,
-            raw: true,
           })
-        expect(childrenWithDiverseNeedsFundingCategories).to.have.deep.members(
-          originalChildrenWithDiverseNeedsFundingCategories
-        )
+        expect(childrenWithDiverseNeedsFundingCategories).toEqual([
+          expect.objectContaining({
+            id: olderFundingCategory.id,
+            fundingPeriodId: olderFundingPeriod.id,
+            categoryName: "Older support",
+            fromAge: 2,
+            toAge: 3,
+            monthlyAmount: "100",
+            deletedAt: null,
+          }),
+          expect.objectContaining({
+            id: retiredChildrenWithDiverseNeedsFundingCategory.id,
+            fundingPeriodId: emptiedFundingPeriod.id,
+            categoryName: "Retired support",
+            fromAge: 2,
+            toAge: 3,
+            monthlyAmount: "150",
+            deletedAt: retiredChildrenWithDiverseNeedsFundingCategory.deletedAt,
+          }),
+        ])
       })
     })
   })

@@ -186,9 +186,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           }
           throw new Error(`Unexpected GET ${url}`)
         })
-        const savedWorksheetUpdates: string[] = []
         httpClientMock.patch.mockImplementation(async (url) => {
-          savedWorksheetUpdates.push(url)
           if (url === "/api/child-care-spaces/50") {
             return { data: { childCareSpace } }
           }
@@ -271,10 +269,17 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         await flushPromises()
 
         // Assert
-        expect(savedWorksheetUpdates).toEqual([
+        expect(httpClientMock.patch).toHaveBeenCalledTimes(2)
+        expect(httpClientMock.patch).toHaveBeenNthCalledWith(
+          1,
           "/api/child-care-spaces/50",
+          expect.anything()
+        )
+        expect(httpClientMock.patch).toHaveBeenNthCalledWith(
+          2,
           "/api/funding-submission-line-jsons/55",
-        ])
+          expect.anything()
+        )
       })
 
       test("when the fiscal period is pending after replication, withholds worksheet editing", async () => {
@@ -431,11 +436,11 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             return {
               data: {
                 fiscalPeriods: [
-                  {
+                  fiscalPeriodFactory.build({
                     id: 4,
                     fiscalYear: "2024-25",
                     month: FiscalPeriodMonths.APRIL,
-                  },
+                  }),
                 ],
                 totalCount: 1,
               },
@@ -618,8 +623,6 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             estimatedChildOccupancyRate: "0.6250",
           })
           const http = vi.mocked(httpClient, true)
-          const qualityUpdates: unknown[] = []
-          const replicationRequests: string[] = []
           http.get.mockImplementation(async (url) => {
             if (url === "/api/funding-submission-line-jsons") {
               return { data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 } }
@@ -641,14 +644,8 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             }
             return { data: { fundingSubmissionLineJson: worksheet } }
           })
-          http.patch.mockImplementation(async (url, attributes) => {
-            if (url === "/api/quality-enhancements/70") qualityUpdates.push(attributes)
-            return { data: {} }
-          })
-          http.post.mockImplementation(async (url) => {
-            replicationRequests.push(url)
-            return { data: undefined }
-          })
+          http.patch.mockResolvedValue({ data: {} })
+          http.post.mockResolvedValue({ data: undefined })
           const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
           await router.push("/")
           await router.isReady()
@@ -678,14 +675,22 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           await flushPromises()
 
           // Assert
-          expect(qualityUpdates).toEqual([{ estimatedChildOccupancyRate: "0.8125" }])
+          expect(http.patch).toHaveBeenCalledTimes(2)
+          expect(http.patch).toHaveBeenNthCalledWith(1, "/api/quality-enhancements/70", {
+            estimatedChildOccupancyRate: "0.8125",
+          })
           if (actionLabel === "Replicate Estimates") {
-            expect(replicationRequests).toEqual([
-              "/api/funding-submission-line-jsons/44/replicate-estimates",
-              "/api/quality-enhancements/70/replicate-estimates",
-            ])
+            expect(http.post).toHaveBeenCalledTimes(2)
+            expect(http.post).toHaveBeenNthCalledWith(
+              1,
+              "/api/funding-submission-line-jsons/44/replicate-estimates"
+            )
+            expect(http.post).toHaveBeenNthCalledWith(
+              2,
+              "/api/quality-enhancements/70/replicate-estimates"
+            )
           } else {
-            expect(replicationRequests).toEqual([])
+            expect(http.post).not.toHaveBeenCalled()
           }
         }
       )

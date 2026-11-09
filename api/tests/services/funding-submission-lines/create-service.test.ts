@@ -18,14 +18,14 @@ describe("api/src/services/funding-submission-lines/create-service.ts", () => {
         })
 
         // Act
-        await CreateService.perform({
+        const fundingSubmissionLine1 = await CreateService.perform({
           fiscalYear: "2147/48",
           sectionName: "Additional Funding",
           lineName: "Infants",
           monthlyAmount: "100.00",
           childCareSpaceCategoryId: null,
         })
-        await CreateService.perform({
+        const fundingSubmissionLine2 = await CreateService.perform({
           fiscalYear: "2147/48",
           sectionName: "Other Section",
           lineName: "Infants",
@@ -37,10 +37,12 @@ describe("api/src/services/funding-submission-lines/create-service.ts", () => {
         const persistedLines = await FundingSubmissionLine.findAll()
         expect(persistedLines).toEqual([
           expect.objectContaining({
+            id: fundingSubmissionLine1.id,
             sectionName: "Additional Funding",
             childCareSpaceCategoryId: null,
           }),
           expect.objectContaining({
+            id: fundingSubmissionLine2.id,
             sectionName: "Other Section",
             childCareSpaceCategoryId: null,
           }),

@@ -1,5 +1,3 @@
-import { type Attributes } from "@sequelize/core"
-
 import { ChildrenWithDiverseNeedsFundingRecord, FiscalPeriod } from "@/models"
 
 import {
@@ -24,33 +22,25 @@ describe("api/src/services/centres/funding-periods/children-with-diverse-needs-f
           await childrenWithDiverseNeedsFundingCategoryFactory
             .associations({ fundingPeriod })
             .create({ categoryName: "Additional support", monthlyAmount: "123.4567" })
-        await childrenWithDiverseNeedsFundingRecordFactory
+        const otherCentreFundingRecord = await childrenWithDiverseNeedsFundingRecordFactory
           .associations({ fiscalPeriod, category: childrenWithDiverseNeedsFundingCategory })
-          .create()
+          .create({
+            lineName: "Other centre support",
+            monthlyAmount: "100.0000",
+            estimatedChildOccupancyRate: "0.5000",
+            actualChildOccupancyRate: "0.2500",
+          })
         const otherFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2025-2026" })
         const otherFiscalPeriod = await fiscalPeriodFactory
           .associations({ fundingPeriod: otherFundingPeriod })
           .create()
-        await childrenWithDiverseNeedsFundingRecordFactory
+        const otherYearFundingRecord = await childrenWithDiverseNeedsFundingRecordFactory
           .associations({ centre, fiscalPeriod: otherFiscalPeriod })
-          .create()
-        const fundingRecordFields: (keyof Attributes<ChildrenWithDiverseNeedsFundingRecord>)[] = [
-          "centreId",
-          "fiscalPeriodId",
-          "categoryId",
-          "lineName",
-          "monthlyAmount",
-          "estimatedChildOccupancyRate",
-          "actualChildOccupancyRate",
-          "estimatedComputedTotal",
-          "actualComputedTotal",
-          "deletedAt",
-        ]
-        const originalChildrenWithDiverseNeedsFundingRecords =
-          await ChildrenWithDiverseNeedsFundingRecord.findAll({
-            attributes: fundingRecordFields,
-            paranoid: false,
-            raw: true,
+          .create({
+            lineName: "Other year support",
+            monthlyAmount: "200.0000",
+            estimatedChildOccupancyRate: "0.7500",
+            actualChildOccupancyRate: "0.5000",
           })
 
         // Act
@@ -60,13 +50,36 @@ describe("api/src/services/centres/funding-periods/children-with-diverse-needs-f
         // Assert
         const childrenWithDiverseNeedsFundingRecords =
           await ChildrenWithDiverseNeedsFundingRecord.findAll({
-            attributes: fundingRecordFields,
             paranoid: false,
-            raw: true,
           })
-        expect(childrenWithDiverseNeedsFundingRecords).to.have.deep.members([
-          ...originalChildrenWithDiverseNeedsFundingRecords,
-          {
+        expect(childrenWithDiverseNeedsFundingRecords).toEqual([
+          expect.objectContaining({
+            id: otherCentreFundingRecord.id,
+            centreId: otherCentreFundingRecord.centreId,
+            fiscalPeriodId: fiscalPeriod.id,
+            categoryId: childrenWithDiverseNeedsFundingCategory.id,
+            lineName: "Other centre support",
+            monthlyAmount: "100",
+            estimatedChildOccupancyRate: "0.5",
+            actualChildOccupancyRate: "0.25",
+            estimatedComputedTotal: "50",
+            actualComputedTotal: "25",
+            deletedAt: null,
+          }),
+          expect.objectContaining({
+            id: otherYearFundingRecord.id,
+            centreId: centre.id,
+            fiscalPeriodId: otherFiscalPeriod.id,
+            categoryId: otherYearFundingRecord.categoryId,
+            lineName: "Other year support",
+            monthlyAmount: "200",
+            estimatedChildOccupancyRate: "0.75",
+            actualChildOccupancyRate: "0.5",
+            estimatedComputedTotal: "150",
+            actualComputedTotal: "100",
+            deletedAt: null,
+          }),
+          expect.objectContaining({
             centreId: centre.id,
             fiscalPeriodId: fiscalPeriod.id,
             categoryId: childrenWithDiverseNeedsFundingCategory.id,
@@ -77,7 +90,7 @@ describe("api/src/services/centres/funding-periods/children-with-diverse-needs-f
             estimatedComputedTotal: "0",
             actualComputedTotal: "0",
             deletedAt: null,
-          },
+          }),
         ])
       })
 
@@ -91,13 +104,13 @@ describe("api/src/services/centres/funding-periods/children-with-diverse-needs-f
         const mayFiscalPeriod = await fiscalPeriodFactory
           .associations({ fundingPeriod })
           .create({ month: FiscalPeriod.Months.MAY })
-        await childrenWithDiverseNeedsFundingRecordFactory
+        const mayFundingRecord = await childrenWithDiverseNeedsFundingRecordFactory
           .associations({ centre, fiscalPeriod: mayFiscalPeriod })
-          .create({ estimatedChildOccupancyRate: "0.5000", actualChildOccupancyRate: "0.2500" })
-        const originalChildrenWithDiverseNeedsFundingRecords =
-          await ChildrenWithDiverseNeedsFundingRecord.findAll({
-            paranoid: false,
-            raw: true,
+          .create({
+            lineName: "Saved support",
+            monthlyAmount: "100.0000",
+            estimatedChildOccupancyRate: "0.5000",
+            actualChildOccupancyRate: "0.2500",
           })
 
         // Act
@@ -107,11 +120,22 @@ describe("api/src/services/centres/funding-periods/children-with-diverse-needs-f
         const childrenWithDiverseNeedsFundingRecords =
           await ChildrenWithDiverseNeedsFundingRecord.findAll({
             paranoid: false,
-            raw: true,
           })
-        expect(childrenWithDiverseNeedsFundingRecords).to.have.deep.members(
-          originalChildrenWithDiverseNeedsFundingRecords
-        )
+        expect(childrenWithDiverseNeedsFundingRecords).toEqual([
+          expect.objectContaining({
+            id: mayFundingRecord.id,
+            centreId: centre.id,
+            fiscalPeriodId: mayFiscalPeriod.id,
+            categoryId: mayFundingRecord.categoryId,
+            lineName: "Saved support",
+            monthlyAmount: "100",
+            estimatedChildOccupancyRate: "0.5",
+            actualChildOccupancyRate: "0.25",
+            estimatedComputedTotal: "50",
+            actualComputedTotal: "25",
+            deletedAt: null,
+          }),
+        ])
       })
 
       test("when all monthly snapshots were retired, repeated ensures preserve the retirement without creating replacements", async () => {
@@ -122,13 +146,13 @@ describe("api/src/services/centres/funding-periods/children-with-diverse-needs-f
         const childrenWithDiverseNeedsFundingRecord =
           await childrenWithDiverseNeedsFundingRecordFactory
             .associations({ centre, fiscalPeriod })
-            .create()
+            .create({
+              lineName: "Retired support",
+              monthlyAmount: "100.0000",
+              estimatedChildOccupancyRate: "0.5000",
+              actualChildOccupancyRate: "0.2500",
+            })
         await childrenWithDiverseNeedsFundingRecord.destroy()
-        const originalChildrenWithDiverseNeedsFundingRecords =
-          await ChildrenWithDiverseNeedsFundingRecord.findAll({
-            paranoid: false,
-            raw: true,
-          })
 
         // Act
         await BulkEnsureService.perform(centre, fundingPeriod)
@@ -138,11 +162,22 @@ describe("api/src/services/centres/funding-periods/children-with-diverse-needs-f
         const childrenWithDiverseNeedsFundingRecords =
           await ChildrenWithDiverseNeedsFundingRecord.findAll({
             paranoid: false,
-            raw: true,
           })
-        expect(childrenWithDiverseNeedsFundingRecords).to.have.deep.members(
-          originalChildrenWithDiverseNeedsFundingRecords
-        )
+        expect(childrenWithDiverseNeedsFundingRecords).toEqual([
+          expect.objectContaining({
+            id: childrenWithDiverseNeedsFundingRecord.id,
+            centreId: centre.id,
+            fiscalPeriodId: fiscalPeriod.id,
+            categoryId: childrenWithDiverseNeedsFundingRecord.categoryId,
+            lineName: "Retired support",
+            monthlyAmount: "100",
+            estimatedChildOccupancyRate: "0.5",
+            actualChildOccupancyRate: "0.25",
+            estimatedComputedTotal: "50",
+            actualComputedTotal: "25",
+            deletedAt: childrenWithDiverseNeedsFundingRecord.deletedAt,
+          }),
+        ])
       })
     })
   })

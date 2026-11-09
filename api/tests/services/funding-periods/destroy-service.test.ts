@@ -204,7 +204,7 @@ describe("api/src/services/funding-periods/destroy-service.ts", () => {
         await administrationCostFactory
           .associations({ centre, fiscalPeriod: selectedFiscalPeriod, category: selectedCategory })
           .create()
-        await administrationCostFactory
+        const unrelatedAdministrationCost = await administrationCostFactory
           .associations({
             centre,
             fiscalPeriod: unrelatedFiscalPeriod,
@@ -219,6 +219,7 @@ describe("api/src/services/funding-periods/destroy-service.ts", () => {
         const remainingAdministrationCosts = await AdministrationCost.findAll()
         expect(remainingAdministrationCosts).toEqual([
           expect.objectContaining({
+            id: unrelatedAdministrationCost.id,
             centreId: centre.id,
             fiscalPeriodId: unrelatedFiscalPeriod.id,
             categoryId: unrelatedCategory.id,
