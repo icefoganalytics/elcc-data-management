@@ -1,3 +1,5 @@
+import { type Attributes } from "@sequelize/core"
+
 import { ChildrenWithDiverseNeedsFundingRecord, FiscalPeriod } from "@/models"
 
 import {
@@ -18,11 +20,12 @@ describe("api/src/services/centres/funding-periods/children-with-diverse-needs-f
         const centre = await centreFactory.create()
         const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2024-2025" })
         const fiscalPeriod = await fiscalPeriodFactory.associations({ fundingPeriod }).create()
-        const category = await childrenWithDiverseNeedsFundingCategoryFactory
-          .associations({ fundingPeriod })
-          .create({ categoryName: "Additional support", monthlyAmount: "123.4567" })
+        const childrenWithDiverseNeedsFundingCategory =
+          await childrenWithDiverseNeedsFundingCategoryFactory
+            .associations({ fundingPeriod })
+            .create({ categoryName: "Additional support", monthlyAmount: "123.4567" })
         await childrenWithDiverseNeedsFundingRecordFactory
-          .associations({ fiscalPeriod, category })
+          .associations({ fiscalPeriod, category: childrenWithDiverseNeedsFundingCategory })
           .create()
         const otherFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2025-2026" })
         const otherFiscalPeriod = await fiscalPeriodFactory
@@ -31,30 +34,50 @@ describe("api/src/services/centres/funding-periods/children-with-diverse-needs-f
         await childrenWithDiverseNeedsFundingRecordFactory
           .associations({ centre, fiscalPeriod: otherFiscalPeriod })
           .create()
+        const fundingRecordFields: (keyof Attributes<ChildrenWithDiverseNeedsFundingRecord>)[] = [
+          "centreId",
+          "fiscalPeriodId",
+          "categoryId",
+          "lineName",
+          "monthlyAmount",
+          "estimatedChildOccupancyRate",
+          "actualChildOccupancyRate",
+          "estimatedComputedTotal",
+          "actualComputedTotal",
+          "deletedAt",
+        ]
+        const originalChildrenWithDiverseNeedsFundingRecords =
+          await ChildrenWithDiverseNeedsFundingRecord.findAll({
+            attributes: fundingRecordFields,
+            paranoid: false,
+            raw: true,
+          })
 
         // Act
         await BulkEnsureService.perform(centre, fundingPeriod)
         await BulkEnsureService.perform(centre, fundingPeriod)
 
         // Assert
-        const records = await ChildrenWithDiverseNeedsFundingRecord.findAll({
-          where: {
+        const childrenWithDiverseNeedsFundingRecords =
+          await ChildrenWithDiverseNeedsFundingRecord.findAll({
+            attributes: fundingRecordFields,
+            paranoid: false,
+            raw: true,
+          })
+        expect(childrenWithDiverseNeedsFundingRecords).to.have.deep.members([
+          ...originalChildrenWithDiverseNeedsFundingRecords,
+          {
             centreId: centre.id,
             fiscalPeriodId: fiscalPeriod.id,
-          },
-        })
-        expect(records).toEqual([
-          expect.objectContaining({
-            centreId: centre.id,
-            fiscalPeriodId: fiscalPeriod.id,
-            categoryId: category.id,
+            categoryId: childrenWithDiverseNeedsFundingCategory.id,
             lineName: "Additional support",
             monthlyAmount: "123.4567",
             estimatedChildOccupancyRate: "0",
             actualChildOccupancyRate: "0",
             estimatedComputedTotal: "0",
             actualComputedTotal: "0",
-          }),
+            deletedAt: null,
+          },
         ])
       })
 
@@ -65,30 +88,30 @@ describe("api/src/services/centres/funding-periods/children-with-diverse-needs-f
         await fiscalPeriodFactory
           .associations({ fundingPeriod })
           .create({ month: FiscalPeriod.Months.APRIL })
-        const fiscalPeriod = await fiscalPeriodFactory
+        const mayFiscalPeriod = await fiscalPeriodFactory
           .associations({ fundingPeriod })
           .create({ month: FiscalPeriod.Months.MAY })
-        const record = await childrenWithDiverseNeedsFundingRecordFactory
-          .associations({ centre, fiscalPeriod })
+        await childrenWithDiverseNeedsFundingRecordFactory
+          .associations({ centre, fiscalPeriod: mayFiscalPeriod })
           .create({ estimatedChildOccupancyRate: "0.5000", actualChildOccupancyRate: "0.2500" })
-        const originalRecords = await ChildrenWithDiverseNeedsFundingRecord.findAll({
-          where: {
-            id: record.id,
-          },
-          raw: true,
-        })
+        const originalChildrenWithDiverseNeedsFundingRecords =
+          await ChildrenWithDiverseNeedsFundingRecord.findAll({
+            paranoid: false,
+            raw: true,
+          })
 
         // Act
         await BulkEnsureService.perform(centre, fundingPeriod)
 
         // Assert
-        const records = await ChildrenWithDiverseNeedsFundingRecord.findAll({
-          where: {
-            centreId: centre.id,
-          },
-          raw: true,
-        })
-        expect(records).toEqual(originalRecords)
+        const childrenWithDiverseNeedsFundingRecords =
+          await ChildrenWithDiverseNeedsFundingRecord.findAll({
+            paranoid: false,
+            raw: true,
+          })
+        expect(childrenWithDiverseNeedsFundingRecords).to.have.deep.members(
+          originalChildrenWithDiverseNeedsFundingRecords
+        )
       })
 
       test("when all monthly snapshots were retired, repeated ensures preserve the retirement without creating replacements", async () => {
@@ -96,31 +119,30 @@ describe("api/src/services/centres/funding-periods/children-with-diverse-needs-f
         const centre = await centreFactory.create()
         const fundingPeriod = await fundingPeriodFactory.create()
         const fiscalPeriod = await fiscalPeriodFactory.associations({ fundingPeriod }).create()
-        const record = await childrenWithDiverseNeedsFundingRecordFactory
-          .associations({ centre, fiscalPeriod })
-          .create()
-        await record.destroy()
-        const originalRecords = await ChildrenWithDiverseNeedsFundingRecord.findAll({
-          where: {
-            id: record.id,
-          },
-          paranoid: false,
-          raw: true,
-        })
+        const childrenWithDiverseNeedsFundingRecord =
+          await childrenWithDiverseNeedsFundingRecordFactory
+            .associations({ centre, fiscalPeriod })
+            .create()
+        await childrenWithDiverseNeedsFundingRecord.destroy()
+        const originalChildrenWithDiverseNeedsFundingRecords =
+          await ChildrenWithDiverseNeedsFundingRecord.findAll({
+            paranoid: false,
+            raw: true,
+          })
 
         // Act
         await BulkEnsureService.perform(centre, fundingPeriod)
         await BulkEnsureService.perform(centre, fundingPeriod)
 
         // Assert
-        const records = await ChildrenWithDiverseNeedsFundingRecord.findAll({
-          where: {
-            centreId: centre.id,
-          },
-          paranoid: false,
-          raw: true,
-        })
-        expect(records).toEqual(originalRecords)
+        const childrenWithDiverseNeedsFundingRecords =
+          await ChildrenWithDiverseNeedsFundingRecord.findAll({
+            paranoid: false,
+            raw: true,
+          })
+        expect(childrenWithDiverseNeedsFundingRecords).to.have.deep.members(
+          originalChildrenWithDiverseNeedsFundingRecords
+        )
       })
     })
   })
