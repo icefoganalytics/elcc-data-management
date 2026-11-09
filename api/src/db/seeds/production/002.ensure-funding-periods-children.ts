@@ -9,21 +9,17 @@ import type { Knex } from "knex"
 
 import { FundingPeriod } from "@/models"
 import { FundingPeriods } from "@/services"
-import {
-  AdministrationCostCategories,
-  ChildCareSpaceCategories,
-  ChildrenWithDiverseNeedsFundingCategories,
-  QualityEnhancementCategories,
-} from "@/services/funding-periods"
 
 export async function seed(_knex: Knex): Promise<void> {
   await FundingPeriod.findEach(async (fundingPeriod) => {
     await FundingPeriods.FiscalPeriods.BulkEnsureService.perform(fundingPeriod)
     await FundingPeriods.EmployeeWageTiers.BulkEnsureService.perform(fundingPeriod)
-    await ChildCareSpaceCategories.BulkEnsureService.perform(fundingPeriod)
-    await QualityEnhancementCategories.BulkEnsureService.perform(fundingPeriod)
-    await ChildrenWithDiverseNeedsFundingCategories.BulkEnsureService.perform(fundingPeriod)
-    await AdministrationCostCategories.BulkEnsureService.perform(fundingPeriod)
+    await FundingPeriods.ChildCareSpaceCategories.BulkEnsureService.perform(fundingPeriod)
+    await FundingPeriods.QualityEnhancementCategories.BulkEnsureService.perform(fundingPeriod)
+    await FundingPeriods.ChildrenWithDiverseNeedsFundingCategories.BulkEnsureService.perform(
+      fundingPeriod
+    )
+    await FundingPeriods.AdministrationCostCategories.BulkEnsureService.perform(fundingPeriod)
     await FundingPeriods.FundingSubmissionLines.BulkEnsureService.perform(fundingPeriod)
   })
 }
