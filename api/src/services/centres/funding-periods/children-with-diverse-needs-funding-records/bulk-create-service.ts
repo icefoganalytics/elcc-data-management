@@ -29,6 +29,7 @@ export class BulkCreateService extends BaseService {
     }
 
     const categories = await ChildrenWithDiverseNeedsFundingCategory.findAll({
+      attributes: ["id", "categoryName", "monthlyAmount"],
       where: { fundingPeriodId: this.fundingPeriod.id },
       order: [["id", "ASC"]],
     })

@@ -1,10 +1,6 @@
 import { Centre, FundingPeriod } from "@/models"
 import { Centres } from "@/services"
 import BaseService from "@/services/base-service"
-import {
-  ChildrenWithDiverseNeedsFundingRecords,
-  QualityEnhancements,
-} from "@/services/centres/funding-periods"
 
 export class EnsureChildrenService extends BaseService {
   constructor(
@@ -43,12 +39,12 @@ export class EnsureChildrenService extends BaseService {
       this.fundingPeriod,
       isInitialProvisioning
     )
-    await QualityEnhancements.BulkEnsureService.perform(
+    await Centres.FundingPeriods.QualityEnhancements.BulkEnsureService.perform(
       this.centre,
       this.fundingPeriod,
       isInitialProvisioning
     )
-    await ChildrenWithDiverseNeedsFundingRecords.BulkEnsureService.perform(
+    await Centres.FundingPeriods.ChildrenWithDiverseNeedsFundingRecords.BulkEnsureService.perform(
       this.centre,
       this.fundingPeriod,
       isInitialProvisioning

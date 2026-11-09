@@ -1,8 +1,8 @@
 import { isNil } from "lodash"
 
 import { ChildrenWithDiverseNeedsFundingCategory, FundingPeriod } from "@/models"
+import { FundingPeriods } from "@/services"
 import BaseService from "@/services/base-service"
-import BulkCreateService from "@/services/funding-periods/children-with-diverse-needs-funding-categories/bulk-create-service"
 
 export class BulkEnsureService extends BaseService {
   constructor(private fundingPeriod: FundingPeriod) {
@@ -21,7 +21,9 @@ export class BulkEnsureService extends BaseService {
       })
     }
 
-    return BulkCreateService.perform(this.fundingPeriod)
+    return FundingPeriods.ChildrenWithDiverseNeedsFundingCategories.BulkCreateService.perform(
+      this.fundingPeriod
+    )
   }
 }
 

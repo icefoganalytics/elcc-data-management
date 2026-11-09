@@ -45,7 +45,7 @@ describe("api/src/services/funding-reconciliations/calculate-eligible-expenses-p
           dateEnd: new Date("2025-04-30"),
           values: JSON.stringify([
             {
-              actualComputedTotal: 50.0,
+              actualComputedTotal: "50.0000",
             },
           ]),
         })
@@ -256,7 +256,7 @@ describe("api/src/services/funding-reconciliations/calculate-eligible-expenses-p
           dateEnd: new Date("2025-04-30"),
           values: JSON.stringify([
             {
-              actualComputedTotal: 30.0,
+              actualComputedTotal: "30.0000",
             },
           ]),
         })
@@ -268,7 +268,7 @@ describe("api/src/services/funding-reconciliations/calculate-eligible-expenses-p
           dateEnd: new Date("2025-04-30"),
           values: JSON.stringify([
             {
-              actualComputedTotal: 70.0,
+              actualComputedTotal: "70.0000",
             },
           ]),
         })
@@ -307,13 +307,13 @@ describe("api/src/services/funding-reconciliations/calculate-eligible-expenses-p
           dateEnd: new Date("2025-04-30"),
           values: JSON.stringify([
             {
-              actualComputedTotal: 25.0,
+              actualComputedTotal: "25.0000",
             },
             {
-              actualComputedTotal: 35.0,
+              actualComputedTotal: "35.0000",
             },
             {
-              actualComputedTotal: 40.0,
+              actualComputedTotal: "40.0000",
             },
           ]),
         })
@@ -352,7 +352,7 @@ describe("api/src/services/funding-reconciliations/calculate-eligible-expenses-p
           dateEnd: new Date("2025-04-30"),
           values: JSON.stringify([
             {
-              actualComputedTotal: 50.0,
+              actualComputedTotal: "50.0000",
             },
           ]),
         })

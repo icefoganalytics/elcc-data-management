@@ -100,7 +100,9 @@ const props = withDefaults(
     fiscalPeriodId: number
     isWorkflowBusy?: boolean
   }>(),
-  { isWorkflowBusy: false }
+  {
+    isWorkflowBusy: false,
+  }
 )
 
 const emit = defineEmits<{

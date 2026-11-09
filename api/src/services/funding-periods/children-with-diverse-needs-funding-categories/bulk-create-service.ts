@@ -41,6 +41,7 @@ export class BulkCreateService extends BaseService {
     const previousCategories = isNil(previousFundingPeriod)
       ? []
       : await ChildrenWithDiverseNeedsFundingCategory.findAll({
+          attributes: ["categoryName", "fromAge", "toAge", "monthlyAmount"],
           where: { fundingPeriodId: previousFundingPeriod.id },
           order: [["id", "ASC"]],
         })

@@ -6,8 +6,8 @@ import {
   FiscalPeriod,
   FundingPeriod,
 } from "@/models"
+import { Centres } from "@/services"
 import BaseService from "@/services/base-service"
-import BulkCreateService from "@/services/centres/funding-periods/children-with-diverse-needs-funding-records/bulk-create-service"
 
 export class BulkEnsureService extends BaseService {
   constructor(
@@ -41,7 +41,10 @@ export class BulkEnsureService extends BaseService {
       })
     }
 
-    return BulkCreateService.perform(this.centre, this.fundingPeriod)
+    return Centres.FundingPeriods.ChildrenWithDiverseNeedsFundingRecords.BulkCreateService.perform(
+      this.centre,
+      this.fundingPeriod
+    )
   }
 }
 

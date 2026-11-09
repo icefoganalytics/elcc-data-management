@@ -12,12 +12,13 @@ import { FiscalPeriodMonths } from "@/use/use-fiscal-periods"
 import {
   administrationCostFactory,
   childCareSpaceFactory,
+  childrenWithDiverseNeedsFundingRecordFactory,
   fiscalPeriodFactory,
   fundingSubmissionLineJsonFactory,
-  childrenWithDiverseNeedsFundingRecordFactory,
   qualityEnhancementFactory,
 } from "@/tests/factories"
 import { mockRouter, mockVuetify } from "@/tests/support"
+
 import MonthlyWorksheetPage from "@/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue"
 
 describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue", () => {
@@ -170,6 +171,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           if (url === "/api/children-with-diverse-needs-funding-records") {
             return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
           }
+
           if (url === "/api/quality-enhancements") {
             return { data: { qualityEnhancements: [qualityEnhancement], totalCount: 1 } }
           }
@@ -351,6 +353,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           if (url === "/api/children-with-diverse-needs-funding-records") {
             return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
           }
+
           if (url === "/api/quality-enhancements") {
             return { data: { qualityEnhancements: [], totalCount: 0 } }
           }
@@ -459,6 +462,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           if (url === "/api/children-with-diverse-needs-funding-records") {
             return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
           }
+
           if (url === "/api/quality-enhancements") {
             return { data: { qualityEnhancements: [], totalCount: 0 } }
           }
@@ -674,18 +678,19 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           await flushPromises()
 
           // Assert
-          expect(qualityUpdates).toContainEqual({ estimatedChildOccupancyRate: "0.8125" })
+          expect(qualityUpdates).toEqual([{ estimatedChildOccupancyRate: "0.8125" }])
           if (actionLabel === "Replicate Estimates") {
-            expect(replicationRequests).toContain(
-              "/api/quality-enhancements/70/replicate-estimates"
-            )
+            expect(replicationRequests).toEqual([
+              "/api/funding-submission-line-jsons/44/replicate-estimates",
+              "/api/quality-enhancements/70/replicate-estimates",
+            ])
           } else {
             expect(replicationRequests).toEqual([])
           }
         }
       )
 
-      test("when one Spaces update fails, refreshes linked tables after the partial save", async () => {
+      test("when one Spaces update fails, refreshes linked values without replicating the partial save", async () => {
         // Arrange
         const worksheet = fundingSubmissionLineJsonFactory.build({
           id: 44,
@@ -703,8 +708,21 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           childCareSpaceFactory.build({ id: 40, centreId: 1, fiscalPeriodId: 4, categoryId: 9 }),
           childCareSpaceFactory.build({ id: 41, centreId: 1, fiscalPeriodId: 4, categoryId: 10 }),
         ]
-        let administrationRequests = 0
-        let qualityRequests = 0
+        const administration = administrationCostFactory.build({
+          id: 60,
+          centreId: 1,
+          fiscalPeriodId: 4,
+          lineName: "Administration Infant Cohort",
+          estimatedComputedTotal: "10.0000",
+        })
+        const quality = qualityEnhancementFactory.build({
+          id: 70,
+          centreId: 1,
+          fiscalPeriodId: 4,
+          lineName: "Quality Enhancement Infant Cohort",
+          estimatedComputedTotal: "30.0000",
+        })
+        let hasSavedSpace = false
         const http = vi.mocked(httpClient, true)
         http.get.mockImplementation(async (url) => {
           if (url === "/api/funding-submission-line-jsons") {
@@ -717,29 +735,44 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             return { data: { childCareSpaces: spaces, totalCount: spaces.length } }
           }
           if (url === "/api/administration-costs") {
-            administrationRequests += 1
-            return { data: { administrationCosts: [], totalCount: 0 } }
+            return {
+              data: {
+                administrationCosts: [
+                  {
+                    ...administration,
+                    estimatedComputedTotal: hasSavedSpace ? "20.0000" : "10.0000",
+                  },
+                ],
+                totalCount: 1,
+              },
+            }
           }
           if (url === "/api/children-with-diverse-needs-funding-records") {
             return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
           }
           if (url === "/api/quality-enhancements") {
-            qualityRequests += 1
-            return { data: { qualityEnhancements: [], totalCount: 0 } }
+            return {
+              data: {
+                qualityEnhancements: [
+                  {
+                    ...quality,
+                    estimatedComputedTotal: hasSavedSpace ? "40.0000" : "30.0000",
+                  },
+                ],
+                totalCount: 1,
+              },
+            }
           }
           return { data: { fundingSubmissionLineJson: worksheet } }
         })
-        const replicationRequests: string[] = []
         http.patch.mockImplementation(async (url) => {
           if (url === "/api/child-care-spaces/41") {
             throw new ApiOperationError("Second Spaces update failed", 503)
           }
+          hasSavedSpace = true
           return { data: {} }
         })
-        http.post.mockImplementation(async (url) => {
-          replicationRequests.push(url)
-          return { data: undefined }
-        })
+        http.post.mockResolvedValue({ data: undefined })
         const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
         await router.push("/")
         await router.isReady()
@@ -751,8 +784,6 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           },
         })
         await flushPromises()
-        const initialAdministrationRequests = administrationRequests
-        const initialQualityRequests = qualityRequests
         const inputs = wrapper.findAll("tbody input")
         await inputs[0]?.setValue("0.5")
         await inputs[2]?.setValue("0.75")
@@ -766,9 +797,13 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         await flushPromises()
 
         // Assert
-        expect(administrationRequests).toBeGreaterThan(initialAdministrationRequests)
-        expect(qualityRequests).toBeGreaterThan(initialQualityRequests)
-        expect(replicationRequests).toEqual([])
+        expect(wrapper.getComponent({ name: "AdministrationCostEditTable" }).text()).toContain(
+          "$20.00"
+        )
+        expect(wrapper.getComponent({ name: "QualityEnhancementEditTable" }).text()).toContain(
+          "$40.00"
+        )
+        expect(http.post).not.toHaveBeenCalled()
       })
 
       test.each([
