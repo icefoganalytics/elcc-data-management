@@ -46,8 +46,7 @@ export class EnsureChildrenService extends BaseService {
     )
     await Centres.FundingPeriods.ChildrenWithDiverseNeedsFundingRecords.BulkEnsureService.perform(
       this.centre,
-      this.fundingPeriod,
-      isInitialProvisioning
+      this.fundingPeriod
     )
     await Centres.FundingPeriods.FundingSubmissionLineJsons.BulkEnsureService.perform(
       this.centre,

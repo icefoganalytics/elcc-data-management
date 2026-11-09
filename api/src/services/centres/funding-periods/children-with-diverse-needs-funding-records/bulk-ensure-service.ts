@@ -7,22 +7,19 @@ import BaseService from "@/services/base-service"
 export class BulkEnsureService extends BaseService {
   constructor(
     private centre: Centre,
-    private fundingPeriod: FundingPeriod,
-    private isInitialProvisioning: boolean
+    private fundingPeriod: FundingPeriod
   ) {
     super()
   }
 
   async perform(): Promise<void> {
-    if (!this.isInitialProvisioning) {
-      return
-    }
-
     const historicalRecord = await ChildrenWithDiverseNeedsFundingRecord.withScope({
       method: ["byFundingPeriod", this.fundingPeriod.id],
     }).findOne({
       attributes: ["id"],
-      where: { centreId: this.centre.id },
+      where: {
+        centreId: this.centre.id,
+      },
       paranoid: false,
     })
     if (!isNil(historicalRecord)) {
