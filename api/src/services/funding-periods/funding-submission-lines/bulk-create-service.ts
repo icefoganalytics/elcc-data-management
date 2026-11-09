@@ -67,7 +67,12 @@ export class BulkCreateService extends BaseService {
         "childCareSpaceCategoryId",
       ],
     })
-    if (isEmpty(newestFundingSubmissionLines)) return []
+    if (isEmpty(newestFundingSubmissionLines)) {
+      return FundingSubmissionLine.DEFAULTS.map((line) => ({
+        ...line,
+        childCareSpaceCategoryId: null,
+      }))
+    }
 
     return newestFundingSubmissionLines.map(
       ({ sectionName, lineName, fromAge, toAge, monthlyAmount, childCareSpaceCategoryId }) => ({

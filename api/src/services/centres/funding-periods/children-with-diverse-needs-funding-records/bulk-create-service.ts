@@ -20,7 +20,13 @@ export class BulkCreateService extends BaseService {
 
   async perform(): Promise<void> {
     await db.transaction(async () => {
-      let hasFiscalPeriods = false
+      const fiscalPeriodCount = await FiscalPeriod.count({
+        where: { fundingPeriodId: this.fundingPeriod.id },
+      })
+      if (fiscalPeriodCount === 0) {
+        throw new Error("No fiscal periods found for the given funding period.")
+      }
+
       await FiscalPeriod.findEach(
         {
           attributes: ["id"],
@@ -28,7 +34,6 @@ export class BulkCreateService extends BaseService {
           order: [["id", "ASC"]],
         },
         async (fiscalPeriod) => {
-          hasFiscalPeriods = true
           await ChildrenWithDiverseNeedsFundingCategory.findEach(
             {
               attributes: ["id", "categoryName", "monthlyAmount"],
@@ -64,9 +69,6 @@ export class BulkCreateService extends BaseService {
           )
         }
       )
-      if (!hasFiscalPeriods) {
-        throw new Error("No fiscal periods found for the given funding period.")
-      }
     })
   }
 }

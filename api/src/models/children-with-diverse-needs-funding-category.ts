@@ -23,6 +23,13 @@ import BaseModel from "@/models/base-model"
 import ChildrenWithDiverseNeedsFundingRecord from "@/models/children-with-diverse-needs-funding-record"
 import FundingPeriod from "@/models/funding-period"
 
+export const CHILDREN_WITH_DIVERSE_NEEDS_FUNDING_CATEGORY_DEFAULTS = Object.freeze([
+  { categoryName: "Toddlers", fromAge: 2, toAge: 3, monthlyAmount: "54.9600" },
+  { categoryName: "Preschool", fromAge: 4, toAge: 5, monthlyAmount: "91.6000" },
+  { categoryName: "Kindergarten", fromAge: 5, toAge: 6, monthlyAmount: "91.6000" },
+  { categoryName: "School Age", fromAge: 5, toAge: 6, monthlyAmount: "114.5000" },
+])
+
 @Table({
   tableName: "children_with_diverse_needs_funding_categories",
 })
@@ -30,6 +37,8 @@ export class ChildrenWithDiverseNeedsFundingCategory extends BaseModel<
   InferAttributes<ChildrenWithDiverseNeedsFundingCategory>,
   InferCreationAttributes<ChildrenWithDiverseNeedsFundingCategory>
 > {
+  static readonly DEFAULTS = CHILDREN_WITH_DIVERSE_NEEDS_FUNDING_CATEGORY_DEFAULTS
+
   @Attribute(DataTypes.INTEGER)
   @PrimaryKey
   @AutoIncrement
