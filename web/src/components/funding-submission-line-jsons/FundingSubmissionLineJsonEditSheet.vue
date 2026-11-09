@@ -297,8 +297,13 @@ async function replicateChildCareSpaceEstimates(): Promise<void> {
 
 function goToNextSection(sectionIndex: number, columnName: ColumnNames) {
   if (sectionIndex < sections.value.length - 1) {
+    const sectionTables = fundingSubmissionLineJsonSectionTables.value
+    if (isNil(sectionTables)) {
+      return
+    }
+
     const nextIndex = sectionIndex + 1
-    const nextSection = fundingSubmissionLineJsonSectionTables.value?.[nextIndex]
+    const nextSection = sectionTables[nextIndex]
     if (isNil(nextSection)) {
       return
     }
@@ -309,8 +314,13 @@ function goToNextSection(sectionIndex: number, columnName: ColumnNames) {
 
 function goToPreviousSection(sectionIndex: number, columnName: ColumnNames) {
   if (sectionIndex > 0) {
+    const sectionTables = fundingSubmissionLineJsonSectionTables.value
+    if (isNil(sectionTables)) {
+      return
+    }
+
     const previousIndex = sectionIndex - 1
-    const previousSection = fundingSubmissionLineJsonSectionTables.value?.[previousIndex]
+    const previousSection = sectionTables[previousIndex]
     if (isNil(previousSection)) {
       return
     }
