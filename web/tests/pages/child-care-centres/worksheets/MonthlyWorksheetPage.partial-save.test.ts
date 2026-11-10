@@ -14,7 +14,7 @@ import {
   fundingSubmissionLineJsonFactory,
   qualityEnhancementFactory,
 } from "@/tests/factories"
-import { mockRouter, mockVuetify } from "@/tests/support"
+import { mockHttpGetRoutes, mockRouter, mockVuetify } from "@/tests/support"
 
 import MonthlyWorksheetPage from "@/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue"
 
@@ -55,23 +55,25 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           totalCount: 1,
         })
         const http = vi.mocked(httpClient, true)
-        http.get.mockImplementation(async (url) => {
-          if (url === "/api/funding-submission-line-jsons") {
+        mockHttpGetRoutes({
+          "/api/funding-submission-line-jsons": async () => {
             return { data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 } }
-          }
-          if (url === "/api/fiscal-periods") {
+          },
+          "/api/fiscal-periods": async () => {
             return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
-          }
-          if (url === "/api/child-care-spaces") {
+          },
+          "/api/child-care-spaces": async () => {
             return { data: { childCareSpaces, totalCount: 2 } }
-          }
-          if (url === "/api/children-with-diverse-needs-funding-records") {
+          },
+          "/api/children-with-diverse-needs-funding-records": async () => {
             return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
-          }
-          if (url === "/api/quality-enhancements") {
+          },
+          "/api/quality-enhancements": async () => {
             return { data: { qualityEnhancements: [], totalCount: 0 } }
-          }
-          return { data: { fundingSubmissionLineJson: worksheet } }
+          },
+          "/api/funding-submission-line-jsons/44": async () => {
+            return { data: { fundingSubmissionLineJson: worksheet } }
+          },
         })
         http.patch.mockImplementation(async (url) => {
           if (url === "/api/child-care-spaces/41") {
@@ -149,23 +151,25 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           totalCount: 1,
         })
         const http = vi.mocked(httpClient, true)
-        http.get.mockImplementation(async (url) => {
-          if (url === "/api/funding-submission-line-jsons") {
+        mockHttpGetRoutes({
+          "/api/funding-submission-line-jsons": async () => {
             return { data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 } }
-          }
-          if (url === "/api/fiscal-periods") {
+          },
+          "/api/fiscal-periods": async () => {
             return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
-          }
-          if (url === "/api/child-care-spaces") {
+          },
+          "/api/child-care-spaces": async () => {
             return { data: { childCareSpaces, totalCount: 2 } }
-          }
-          if (url === "/api/administration-costs") {
+          },
+          "/api/administration-costs": async () => {
             return { data: { administrationCosts: [], totalCount: 0 } }
-          }
-          if (url === "/api/children-with-diverse-needs-funding-records") {
+          },
+          "/api/children-with-diverse-needs-funding-records": async () => {
             return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
-          }
-          return { data: { fundingSubmissionLineJson: worksheet } }
+          },
+          "/api/funding-submission-line-jsons/44": async () => {
+            return { data: { fundingSubmissionLineJson: worksheet } }
+          },
         })
         http.patch.mockImplementation(async (url) => {
           if (url === "/api/child-care-spaces/41") {
@@ -228,26 +232,28 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           childCareSpaceFactory.build({ id: 41, centreId: 1, fiscalPeriodId: 4, categoryId: 10 }),
         ]
         const http = vi.mocked(httpClient, true)
-        http.get.mockImplementation(async (url) => {
-          if (url === "/api/funding-submission-line-jsons") {
+        mockHttpGetRoutes({
+          "/api/funding-submission-line-jsons": async () => {
             return { data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 } }
-          }
-          if (url === "/api/fiscal-periods") {
+          },
+          "/api/fiscal-periods": async () => {
             return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
-          }
-          if (url === "/api/child-care-spaces") {
+          },
+          "/api/child-care-spaces": async () => {
             return { data: { childCareSpaces, totalCount: 2 } }
-          }
-          if (url === "/api/administration-costs") {
+          },
+          "/api/administration-costs": async () => {
             return { data: { administrationCosts: [], totalCount: 0 } }
-          }
-          if (url === "/api/children-with-diverse-needs-funding-records") {
+          },
+          "/api/children-with-diverse-needs-funding-records": async () => {
             return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
-          }
-          if (url === "/api/quality-enhancements") {
+          },
+          "/api/quality-enhancements": async () => {
             return { data: { qualityEnhancements: [], totalCount: 0 } }
-          }
-          return { data: { fundingSubmissionLineJson: worksheet } }
+          },
+          "/api/funding-submission-line-jsons/44": async () => {
+            return { data: { fundingSubmissionLineJson: worksheet } }
+          },
         })
         http.patch.mockImplementation(async (url) => {
           if (url === "/api/child-care-spaces/41") {

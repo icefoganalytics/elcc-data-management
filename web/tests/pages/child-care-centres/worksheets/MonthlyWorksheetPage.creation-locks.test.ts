@@ -1,11 +1,10 @@
 import { createPinia } from "pinia"
 import { flushPromises, mount } from "@vue/test-utils"
 
-import httpClient from "@/api/http-client"
 import { FiscalPeriodMonths } from "@/use/use-fiscal-periods"
 
 import { fiscalPeriodFactory, fundingSubmissionLineJsonFactory } from "@/tests/factories"
-import { mockRouter, mockVuetify } from "@/tests/support"
+import { mockHttpGetRoutes, mockRouter, mockVuetify } from "@/tests/support"
 
 import MonthlyWorksheetPage from "@/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue"
 
@@ -46,38 +45,43 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             fiscalYear: "2024-25",
             month: FiscalPeriodMonths.MAY,
           })
-          vi.mocked(httpClient, true).get.mockImplementation(async (url, config) => {
-            if (url === "/api/funding-submission-line-jsons") {
+          mockHttpGetRoutes({
+            "/api/funding-submission-line-jsons": async (config) => {
               const worksheet =
                 config?.params?.where?.dateName === "April" ? aprilWorksheet : mayWorksheet
               return { data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 } }
-            }
-            if (url === "/api/fiscal-periods") {
+            },
+            "/api/fiscal-periods": async (config) => {
               const period = config?.params?.where?.month === FiscalPeriodMonths.APRIL ? april : may
               return { data: { fiscalPeriods: [period], totalCount: 1 } }
-            }
-            if (url === "/api/administration-costs") {
+            },
+            "/api/administration-costs": async () => {
               return { data: { administrationCosts: [], totalCount: 0 } }
-            }
-            if (url === "/api/children-with-diverse-needs-funding-records") {
+            },
+            "/api/children-with-diverse-needs-funding-records": async () => {
               return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
-            }
-            if (url === "/api/quality-enhancements") {
+            },
+            "/api/quality-enhancements": async () => {
               return { data: { qualityEnhancements: [], totalCount: 0 } }
-            }
-            if (url === "/api/child-care-spaces") {
+            },
+            "/api/child-care-spaces": async () => {
               return { data: { childCareSpaces: [], totalCount: 0 } }
-            }
-            if (url === "/api/administration-cost-categories") {
+            },
+            "/api/administration-cost-categories": async () => {
               return { data: { administrationCostCategories: [], totalCount: 0 } }
-            }
-            if (url === "/api/quality-enhancement-categories") {
+            },
+            "/api/quality-enhancement-categories": async () => {
               return { data: { qualityEnhancementCategories: [], totalCount: 0 } }
-            }
-            if (url === "/api/children-with-diverse-needs-funding-categories") {
+            },
+            "/api/children-with-diverse-needs-funding-categories": async () => {
               return { data: { childrenWithDiverseNeedsFundingCategories: [], totalCount: 0 } }
-            }
-            return { data: { fundingSubmissionLineJson: mayWorksheet } }
+            },
+            "/api/funding-submission-line-jsons/44": async () => {
+              return { data: { fundingSubmissionLineJson: mayWorksheet } }
+            },
+            "/api/funding-submission-line-jsons/45": async () => {
+              return { data: { fundingSubmissionLineJson: mayWorksheet } }
+            },
           })
           const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
           await router.push("/")
@@ -142,38 +146,43 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             fiscalYear: "2024-25",
             month: FiscalPeriodMonths.MAY,
           })
-          vi.mocked(httpClient, true).get.mockImplementation(async (url, config) => {
-            if (url === "/api/funding-submission-line-jsons") {
+          mockHttpGetRoutes({
+            "/api/funding-submission-line-jsons": async (config) => {
               const worksheet =
                 config?.params?.where?.dateName === "April" ? aprilWorksheet : mayWorksheet
               return { data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 } }
-            }
-            if (url === "/api/fiscal-periods") {
+            },
+            "/api/fiscal-periods": async (config) => {
               const period = config?.params?.where?.month === FiscalPeriodMonths.APRIL ? april : may
               return { data: { fiscalPeriods: [period], totalCount: 1 } }
-            }
-            if (url === "/api/administration-costs") {
+            },
+            "/api/administration-costs": async () => {
               return { data: { administrationCosts: [], totalCount: 0 } }
-            }
-            if (url === "/api/children-with-diverse-needs-funding-records") {
+            },
+            "/api/children-with-diverse-needs-funding-records": async () => {
               return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
-            }
-            if (url === "/api/quality-enhancements") {
+            },
+            "/api/quality-enhancements": async () => {
               return { data: { qualityEnhancements: [], totalCount: 0 } }
-            }
-            if (url === "/api/child-care-spaces") {
+            },
+            "/api/child-care-spaces": async () => {
               return { data: { childCareSpaces: [], totalCount: 0 } }
-            }
-            if (url === "/api/administration-cost-categories") {
+            },
+            "/api/administration-cost-categories": async () => {
               return { data: { administrationCostCategories: [], totalCount: 0 } }
-            }
-            if (url === "/api/quality-enhancement-categories") {
+            },
+            "/api/quality-enhancement-categories": async () => {
               return { data: { qualityEnhancementCategories: [], totalCount: 0 } }
-            }
-            if (url === "/api/children-with-diverse-needs-funding-categories") {
+            },
+            "/api/children-with-diverse-needs-funding-categories": async () => {
               return { data: { childrenWithDiverseNeedsFundingCategories: [], totalCount: 0 } }
-            }
-            return { data: { fundingSubmissionLineJson: mayWorksheet } }
+            },
+            "/api/funding-submission-line-jsons/44": async () => {
+              return { data: { fundingSubmissionLineJson: mayWorksheet } }
+            },
+            "/api/funding-submission-line-jsons/45": async () => {
+              return { data: { fundingSubmissionLineJson: mayWorksheet } }
+            },
           })
           const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
           await router.push("/")
@@ -245,38 +254,43 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             fiscalYear: "2024-25",
             month: FiscalPeriodMonths.MAY,
           })
-          vi.mocked(httpClient, true).get.mockImplementation(async (url, config) => {
-            if (url === "/api/funding-submission-line-jsons") {
+          mockHttpGetRoutes({
+            "/api/funding-submission-line-jsons": async (config) => {
               const worksheet =
                 config?.params?.where?.dateName === "April" ? aprilWorksheet : mayWorksheet
               return { data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 } }
-            }
-            if (url === "/api/fiscal-periods") {
+            },
+            "/api/fiscal-periods": async (config) => {
               const period = config?.params?.where?.month === FiscalPeriodMonths.APRIL ? april : may
               return { data: { fiscalPeriods: [period], totalCount: 1 } }
-            }
-            if (url === "/api/administration-costs") {
+            },
+            "/api/administration-costs": async () => {
               return { data: { administrationCosts: [], totalCount: 0 } }
-            }
-            if (url === "/api/children-with-diverse-needs-funding-records") {
+            },
+            "/api/children-with-diverse-needs-funding-records": async () => {
               return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
-            }
-            if (url === "/api/quality-enhancements") {
+            },
+            "/api/quality-enhancements": async () => {
               return { data: { qualityEnhancements: [], totalCount: 0 } }
-            }
-            if (url === "/api/child-care-spaces") {
+            },
+            "/api/child-care-spaces": async () => {
               return { data: { childCareSpaces: [], totalCount: 0 } }
-            }
-            if (url === "/api/administration-cost-categories") {
+            },
+            "/api/administration-cost-categories": async () => {
               return { data: { administrationCostCategories: [], totalCount: 0 } }
-            }
-            if (url === "/api/quality-enhancement-categories") {
+            },
+            "/api/quality-enhancement-categories": async () => {
               return { data: { qualityEnhancementCategories: [], totalCount: 0 } }
-            }
-            if (url === "/api/children-with-diverse-needs-funding-categories") {
+            },
+            "/api/children-with-diverse-needs-funding-categories": async () => {
               return { data: { childrenWithDiverseNeedsFundingCategories: [], totalCount: 0 } }
-            }
-            return { data: { fundingSubmissionLineJson: mayWorksheet } }
+            },
+            "/api/funding-submission-line-jsons/44": async () => {
+              return { data: { fundingSubmissionLineJson: mayWorksheet } }
+            },
+            "/api/funding-submission-line-jsons/45": async () => {
+              return { data: { fundingSubmissionLineJson: mayWorksheet } }
+            },
           })
           const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
           await router.push("/")

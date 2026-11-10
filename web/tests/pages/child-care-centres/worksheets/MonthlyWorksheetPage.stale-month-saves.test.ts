@@ -16,7 +16,7 @@ import {
   fundingSubmissionLineJsonFactory,
   qualityEnhancementFactory,
 } from "@/tests/factories"
-import { mockRouter, mockVuetify } from "@/tests/support"
+import { mockHttpGetRoutes, mockRouter, mockVuetify } from "@/tests/support"
 
 import MonthlyWorksheetPage from "@/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue"
 
@@ -74,48 +74,45 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           lineName: "Quality Enhancement Infant Cohort",
         })
         const httpClientMock = vi.mocked(httpClient, true)
-        httpClientMock.get.mockImplementation(async (url, config) => {
-          if (url === "/api/funding-submission-line-jsons") {
+        mockHttpGetRoutes({
+          "/api/funding-submission-line-jsons": async (config) => {
             if (config?.params?.where?.dateName === "April") {
               return await aprilWorksheetList.promise
             }
 
             return await mayWorksheetList.promise
-          }
-
-          if (url === "/api/fiscal-periods") {
+          },
+          "/api/fiscal-periods": async (config) => {
             if (config?.params?.where?.month === "april") {
               return await aprilFiscalPeriodList.promise
             }
 
             return await mayFiscalPeriodList.promise
-          }
-
-          if (url === "/api/funding-submission-line-jsons/55") {
+          },
+          "/api/funding-submission-line-jsons/55": async () => {
             return { data: { fundingSubmissionLineJson } }
-          }
+          },
+          "/api/child-care-spaces": async (config) => {
+            if (config?.params?.where?.fiscalPeriodId === 5) {
+              return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
+            }
 
-          if (url === "/api/child-care-spaces" && config?.params?.where?.fiscalPeriodId === 5) {
-            return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
-          }
-
-          if (url === "/api/children-with-diverse-needs-funding-records") {
+            throw new Error("Unexpected GET /api/child-care-spaces")
+          },
+          "/api/children-with-diverse-needs-funding-records": async () => {
             return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
-          }
-
-          if (url === "/api/quality-enhancements") {
+          },
+          "/api/quality-enhancements": async () => {
             return { data: { qualityEnhancements: [qualityEnhancement], totalCount: 1 } }
-          }
-
-          if (url === "/api/administration-costs") {
+          },
+          "/api/administration-costs": async () => {
             return {
               data: {
                 administrationCosts: [administrationCost],
                 totalCount: 1,
               },
             }
-          }
-          throw new Error(`Unexpected GET ${url}`)
+          },
         })
         httpClientMock.patch.mockImplementation(async (url) => {
           if (url === "/api/child-care-spaces/50") {
@@ -257,48 +254,45 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           lineName: "Quality Enhancement Infant Cohort",
         })
         const httpClientMock = vi.mocked(httpClient, true)
-        httpClientMock.get.mockImplementation(async (url, config) => {
-          if (url === "/api/funding-submission-line-jsons") {
+        mockHttpGetRoutes({
+          "/api/funding-submission-line-jsons": async (config) => {
             if (config?.params?.where?.dateName === "April") {
               return await aprilWorksheetList.promise
             }
 
             return await mayWorksheetList.promise
-          }
-
-          if (url === "/api/fiscal-periods") {
+          },
+          "/api/fiscal-periods": async (config) => {
             if (config?.params?.where?.month === "april") {
               return await aprilFiscalPeriodList.promise
             }
 
             return await mayFiscalPeriodList.promise
-          }
-
-          if (url === "/api/funding-submission-line-jsons/55") {
+          },
+          "/api/funding-submission-line-jsons/55": async () => {
             return { data: { fundingSubmissionLineJson } }
-          }
+          },
+          "/api/child-care-spaces": async (config) => {
+            if (config?.params?.where?.fiscalPeriodId === 5) {
+              return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
+            }
 
-          if (url === "/api/child-care-spaces" && config?.params?.where?.fiscalPeriodId === 5) {
-            return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
-          }
-
-          if (url === "/api/children-with-diverse-needs-funding-records") {
+            throw new Error("Unexpected GET /api/child-care-spaces")
+          },
+          "/api/children-with-diverse-needs-funding-records": async () => {
             return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
-          }
-
-          if (url === "/api/quality-enhancements") {
+          },
+          "/api/quality-enhancements": async () => {
             return { data: { qualityEnhancements: [qualityEnhancement], totalCount: 1 } }
-          }
-
-          if (url === "/api/administration-costs") {
+          },
+          "/api/administration-costs": async () => {
             return {
               data: {
                 administrationCosts: [administrationCost],
                 totalCount: 1,
               },
             }
-          }
-          throw new Error(`Unexpected GET ${url}`)
+          },
         })
         httpClientMock.patch.mockImplementation(async (url) => {
           if (url === "/api/child-care-spaces/50") {

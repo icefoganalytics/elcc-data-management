@@ -11,7 +11,7 @@ import {
   fundingSubmissionLineJsonFactory,
   qualityEnhancementFactory,
 } from "@/tests/factories"
-import { mockRouter, mockVuetify } from "@/tests/support"
+import { mockHttpGetRoutes, mockRouter, mockVuetify } from "@/tests/support"
 
 import MonthlyWorksheetPage from "@/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue"
 
@@ -43,26 +43,28 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             estimatedChildOccupancyRate: "0.6250",
           })
           const http = vi.mocked(httpClient, true)
-          http.get.mockImplementation(async (url) => {
-            if (url === "/api/funding-submission-line-jsons") {
+          mockHttpGetRoutes({
+            "/api/funding-submission-line-jsons": async () => {
               return { data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 } }
-            }
-            if (url === "/api/fiscal-periods") {
+            },
+            "/api/fiscal-periods": async () => {
               return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
-            }
-            if (url === "/api/child-care-spaces") {
+            },
+            "/api/child-care-spaces": async () => {
               return { data: { childCareSpaces: [], totalCount: 0 } }
-            }
-            if (url === "/api/administration-costs") {
+            },
+            "/api/administration-costs": async () => {
               return { data: { administrationCosts: [], totalCount: 0 } }
-            }
-            if (url === "/api/children-with-diverse-needs-funding-records") {
+            },
+            "/api/children-with-diverse-needs-funding-records": async () => {
               return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
-            }
-            if (url === "/api/quality-enhancements") {
+            },
+            "/api/quality-enhancements": async () => {
               return { data: { qualityEnhancements: [quality], totalCount: 1 } }
-            }
-            return { data: { fundingSubmissionLineJson: worksheet } }
+            },
+            "/api/funding-submission-line-jsons/44": async () => {
+              return { data: { fundingSubmissionLineJson: worksheet } }
+            },
           })
           http.patch.mockResolvedValue({ data: {} })
           http.post.mockResolvedValue({ data: undefined })
@@ -125,26 +127,28 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           estimatedChildOccupancyRate: "0.6250",
         })
         const http = vi.mocked(httpClient, true)
-        http.get.mockImplementation(async (url) => {
-          if (url === "/api/funding-submission-line-jsons") {
+        mockHttpGetRoutes({
+          "/api/funding-submission-line-jsons": async () => {
             return { data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 } }
-          }
-          if (url === "/api/fiscal-periods") {
+          },
+          "/api/fiscal-periods": async () => {
             return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
-          }
-          if (url === "/api/child-care-spaces") {
+          },
+          "/api/child-care-spaces": async () => {
             return { data: { childCareSpaces: [], totalCount: 0 } }
-          }
-          if (url === "/api/administration-costs") {
+          },
+          "/api/administration-costs": async () => {
             return { data: { administrationCosts: [], totalCount: 0 } }
-          }
-          if (url === "/api/children-with-diverse-needs-funding-records") {
+          },
+          "/api/children-with-diverse-needs-funding-records": async () => {
             return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
-          }
-          if (url === "/api/quality-enhancements") {
+          },
+          "/api/quality-enhancements": async () => {
             return { data: { qualityEnhancements: [quality], totalCount: 1 } }
-          }
-          return { data: { fundingSubmissionLineJson: worksheet } }
+          },
+          "/api/funding-submission-line-jsons/44": async () => {
+            return { data: { fundingSubmissionLineJson: worksheet } }
+          },
         })
         http.patch.mockResolvedValue({ data: {} })
         http.post.mockResolvedValue({ data: undefined })
@@ -204,26 +208,28 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           estimatedChildOccupancyRate: "0.6250",
         })
         const http = vi.mocked(httpClient, true)
-        http.get.mockImplementation(async (url) => {
-          if (url === "/api/funding-submission-line-jsons") {
+        mockHttpGetRoutes({
+          "/api/funding-submission-line-jsons": async () => {
             return { data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 } }
-          }
-          if (url === "/api/fiscal-periods") {
+          },
+          "/api/fiscal-periods": async () => {
             return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
-          }
-          if (url === "/api/child-care-spaces") {
+          },
+          "/api/child-care-spaces": async () => {
             return { data: { childCareSpaces: [], totalCount: 0 } }
-          }
-          if (url === "/api/administration-costs") {
+          },
+          "/api/administration-costs": async () => {
             return { data: { administrationCosts: [], totalCount: 0 } }
-          }
-          if (url === "/api/children-with-diverse-needs-funding-records") {
+          },
+          "/api/children-with-diverse-needs-funding-records": async () => {
             return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
-          }
-          if (url === "/api/quality-enhancements") {
+          },
+          "/api/quality-enhancements": async () => {
             return { data: { qualityEnhancements: [quality], totalCount: 1 } }
-          }
-          return { data: { fundingSubmissionLineJson: worksheet } }
+          },
+          "/api/funding-submission-line-jsons/44": async () => {
+            return { data: { fundingSubmissionLineJson: worksheet } }
+          },
         })
         http.patch.mockResolvedValue({ data: {} })
         http.post.mockResolvedValue({ data: undefined })
@@ -282,26 +288,28 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           estimatedChildOccupancyRate: "0.6250",
         })
         const http = vi.mocked(httpClient, true)
-        http.get.mockImplementation(async (url) => {
-          if (url === "/api/funding-submission-line-jsons") {
+        mockHttpGetRoutes({
+          "/api/funding-submission-line-jsons": async () => {
             return { data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 } }
-          }
-          if (url === "/api/fiscal-periods") {
+          },
+          "/api/fiscal-periods": async () => {
             return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
-          }
-          if (url === "/api/child-care-spaces") {
+          },
+          "/api/child-care-spaces": async () => {
             return { data: { childCareSpaces: [], totalCount: 0 } }
-          }
-          if (url === "/api/administration-costs") {
+          },
+          "/api/administration-costs": async () => {
             return { data: { administrationCosts: [], totalCount: 0 } }
-          }
-          if (url === "/api/children-with-diverse-needs-funding-records") {
+          },
+          "/api/children-with-diverse-needs-funding-records": async () => {
             return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
-          }
-          if (url === "/api/quality-enhancements") {
+          },
+          "/api/quality-enhancements": async () => {
             return { data: { qualityEnhancements: [quality], totalCount: 1 } }
-          }
-          return { data: { fundingSubmissionLineJson: worksheet } }
+          },
+          "/api/funding-submission-line-jsons/44": async () => {
+            return { data: { fundingSubmissionLineJson: worksheet } }
+          },
         })
         http.patch.mockResolvedValue({ data: {} })
         http.post.mockResolvedValue({ data: undefined })
