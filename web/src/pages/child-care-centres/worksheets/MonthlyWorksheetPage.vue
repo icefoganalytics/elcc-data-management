@@ -113,12 +113,8 @@
           >
             <v-btn
               color="primary"
-              :disabled="
-                isWorkflowBusy ||
-                childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.isLoading ||
-                childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.isErrored
-              "
-              @click="showChildrenWithDiverseNeedsFundingRecordCreateForm = true"
+              :disabled="isChildrenWithDiverseNeedsFundingRecordCreationUnavailable"
+              @click="openChildrenWithDiverseNeedsFundingRecordCreateForm"
             >
               Add Diverse Need
             </v-btn>
@@ -135,9 +131,9 @@
                 childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.categoryIds
               "
               :is-workflow-busy="isReplicating || isWorksheetSaving || isRefreshingLinked"
-              @saving="isCreatingChildrenWithDiverseNeedsFundingRecord = $event"
-              @created="onChildrenWithDiverseNeedsFundingRecordCreated"
-              @cancel="showChildrenWithDiverseNeedsFundingRecordCreateForm = false"
+              @saving="trackChildrenWithDiverseNeedsFundingRecordCreation"
+              @created="closeChildrenWithDiverseNeedsFundingRecordCreateFormAndRefresh"
+              @cancel="closeChildrenWithDiverseNeedsFundingRecordCreateForm"
             />
           </v-col>
         </v-row>
@@ -164,12 +160,8 @@
           >
             <v-btn
               color="primary"
-              :disabled="
-                isWorkflowBusy ||
-                administrationCostTable.isLoading ||
-                administrationCostTable.isErrored
-              "
-              @click="showAdministrationCostCreateForm = true"
+              :disabled="isAdministrationCostCreationUnavailable"
+              @click="openAdministrationCostCreateForm"
             >
               Add Administration Cost
             </v-btn>
@@ -184,9 +176,9 @@
               :funding-period-id="fiscalPeriod.fundingPeriodId"
               :existing-category-ids="administrationCostTable.categoryIds"
               :is-workflow-busy="isReplicating || isWorksheetSaving || isRefreshingLinked"
-              @saving="isCreatingAdministrationCost = $event"
-              @created="onAdministrationCostCreated"
-              @cancel="showAdministrationCostCreateForm = false"
+              @saving="trackAdministrationCostCreation"
+              @created="closeAdministrationCostCreateFormAndRefresh"
+              @cancel="closeAdministrationCostCreateForm"
             />
           </v-col>
         </v-row>
@@ -213,12 +205,8 @@
           >
             <v-btn
               color="primary"
-              :disabled="
-                isWorkflowBusy ||
-                qualityEnhancementTable.isLoading ||
-                qualityEnhancementTable.isErrored
-              "
-              @click="showQualityEnhancementCreateForm = true"
+              :disabled="isQualityEnhancementCreationUnavailable"
+              @click="openQualityEnhancementCreateForm"
             >
               Add Quality Enhancement
             </v-btn>
@@ -233,9 +221,9 @@
               :funding-period-id="fiscalPeriod.fundingPeriodId"
               :existing-category-ids="qualityEnhancementTable.categoryIds"
               :is-workflow-busy="isReplicating || isWorksheetSaving || isRefreshingLinked"
-              @saving="isCreatingQualityEnhancement = $event"
-              @created="onQualityEnhancementCreated"
-              @cancel="showQualityEnhancementCreateForm = false"
+              @saving="trackQualityEnhancementCreation"
+              @created="closeQualityEnhancementCreateFormAndRefresh"
+              @cancel="closeQualityEnhancementCreateForm"
             />
           </v-col>
         </v-row>
@@ -459,6 +447,41 @@ const isWorkflowBusy = computed(
     isLedgerMutating.value ||
     isRefreshingLinked.value
 )
+
+const isChildrenWithDiverseNeedsFundingRecordCreationUnavailable = computed(() => {
+  const childrenWithDiverseNeedsFundingRecordsTable =
+    childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value
+
+  return (
+    isWorkflowBusy.value ||
+    isNil(childrenWithDiverseNeedsFundingRecordsTable) ||
+    childrenWithDiverseNeedsFundingRecordsTable.isLoading ||
+    childrenWithDiverseNeedsFundingRecordsTable.isErrored
+  )
+})
+
+const isAdministrationCostCreationUnavailable = computed(() => {
+  const administration = administrationCostTable.value
+
+  return (
+    isWorkflowBusy.value ||
+    isNil(administration) ||
+    administration.isLoading ||
+    administration.isErrored
+  )
+})
+
+const isQualityEnhancementCreationUnavailable = computed(() => {
+  const qualityEnhancement = qualityEnhancementTable.value
+
+  return (
+    isWorkflowBusy.value ||
+    isNil(qualityEnhancement) ||
+    qualityEnhancement.isLoading ||
+    qualityEnhancement.isErrored
+  )
+})
+
 const isReplicationUnavailable = computed(() => {
   const sheet = jsonSheet.value
   const administration = administrationCostTable.value
@@ -576,8 +599,21 @@ async function saveWorksheet(): Promise<boolean> {
   }
 }
 
-async function onAdministrationCostCreated() {
+function openAdministrationCostCreateForm() {
+  showAdministrationCostCreateForm.value = true
+}
+
+function closeAdministrationCostCreateForm() {
   showAdministrationCostCreateForm.value = false
+}
+
+function trackAdministrationCostCreation(isCreating: boolean) {
+  isCreatingAdministrationCost.value = isCreating
+}
+
+async function closeAdministrationCostCreateFormAndRefresh() {
+  closeAdministrationCostCreateForm()
+
   try {
     await administrationCostTable.value?.refresh()
   } catch (error) {
@@ -587,8 +623,21 @@ async function onAdministrationCostCreated() {
   }
 }
 
-async function onChildrenWithDiverseNeedsFundingRecordCreated() {
+function openChildrenWithDiverseNeedsFundingRecordCreateForm() {
+  showChildrenWithDiverseNeedsFundingRecordCreateForm.value = true
+}
+
+function closeChildrenWithDiverseNeedsFundingRecordCreateForm() {
   showChildrenWithDiverseNeedsFundingRecordCreateForm.value = false
+}
+
+function trackChildrenWithDiverseNeedsFundingRecordCreation(isCreating: boolean) {
+  isCreatingChildrenWithDiverseNeedsFundingRecord.value = isCreating
+}
+
+async function closeChildrenWithDiverseNeedsFundingRecordCreateFormAndRefresh() {
+  closeChildrenWithDiverseNeedsFundingRecordCreateForm()
+
   try {
     await childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value?.refresh()
   } catch (error) {
@@ -598,8 +647,21 @@ async function onChildrenWithDiverseNeedsFundingRecordCreated() {
   }
 }
 
-async function onQualityEnhancementCreated() {
+function openQualityEnhancementCreateForm() {
+  showQualityEnhancementCreateForm.value = true
+}
+
+function closeQualityEnhancementCreateForm() {
   showQualityEnhancementCreateForm.value = false
+}
+
+function trackQualityEnhancementCreation(isCreating: boolean) {
+  isCreatingQualityEnhancement.value = isCreating
+}
+
+async function closeQualityEnhancementCreateFormAndRefresh() {
+  closeQualityEnhancementCreateForm()
+
   try {
     await qualityEnhancementTable.value?.refresh()
   } catch (error) {
