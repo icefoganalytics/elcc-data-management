@@ -170,12 +170,7 @@ const childCareSpacesAsFundingLineValues = computed<FundingLineValue[]>(() => {
 })
 
 const sections = computed<{ sectionName: string; lines: FundingLineValue[] }[]>(() => {
-  const sectionGroups = groupBy(
-    (fundingSubmissionLineJson.value?.lines ?? []).filter(
-      ({ sectionName }) => sectionName !== "Children with Diverse Needs"
-    ),
-    "sectionName"
-  )
+  const sectionGroups = groupBy(fundingSubmissionLineJson.value?.lines ?? [], "sectionName")
   return [
     {
       sectionName: CHILD_CARE_SPACES_SECTION_NAME,

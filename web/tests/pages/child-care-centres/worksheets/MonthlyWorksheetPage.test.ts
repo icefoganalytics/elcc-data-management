@@ -517,18 +517,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           id: 44,
           centreId: 1,
           dateName: "April",
-          lines: [
-            {
-              submissionLineId: 90,
-              sectionName: "Children with Diverse Needs",
-              lineName: "Toddlers",
-              monthlyAmount: "54.9600",
-              estimatedChildOccupancyRate: "0.0000",
-              actualChildOccupancyRate: "0.0000",
-              estimatedComputedTotal: "0.0000",
-              actualComputedTotal: "0.0000",
-            },
-          ],
+          lines: [],
         })
         const childrenWithDiverseNeedsFundingRecord =
           childrenWithDiverseNeedsFundingRecordFactory.build({
