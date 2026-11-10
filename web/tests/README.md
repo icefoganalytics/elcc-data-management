@@ -14,6 +14,7 @@ Follow [Scenario-Oriented Verification in the shared Code Organization Reference
 
 - Component and composable suites use three nested `describe` scopes: the source file path, the component or composable name, then the method or behavior under test. Keep each `test("when ..., ...")` inside that behavior scope.
 - Use explicit Arrange, Act, and Assert sections with descriptive `when ..., does ...` test names.
+- Use one `expect` per test. Give independently observable outcomes separate scenarios; do not hide additional assertions in helpers or combine unrelated outcomes into a synthetic bundle.
 - Reuse existing infrastructure helpers such as `mockVuetify` and the typed frontend factories in `tests/factories`. Keep scenario-specific factory overrides inline.
 - Prefer API spies and real composables. Mock dependencies outside the behavior under test, not the component's own state machinery.
 - ELCC request-state coverage gives errors, loading completion, returned records, authorization policy, and collection counts separate named scenarios. These are independently consumed states, even when one request changes them together.
