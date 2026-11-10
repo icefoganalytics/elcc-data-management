@@ -49,9 +49,7 @@ describe("api/src/services/centres/funding-periods/children-with-diverse-needs-f
 
         // Assert
         const childrenWithDiverseNeedsFundingRecords =
-          await ChildrenWithDiverseNeedsFundingRecord.findAll({
-            paranoid: false,
-          })
+          await ChildrenWithDiverseNeedsFundingRecord.findAll()
         expect(childrenWithDiverseNeedsFundingRecords).toEqual([
           expect.objectContaining({
             id: otherCentreFundingRecord.id,
@@ -118,9 +116,7 @@ describe("api/src/services/centres/funding-periods/children-with-diverse-needs-f
 
         // Assert
         const childrenWithDiverseNeedsFundingRecords =
-          await ChildrenWithDiverseNeedsFundingRecord.findAll({
-            paranoid: false,
-          })
+          await ChildrenWithDiverseNeedsFundingRecord.findAll()
         expect(childrenWithDiverseNeedsFundingRecords).toEqual([
           expect.objectContaining({
             id: mayFundingRecord.id,

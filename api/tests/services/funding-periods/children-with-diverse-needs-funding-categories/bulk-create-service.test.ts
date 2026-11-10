@@ -37,9 +37,7 @@ describe("api/src/services/funding-periods/children-with-diverse-needs-funding-c
 
         // Assert
         const childrenWithDiverseNeedsFundingCategories =
-          await ChildrenWithDiverseNeedsFundingCategory.findAll({
-            paranoid: false,
-          })
+          await ChildrenWithDiverseNeedsFundingCategory.findAll()
         expect(childrenWithDiverseNeedsFundingCategories).toEqual([
           expect.objectContaining({
             id: configuredFundingCategory.id,
