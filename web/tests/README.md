@@ -17,6 +17,7 @@ Follow [Scenario-Oriented Verification in the shared Code Organization Reference
 - Use one `expect` per test. Give independently observable outcomes separate scenarios; do not hide additional assertions in helpers or combine unrelated outcomes into a synthetic bundle.
 - Reuse existing infrastructure helpers such as `mockVuetify` and the typed frontend factories in `tests/factories`. Keep scenario-specific factory overrides inline.
 - Prefer API spies and real composables. Mock dependencies outside the behavior under test, not the component's own state machinery.
+- Match the specific failure with `toThrow`/`rejects` when the tested action throws or rejects. For Vue-delivered errors, assert the errors received by the application handler directly; do not pad spy assertions with `expect.anything()` or `expect.any(String)` for incidental framework arguments.
 - ELCC request-state coverage gives errors, loading completion, returned records, authorization policy, and collection counts separate named scenarios. These are independently consumed states, even when one request changes them together.
 - Give independently observable retry feedback, edited-input retention, and saved API payloads their own named scenarios.
 - Assert live state at the phase the test names. Cover pending and completed requests in separate self-contained scenarios; do not capture intermediate state in variables and assert those snapshots after a later transition.

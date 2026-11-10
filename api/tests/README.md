@@ -19,6 +19,8 @@ Keep setup local to the scenario, using explicit fixture names such as `user1` a
 
 For a negative spy contract, use `expect(spy).not.toHaveBeenCalled()` without arguments. Time-dependent suites use `vi.useFakeTimers()` with `vi.useRealTimers()` teardown; set the clock with `vi.setSystemTime(new Date("YYYY-MM-DD"))`, leave a blank line before scenario setup, and use explicit dates relative to that clock.
 
+For rejected operations, use `rejects.toThrow` with the expected failure message or pattern. A generic `Error` or validation-error class alone can pass for an unrelated failure; identify the business rule being rejected.
+
 ## Factory and Harness Boundaries
 
 Use [Factory Shark](https://github.com/klondikemarlen/factory-shark#readme) for Sequelize model factories in `tests/factories`. Declare scalar attributes and `belongsTo` dependencies with `associate`; the library owns building and persistence. Fishery remains appropriate for `FundingLineValue`, a plain JSON value, and frontend API response fixtures rather than Sequelize models.
