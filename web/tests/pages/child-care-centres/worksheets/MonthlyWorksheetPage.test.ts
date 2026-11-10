@@ -88,11 +88,8 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           await flushPromises()
 
           // Assert
-          expect(errorHandler).toHaveBeenCalledWith(
-            recoveryError,
-            expect.anything(),
-            expect.any(String)
-          )
+          const receivedErrors = errorHandler.mock.calls.map(([error]) => error)
+          expect(receivedErrors).toEqual([recoveryError])
         }
       )
 
@@ -641,7 +638,8 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           await flushPromises()
 
           // Assert
-          expect(errorHandler).toHaveBeenCalledWith(error, expect.anything(), expect.any(String))
+          const receivedErrors = errorHandler.mock.calls.map(([error]) => error)
+          expect(receivedErrors).toEqual([error])
         }
       )
     })

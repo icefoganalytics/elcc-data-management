@@ -1,5 +1,3 @@
-import { ValidationError } from "@sequelize/core"
-
 import { fundingSubmissionLineFactory } from "@/factories"
 
 import UpdateService from "@/services/funding-submission-lines/update-service"
@@ -28,7 +26,9 @@ describe("api/src/services/funding-submission-lines/update-service.ts", () => {
         })
 
         // Assert
-        await expect(updatePromise).rejects.toThrow(ValidationError)
+        await expect(updatePromise).rejects.toThrow(
+          `${sectionName} must be written through its dedicated ledger.`
+        )
       })
     })
   })

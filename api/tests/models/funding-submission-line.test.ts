@@ -1,5 +1,3 @@
-import { ValidationError } from "@sequelize/core"
-
 import { fundingPeriodFactory, fundingSubmissionLineFactory } from "@/factories"
 
 import FundingSubmissionLine from "@/models/funding-submission-line"
@@ -232,7 +230,9 @@ describe("api/src/models/funding-submission-line.ts", () => {
           const validation = fundingSubmissionLine.validate()
 
           // Assert
-          await expect(validation).rejects.toThrow(ValidationError)
+          await expect(validation).rejects.toThrow(
+            `${sectionName} must be written through its dedicated ledger.`
+          )
         })
       })
     })
