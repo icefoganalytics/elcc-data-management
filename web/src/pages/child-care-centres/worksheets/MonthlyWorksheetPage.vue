@@ -102,7 +102,10 @@
             isCreatingChildrenWithDiverseNeedsFundingRecord
           "
         />
-        <v-row class="mt-0">
+        <v-row
+          v-if="!isNil(childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual)"
+          class="mt-0"
+        >
           <v-col
             v-if="!showChildrenWithDiverseNeedsFundingRecordCreateForm"
             cols="12"
@@ -112,8 +115,8 @@
               color="primary"
               :disabled="
                 isWorkflowBusy ||
-                childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual?.isLoading ||
-                childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual?.isErrored
+                childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.isLoading ||
+                childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.isErrored
               "
               @click="showChildrenWithDiverseNeedsFundingRecordCreateForm = true"
             >
@@ -129,7 +132,7 @@
               :fiscal-period-id="fiscalPeriod.id"
               :funding-period-id="fiscalPeriod.fundingPeriodId"
               :existing-category-ids="
-                childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual?.categoryIds ?? []
+                childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.categoryIds
               "
               :is-workflow-busy="isReplicating || isWorksheetSaving || isRefreshingLinked"
               @saving="isCreatingChildrenWithDiverseNeedsFundingRecord = $event"
@@ -150,7 +153,10 @@
             isReplicating || isWorksheetSaving || isRefreshingLinked || isCreatingAdministrationCost
           "
         />
-        <v-row class="mt-0">
+        <v-row
+          v-if="!isNil(administrationCostTable)"
+          class="mt-0"
+        >
           <v-col
             v-if="!showAdministrationCostCreateForm"
             cols="12"
@@ -160,8 +166,8 @@
               color="primary"
               :disabled="
                 isWorkflowBusy ||
-                administrationCostTable?.isLoading ||
-                administrationCostTable?.isErrored
+                administrationCostTable.isLoading ||
+                administrationCostTable.isErrored
               "
               @click="showAdministrationCostCreateForm = true"
             >
@@ -176,7 +182,7 @@
               :centre-id="centreId"
               :fiscal-period-id="fiscalPeriod.id"
               :funding-period-id="fiscalPeriod.fundingPeriodId"
-              :existing-category-ids="administrationCostTable?.categoryIds ?? []"
+              :existing-category-ids="administrationCostTable.categoryIds"
               :is-workflow-busy="isReplicating || isWorksheetSaving || isRefreshingLinked"
               @saving="isCreatingAdministrationCost = $event"
               @created="onAdministrationCostCreated"
@@ -196,7 +202,10 @@
             isReplicating || isWorksheetSaving || isRefreshingLinked || isCreatingQualityEnhancement
           "
         />
-        <v-row class="mt-0">
+        <v-row
+          v-if="!isNil(qualityEnhancementTable)"
+          class="mt-0"
+        >
           <v-col
             v-if="!showQualityEnhancementCreateForm"
             cols="12"
@@ -206,8 +215,8 @@
               color="primary"
               :disabled="
                 isWorkflowBusy ||
-                qualityEnhancementTable?.isLoading ||
-                qualityEnhancementTable?.isErrored
+                qualityEnhancementTable.isLoading ||
+                qualityEnhancementTable.isErrored
               "
               @click="showQualityEnhancementCreateForm = true"
             >
@@ -222,7 +231,7 @@
               :centre-id="centreId"
               :fiscal-period-id="fiscalPeriod.id"
               :funding-period-id="fiscalPeriod.fundingPeriodId"
-              :existing-category-ids="qualityEnhancementTable?.categoryIds ?? []"
+              :existing-category-ids="qualityEnhancementTable.categoryIds"
               :is-workflow-busy="isReplicating || isWorksheetSaving || isRefreshingLinked"
               @saving="isCreatingQualityEnhancement = $event"
               @created="onQualityEnhancementCreated"
