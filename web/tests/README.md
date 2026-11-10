@@ -26,6 +26,26 @@ Follow [Scenario-Oriented Verification in the shared Code Organization Reference
 - Keep suite-specific lifecycle state and hooks inside the suite's outer `describe`. Reserve shared setup for infrastructure needed across suites; do not introduce a global fixture for locally owned resources.
 - For slow-save scenarios, a local deferred promise can hold the API spy pending. Keep stale server responses separate from editable records so subsequent edits cannot mutate the response fixture.
 
+### Mocking GET Routes
+
+Use `mockHttpGetRoutes` from `@/tests/support` to register an explicit URL-to-callback map beside each scenario's fixtures:
+
+```ts
+const records = [recordFactory.build({ month: "April" })]
+mockHttpGetRoutes({
+  "/api/records": (config) => ({
+    data: {
+      records: config?.params?.where?.month === "April" ? records : [],
+    },
+  }),
+  "/api/categories": () => ({ data: { categories: [] } }),
+})
+```
+
+Keys match exact URLs; query parameters remain in the Axios config passed to the callback. Callbacks (including `vi.fn` spies) return the complete mocked response, such as `{ data: ... }`, or a promise of that response. Return a deferred promise for pending requests or a rejected promise for failures. Keep route-specific decisions within that route's callback.
+
+Unmatched URLs delegate to the GET implementation already installed, preserving shared setup and authentication mocks. Register once per scenario; Vitest's configured mock reset removes these overrides between tests. The helper does not supply collection data or other scenario defaults.
+
 ## Fixture Factories
 
 Use Fishery for repeated frontend API entities. Factories return the corresponding frontend API type and build related records through the owning factory. They must not import backend models or create persisted data. Keep one-off inputs literal; use `build({ ...overrides })` beside each scenario for meaningful values.
