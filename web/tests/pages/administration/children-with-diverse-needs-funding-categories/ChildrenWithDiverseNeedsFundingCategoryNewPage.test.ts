@@ -5,6 +5,7 @@ import { VTextField } from "vuetify/components"
 import httpClient from "@/api/http-client"
 import { UserRoles } from "@/api/current-user-api"
 import ApiOperationError from "@/api/errors/api-operation-error"
+import useCurrentUser from "@/use/use-current-user"
 import useSnack from "@/use/use-snack"
 
 import { childrenWithDiverseNeedsFundingCategoryFactory } from "@/tests/factories"
@@ -17,6 +18,10 @@ import ChildrenWithDiverseNeedsFundingCategoryNewPage from "@/pages/administrati
 describe("web/src/pages/administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryNewPage.vue", () => {
   describe("ChildrenWithDiverseNeedsFundingCategoryNewPage", () => {
     describe("creation recovery", () => {
+      afterEach(() => {
+        useCurrentUser().reset()
+      })
+
       test("when creation fails unexpectedly, delivers the original error to the application boundary", async () => {
         // Arrange
         const category = childrenWithDiverseNeedsFundingCategoryFactory.build({
@@ -37,6 +42,7 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
         mockCurrentUserApi({
           user: { ...DEFAULT_USER, roles: [UserRoles.SYSTEM_ADMINISTRATOR] },
         })
+        await useCurrentUser().fetch()
         const router = mockRouter([
           { path: "/", component: ChildrenWithDiverseNeedsFundingCategoryNewPage },
           {
@@ -93,6 +99,7 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
         mockCurrentUserApi({
           user: { ...DEFAULT_USER, roles: [UserRoles.SYSTEM_ADMINISTRATOR] },
         })
+        await useCurrentUser().fetch()
         const router = mockRouter([
           { path: "/", component: ChildrenWithDiverseNeedsFundingCategoryNewPage },
           {
@@ -144,6 +151,7 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
         mockCurrentUserApi({
           user: { ...DEFAULT_USER, roles: [UserRoles.SYSTEM_ADMINISTRATOR] },
         })
+        await useCurrentUser().fetch()
         const router = mockRouter([
           { path: "/", component: ChildrenWithDiverseNeedsFundingCategoryNewPage },
           {
