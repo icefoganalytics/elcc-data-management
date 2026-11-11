@@ -4,11 +4,11 @@ import { isEmpty } from "lodash"
 import {
   Centre,
   FiscalPeriod,
+  type FundingLineValue,
   FundingPeriod,
   FundingSubmissionLine,
   FundingSubmissionLineJson,
 } from "@/models"
-import { type FundingLineValue } from "@/models/funding-line-value"
 import BaseService from "@/services/base-service"
 
 export class BulkCreateService extends BaseService {
@@ -37,9 +37,6 @@ export class BulkCreateService extends BaseService {
         fiscalYear: fiscalYearLegacy,
       },
     })
-    if (isEmpty(fundingSubmissionLines)) {
-      throw new Error("No funding submission lines found for the funding period.")
-    }
 
     const fundingSubmissionLineJsonsDefaults = fundingSubmissionLines.map(
       (fundingSubmissionLine) => {

@@ -1,3 +1,5 @@
+import { type AxiosRequestConfig } from "axios"
+
 import httpClient from "@/api/http-client"
 
 vi.mock("@/api/http-client")
@@ -35,6 +37,27 @@ export function mockHttpClient() {
   })
 
   return httpClientMock
+}
+
+type HttpGetRouteHandler = (
+  config: AxiosRequestConfig<unknown> | undefined
+) => { data: unknown } | Promise<{ data: unknown }>
+
+/**
+ * Overrides exact GET URLs for one scenario, preserving the previous implementation
+ * for unmatched URLs. Vitest's configured mock reset clears registrations between tests.
+ */
+export function mockHttpGetRoutes(routes: Record<string, HttpGetRouteHandler>) {
+  const getMock = vi.mocked(httpClient.get)
+  const previousImplementation = getMock.getMockImplementation()
+
+  getMock.mockImplementation(async (url, config) => {
+    if (Object.hasOwn(routes, url)) {
+      return routes[url](config)
+    }
+
+    return previousImplementation?.(url, config)
+  })
 }
 
 export default mockHttpClient

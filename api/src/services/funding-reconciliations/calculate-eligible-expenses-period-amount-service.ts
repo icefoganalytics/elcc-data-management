@@ -14,25 +14,41 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
   }
 
   async perform(): Promise<string> {
-    const fundingSubmissionExpensesAmount = await this.calculateFundingSubmissionExpenses()
-    const childCareSpacesTotalAmount = await this.calculateChildCareSpaces(
-      this.centreId,
-      this.fiscalPeriodId
+    const { centreId, fiscalPeriodId } = this
+    const fundingSubmissionExpensesAmount = await this.calculateFundingSubmissionExpenses(
+      centreId,
+      fiscalPeriodId
     )
-    const qualityEnhancementsTotalAmount = await this.calculateQualityEnhancements()
-    const administrationCostsTotalAmount = await this.calculateAdministrationCosts()
-    const buildingExpensesTotalAmount = await this.calculateBuildingExpenses()
+    const childCareSpacesTotalAmount = await this.calculateChildCareSpaces(centreId, fiscalPeriodId)
+    const qualityEnhancementsTotalAmount = await this.calculateQualityEnhancements(
+      centreId,
+      fiscalPeriodId
+    )
+    const childrenWithDiverseNeedsFundingRecordsTotalAmount =
+      await this.calculateChildrenWithDiverseNeedsFundingRecords(centreId, fiscalPeriodId)
+    const administrationCostsTotalAmount = await this.calculateAdministrationCosts(
+      centreId,
+      fiscalPeriodId
+    )
+    const buildingExpensesTotalAmount = await this.calculateBuildingExpenses(
+      centreId,
+      fiscalPeriodId
+    )
     const totalEligibleExpenses = Big(fundingSubmissionExpensesAmount)
       .plus(childCareSpacesTotalAmount)
       .plus(qualityEnhancementsTotalAmount)
+      .plus(childrenWithDiverseNeedsFundingRecordsTotalAmount)
       .plus(administrationCostsTotalAmount)
       .plus(buildingExpensesTotalAmount)
 
     return totalEligibleExpenses.toFixed(4)
   }
 
-  private async calculateFundingSubmissionExpenses(): Promise<string> {
-    const fiscalPeriod = await FiscalPeriod.findByPk(this.fiscalPeriodId, {
+  private async calculateFundingSubmissionExpenses(
+    centreId: number,
+    fiscalPeriodId: number
+  ): Promise<string> {
+    const fiscalPeriod = await FiscalPeriod.findByPk(fiscalPeriodId, {
       rejectOnEmpty: true,
     })
     const { fiscalYear: fiscalYearShort, month } = fiscalPeriod
@@ -68,7 +84,7 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
       {
         type: QueryTypes.SELECT,
         replacements: {
-          centreId: this.centreId,
+          centreId,
           fiscalYear: fiscalYearLegacy,
           dateName: monthLegacy,
         },
@@ -114,7 +130,10 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
     return Big(childCareSpacesTotalAmount).toFixed(4)
   }
 
-  private async calculateQualityEnhancements(): Promise<string> {
+  private async calculateQualityEnhancements(
+    centreId: number,
+    fiscalPeriodId: number
+  ): Promise<string> {
     const [qualityEnhancementsResult] = await db.query<{
       qualityEnhancementsTotalAmount: string
     }>(
@@ -134,8 +153,8 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
       {
         type: QueryTypes.SELECT,
         replacements: {
-          centreId: this.centreId,
-          fiscalPeriodId: this.fiscalPeriodId,
+          centreId,
+          fiscalPeriodId,
         },
       }
     )
@@ -143,7 +162,44 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
     return Big(qualityEnhancementsResult.qualityEnhancementsTotalAmount).toFixed(4)
   }
 
-  private async calculateAdministrationCosts(): Promise<string> {
+  private async calculateChildrenWithDiverseNeedsFundingRecords(
+    centreId: number,
+    fiscalPeriodId: number
+  ): Promise<string> {
+    const [childrenWithDiverseNeedsFundingRecordsResult] = await db.query<{
+      childrenWithDiverseNeedsFundingRecordsTotalAmount: string
+    }>(
+      /* sql */ `
+        SELECT
+          CONVERT(
+            VARCHAR(50),
+            COALESCE(SUM(actual_computed_total), 0)
+          ) AS childrenWithDiverseNeedsFundingRecordsTotalAmount
+        FROM
+          children_with_diverse_needs_funding_records
+        WHERE
+          centre_id = :centreId
+          AND fiscal_period_id = :fiscalPeriodId
+          AND deleted_at IS NULL
+      `,
+      {
+        type: QueryTypes.SELECT,
+        replacements: {
+          centreId,
+          fiscalPeriodId,
+        },
+      }
+    )
+
+    return Big(
+      childrenWithDiverseNeedsFundingRecordsResult.childrenWithDiverseNeedsFundingRecordsTotalAmount
+    ).toFixed(4)
+  }
+
+  private async calculateAdministrationCosts(
+    centreId: number,
+    fiscalPeriodId: number
+  ): Promise<string> {
     const [administrationCostsResult] = await db.query<{
       administrationCostsTotalAmount: string
     }>(
@@ -163,8 +219,8 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
       {
         type: QueryTypes.SELECT,
         replacements: {
-          centreId: this.centreId,
-          fiscalPeriodId: this.fiscalPeriodId,
+          centreId,
+          fiscalPeriodId,
         },
       }
     )
@@ -174,7 +230,10 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
     return Big(administrationCostsTotalAmount).toFixed(4)
   }
 
-  private async calculateBuildingExpenses(): Promise<string> {
+  private async calculateBuildingExpenses(
+    centreId: number,
+    fiscalPeriodId: number
+  ): Promise<string> {
     const [buildingExpensesResult] = await db.query<{
       buildingExpensesTotalAmount: string
     }>(
@@ -191,8 +250,8 @@ export class CalculateEligibleExpensesPeriodAmountService extends BaseService {
       {
         type: QueryTypes.SELECT,
         replacements: {
-          centreId: this.centreId,
-          fiscalPeriodId: this.fiscalPeriodId,
+          centreId,
+          fiscalPeriodId,
         },
       }
     )

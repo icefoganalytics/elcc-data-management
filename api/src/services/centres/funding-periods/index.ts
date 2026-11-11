@@ -6,6 +6,7 @@ export { IsInitializedService, type InitializationStatus } from "./is-initialize
 export * as AdministrationCosts from "./administration-costs"
 export * as BuildingExpenses from "./building-expenses"
 export * as ChildCareSpaces from "./child-care-spaces"
+export * as ChildrenWithDiverseNeedsFundingRecords from "./children-with-diverse-needs-funding-records"
 export * as EmployeeBenefits from "./employee-benefits"
 export * as FundingReconciliations from "./funding-reconciliations"
 export * as FundingSubmissionLineJsons from "./funding-submission-line-jsons"

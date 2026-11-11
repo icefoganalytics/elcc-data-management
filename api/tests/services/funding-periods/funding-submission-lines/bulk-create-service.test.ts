@@ -100,7 +100,7 @@ describe("api/src/services/funding-periods/funding-submission-lines/bulk-create-
         })
         await fundingSubmissionLineFactory.create({
           fiscalYear: "2024/25",
-          sectionName: "Children with Diverse Needs",
+          sectionName: "Unrelated Program",
           lineName: "Infants",
           monthlyAmount: "100.0000",
           childCareSpaceCategoryId: renamedCategory.id,
@@ -124,7 +124,7 @@ describe("api/src/services/funding-periods/funding-submission-lines/bulk-create-
         })
         expect(persistedLines).toEqual([
           expect.objectContaining({
-            sectionName: "Children with Diverse Needs",
+            sectionName: "Unrelated Program",
             lineName: "Infants",
             monthlyAmount: "100",
             childCareSpaceCategoryId: null,
@@ -153,7 +153,9 @@ describe("api/src/services/funding-periods/funding-submission-lines/bulk-create-
         const clonePromise = BulkCreateService.perform(targetFundingPeriod)
 
         // Assert
-        await expect(clonePromise).rejects.toThrow(Error)
+        await expect(clonePromise).rejects.toThrow(
+          /Child Care Spaces must be written through its dedicated ledger/
+        )
       })
 
       test("when cloning a retired section, creates no target configuration", async () => {

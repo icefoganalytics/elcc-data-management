@@ -2,6 +2,7 @@ const LEDGER_SECTION_NAMES = [
   "Administration (10% of Spaces)",
   "Administration",
   "Child Care Spaces",
+  "Children with Diverse Needs",
   "Quality Enhancement Program",
 ]
 

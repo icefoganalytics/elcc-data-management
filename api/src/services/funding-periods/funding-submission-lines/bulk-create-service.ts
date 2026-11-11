@@ -6,14 +6,10 @@ import { doesNotUseLedgerSection } from "@/models/validators"
 
 import BaseService from "@/services/base-service"
 
-type FundingSubmissionLineDefaultWithCategory = {
-  sectionName: string
-  lineName: string
-  fromAge: number | null
-  toAge: number | null
-  monthlyAmount: string
-  childCareSpaceCategoryId: number | null
-}
+type FundingSubmissionLineDefaultWithCategory = Pick<
+  FundingSubmissionLine,
+  "sectionName" | "lineName" | "fromAge" | "toAge" | "monthlyAmount" | "childCareSpaceCategoryId"
+>
 
 export class BulkCreateService extends BaseService {
   constructor(private fundingPeriod: FundingPeriod) {

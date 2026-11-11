@@ -90,6 +90,56 @@
       </FundingSubmissionLineJsonEditSheet>
       <section class="ma-4 mt-8">
         <h3 class="mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2">
+          Children with Diverse Needs
+        </h3>
+        <ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual
+          ref="childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual"
+          :where="worksheetWhere"
+          :is-replicating="
+            isReplicating ||
+            isWorksheetSaving ||
+            isRefreshingLinked ||
+            isCreatingChildrenWithDiverseNeedsFundingRecord
+          "
+        />
+        <v-row
+          v-if="!isNil(childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual)"
+          class="mt-0"
+        >
+          <v-col
+            v-if="!showChildrenWithDiverseNeedsFundingRecordCreateForm"
+            cols="12"
+            class="d-flex justify-end"
+          >
+            <v-btn
+              color="primary"
+              :disabled="isChildrenWithDiverseNeedsFundingRecordCreationUnavailable"
+              @click="openChildrenWithDiverseNeedsFundingRecordCreateForm"
+            >
+              Add Diverse Need
+            </v-btn>
+          </v-col>
+          <v-col
+            v-else
+            cols="12"
+          >
+            <ChildrenWithDiverseNeedsFundingRecordsCreateFormCard
+              :centre-id="centreId"
+              :fiscal-period-id="fiscalPeriod.id"
+              :funding-period-id="fiscalPeriod.fundingPeriodId"
+              :existing-category-ids="
+                childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.categoryIds
+              "
+              :is-workflow-busy="isReplicating || isWorksheetSaving || isRefreshingLinked"
+              @saving="trackChildrenWithDiverseNeedsFundingRecordCreation"
+              @created="closeChildrenWithDiverseNeedsFundingRecordCreateFormAndRefresh"
+              @cancel="closeChildrenWithDiverseNeedsFundingRecordCreateForm"
+            />
+          </v-col>
+        </v-row>
+      </section>
+      <section class="ma-4 mt-8">
+        <h3 class="mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2">
           Administration (10% of Spaces)
         </h3>
         <AdministrationCostEditTable
@@ -99,7 +149,10 @@
             isReplicating || isWorksheetSaving || isRefreshingLinked || isCreatingAdministrationCost
           "
         />
-        <v-row class="mt-0">
+        <v-row
+          v-if="!isNil(administrationCostTable)"
+          class="mt-0"
+        >
           <v-col
             v-if="!showAdministrationCostCreateForm"
             cols="12"
@@ -107,12 +160,8 @@
           >
             <v-btn
               color="primary"
-              :disabled="
-                isWorkflowBusy ||
-                administrationCostTable?.isLoading ||
-                administrationCostTable?.isErrored
-              "
-              @click="showAdministrationCostCreateForm = true"
+              :disabled="isAdministrationCostCreationUnavailable"
+              @click="openAdministrationCostCreateForm"
             >
               Add Administration Cost
             </v-btn>
@@ -125,11 +174,11 @@
               :centre-id="centreId"
               :fiscal-period-id="fiscalPeriod.id"
               :funding-period-id="fiscalPeriod.fundingPeriodId"
-              :existing-category-ids="administrationCostTable?.categoryIds ?? []"
+              :existing-category-ids="administrationCostTable.categoryIds"
               :is-workflow-busy="isReplicating || isWorksheetSaving || isRefreshingLinked"
-              @saving="isCreatingAdministrationCost = $event"
-              @created="onAdministrationCostCreated"
-              @cancel="showAdministrationCostCreateForm = false"
+              @saving="trackAdministrationCostCreation"
+              @created="closeAdministrationCostCreateFormAndRefresh"
+              @cancel="closeAdministrationCostCreateForm"
             />
           </v-col>
         </v-row>
@@ -145,7 +194,10 @@
             isReplicating || isWorksheetSaving || isRefreshingLinked || isCreatingQualityEnhancement
           "
         />
-        <v-row class="mt-0">
+        <v-row
+          v-if="!isNil(qualityEnhancementTable)"
+          class="mt-0"
+        >
           <v-col
             v-if="!showQualityEnhancementCreateForm"
             cols="12"
@@ -153,12 +205,8 @@
           >
             <v-btn
               color="primary"
-              :disabled="
-                isWorkflowBusy ||
-                qualityEnhancementTable?.isLoading ||
-                qualityEnhancementTable?.isErrored
-              "
-              @click="showQualityEnhancementCreateForm = true"
+              :disabled="isQualityEnhancementCreationUnavailable"
+              @click="openQualityEnhancementCreateForm"
             >
               Add Quality Enhancement
             </v-btn>
@@ -171,11 +219,11 @@
               :centre-id="centreId"
               :fiscal-period-id="fiscalPeriod.id"
               :funding-period-id="fiscalPeriod.fundingPeriodId"
-              :existing-category-ids="qualityEnhancementTable?.categoryIds ?? []"
+              :existing-category-ids="qualityEnhancementTable.categoryIds"
               :is-workflow-busy="isReplicating || isWorksheetSaving || isRefreshingLinked"
-              @saving="isCreatingQualityEnhancement = $event"
-              @created="onQualityEnhancementCreated"
-              @cancel="showQualityEnhancementCreateForm = false"
+              @saving="trackQualityEnhancementCreation"
+              @created="closeQualityEnhancementCreateFormAndRefresh"
+              @cancel="closeQualityEnhancementCreateForm"
             />
           </v-col>
         </v-row>
@@ -255,7 +303,10 @@ import AdministrationCostEditTable from "@/components/administration-costs/Admin
 import AdministrationCostCreateFormCard from "@/components/administration-costs/AdministrationCostCreateFormCard.vue"
 import QualityEnhancementEditTable from "@/components/quality-enhancements/QualityEnhancementEditTable.vue"
 import QualityEnhancementCreateFormCard from "@/components/quality-enhancements/QualityEnhancementCreateFormCard.vue"
+import ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual from "@/components/children-with-diverse-needs-funding-records/ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.vue"
+import ChildrenWithDiverseNeedsFundingRecordsCreateFormCard from "@/components/children-with-diverse-needs-funding-records/ChildrenWithDiverseNeedsFundingRecordsCreateFormCard.vue"
 import useSnack from "@/use/use-snack"
+
 const props = defineProps<{
   centreId: number
   fiscalYearSlug: string
@@ -273,6 +324,8 @@ const fiscalPeriod = ref<FiscalPeriod | null>(null)
 const isLoading = ref(true)
 const loadError = ref(false)
 let activeRequest = 0
+const showChildrenWithDiverseNeedsFundingRecordCreateForm = ref(false)
+const isCreatingChildrenWithDiverseNeedsFundingRecord = ref(false)
 const showAdministrationCostCreateForm = ref(false)
 const showQualityEnhancementCreateForm = ref(false)
 const isCreatingAdministrationCost = ref(false)
@@ -281,6 +334,8 @@ const isCreatingQualityEnhancement = ref(false)
 async function loadWorksheet() {
   showAdministrationCostCreateForm.value = false
   showQualityEnhancementCreateForm.value = false
+  showChildrenWithDiverseNeedsFundingRecordCreateForm.value = false
+  isCreatingChildrenWithDiverseNeedsFundingRecord.value = false
   isCreatingAdministrationCost.value = false
   isCreatingQualityEnhancement.value = false
   const requestId = ++activeRequest
@@ -315,22 +370,22 @@ async function loadWorksheet() {
       throw new AggregateError(failures, failures.map(String).join("; "))
     }
 
-    const worksheetResponse = worksheetResult.value
-    const fiscalPeriodResponse = fiscalPeriodResult.value
+    const { fundingSubmissionLineJsons } = worksheetResult.value
+    const { fiscalPeriods } = fiscalPeriodResult.value
 
     if (requestId !== activeRequest) {
       return
     }
 
     fundingSubmissionLineJson.value =
-      worksheetResponse.fundingSubmissionLineJsons.find(
+      fundingSubmissionLineJsons.find(
         (worksheet) =>
           worksheet.centreId === props.centreId &&
           worksheet.fiscalYear === fiscalYear.value &&
           worksheet.dateName === monthAsDateName.value
       ) ?? null
     fiscalPeriod.value =
-      fiscalPeriodResponse.fiscalPeriods.find(
+      fiscalPeriods.find(
         (period) => period.fiscalYear === props.fiscalYearSlug && period.month === props.month
       ) ?? null
   } catch (error) {
@@ -357,12 +412,14 @@ const worksheetWhere = computed(() => ({
   centreId: props.centreId,
   fiscalPeriodId: fiscalPeriod.value?.id,
 }))
+const childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual = useTemplateRef<
+  InstanceType<typeof ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual>
+>("childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual")
 const administrationCostTable =
   useTemplateRef<InstanceType<typeof AdministrationCostEditTable>>("administrationCostTable")
 const qualityEnhancementTable =
   useTemplateRef<InstanceType<typeof QualityEnhancementEditTable>>("qualityEnhancementTable")
-const jsonSheet =
-  useTemplateRef<InstanceType<typeof FundingSubmissionLineJsonEditSheet>>("jsonSheet")
+const jsonSheet = useTemplateRef("jsonSheet")
 const buildingExpensesEditTable = useTemplateRef("buildingExpensesEditTable")
 const keyboardShortcutsModal = useTemplateRef("keyboardShortcutsModal")
 const showBuildingExpenseCreateForm = ref(false)
@@ -372,10 +429,13 @@ const isRefreshingLinked = ref(false)
 const snack = useSnack()
 const isLedgerMutating = computed(() =>
   Boolean(
-    administrationCostTable.value?.isSaving ||
+    childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value?.isSaving ||
+      childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value?.isDeleting ||
+      administrationCostTable.value?.isSaving ||
       administrationCostTable.value?.isDeleting ||
       qualityEnhancementTable.value?.isSaving ||
       qualityEnhancementTable.value?.isDeleting ||
+      isCreatingChildrenWithDiverseNeedsFundingRecord.value ||
       isCreatingAdministrationCost.value ||
       isCreatingQualityEnhancement.value
   )
@@ -387,14 +447,54 @@ const isWorkflowBusy = computed(
     isLedgerMutating.value ||
     isRefreshingLinked.value
 )
+
+const isChildrenWithDiverseNeedsFundingRecordCreationUnavailable = computed(() => {
+  const childrenWithDiverseNeedsFundingRecordsTable =
+    childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value
+
+  return (
+    isWorkflowBusy.value ||
+    isNil(childrenWithDiverseNeedsFundingRecordsTable) ||
+    childrenWithDiverseNeedsFundingRecordsTable.isLoading ||
+    childrenWithDiverseNeedsFundingRecordsTable.isErrored
+  )
+})
+
+const isAdministrationCostCreationUnavailable = computed(() => {
+  const administration = administrationCostTable.value
+
+  return (
+    isWorkflowBusy.value ||
+    isNil(administration) ||
+    administration.isLoading ||
+    administration.isErrored
+  )
+})
+
+const isQualityEnhancementCreationUnavailable = computed(() => {
+  const qualityEnhancement = qualityEnhancementTable.value
+
+  return (
+    isWorkflowBusy.value ||
+    isNil(qualityEnhancement) ||
+    qualityEnhancement.isLoading ||
+    qualityEnhancement.isErrored
+  )
+})
+
 const isReplicationUnavailable = computed(() => {
   const sheet = jsonSheet.value
   const administration = administrationCostTable.value
+  const childrenWithDiverseNeedsFundingRecord =
+    childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value
   const quality = qualityEnhancementTable.value
   return (
     !sheet ||
     sheet.isLoading ||
     sheet.isErrored ||
+    !childrenWithDiverseNeedsFundingRecord ||
+    childrenWithDiverseNeedsFundingRecord.isLoading ||
+    childrenWithDiverseNeedsFundingRecord.isErrored ||
     !administration ||
     administration.isLoading ||
     administration.isErrored ||
@@ -429,33 +529,57 @@ async function closeCreateFormAndRefresh() {
 async function refreshLinkedResources() {
   const results = await Promise.allSettled([
     administrationCostTable.value?.refresh(),
+    childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value?.refresh(),
     qualityEnhancementTable.value?.refresh(),
   ])
   const failures = results.flatMap((result) =>
     result.status === "rejected" ? [result.reason] : []
   )
-  if (failures.length > 0) throw new AggregateError(failures, failures.map(String).join("; "))
+  if (failures.length > 0) {
+    throw new AggregateError(failures, failures.map(String).join("; "))
+  }
 }
 
 function onJsonUpdated(fundingSubmissionLineJsonId: number) {
-  if (fundingSubmissionLineJson.value?.id !== fundingSubmissionLineJsonId) return
+  if (fundingSubmissionLineJson.value?.id !== fundingSubmissionLineJsonId) {
+    return
+  }
 
   emit("update:fundingSubmissionLineJson", fundingSubmissionLineJsonId)
 }
 
 async function saveWorksheet(): Promise<boolean> {
-  if (isWorkflowBusy.value || isReplicationUnavailable.value) return false
+  if (isWorkflowBusy.value || isReplicationUnavailable.value) {
+    return false
+  }
 
   const sheet = jsonSheet.value
   const administration = administrationCostTable.value
+  const childrenWithDiverseNeedsFundingRecord =
+    childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value
   const quality = qualityEnhancementTable.value
-  if (!sheet || !administration || !quality) return false
+  if (!sheet || !administration || !childrenWithDiverseNeedsFundingRecord || !quality) {
+    return false
+  }
 
   try {
-    const committedEdits = Promise.all([administration.commitEdit(), quality.commitEdit()])
     isWorksheetSaving.value = true
-    const [administrationCommitted, qualityCommitted] = await committedEdits
-    if (!administrationCommitted || !qualityCommitted) return false
+    const [
+      administrationCommitted,
+      childrenWithDiverseNeedsFundingRecordCommitted,
+      qualityCommitted,
+    ] = await Promise.all([
+      administration.commitEdit(),
+      childrenWithDiverseNeedsFundingRecord.commitEdit(),
+      quality.commitEdit(),
+    ])
+    if (
+      !administrationCommitted ||
+      !childrenWithDiverseNeedsFundingRecordCommitted ||
+      !qualityCommitted
+    ) {
+      return false
+    }
 
     const wasSaved = await sheet.saveFundingSubmissionLineJson()
     isRefreshingLinked.value = true
@@ -475,8 +599,21 @@ async function saveWorksheet(): Promise<boolean> {
   }
 }
 
-async function onAdministrationCostCreated() {
+function openAdministrationCostCreateForm() {
+  showAdministrationCostCreateForm.value = true
+}
+
+function closeAdministrationCostCreateForm() {
   showAdministrationCostCreateForm.value = false
+}
+
+function trackAdministrationCostCreation(isCreating: boolean) {
+  isCreatingAdministrationCost.value = isCreating
+}
+
+async function closeAdministrationCostCreateFormAndRefresh() {
+  closeAdministrationCostCreateForm()
+
   try {
     await administrationCostTable.value?.refresh()
   } catch (error) {
@@ -486,8 +623,45 @@ async function onAdministrationCostCreated() {
   }
 }
 
-async function onQualityEnhancementCreated() {
+function openChildrenWithDiverseNeedsFundingRecordCreateForm() {
+  showChildrenWithDiverseNeedsFundingRecordCreateForm.value = true
+}
+
+function closeChildrenWithDiverseNeedsFundingRecordCreateForm() {
+  showChildrenWithDiverseNeedsFundingRecordCreateForm.value = false
+}
+
+function trackChildrenWithDiverseNeedsFundingRecordCreation(isCreating: boolean) {
+  isCreatingChildrenWithDiverseNeedsFundingRecord.value = isCreating
+}
+
+async function closeChildrenWithDiverseNeedsFundingRecordCreateFormAndRefresh() {
+  closeChildrenWithDiverseNeedsFundingRecordCreateForm()
+
+  try {
+    await childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value?.refresh()
+  } catch (error) {
+    rethrowUnexpectedError(error)
+
+    snack.error(`Failed to refresh diverse needs: ${error}`)
+  }
+}
+
+function openQualityEnhancementCreateForm() {
+  showQualityEnhancementCreateForm.value = true
+}
+
+function closeQualityEnhancementCreateForm() {
   showQualityEnhancementCreateForm.value = false
+}
+
+function trackQualityEnhancementCreation(isCreating: boolean) {
+  isCreatingQualityEnhancement.value = isCreating
+}
+
+async function closeQualityEnhancementCreateFormAndRefresh() {
+  closeQualityEnhancementCreateForm()
+
   try {
     await qualityEnhancementTable.value?.refresh()
   } catch (error) {
@@ -498,27 +672,54 @@ async function onQualityEnhancementCreated() {
 }
 
 async function replicateEstimatesForward() {
-  if (isWorkflowBusy.value || isReplicationUnavailable.value) return
+  const context = {
+    centreId: props.centreId,
+    fiscalPeriodId: fiscalPeriod.value?.id,
+    worksheetId: fundingSubmissionLineJson.value?.id,
+  }
+  if (
+    isNil(context.fiscalPeriodId) ||
+    isNil(context.worksheetId) ||
+    isWorkflowBusy.value ||
+    isReplicationUnavailable.value
+  ) {
+    return
+  }
 
   const sheet = jsonSheet.value
   const administration = administrationCostTable.value
+  const childrenWithDiverseNeedsFundingRecord =
+    childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value
   const quality = qualityEnhancementTable.value
-  if (!sheet || !administration || !quality) return
+  if (!sheet || !administration || !childrenWithDiverseNeedsFundingRecord || !quality) {
+    return
+  }
 
   const savedWorksheet = saveWorksheet()
   isReplicating.value = true
   try {
     if (!(await savedWorksheet)) return
 
+    if (
+      props.centreId !== context.centreId ||
+      fiscalPeriod.value?.id !== context.fiscalPeriodId ||
+      fundingSubmissionLineJson.value?.id !== context.worksheetId
+    ) {
+      return
+    }
+
     const results = await Promise.allSettled([
       sheet.replicateOwnEstimates(),
       administration.replicateEstimates(),
+      childrenWithDiverseNeedsFundingRecord.replicateEstimates(),
       quality.replicateEstimates(),
     ])
     const failures = results.flatMap((result) =>
       result.status === "rejected" ? [result.reason] : []
     )
-    if (failures.length > 0) throw new AggregateError(failures, failures.map(String).join("; "))
+    if (failures.length > 0) {
+      throw new AggregateError(failures, failures.map(String).join("; "))
+    }
 
     snack.success("Estimates replicated successfully!")
   } catch (error) {

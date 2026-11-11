@@ -1,5 +1,3 @@
-import { ValidationError } from "@sequelize/core"
-
 import { FundingSubmissionLine } from "@/models"
 
 import { childCareSpaceCategoryFactory, fundingPeriodFactory } from "@/factories"
@@ -9,7 +7,34 @@ import CreateService from "@/services/funding-submission-lines/create-service"
 describe("api/src/services/funding-submission-lines/create-service.ts", () => {
   describe("CreateService", () => {
     describe("#perform", () => {
-      test("when creating unrelated sections, does not retain ledger category links", async () => {
+      test("when creating an unrelated section without a category link, persists its snapshot without a ledger link", async () => {
+        // Arrange
+        await fundingPeriodFactory.create({ fiscalYear: "2147-2148" })
+
+        // Act
+        const fundingSubmissionLine = await CreateService.perform({
+          fiscalYear: "2147/48",
+          sectionName: "Additional Funding",
+          lineName: "Infants",
+          monthlyAmount: "100.00",
+          childCareSpaceCategoryId: null,
+        })
+
+        // Assert
+        const persistedLines = await FundingSubmissionLine.findAll()
+        expect(persistedLines).toEqual([
+          expect.objectContaining({
+            id: fundingSubmissionLine.id,
+            fiscalYear: "2147/48",
+            sectionName: "Additional Funding",
+            lineName: "Infants",
+            monthlyAmount: "100",
+            childCareSpaceCategoryId: null,
+          }),
+        ])
+      })
+
+      test("when creating an unrelated section with a category link, persists its snapshot without the ledger link", async () => {
         // Arrange
         const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2147-2148" })
         const category = await childCareSpaceCategoryFactory.create({
@@ -18,14 +43,7 @@ describe("api/src/services/funding-submission-lines/create-service.ts", () => {
         })
 
         // Act
-        await CreateService.perform({
-          fiscalYear: "2147/48",
-          sectionName: "Children with Diverse Needs",
-          lineName: "Infants",
-          monthlyAmount: "100.00",
-          childCareSpaceCategoryId: null,
-        })
-        await CreateService.perform({
+        const fundingSubmissionLine = await CreateService.perform({
           fiscalYear: "2147/48",
           sectionName: "Other Section",
           lineName: "Infants",
@@ -37,11 +55,11 @@ describe("api/src/services/funding-submission-lines/create-service.ts", () => {
         const persistedLines = await FundingSubmissionLine.findAll()
         expect(persistedLines).toEqual([
           expect.objectContaining({
-            sectionName: "Children with Diverse Needs",
-            childCareSpaceCategoryId: null,
-          }),
-          expect.objectContaining({
+            id: fundingSubmissionLine.id,
+            fiscalYear: "2147/48",
             sectionName: "Other Section",
+            lineName: "Infants",
+            monthlyAmount: "300",
             childCareSpaceCategoryId: null,
           }),
         ])
@@ -49,6 +67,7 @@ describe("api/src/services/funding-submission-lines/create-service.ts", () => {
 
       test.each([
         "Child Care Spaces",
+        "Children with Diverse Needs",
         "Administration",
         "Administration (10% of Spaces)",
         "Quality Enhancement Program",
@@ -65,7 +84,9 @@ describe("api/src/services/funding-submission-lines/create-service.ts", () => {
         const createPromise = CreateService.perform(attributes)
 
         // Assert
-        await expect(createPromise).rejects.toThrow(ValidationError)
+        await expect(createPromise).rejects.toThrow(
+          `${sectionName} must be written through its dedicated ledger.`
+        )
       })
     })
   })
