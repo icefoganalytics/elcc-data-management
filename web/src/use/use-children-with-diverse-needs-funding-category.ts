@@ -112,8 +112,6 @@ export function useChildrenWithDiverseNeedsFundingCategory(
     }
 
     const signal = requestController?.signal
-    state.isLoading = true
-    state.isErrored = false
 
     try {
       const { categoryName, fromAge, toAge, monthlyAmount } =
@@ -136,14 +134,7 @@ export function useChildrenWithDiverseNeedsFundingCategory(
       return childrenWithDiverseNeedsFundingCategory
     } catch (error) {
       console.error("Failed to save Children with Diverse Needs funding category", { error })
-      if (!signal?.aborted) {
-        state.isErrored = true
-      }
       throw error
-    } finally {
-      if (!signal?.aborted) {
-        state.isLoading = false
-      }
     }
   }
 
