@@ -73,8 +73,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
 
 ### Fixed
 
-- Development commands now honor an exported `COMPOSE_PROJECT_NAME`, allowing a short database-safe identity for long checkout names without changing existing checkout defaults or gateway routes.
-- Children with Diverse Needs categories can be retired while preserving their existing monthly funding records. Rejected category edits retain input for correction; authentication and unexpected mutation failures reach application recovery.
+- Children with Diverse Needs categories can be retired while preserving their existing monthly funding records. Rejected category edits retain input for correction. Authentication and unexpected failures during category mutations or list retries reach application recovery.
 - JSON API requests now distinguish backend errors from intermediary HTML. Cloudflare challenges offer explicit reload/verification and an opt-in, isolated diagnostic preview; other HTML reaches the application-error page. Recovery never automatically replays a write.
 - Inactive ELCC accounts now receive a stable access-denied response instead of repeatedly restarting sign-in.
 - Funding-period selections retain their fiscal-year labels when earlier lookup requests finish late.
@@ -84,6 +83,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
 - Adding Child Care Space categories no longer blocks initialized worksheets or forces records into earlier months. Concurrent occupancy edits use current stored rates, failed parallel writes remain locked until settled, and category filters ignore outdated responses.
 - Restored the missing icon beside Child Care Space Categories in the administration navigation.
 - Child Care Spaces reconciliation totals now retain all four decimal places even when aggregate amounts exceed JavaScript's decimal precision.
+- Development commands now honor an exported `COMPOSE_PROJECT_NAME`, allowing a short database-safe identity for long checkout names without changing existing checkout defaults or gateway routes.
 - Worksheet navigation now waits for the matching month, and occupancy inputs stay read only during saving and estimate replication.
 - Fresh annual setup retains Administration defaults, and shared funding lines cannot recreate the retired Child Care Spaces section.
 - Historical category linkage now recognizes zero-valued, integral decimal, and exponent-form numeric IDs without confusing strings or fractional values with record IDs.
