@@ -52,6 +52,8 @@ import { computed, ref, watch } from "vue"
 import { useRouteQuery } from "@vueuse/router"
 import { useRouter } from "vue-router"
 
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
+
 import { formatMoney } from "@/utils/formatters"
 import useVuetifySortByToSafeRouteQuery from "@/use/vuetify/use-vuetify-sort-by-to-safe-route-query"
 import useVuetifySortByToSequelizeSafeOrder from "@/use/vuetify/use-vuetify-sort-by-to-sequelize-safe-order"
@@ -120,8 +122,8 @@ const { childrenWithDiverseNeedsFundingCategories, totalCount, isLoading, isErro
 async function reload() {
   try {
     await fetch()
-  } catch {
-    // The table state presents the retryable load failure.
+  } catch (error) {
+    rethrowUnexpectedError(error)
   }
 }
 
