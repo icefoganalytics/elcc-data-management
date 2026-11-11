@@ -114,7 +114,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             .getComponent({ name: "AdministrationCostEditTable" })
             .get("tbody tr.cursor-pointer td:nth-child(4)")
             .text()
-        ).toEqual("$20.00")
+        ).toEqual("$20")
       })
 
       test("when one Spaces update fails, refreshes the Quality Enhancement total", async () => {
@@ -210,7 +210,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             .getComponent({ name: "QualityEnhancementEditTable" })
             .get("tbody tr.cursor-pointer td:nth-child(4)")
             .text()
-        ).toEqual("$40.00")
+        ).toEqual("$40")
       })
 
       test("when one Spaces update fails, does not replicate the partial save", async () => {
