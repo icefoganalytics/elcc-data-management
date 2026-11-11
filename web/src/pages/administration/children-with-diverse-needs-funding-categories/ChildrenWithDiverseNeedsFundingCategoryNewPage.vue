@@ -79,6 +79,7 @@ import { reactive, ref, useTemplateRef } from "vue"
 import { useRoute, useRouter } from "vue-router"
 
 import childrenWithDiverseNeedsFundingCategoriesApi from "@/api/children-with-diverse-needs-funding-categories-api"
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 import { required } from "@/utils/validators"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useSnack from "@/use/use-snack"
@@ -128,6 +129,8 @@ async function createCategory() {
       },
     })
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     snack.error(`Failed to create diverse need category: ${error}`)
   } finally {
     isCreating.value = false

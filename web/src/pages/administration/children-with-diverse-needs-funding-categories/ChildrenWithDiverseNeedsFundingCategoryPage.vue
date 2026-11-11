@@ -123,6 +123,7 @@ import { computed, ref } from "vue"
 import { useRouter } from "vue-router"
 
 import childrenWithDiverseNeedsFundingCategoriesApi from "@/api/children-with-diverse-needs-funding-categories-api"
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 import useChildrenWithDiverseNeedsFundingCategory from "@/use/use-children-with-diverse-needs-funding-category"
 import useFundingPeriod from "@/use/use-funding-period"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
@@ -172,6 +173,8 @@ async function retireCategory() {
     snack.success("Diverse need category retired successfully!")
     await router.push({ name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage" })
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     snack.error(`Failed to retire diverse need category: ${error}`)
   } finally {
     isDeleting.value = false

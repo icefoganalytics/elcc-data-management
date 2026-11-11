@@ -108,5 +108,26 @@ describe("api/src/controllers/children-with-diverse-needs-funding-categories-con
         })
       })
     })
+
+    describe("#destroy -> DELETE /api/children-with-diverse-needs-funding-categories/:id", () => {
+      test("when an ordinary user retires annual configuration, denies the request", async () => {
+        // Arrange
+        const currentUser = await userFactory.create({ roles: [User.Roles.USER] })
+        mockCurrentUser(currentUser)
+        const category = await childrenWithDiverseNeedsFundingCategoryFactory.create()
+
+        // Act
+        const response = await request().delete(
+          `/api/children-with-diverse-needs-funding-categories/${category.id}`
+        )
+
+        // Assert
+        expect(response.status).toEqual(403)
+        expect(response.body).toEqual({
+          message:
+            "You are not authorized to delete this Children with Diverse Needs funding category",
+        })
+      })
+    })
   })
 })

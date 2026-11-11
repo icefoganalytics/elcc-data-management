@@ -39,6 +39,8 @@
 import { computed, ref } from "vue"
 import { useRouter } from "vue-router"
 
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
+
 import useChildrenWithDiverseNeedsFundingCategory from "@/use/use-children-with-diverse-needs-funding-category"
 import useFundingPeriods from "@/use/use-funding-periods"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
@@ -78,6 +80,8 @@ async function saveCategory() {
     await save()
     snack.success("Diverse need category updated successfully!")
   } catch (error) {
+    rethrowUnexpectedError(error)
+
     snack.error(`Failed to update diverse need category: ${error}`)
   } finally {
     isSaving.value = false
