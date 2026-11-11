@@ -199,7 +199,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         // Assert
         expect(updateChildCareSpace).toHaveBeenCalledExactlyOnceWith(50, {
           estimatedChildOccupancyRate: "0.5",
-          actualChildOccupancyRate: "0.0000",
+          actualChildOccupancyRate: "0",
         })
       })
 
