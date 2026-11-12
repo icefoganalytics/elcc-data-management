@@ -54,6 +54,11 @@ import moment from "moment" // TODO: deprecated; replace with luxon
 
 import BaseCard from "@/components/BaseCard.vue"
 
+interface EnrollmentTotals {
+  dailyTotal: number
+  weeklyTotal: number
+}
+
 export default {
   name: "DataEntry",
   components: {
@@ -71,19 +76,19 @@ export default {
     // let t: CareCentre = { name: "Mi", id: 213, location: "Home" };
   },
   methods: {
-    plusOne(location: any) {
+    plusOne(location: EnrollmentTotals) {
       location.dailyTotal++
       location.weeklyTotal = location.dailyTotal * 5
     },
-    plusFive(location: any) {
+    plusFive(location: EnrollmentTotals) {
       location.dailyTotal += 5
       location.weeklyTotal = location.dailyTotal * 5
     },
-    minusOne(location: any) {
+    minusOne(location: EnrollmentTotals) {
       location.dailyTotal = Math.max(location.dailyTotal - 1, 0)
       location.weeklyTotal = location.dailyTotal * 5
     },
-    minusFive(location: any) {
+    minusFive(location: EnrollmentTotals) {
       location.dailyTotal = Math.max(location.dailyTotal - 5, 0)
       location.weeklyTotal = location.dailyTotal * 5
     },

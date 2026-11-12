@@ -2,7 +2,7 @@
 import { times } from "lodash"
 const a = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o",
            "p","q","r","s","t","u","v","w","x","y","z"]
-const b = times(200, Number)
+const b = times(200, Number)
 const chunkSize = 2; // Specify the chunk size
 
 const interleaveIterator = interleaveArrays(a, b, chunkSize);

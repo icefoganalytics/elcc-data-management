@@ -14,29 +14,21 @@
 </template>
 
 <script lang="ts">
-import { useNotificationStore } from "../store/NotificationStore"
 import { mapWritableState } from "pinia"
+
+import { useNotificationStore, type Notification } from "@/store/NotificationStore"
 
 /**
  * @deprecated This component is deprecated and will be removed in a future version.
  */
 export default {
-  name: "Notifications",
-  setup() {
-    const notifcation = useNotificationStore()
-
-    // this subscription will be kept even after the component is unmounted
-    notifcation.$subscribe((mutation, state) => {
-      // console.log(mutation.type, mutation.events);
-      // console.log(state.showNotification);
-    })
-  },
+  name: "NotificationsSnackbar",
   data: () => ({}),
   computed: {
     ...mapWritableState(useNotificationStore, ["showNotification", "message"]),
   },
   methods: {
-    prettyMessage(message: any) {
+    prettyMessage(message: Notification) {
       if (message.variant == "success") {
         return {
           color: "green",

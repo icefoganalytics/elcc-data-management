@@ -1,8 +1,11 @@
 import { defineStore } from "pinia"
 
+import { type FundingPeriod } from "@/api/funding-periods-api"
 import { useNotificationStore } from "@/store/NotificationStore"
 import { useApiStore } from "@/store/ApiStore"
 import { FUNDING_PERIOD_URL } from "@/urls"
+
+export { type FundingPeriod }
 
 const m = useNotificationStore()
 
@@ -37,8 +40,8 @@ export const useFundingPeriodStore = defineStore("periodAdmin", {
           this.isLoading = false
         })
     },
-    selectPeriod(user: any) {
-      this.selectedPeriod = user
+    selectPeriod(period: FundingPeriod) {
+      this.selectedPeriod = period
     },
     unselectPeriod() {
       this.selectedPeriod = undefined
@@ -64,11 +67,3 @@ export const useFundingPeriodStore = defineStore("periodAdmin", {
     },
   },
 })
-
-export interface FundingPeriod {
-  id: number
-  fiscalYear: string
-  fromDate: Date
-  toDate: Date
-  title: string
-}

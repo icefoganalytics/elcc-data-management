@@ -2,6 +2,7 @@ import { defineStore } from "pinia"
 import { uniq, isNil } from "lodash"
 
 import { type Centre, CentreStatuses } from "@/api/centres-api"
+import { type FundingLineValue } from "@/api/funding-submission-line-jsons-api"
 import { useNotificationStore } from "@/store/NotificationStore"
 import { useApiStore } from "@/store/ApiStore"
 import { CENTRE_URL } from "@/urls"
@@ -10,13 +11,21 @@ export { type Centre, CentreStatuses }
 
 const m = useNotificationStore()
 
+interface Worksheet {
+  id: number
+  fiscalYear: string
+  month: string
+  year: string
+  sections: { sectionName: string; lines: FundingLineValue[] }[]
+}
+
 interface CentreState {
   centres: Centre[]
   selectedCentre: Centre | undefined
   isLoading: boolean
   enrollmentChartLoading: boolean
   enrollmentChartData: number[]
-  worksheets: any[]
+  worksheets: Worksheet[]
 }
 
 export const useCentreStore = defineStore("centre", {
@@ -101,7 +110,7 @@ export const useCentreStore = defineStore("centre", {
         .finally(() => {})
     },
 
-    async saveWorksheet(worksheet: any, reload = true) {
+    async saveWorksheet(worksheet: Worksheet, reload = true) {
       let id = 0
       if (this.selectedCentre != null) id = this.selectedCentre.id || 0
 
