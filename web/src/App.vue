@@ -34,13 +34,10 @@ import UnexpectedApiResponseError from "@/api/errors/unexpected-api-response-err
 
 import useCurrentUser from "@/use/use-current-user"
 import useCloudflareChallenge from "@/use/use-cloudflare-challenge"
-import { useApiStore } from "@/store/ApiStore"
 
 import PageLoader from "@/components/common/PageLoader.vue"
 import AppSnackbar from "@/components/layouts/AppSnackbar.vue"
 import CloudflareChallengeDialog from "@/components/CloudflareChallengeDialog.vue"
-
-useApiStore()
 
 const route = useRoute()
 const isUnauthenticatedRoute = computed(() => route.meta.requiresAuth === false)
