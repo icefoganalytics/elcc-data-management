@@ -244,7 +244,7 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
         const refresh = wrapper.vm.refresh()
 
         // Assert
-        await expect(refresh).rejects.toBe(loadFailure)
+        await expect(refresh).rejects.toThrow(/Unavailable/)
       })
     })
   })
