@@ -76,48 +76,67 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
         expect(wrapper.get(".v-data-table").attributes("aria-busy")).toEqual("true")
       })
 
-      test.each([
-        { state: "pending", finishWrite: false, expected: undefined },
-        { state: "completed", finishWrite: true, expected: true },
-      ])(
-        "when an active edit is $state, reports its current write outcome",
-        async ({ finishWrite, expected }) => {
-          // Arrange
-          const record = administrationCostFactory.build()
-          vi.spyOn(administrationCostsApi, "list").mockResolvedValue({
-            administrationCosts: [record],
-            totalCount: 1,
-          })
-          const update = Promise.withResolvers<{
-            administrationCost: typeof record
-            policy: typeof record.policy
-          }>()
-          vi.spyOn(administrationCostsApi, "update").mockReturnValue(update.promise)
-          const wrapper = mount(AdministrationCostEditTable, {
-            props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-            global: { plugins: [mockVuetify()] },
-          })
-          await flushPromises()
-          await wrapper.get("tr.cursor-pointer").trigger("click")
-          await wrapper.get('input[inputmode="decimal"]').setValue("0.25")
+      test("when an active edit is pending, waits for its write before reporting success", async () => {
+        // Arrange
+        const record = administrationCostFactory.build()
+        vi.spyOn(administrationCostsApi, "list").mockResolvedValue({
+          administrationCosts: [record],
+          totalCount: 1,
+        })
+        const update = Promise.withResolvers<{
+          administrationCost: typeof record
+          policy: typeof record.policy
+        }>()
+        vi.spyOn(administrationCostsApi, "update").mockReturnValue(update.promise)
+        const wrapper = mount(AdministrationCostEditTable, {
+          props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
+          global: { plugins: [mockVuetify()] },
+        })
+        await flushPromises()
+        await wrapper.get("tr.cursor-pointer").trigger("click")
+        await wrapper.get('input[inputmode="decimal"]').setValue("0.25")
 
-          // Act
-          let committed: boolean | undefined
-          void wrapper.vm.commitEdit().then((result) => {
-            committed = result
-          })
-          if (finishWrite) {
-            update.resolve({
-              administrationCost: { ...record, estimatedChildOccupancyRate: "0.25" },
-              policy: record.policy,
-            })
-          }
-          await flushPromises()
+        // Act
+        let committed: boolean | undefined
+        void wrapper.vm.commitEdit().then((result) => {
+          committed = result
+        })
+        await flushPromises()
 
-          // Assert
-          expect(committed).toEqual(expected)
-        }
-      )
+        // Assert
+        expect(committed).toBeUndefined()
+      })
+
+      test("when an active edit finishes saving, reports success to the worksheet workflow", async () => {
+        // Arrange
+        const record = administrationCostFactory.build()
+        vi.spyOn(administrationCostsApi, "list").mockResolvedValue({
+          administrationCosts: [record],
+          totalCount: 1,
+        })
+        const update = Promise.withResolvers<{
+          administrationCost: typeof record
+          policy: typeof record.policy
+        }>()
+        vi.spyOn(administrationCostsApi, "update").mockReturnValue(update.promise)
+        const wrapper = mount(AdministrationCostEditTable, {
+          props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
+          global: { plugins: [mockVuetify()] },
+        })
+        await flushPromises()
+        await wrapper.get("tr.cursor-pointer").trigger("click")
+        await wrapper.get('input[inputmode="decimal"]').setValue("0.25")
+
+        // Act
+        const commit = wrapper.vm.commitEdit()
+        update.resolve({
+          administrationCost: { ...record, estimatedChildOccupancyRate: "0.25" },
+          policy: record.policy,
+        })
+
+        // Assert
+        await expect(commit).resolves.toEqual(true)
+      })
 
       test("when the active write fails, reports failure to the worksheet workflow", async () => {
         // Arrange
