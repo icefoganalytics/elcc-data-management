@@ -9,31 +9,6 @@ import { mockRouter, mockVuetify } from "@/tests/support"
 
 import DashboardPage from "@/pages/DashboardPage.vue"
 
-async function mountDashboardPage(errorHandler?: (error: unknown) => void) {
-  const router = mockRouter([
-    {
-      path: "/",
-      name: "DashboardPage",
-      component: { template: "<div />" },
-    },
-    {
-      path: "/centres",
-      name: "ChildCareCentresPage",
-      component: { template: "<div />" },
-    },
-  ])
-  await router.push("/")
-  await router.isReady()
-
-  return mount(DashboardPage, {
-    global: {
-      plugins: [router, mockVuetify()],
-      stubs: { apexchart: true },
-      config: { errorHandler },
-    },
-  })
-}
-
 describe("web/src/pages/DashboardPage.vue", () => {
   describe("DashboardPage", () => {
     describe("centre statistics", () => {
@@ -41,9 +16,20 @@ describe("web/src/pages/DashboardPage.vue", () => {
         // Arrange
         const pending = Promise.withResolvers<never>()
         vi.mocked(httpClient, true).get.mockReturnValueOnce(pending.promise)
+        const router = mockRouter([
+          { path: "/", name: "DashboardPage", component: { template: "<div />" } },
+          { path: "/centres", name: "ChildCareCentresPage", component: { template: "<div />" } },
+        ])
+        await router.push("/")
+        await router.isReady()
 
         // Act
-        const wrapper = await mountDashboardPage()
+        const wrapper = mount(DashboardPage, {
+          global: {
+            plugins: [router, mockVuetify()],
+            stubs: { apexchart: true },
+          },
+        })
 
         // Assert
         expect(wrapper.get('[aria-label="Child care centre count"]').text()).toEqual("Loading…")
@@ -54,9 +40,20 @@ describe("web/src/pages/DashboardPage.vue", () => {
         vi.mocked(httpClient, true).get.mockResolvedValueOnce({
           data: { centres: [], totalCount: 0 },
         })
+        const router = mockRouter([
+          { path: "/", name: "DashboardPage", component: { template: "<div />" } },
+          { path: "/centres", name: "ChildCareCentresPage", component: { template: "<div />" } },
+        ])
+        await router.push("/")
+        await router.isReady()
 
         // Act
-        const wrapper = await mountDashboardPage()
+        const wrapper = mount(DashboardPage, {
+          global: {
+            plugins: [router, mockVuetify()],
+            stubs: { apexchart: true },
+          },
+        })
         await flushPromises()
 
         // Assert
@@ -68,9 +65,20 @@ describe("web/src/pages/DashboardPage.vue", () => {
         vi.mocked(httpClient, true).get.mockRejectedValueOnce(
           new ApiOperationError("Unavailable", 503)
         )
+        const router = mockRouter([
+          { path: "/", name: "DashboardPage", component: { template: "<div />" } },
+          { path: "/centres", name: "ChildCareCentresPage", component: { template: "<div />" } },
+        ])
+        await router.push("/")
+        await router.isReady()
 
         // Act
-        const wrapper = await mountDashboardPage()
+        const wrapper = mount(DashboardPage, {
+          global: {
+            plugins: [router, mockVuetify()],
+            stubs: { apexchart: true },
+          },
+        })
         await flushPromises()
 
         // Assert
@@ -84,9 +92,20 @@ describe("web/src/pages/DashboardPage.vue", () => {
         )
         const snack = useSnack()
         snack.reset()
+        const router = mockRouter([
+          { path: "/", name: "DashboardPage", component: { template: "<div />" } },
+          { path: "/centres", name: "ChildCareCentresPage", component: { template: "<div />" } },
+        ])
+        await router.push("/")
+        await router.isReady()
 
         // Act
-        await mountDashboardPage()
+        mount(DashboardPage, {
+          global: {
+            plugins: [router, mockVuetify()],
+            stubs: { apexchart: true },
+          },
+        })
         await flushPromises()
 
         // Assert
@@ -98,9 +117,21 @@ describe("web/src/pages/DashboardPage.vue", () => {
         const error = new AuthenticationRequiredError()
         vi.mocked(httpClient, true).get.mockRejectedValueOnce(error)
         const errors: unknown[] = []
+        const router = mockRouter([
+          { path: "/", name: "DashboardPage", component: { template: "<div />" } },
+          { path: "/centres", name: "ChildCareCentresPage", component: { template: "<div />" } },
+        ])
+        await router.push("/")
+        await router.isReady()
 
         // Act
-        await mountDashboardPage((receivedError) => errors.push(receivedError))
+        mount(DashboardPage, {
+          global: {
+            plugins: [router, mockVuetify()],
+            stubs: { apexchart: true },
+            config: { errorHandler: (receivedError) => errors.push(receivedError) },
+          },
+        })
         await flushPromises()
 
         // Assert
@@ -113,7 +144,18 @@ describe("web/src/pages/DashboardPage.vue", () => {
         vi.mocked(httpClient, true).get.mockReturnValueOnce(pending.promise)
         const snack = useSnack()
         snack.reset()
-        const wrapper = await mountDashboardPage()
+        const router = mockRouter([
+          { path: "/", name: "DashboardPage", component: { template: "<div />" } },
+          { path: "/centres", name: "ChildCareCentresPage", component: { template: "<div />" } },
+        ])
+        await router.push("/")
+        await router.isReady()
+        const wrapper = mount(DashboardPage, {
+          global: {
+            plugins: [router, mockVuetify()],
+            stubs: { apexchart: true },
+          },
+        })
 
         // Act
         wrapper.unmount()
