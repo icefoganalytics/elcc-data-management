@@ -17,7 +17,11 @@
     <template #item.fromAge="{ item }">{{ item.fromAge ?? "—" }}</template>
     <template #item.toAge="{ item }">{{ item.toAge ?? "—" }}</template>
     <template #item.monthlyAmount="{ item }">
-      {{ formatMoney(item.monthlyAmount, monthlyAmountFormatOptions) }}
+      {{
+        formatMoney(item.monthlyAmount, {
+          maximumFractionDigits: 4,
+        })
+      }}
     </template>
     <template #item.actions="{ item }">
       <v-btn
@@ -64,9 +68,6 @@ const props = withDefaults(
   }
 )
 
-const monthlyAmountFormatOptions = {
-  maximumFractionDigits: 4,
-}
 const headers = ref([
   {
     title: "Category Name",
