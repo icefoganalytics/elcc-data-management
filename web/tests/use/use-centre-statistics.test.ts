@@ -9,15 +9,6 @@ import useCentreStatistics from "@/use/use-centre-statistics"
 
 import { mockHttpGetRoutes } from "@/tests/support"
 
-function createStatistics(onTestFinished: (cleanup: () => void) => void) {
-  const scope = effectScope()
-  onTestFinished(() => scope.stop())
-  const statistics = scope.run(() => useCentreStatistics({ skipWatchIf: () => true }))
-  if (!statistics) throw new Error("Expected an active statistics scope")
-
-  return statistics
-}
-
 describe("web/src/use/use-centre-statistics.ts", () => {
   describe("useCentreStatistics", () => {
     describe("fetch", () => {
@@ -55,7 +46,11 @@ describe("web/src/use/use-centre-statistics.ts", () => {
             },
           }),
         })
-        const { statistics, fetch } = createStatistics(onTestFinished)
+        const scope = effectScope()
+        onTestFinished(() => scope.stop())
+        const result = scope.run(() => useCentreStatistics({ skipWatchIf: () => true }))
+        if (!result) throw new Error("Expected an active statistics scope")
+        const { statistics, fetch } = result
 
         // Act
         await fetch()
@@ -98,7 +93,11 @@ describe("web/src/use/use-centre-statistics.ts", () => {
             },
           }),
         })
-        const { statistics, fetch } = createStatistics(onTestFinished)
+        const scope = effectScope()
+        onTestFinished(() => scope.stop())
+        const result = scope.run(() => useCentreStatistics({ skipWatchIf: () => true }))
+        if (!result) throw new Error("Expected an active statistics scope")
+        const { statistics, fetch } = result
 
         // Act
         await fetch()
@@ -114,7 +113,11 @@ describe("web/src/use/use-centre-statistics.ts", () => {
         vi.mocked(httpClient, true).get.mockResolvedValueOnce({
           data: { centres: [], totalCount: 0 },
         })
-        const { statistics, fetch } = createStatistics(onTestFinished)
+        const scope = effectScope()
+        onTestFinished(() => scope.stop())
+        const result = scope.run(() => useCentreStatistics({ skipWatchIf: () => true }))
+        if (!result) throw new Error("Expected an active statistics scope")
+        const { statistics, fetch } = result
 
         // Act
         await fetch()
@@ -130,7 +133,11 @@ describe("web/src/use/use-centre-statistics.ts", () => {
         vi.mocked(httpClient, true).get.mockResolvedValueOnce({
           data: { centres: [], totalCount: 0 },
         })
-        const { statistics, fetch } = createStatistics(onTestFinished)
+        const scope = effectScope()
+        onTestFinished(() => scope.stop())
+        const result = scope.run(() => useCentreStatistics({ skipWatchIf: () => true }))
+        if (!result) throw new Error("Expected an active statistics scope")
+        const { statistics, fetch } = result
         await fetch()
         vi.mocked(httpClient, true).get.mockRejectedValueOnce(
           new ApiOperationError("Unavailable", 503)
@@ -150,7 +157,11 @@ describe("web/src/use/use-centre-statistics.ts", () => {
         vi.mocked(httpClient, true).get.mockRejectedValueOnce(
           new ApiOperationError("Unavailable", 503)
         )
-        const { isErrored, fetch } = createStatistics(onTestFinished)
+        const scope = effectScope()
+        onTestFinished(() => scope.stop())
+        const result = scope.run(() => useCentreStatistics({ skipWatchIf: () => true }))
+        if (!result) throw new Error("Expected an active statistics scope")
+        const { isErrored, fetch } = result
         await fetch().catch(() => undefined)
         vi.mocked(httpClient, true).get.mockResolvedValueOnce({
           data: { centres: [], totalCount: 0 },
@@ -172,7 +183,11 @@ describe("web/src/use/use-centre-statistics.ts", () => {
         vi.mocked(httpClient, true).get.mockResolvedValueOnce({
           data: { centres: [], totalCount: 0 },
         })
-        const { isErrored, fetch } = createStatistics(onTestFinished)
+        const scope = effectScope()
+        onTestFinished(() => scope.stop())
+        const result = scope.run(() => useCentreStatistics({ skipWatchIf: () => true }))
+        if (!result) throw new Error("Expected an active statistics scope")
+        const { isErrored, fetch } = result
         const previousFetch = fetch()
         await fetch()
 

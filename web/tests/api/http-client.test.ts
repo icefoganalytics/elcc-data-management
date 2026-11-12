@@ -1,4 +1,4 @@
-import axios, { AxiosError, AxiosHeaders, type InternalAxiosRequestConfig } from "axios"
+import axios, { AxiosError, AxiosHeaders } from "axios"
 
 import httpClient from "@/api/http-client"
 
@@ -9,22 +9,18 @@ vi.mock("@/plugins/auth0-plugin", () => ({
 }))
 vi.unmock("@/api/http-client")
 
-function failedResponse(config: InternalAxiosRequestConfig, status: number, data: unknown) {
-  return new AxiosError("Request failed", "ERR_BAD_REQUEST", config, undefined, {
-    config,
-    data,
-    headers: new AxiosHeaders({ "content-type": "application/json" }),
-    status,
-    statusText: "error",
-  })
-}
-
 describe("web/src/api/http-client.ts", () => {
   test("when a JSON operation fails, classifies its message and status", async () => {
     // Arrange
     const adapter = httpClient.defaults.adapter
     httpClient.defaults.adapter = async (config) => {
-      throw failedResponse(config, 403, { message: "Denied" })
+      throw new AxiosError("Request failed", "ERR_BAD_REQUEST", config, undefined, {
+        config,
+        data: { message: "Denied" },
+        headers: new AxiosHeaders({ "content-type": "application/json" }),
+        status: 403,
+        statusText: "Forbidden",
+      })
     }
 
     // Act
@@ -43,7 +39,13 @@ describe("web/src/api/http-client.ts", () => {
     // Arrange
     const adapter = httpClient.defaults.adapter
     httpClient.defaults.adapter = async (config) => {
-      throw failedResponse(config, 401, { message: "Expired" })
+      throw new AxiosError("Request failed", "ERR_BAD_REQUEST", config, undefined, {
+        config,
+        data: { message: "Expired" },
+        headers: new AxiosHeaders({ "content-type": "application/json" }),
+        status: 401,
+        statusText: "Unauthorized",
+      })
     }
 
     // Act
