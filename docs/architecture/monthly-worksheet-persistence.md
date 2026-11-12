@@ -40,6 +40,8 @@ Deleting a monthly row first commits and awaits any active occupancy edit. If th
 
 `child_care_space_categories` owns category names, age ranges, and rates for each funding period. The category CRUD API and administration pages edit this configuration; monthly ledger rows retain their own historical name/rate snapshots. Both the API policy and edit form keep the category's funding period immutable after creation.
 
+Individual category retirement is blocked while active dependents reference the category. This applies to Child Care Spaces, Administration Costs, Quality Enhancement, and Children with Diverse Needs, matching Building Expenses. Spaces also checks linked Administration and Quality Enhancement categories, their monthly records, and remaining shared funding lines. Dependent records must first be explicitly deleted, or optional category links removed; already soft-deleted dependents do not block retirement. Retiring a category never cascades deletion to its dependents.
+
 Explicit category forward application is a transactional exception to snapshot isolation: an inclusive starting fiscal month limits changes to the same funding period. It fills missing pairs without restoring retired rows; edits update only unchanged snapshots without actual occupancy. The [domain rules](../domain/child-care-spaces.md#forward-application) define preservation and recalculation.
 
 Funding-period creation and development/production ensures provision categories separately from the remaining `funding_submission_lines`. The seven Administration defaults belong to `administration_cost_categories`; the four Diverse Needs defaults belong to `children_with_diverse_needs_funding_categories`. Shared-line writes and bulk cloning reject all ledger-owned sections at their configuration boundary. Centre initialization discovers categories by funding-period ID; later ensures preserve intentionally absent monthly rows and retired pairs. Worksheet JSON provisioning does not generate ledger-owned sections and creates empty worksheets when no JSON-owned configuration remains.
@@ -60,7 +62,7 @@ Missing funding-period mappings or conflicting category references abort the bac
 
 ## Diverse Needs ownership
 
-`children_with_diverse_needs_funding_categories` owns annual names, optional age ranges, and monthly amounts. Its API permits only system administrators to create, edit, and retire configuration, and keeps the funding period immutable after creation. Editing or retiring annual configuration leaves existing monthly snapshots unchanged.
+`children_with_diverse_needs_funding_categories` owns annual names, optional age ranges, and monthly amounts. Its API permits only system administrators to create, edit, and retire configuration, and keeps the funding period immutable after creation. Editing annual configuration leaves existing monthly snapshots unchanged. Retirement requires the category to have no active funding records.
 
 `ChildrenWithDiverseNeedsFundingCategory.DEFAULTS` owns the initial Diverse Needs catalog. `FundingSubmissionLine` still owns sections not yet individualized; its now-empty defaults catalog, model property, and provisioning fallback remain wired until the remaining shared model and its consumers are retired together.
 
@@ -76,7 +78,7 @@ The following [legacy-source cleanup](/api/src/db/migrations/20261020230003_remo
 
 ## Quality Enhancement ownership
 
-`quality_enhancement_categories` owns annual names, age ranges, base amounts, and optional Child Care Space category links through its dedicated category API. **Administration → Quality Enhancement Categories** provides annual browsing and dedicated create, read, edit, and retire pages. Only system administrators can mutate configuration; its funding period is immutable after creation. Editing or retiring a category does not rewrite existing monthly snapshots.
+`quality_enhancement_categories` owns annual names, age ranges, base amounts, and optional Child Care Space category links through its dedicated category API. **Administration → Quality Enhancement Categories** provides annual browsing and dedicated create, read, edit, and retire pages. Only system administrators can mutate configuration; its funding period is immutable after creation. Editing a category does not rewrite existing monthly snapshots. Retirement requires the category to have no active Quality Enhancement records.
 
 New annual configuration copies the latest configured earlier fiscal year, never a future year. Source-period selection includes retired category history so an intentionally emptied year stays empty instead of reviving older categories or defaults.
 
@@ -94,7 +96,7 @@ Historical worksheet rows retain only their explicit Spaces category link. An ab
 
 ## Administration configuration and historical cutover
 
-**Administration → Administration Cost Categories** manages names, age ranges, rates, and optional links to Child Care Space categories within the same funding period. Its funding period is immutable after creation. Normal edits and retirement affect future provisioning, not existing monthly name, rate, or linkage snapshots. Existing configured rates are preserved; the section title does not derive a live percentage from Child Care Spaces.
+**Administration → Administration Cost Categories** manages names, age ranges, rates, and optional links to Child Care Space categories within the same funding period. Its funding period is immutable after creation. Normal edits affect future provisioning, not existing monthly name, rate, or linkage snapshots. Retirement requires the category to have no active Administration Cost records. Existing configured rates are preserved; the section title does not derive a live percentage from Child Care Spaces.
 
 The [Administration cutover](../../api/src/db/migrations/20261020180002_migrate-administration-costs-from-worksheet-json.ts) preserves valid configuration, monthly values, exact totals, timestamps, and deletion state before retiring the old Administration stores. Malformed rows, invalid identifiers or decimals, inconsistent totals, unresolved fiscal context, and conflicts are skipped rather than blocking deployment. The first valid active snapshot in worksheet-ID and line order wins duplicate ledger keys; existing target records are not overwritten. Invalid optional Spaces links become null without losing valid financial values.
 
