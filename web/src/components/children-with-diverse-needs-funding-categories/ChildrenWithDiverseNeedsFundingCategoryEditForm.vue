@@ -1,10 +1,10 @@
 <template>
   <v-skeleton-loader
-    v-if="isLoading"
+    v-if="isNil(childrenWithDiverseNeedsFundingCategory)"
     type="card"
   />
   <HeaderActionsFormCard
-    v-else-if="childrenWithDiverseNeedsFundingCategory && policy?.update"
+    v-else-if="policy?.update"
     ref="form"
     title="Edit Diverse Need Category"
     @submit.prevent="submit"
@@ -73,7 +73,7 @@
     </template>
   </HeaderActionsFormCard>
   <v-empty-state
-    v-else-if="childrenWithDiverseNeedsFundingCategory"
+    v-else
     class="ma-5"
     icon="mdi-lock-outline"
     headline="Editing Not Allowed"
@@ -83,6 +83,7 @@
 
 <script setup lang="ts">
 import { ref, toRef, useTemplateRef } from "vue"
+import { isNil } from "lodash"
 
 import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 
@@ -105,7 +106,7 @@ const emit = defineEmits<{
 }>()
 
 const categoryId = toRef(props, "childrenWithDiverseNeedsFundingCategoryId")
-const { childrenWithDiverseNeedsFundingCategory, policy, isLoading, save } =
+const { childrenWithDiverseNeedsFundingCategory, policy, save } =
   useChildrenWithDiverseNeedsFundingCategory(categoryId)
 
 const form = useTemplateRef("form")
@@ -115,7 +116,7 @@ const snack = useSnack()
 
 async function submit() {
   if (isSaving.value || form.value === null) return
-  if (!childrenWithDiverseNeedsFundingCategory.value || !policy.value?.update) return
+  if (isNil(childrenWithDiverseNeedsFundingCategory.value) || !policy.value?.update) return
 
   const { valid } = await form.value.validate()
   if (!valid) return
