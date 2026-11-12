@@ -109,13 +109,15 @@ const { statistics, isLoading, fetch: fetchCentreStatistics } = useCentreStatist
 
 const centreCount = computed(() => {
   if (isLoading.value) return "Loading…"
+  if (statistics.value === null) return "Unavailable"
 
-  return statistics.value?.centreCount ?? "Unavailable"
+  return statistics.value.centreCount
 })
 const communityCount = computed(() => {
   if (isLoading.value) return "Loading…"
+  if (statistics.value === null) return "Unavailable"
 
-  return statistics.value?.communityCount ?? "Unavailable"
+  return statistics.value.communityCount
 })
 
 onMounted(async () => {
