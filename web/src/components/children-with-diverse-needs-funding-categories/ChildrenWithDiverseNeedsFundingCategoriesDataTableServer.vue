@@ -2,7 +2,7 @@
   <v-data-table-server
     v-model:items-per-page="perPage"
     v-model:sort-by="sortBy"
-    :page="page"
+    v-model:page="page"
     :headers="headers"
     :items="childrenWithDiverseNeedsFundingCategories"
     :items-length="totalCount"
@@ -13,7 +13,6 @@
       (_event: unknown, { item }: ChildrenWithDiverseNeedsFundingCategoryTableRow) =>
         goToChildrenWithDiverseNeedsFundingCategory(item.id)
     "
-    @update:page="updatePage"
   >
     <template #item.fromAge="{ item }">{{ item.fromAge ?? "—" }}</template>
     <template #item.toAge="{ item }">{{ item.toAge ?? "—" }}</template>
@@ -138,12 +137,6 @@ watch(
   },
   { deep: true, immediate: true }
 )
-
-function updatePage(newPage: number) {
-  if (isLoading.value) return
-
-  page.value = newPage
-}
 
 const router = useRouter()
 type ChildrenWithDiverseNeedsFundingCategoryTableRow = {
