@@ -4,7 +4,7 @@
     type="card"
   />
   <HeaderActionsFormCard
-    v-else-if="policy?.update"
+    v-else
     ref="form"
     title="Edit Diverse Need Category"
     @submit.prevent="submit"
@@ -72,13 +72,6 @@
       >
     </template>
   </HeaderActionsFormCard>
-  <v-empty-state
-    v-else
-    class="ma-5"
-    icon="mdi-lock-outline"
-    headline="Editing Not Allowed"
-    title="You do not have permission to edit this category."
-  />
 </template>
 
 <script setup lang="ts">
@@ -106,7 +99,7 @@ const emit = defineEmits<{
 }>()
 
 const categoryId = toRef(props, "childrenWithDiverseNeedsFundingCategoryId")
-const { childrenWithDiverseNeedsFundingCategory, policy, save } =
+const { childrenWithDiverseNeedsFundingCategory, save } =
   useChildrenWithDiverseNeedsFundingCategory(categoryId)
 
 const form = useTemplateRef("form")
@@ -116,7 +109,7 @@ const snack = useSnack()
 
 async function submit() {
   if (isSaving.value || form.value === null) return
-  if (isNil(childrenWithDiverseNeedsFundingCategory.value) || !policy.value?.update) return
+  if (isNil(childrenWithDiverseNeedsFundingCategory.value)) return
 
   const { valid } = await form.value.validate()
   if (!valid) return
