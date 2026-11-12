@@ -1,5 +1,5 @@
 import { isCancel } from "axios"
-import { onScopeDispose, reactive, toRefs } from "vue"
+import { onScopeDispose, reactive, toRefs, watch } from "vue"
 
 import { MAX_PER_PAGE } from "@/api/base-api"
 import centresApi from "@/api/centres-api"
@@ -9,7 +9,13 @@ export type CentreStatistics = {
   communityCount: number
 }
 
-export function useCentreStatistics() {
+export function useCentreStatistics({
+  skipWatchIf = () => false,
+  onError,
+}: {
+  skipWatchIf?: () => boolean
+  onError?: (error: unknown) => void
+} = {}) {
   const state = reactive<{
     statistics: CentreStatistics | null
     isLoading: boolean
@@ -74,6 +80,24 @@ export function useCentreStatistics() {
   onScopeDispose(() => {
     requestController?.abort()
   })
+
+  watch(
+    skipWatchIf,
+    async (skip) => {
+      if (skip) return
+
+      try {
+        await fetch()
+      } catch (error) {
+        if (onError) {
+          onError(error)
+          return
+        }
+        throw error
+      }
+    },
+    { immediate: true }
+  )
 
   return {
     ...toRefs(state),

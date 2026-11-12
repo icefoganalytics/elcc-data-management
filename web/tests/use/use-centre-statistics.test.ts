@@ -12,7 +12,7 @@ import { mockHttpGetRoutes } from "@/tests/support"
 function createStatistics(onTestFinished: (cleanup: () => void) => void) {
   const scope = effectScope()
   onTestFinished(() => scope.stop())
-  const statistics = scope.run(() => useCentreStatistics())
+  const statistics = scope.run(() => useCentreStatistics({ skipWatchIf: () => true }))
   if (!statistics) throw new Error("Expected an active statistics scope")
 
   return statistics

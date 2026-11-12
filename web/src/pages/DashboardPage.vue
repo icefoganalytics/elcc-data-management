@@ -95,7 +95,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from "vue"
+import { computed } from "vue"
 import VueApexCharts from "vue3-apexcharts"
 
 import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
@@ -105,7 +105,12 @@ import useCentreStatistics from "@/use/use-centre-statistics"
 import useSnack from "@/use/use-snack"
 
 const snack = useSnack()
-const { statistics, isLoading, fetch: fetchCentreStatistics } = useCentreStatistics()
+const { statistics, isLoading } = useCentreStatistics({
+  onError(error) {
+    rethrowUnexpectedError(error)
+    snack.error("Failed to load centre statistics.")
+  },
+})
 
 const centreCount = computed(() => {
   if (isLoading.value) return "Loading…"
@@ -118,15 +123,6 @@ const communityCount = computed(() => {
   if (statistics.value === null) return "Unavailable"
 
   return statistics.value.communityCount
-})
-
-onMounted(async () => {
-  try {
-    await fetchCentreStatistics()
-  } catch (error) {
-    rethrowUnexpectedError(error)
-    snack.error("Failed to load centre statistics.")
-  }
 })
 
 const chartOptions = {
