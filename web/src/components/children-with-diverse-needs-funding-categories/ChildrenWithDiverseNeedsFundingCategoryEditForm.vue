@@ -122,12 +122,10 @@ async function submit() {
 
   isSaving.value = true
   try {
-    const id = categoryId.value
-    await save()
-    if (categoryId.value !== id) return
+    const updatedChildrenWithDiverseNeedsFundingCategory = await save()
 
     snack.success("Diverse need category updated successfully!")
-    emit("saved", id)
+    emit("saved", updatedChildrenWithDiverseNeedsFundingCategory.id)
   } catch (error) {
     rethrowUnexpectedError(error)
 
