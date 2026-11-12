@@ -9,7 +9,7 @@ import {
   fiscalPeriodFactory,
 } from "@/factories"
 
-import { DestroyService } from "@/services/children-with-diverse-needs-funding-categories/destroy-service"
+import DestroyService from "@/services/children-with-diverse-needs-funding-categories/destroy-service"
 
 describe("api/src/services/children-with-diverse-needs-funding-categories/destroy-service.ts", () => {
   describe("DestroyService", () => {

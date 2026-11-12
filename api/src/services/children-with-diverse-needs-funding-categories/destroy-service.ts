@@ -12,3 +12,5 @@ export class DestroyService extends BaseService {
     await this.childrenWithDiverseNeedsFundingCategory.destroy()
   }
 }
+
+export default DestroyService
