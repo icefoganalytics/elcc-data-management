@@ -23,17 +23,15 @@ function failedResponse(config: InternalAxiosRequestConfig, status: number, data
 }
 
 describe("web/src/api/http-client.ts", () => {
-  const client = httpClient
-
   test("when a JSON operation fails, classifies its message and status", async () => {
     // Arrange
-    const adapter = client.defaults.adapter
-    client.defaults.adapter = async (config) => {
+    const adapter = httpClient.defaults.adapter
+    httpClient.defaults.adapter = async (config) => {
       throw failedResponse(config, 403, { message: "Denied" })
     }
 
     // Act
-    const request = client.get("/api/items")
+    const request = httpClient.get("/api/items")
 
     // Assert
     await expect(request).rejects.toMatchObject({
@@ -41,22 +39,22 @@ describe("web/src/api/http-client.ts", () => {
       message: "Denied",
       status: 403,
     })
-    client.defaults.adapter = adapter
+    httpClient.defaults.adapter = adapter
   })
 
   test("when a JSON 401 arrives, classifies authentication distinctly", async () => {
     // Arrange
-    const adapter = client.defaults.adapter
-    client.defaults.adapter = async (config) => {
+    const adapter = httpClient.defaults.adapter
+    httpClient.defaults.adapter = async (config) => {
       throw failedResponse(config, 401, { message: "Expired" })
     }
 
     // Act
-    const request = client.get("/api/items")
+    const request = httpClient.get("/api/items")
 
     // Assert
     await expect(request).rejects.toBeInstanceOf(AuthenticationRequiredError)
-    client.defaults.adapter = adapter
+    httpClient.defaults.adapter = adapter
   })
 
   describe("HTML responses", () => {
@@ -64,8 +62,8 @@ describe("web/src/api/http-client.ts", () => {
       "when marked HTML arrives with status %i, requires challenge recovery",
       async (status) => {
         // Arrange
-        const adapter = client.defaults.adapter
-        client.defaults.adapter = async (config) => {
+        const adapter = httpClient.defaults.adapter
+        httpClient.defaults.adapter = async (config) => {
           const response = {
             config,
             data: "<html>Browser verification</html>",
@@ -84,11 +82,11 @@ describe("web/src/api/http-client.ts", () => {
         }
 
         // Act
-        const request = client.get("/api/items")
+        const request = httpClient.get("/api/items")
 
         // Assert
         await expect(request).rejects.toBeInstanceOf(CloudflareChallengeError)
-        client.defaults.adapter = adapter
+        httpClient.defaults.adapter = adapter
       }
     )
 
@@ -96,8 +94,8 @@ describe("web/src/api/http-client.ts", () => {
       "when unmarked HTML arrives with status %i, reports an unexpected HTML failure",
       async (status) => {
         // Arrange
-        const adapter = client.defaults.adapter
-        client.defaults.adapter = async (config) => {
+        const adapter = httpClient.defaults.adapter
+        httpClient.defaults.adapter = async (config) => {
           const response = {
             config,
             data: "<html>Upstream error</html>",
@@ -113,11 +111,11 @@ describe("web/src/api/http-client.ts", () => {
         }
 
         // Act
-        const request = client.get("/_status")
+        const request = httpClient.get("/_status")
 
         // Assert
         await expect(request).rejects.toBeInstanceOf(UnexpectedHtmlResponseError)
-        client.defaults.adapter = adapter
+        httpClient.defaults.adapter = adapter
       }
     )
   })
