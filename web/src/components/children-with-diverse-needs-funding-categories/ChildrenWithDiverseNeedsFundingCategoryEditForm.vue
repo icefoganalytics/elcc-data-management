@@ -8,6 +8,7 @@
       <v-col cols="12">
         <v-text-field
           :model-value="fundingPeriodDescription"
+          append-inner-icon="mdi-lock"
           label="Funding Period"
           readonly
         />
