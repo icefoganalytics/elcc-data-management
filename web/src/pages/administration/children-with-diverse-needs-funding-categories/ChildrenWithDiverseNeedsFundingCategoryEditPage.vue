@@ -1,9 +1,9 @@
 <template>
   <v-skeleton-loader
-    v-if="isLoading"
+    v-if="isNil(childrenWithDiverseNeedsFundingCategory)"
     type="card"
   />
-  <template v-else-if="childrenWithDiverseNeedsFundingCategory">
+  <template v-else>
     <v-row>
       <v-col cols="12">
         <v-text-field
@@ -24,6 +24,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue"
 import { useRouter } from "vue-router"
+import { isNil } from "lodash"
 
 import useChildrenWithDiverseNeedsFundingCategory from "@/use/use-children-with-diverse-needs-funding-category"
 import useFundingPeriods from "@/use/use-funding-periods"
@@ -36,7 +37,7 @@ const props = defineProps<{
 }>()
 const router = useRouter()
 const categoryId = computed(() => Number(props.childrenWithDiverseNeedsFundingCategoryId))
-const { childrenWithDiverseNeedsFundingCategory, isLoading } =
+const { childrenWithDiverseNeedsFundingCategory } =
   useChildrenWithDiverseNeedsFundingCategory(categoryId)
 const fundingPeriodsQuery = ref({ perPage: -1 })
 const { fundingPeriods } = useFundingPeriods(fundingPeriodsQuery)
