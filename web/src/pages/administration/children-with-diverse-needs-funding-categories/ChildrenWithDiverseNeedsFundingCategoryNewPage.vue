@@ -80,12 +80,14 @@
 
 <script setup lang="ts">
 import { reactive, ref, useTemplateRef } from "vue"
+import { useRouteQuery } from "@vueuse/router"
 import { useRoute, useRouter } from "vue-router"
 
 import childrenWithDiverseNeedsFundingCategoriesApi from "@/api/children-with-diverse-needs-funding-categories-api"
 import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 
 import { required } from "@/utils/validators"
+import { integerTransformer } from "@/utils/use-route-query-transformers"
 
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useSnack from "@/use/use-snack"
@@ -97,11 +99,28 @@ import FundingPeriodSearchableAutocomplete from "@/components/funding-periods/Fu
 
 const route = useRoute()
 const router = useRouter()
-const attributes = reactive({
-  fundingPeriodId: Number(route.query.fundingPeriodId) || (null as number | null),
+
+const fundingPeriodId = useRouteQuery<string | undefined, number | undefined>(
+  "fundingPeriodId",
+  undefined,
+  {
+    transform: integerTransformer,
+  }
+)
+
+type CategoryFormAttributes = {
+  fundingPeriodId: number | null
+  categoryName: string
+  fromAge: number | null
+  toAge: number | null
+  monthlyAmount: string
+}
+
+const attributes = reactive<CategoryFormAttributes>({
+  fundingPeriodId: fundingPeriodId.value ?? null,
   categoryName: "",
-  fromAge: null as number | null,
-  toAge: null as number | null,
+  fromAge: null,
+  toAge: null,
   monthlyAmount: "",
 })
 const isCreating = ref(false)
