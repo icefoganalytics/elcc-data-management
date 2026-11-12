@@ -37,7 +37,7 @@ describe("web/src/components/children-with-diverse-needs-funding-categories/Chil
         await flushPromises()
 
         // Act
-        await wrapper.get("button").trigger("click")
+        await wrapper.get("tbody .v-empty-state button").trigger("click")
         await flushPromises()
 
         // Assert
@@ -61,11 +61,13 @@ describe("web/src/components/children-with-diverse-needs-funding-categories/Chil
         await flushPromises()
 
         // Act
-        await wrapper.get("button").trigger("click")
+        await wrapper.get("tbody .v-empty-state button").trigger("click")
         await flushPromises()
 
         // Assert
-        expect(wrapper.get("button").element.disabled).toBe(false)
+        expect(wrapper.get<HTMLButtonElement>("tbody .v-empty-state button").element.disabled).toBe(
+          false
+        )
       })
     })
   })
