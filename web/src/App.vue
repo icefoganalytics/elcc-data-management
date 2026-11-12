@@ -17,7 +17,6 @@
       v-else
       message="Initializing app ..."
     />
-    <Notifications />
     <AppSnackbar />
     <CloudflareChallengeDialog />
   </v-app>
@@ -40,7 +39,6 @@ import { useApiStore } from "@/store/ApiStore"
 import PageLoader from "@/components/common/PageLoader.vue"
 import AppSnackbar from "@/components/layouts/AppSnackbar.vue"
 import CloudflareChallengeDialog from "@/components/CloudflareChallengeDialog.vue"
-import Notifications from "@/components/Notifications.vue"
 
 useApiStore()
 

@@ -2,13 +2,11 @@ import { defineStore } from "pinia"
 import { uniq, cloneDeep, sortBy, last } from "lodash"
 
 import { type FundingSubmissionLine } from "@/api/funding-submission-lines-api"
-import { useNotificationStore } from "@/store/NotificationStore"
+import useSnack from "@/use/use-snack"
 import { useApiStore } from "@/store/ApiStore"
 import { SUBMISSION_LINES_URL } from "@/urls"
 
 export { type FundingSubmissionLine }
-
-const m = useNotificationStore()
 
 interface AdminState {
   lines: FundingSubmissionLine[]
@@ -62,6 +60,7 @@ export const useSubmissionLinesStore = defineStore("linesAdmin", {
       this.selectedLine = undefined
     },
     async saveLine() {
+      const snack = useSnack()
       this.isLoading = true
       const api = useApiStore()
 
@@ -75,7 +74,7 @@ export const useSubmissionLinesStore = defineStore("linesAdmin", {
             this.isLoading = false
           })
 
-        m.notify({ text: "Submission Line saved", variant: "success" })
+        snack.success("Submission Line saved")
         await this.getAllSubmissionLines()
       }
     },
