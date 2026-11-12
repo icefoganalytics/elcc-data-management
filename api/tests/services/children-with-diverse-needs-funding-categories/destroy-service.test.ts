@@ -1,3 +1,5 @@
+import { ChildrenWithDiverseNeedsFundingCategory } from "@/models"
+
 import {
   childrenWithDiverseNeedsFundingCategoryFactory,
   childrenWithDiverseNeedsFundingRecordFactory,
@@ -16,7 +18,10 @@ describe("api/src/services/children-with-diverse-needs-funding-categories/destro
           fundingPeriodId: category.fundingPeriodId,
         })
         await childrenWithDiverseNeedsFundingRecordFactory
-          .associations({ category, fiscalPeriod })
+          .associations({
+            category,
+            fiscalPeriod,
+          })
           .create()
 
         // Act
@@ -35,10 +40,10 @@ describe("api/src/services/children-with-diverse-needs-funding-categories/destro
 
         // Act
         await DestroyService.perform(category)
-        await category.reload({ paranoid: false })
 
         // Assert
-        expect(category.deletedAt).toBeInstanceOf(Date)
+        const retiredCategory = await ChildrenWithDiverseNeedsFundingCategory.findByPk(category.id)
+        expect(retiredCategory).toBeNull()
       })
 
       test("when all records using a category have been deleted, allows retirement", async () => {
@@ -48,16 +53,19 @@ describe("api/src/services/children-with-diverse-needs-funding-categories/destro
           fundingPeriodId: category.fundingPeriodId,
         })
         const fundingRecord = await childrenWithDiverseNeedsFundingRecordFactory
-          .associations({ category, fiscalPeriod })
+          .associations({
+            category,
+            fiscalPeriod,
+          })
           .create()
         await fundingRecord.destroy()
 
         // Act
         await DestroyService.perform(category)
-        await category.reload({ paranoid: false })
 
         // Assert
-        expect(category.deletedAt).toBeInstanceOf(Date)
+        const retiredCategory = await ChildrenWithDiverseNeedsFundingCategory.findByPk(category.id)
+        expect(retiredCategory).toBeNull()
       })
     })
   })
