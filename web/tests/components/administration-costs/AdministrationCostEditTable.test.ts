@@ -76,40 +76,48 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
         expect(wrapper.get(".v-data-table").attributes("aria-busy")).toEqual("true")
       })
 
-      test("when an active edit is saving, waits for its write before reporting success", async () => {
-        // Arrange
-        const record = administrationCostFactory.build()
-        vi.spyOn(administrationCostsApi, "list").mockResolvedValue({
-          administrationCosts: [record],
-          totalCount: 1,
-        })
-        const update = Promise.withResolvers<{
-          administrationCost: typeof record
-          policy: typeof record.policy
-        }>()
-        vi.spyOn(administrationCostsApi, "update").mockReturnValue(update.promise)
-        const wrapper = mount(AdministrationCostEditTable, {
-          props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [mockVuetify()] },
-        })
-        await flushPromises()
-        await wrapper.get("tr.cursor-pointer").trigger("click")
-        await wrapper.get('input[inputmode="decimal"]').setValue("0.25")
+      test.each([
+        { state: "pending", finishWrite: false, expected: undefined },
+        { state: "completed", finishWrite: true, expected: true },
+      ])(
+        "when an active edit is $state, reports its current write outcome",
+        async ({ finishWrite, expected }) => {
+          // Arrange
+          const record = administrationCostFactory.build()
+          vi.spyOn(administrationCostsApi, "list").mockResolvedValue({
+            administrationCosts: [record],
+            totalCount: 1,
+          })
+          const update = Promise.withResolvers<{
+            administrationCost: typeof record
+            policy: typeof record.policy
+          }>()
+          vi.spyOn(administrationCostsApi, "update").mockReturnValue(update.promise)
+          const wrapper = mount(AdministrationCostEditTable, {
+            props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
+            global: { plugins: [mockVuetify()] },
+          })
+          await flushPromises()
+          await wrapper.get("tr.cursor-pointer").trigger("click")
+          await wrapper.get('input[inputmode="decimal"]').setValue("0.25")
 
-        // Act & Assert
-        let committed: boolean | undefined
-        const commit = wrapper.vm.commitEdit().then((result) => {
-          committed = result
-          return result
-        })
-        await flushPromises()
-        expect(committed).toBeUndefined()
-        update.resolve({
-          administrationCost: { ...record, estimatedChildOccupancyRate: "0.25" },
-          policy: record.policy,
-        })
-        await expect(commit).resolves.toEqual(true)
-      })
+          // Act
+          let committed: boolean | undefined
+          void wrapper.vm.commitEdit().then((result) => {
+            committed = result
+          })
+          if (finishWrite) {
+            update.resolve({
+              administrationCost: { ...record, estimatedChildOccupancyRate: "0.25" },
+              policy: record.policy,
+            })
+          }
+          await flushPromises()
+
+          // Assert
+          expect(committed).toEqual(expected)
+        }
+      )
 
       test("when the active write fails, reports failure to the worksheet workflow", async () => {
         // Arrange
@@ -242,7 +250,7 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
     })
 
     describe("#reload", () => {
-      test("when a failed write is reloaded, preserves its failure and permits the next worksheet save", async () => {
+      test("when a failed write is reloaded, permits the next worksheet save", async () => {
         // Arrange
         const record = administrationCostFactory.build()
         vi.spyOn(administrationCostsApi, "list").mockResolvedValue({
@@ -260,21 +268,24 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
         await wrapper.get("tr.cursor-pointer").trigger("click")
         await wrapper.get('input[inputmode="decimal"]').setValue("0.25")
 
-        // Act & Assert
-        await expect(wrapper.vm.commitEdit()).resolves.toEqual(false)
+        // Act
+        await wrapper.vm.commitEdit()
         await wrapper.get(".v-alert button").trigger("click")
         await flushPromises()
+
+        // Assert
         await expect(wrapper.vm.commitEdit()).resolves.toEqual(true)
       })
     })
 
     describe("#deleteRecord", () => {
       test.each([
-        ["succeeds", false, 1],
-        ["fails", true, 0],
+        ["pending", false, false, 0],
+        ["succeeds", true, false, 1],
+        ["fails", true, true, 0],
       ] as const)(
-        "when deleting another row while an active edit %s, waits for its write and deletes only after success",
-        async (_outcome, failSave, expectedDeletes) => {
+        "when deleting another row while an active edit is %s, deletes only after write success",
+        async (_outcome, finishWrite, failSave, expectedDeletes) => {
           // Arrange
           const first = administrationCostFactory.build({ id: 1 })
           const second = administrationCostFactory.build({
@@ -304,20 +315,23 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
           await firstRow.trigger("click")
           await wrapper.get('input[inputmode="decimal"]').setValue("0.25")
 
-          // Act & Assert
+          // Act
           await secondRow.get("button").trigger("click")
           await flushPromises()
-          expect(remove).not.toHaveBeenCalled()
 
-          if (failSave) {
-            write.reject(new ApiOperationError("Write unavailable", 503))
-          } else {
-            write.resolve({
-              administrationCost: { ...first, estimatedChildOccupancyRate: "0.25" },
-              policy: first.policy,
-            })
+          if (finishWrite) {
+            if (failSave) {
+              write.reject(new ApiOperationError("Write unavailable", 503))
+            } else {
+              write.resolve({
+                administrationCost: { ...first, estimatedChildOccupancyRate: "0.25" },
+                policy: first.policy,
+              })
+            }
           }
           await flushPromises()
+
+          // Assert
           expect(remove).toHaveBeenCalledTimes(expectedDeletes)
         }
       )
