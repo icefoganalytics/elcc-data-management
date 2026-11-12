@@ -1,4 +1,3 @@
-import { createPinia } from "pinia"
 import { flushPromises, mount } from "@vue/test-utils"
 import { VTextField } from "vuetify/components"
 
@@ -100,7 +99,7 @@ describe("web/src/pages/administration/administration-cost-categories/Administra
         const wrapper = mount(AdministrationCostCategoryNewPage, {
           attachTo: document.body,
           global: {
-            plugins: [router, createPinia(), mockVuetify()],
+            plugins: [router, mockVuetify()],
           },
         })
         await flushPromises()
@@ -171,7 +170,7 @@ describe("web/src/pages/administration/administration-cost-categories/Administra
         await router.isReady()
         const wrapper = mount(AdministrationCostCategoryNewPage, {
           attachTo: document.body,
-          global: { plugins: [router, createPinia(), mockVuetify()] },
+          global: { plugins: [router, mockVuetify()] },
         })
         await flushPromises()
         await wrapper.getComponent(FundingPeriodSearchableAutocomplete).setValue(1)

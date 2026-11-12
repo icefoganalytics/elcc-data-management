@@ -1,4 +1,3 @@
-import { createPinia } from "pinia"
 import { flushPromises, mount } from "@vue/test-utils"
 
 import httpClient from "@/api/http-client"
@@ -43,7 +42,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         // Act
         const wrapper = mount(MonthlyWorksheetPage, {
           props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
-          global: { plugins: [router, createPinia(), mockVuetify()] },
+          global: { plugins: [router, mockVuetify()] },
         })
         await flushPromises()
 
@@ -78,7 +77,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
             global: {
               config: { errorHandler },
-              plugins: [router, createPinia(), mockVuetify()],
+              plugins: [router, mockVuetify()],
             },
           })
           await flushPromises()
@@ -199,7 +198,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             month: FiscalPeriodMonths.APRIL,
           },
           global: {
-            plugins: [router, createPinia(), mockVuetify()],
+            plugins: [router, mockVuetify()],
             stubs: {
               BuildingExpenseCreateFormCard: true,
               BuildingExpensesEditTable: true,
@@ -302,7 +301,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             config: {
               errorHandler: vi.fn(),
             },
-            plugins: [router, createPinia(), mockVuetify()],
+            plugins: [router, mockVuetify()],
             stubs: {
               BuildingExpenseCreateFormCard: true,
               BuildingExpensesEditTable: true,
@@ -380,7 +379,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         const wrapper = mount(MonthlyWorksheetPage, {
           props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
           global: {
-            plugins: [router, createPinia(), mockVuetify()],
+            plugins: [router, mockVuetify()],
             stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
           },
         })
@@ -459,7 +458,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         const wrapper = mount(MonthlyWorksheetPage, {
           props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
           global: {
-            plugins: [router, createPinia(), mockVuetify()],
+            plugins: [router, mockVuetify()],
             stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
           },
         })
@@ -543,7 +542,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           const wrapper = mount(MonthlyWorksheetPage, {
             props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
             global: {
-              plugins: [router, createPinia(), mockVuetify()],
+              plugins: [router, mockVuetify()],
               stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
             },
           })
@@ -620,7 +619,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
             global: {
               config: { errorHandler },
-              plugins: [router, createPinia(), mockVuetify()],
+              plugins: [router, mockVuetify()],
               stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
             },
           })

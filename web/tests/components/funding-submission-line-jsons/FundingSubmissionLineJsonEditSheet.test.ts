@@ -1,4 +1,3 @@
-import { createPinia } from "pinia"
 import { flushPromises, mount } from "@vue/test-utils"
 import { AxiosHeaders } from "axios"
 
@@ -35,7 +34,7 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         await router.isReady()
         const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
           props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
-          global: { plugins: [router, createPinia(), mockVuetify()] },
+          global: { plugins: [router, mockVuetify()] },
         })
         await flushPromises()
         const [estimateInput, actualInput] = wrapper.findAll("tbody input")
@@ -72,7 +71,7 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         await router.isReady()
         const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
           props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
-          global: { plugins: [router, createPinia(), mockVuetify()] },
+          global: { plugins: [router, mockVuetify()] },
         })
         await flushPromises()
         const estimateInput = wrapper.get("tbody input")
@@ -115,7 +114,7 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         await router.isReady()
         const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
           props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
-          global: { plugins: [router, createPinia(), mockVuetify()] },
+          global: { plugins: [router, mockVuetify()] },
         })
         await flushPromises()
         const inputs = wrapper.findAll("tbody input")
@@ -180,7 +179,7 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
           global: {
             config: { errorHandler },
-            plugins: [router, createPinia(), mockVuetify()],
+            plugins: [router, mockVuetify()],
           },
         })
         await flushPromises()
@@ -224,7 +223,7 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         await router.isReady()
         const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
           props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
-          global: { plugins: [router, createPinia(), mockVuetify()] },
+          global: { plugins: [router, mockVuetify()] },
         })
         await flushPromises()
         const estimateInput = wrapper.get("tbody input")
@@ -260,7 +259,7 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
             props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
             global: {
               config: { errorHandler },
-              plugins: [router, createPinia(), mockVuetify()],
+              plugins: [router, mockVuetify()],
             },
           })
 
@@ -295,7 +294,7 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
           global: {
             config: { errorHandler },
-            plugins: [router, createPinia(), mockVuetify()],
+            plugins: [router, mockVuetify()],
           },
         })
         await flushPromises()
@@ -337,7 +336,7 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
             props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
             global: {
               config: { errorHandler },
-              plugins: [router, createPinia(), mockVuetify()],
+              plugins: [router, mockVuetify()],
             },
           })
           await flushPromises()

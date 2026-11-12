@@ -1,4 +1,3 @@
-import { createPinia } from "pinia"
 import { DOMWrapper, flushPromises, mount } from "@vue/test-utils"
 import { AxiosError } from "axios"
 
@@ -33,7 +32,7 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
         mount(AppSnackbar, { global: { plugins: [mockVuetify()] }, attachTo: document.body })
         const wrapper = mount(AdministrationCostEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [router, createPinia(), mockVuetify(), apiResponseErrorPlugin] },
+          global: { plugins: [router, mockVuetify(), apiResponseErrorPlugin] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -62,7 +61,7 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
         )
         const wrapper = mount(AdministrationCostEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [createPinia(), mockVuetify()] },
+          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -91,7 +90,7 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
         vi.spyOn(administrationCostsApi, "update").mockReturnValue(update.promise)
         const wrapper = mount(AdministrationCostEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [createPinia(), mockVuetify()] },
+          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -124,7 +123,7 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
         )
         const wrapper = mount(AdministrationCostEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [createPinia(), mockVuetify()] },
+          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -148,7 +147,7 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
         })
         const wrapper = mount(AdministrationCostEditTable, {
           props: { where: { centreId: record1.centreId, fiscalPeriodId: record1.fiscalPeriodId } },
-          global: { plugins: [createPinia(), mockVuetify()] },
+          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         const rows = wrapper.findAll("tr.cursor-pointer")
@@ -175,7 +174,7 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
         )
         const wrapper = mount(AdministrationCostEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [createPinia(), mockVuetify()] },
+          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
 
@@ -197,7 +196,7 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
         const replicate = vi.spyOn(administrationCostsApi, "replicateEstimates")
         const wrapper = mount(AdministrationCostEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [createPinia(), mockVuetify()] },
+          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
 
@@ -222,7 +221,7 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
         })
         const wrapper = mount(AdministrationCostEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [createPinia(), mockVuetify()] },
+          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.vm.refresh().catch(() => undefined)
@@ -255,7 +254,7 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
         )
         const wrapper = mount(AdministrationCostEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [createPinia(), mockVuetify()] },
+          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -295,7 +294,7 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
           const remove = vi.spyOn(administrationCostsApi, "delete").mockResolvedValue(undefined)
           const wrapper = mount(AdministrationCostEditTable, {
             props: { where: { centreId: first.centreId, fiscalPeriodId: first.fiscalPeriodId } },
-            global: { plugins: [createPinia(), mockVuetify()] },
+            global: { plugins: [mockVuetify()] },
           })
           await flushPromises()
           const rows = wrapper.findAll("tr.cursor-pointer")
@@ -339,7 +338,7 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
           .mockReturnValue(firstReplication.promise)
         const wrapper = mount(AdministrationCostEditTable, {
           props: { where: { centreId: record1.centreId, fiscalPeriodId: record1.fiscalPeriodId } },
-          global: { plugins: [createPinia(), mockVuetify()] },
+          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
 

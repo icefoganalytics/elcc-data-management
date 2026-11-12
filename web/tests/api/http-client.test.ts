@@ -1,7 +1,6 @@
 import axios, { AxiosError, AxiosHeaders, type InternalAxiosRequestConfig } from "axios"
 
 import httpClient from "@/api/http-client"
-import { SecureAPICall } from "@/store/helpers/axiosAPIConfig"
 import { AuthenticationRequiredError } from "@/api/errors/authentication-required-error"
 import { CloudflareChallengeError } from "@/api/errors/cloudflare-challenge-error"
 import { UnexpectedHtmlResponseError } from "@/api/errors/unexpected-html-response-error"
@@ -23,53 +22,44 @@ function failedResponse(config: InternalAxiosRequestConfig, status: number, data
   })
 }
 
-describe("web/src/api/http-client.ts real clients", () => {
-  const clients = [
-    ["shared httpClient", httpClient],
-    ["authenticated API client", SecureAPICall("get", "token")],
-  ] as const
+describe("web/src/api/http-client.ts", () => {
+  const client = httpClient
 
-  test.each(clients)(
-    "when %s receives a JSON operation failure, classifies its message and status",
-    async (_name, client) => {
-      // Arrange
-      const adapter = client.defaults.adapter
-      client.defaults.adapter = async (config) => {
-        throw failedResponse(config, 403, { message: "Denied" })
-      }
-
-      // Act
-      const request = client.get("/api/items")
-
-      // Assert
-      await expect(request).rejects.toMatchObject({
-        name: "ApiOperationError",
-        message: "Denied",
-        status: 403,
-      })
-      client.defaults.adapter = adapter
+  test("when a JSON operation fails, classifies its message and status", async () => {
+    // Arrange
+    const adapter = client.defaults.adapter
+    client.defaults.adapter = async (config) => {
+      throw failedResponse(config, 403, { message: "Denied" })
     }
-  )
 
-  test.each(clients)(
-    "when %s receives a JSON 401, classifies authentication distinctly",
-    async (_name, client) => {
-      // Arrange
-      const adapter = client.defaults.adapter
-      client.defaults.adapter = async (config) => {
-        throw failedResponse(config, 401, { message: "Expired" })
-      }
+    // Act
+    const request = client.get("/api/items")
 
-      // Act
-      const request = client.get("/api/items")
+    // Assert
+    await expect(request).rejects.toMatchObject({
+      name: "ApiOperationError",
+      message: "Denied",
+      status: 403,
+    })
+    client.defaults.adapter = adapter
+  })
 
-      // Assert
-      await expect(request).rejects.toBeInstanceOf(AuthenticationRequiredError)
-      client.defaults.adapter = adapter
+  test("when a JSON 401 arrives, classifies authentication distinctly", async () => {
+    // Arrange
+    const adapter = client.defaults.adapter
+    client.defaults.adapter = async (config) => {
+      throw failedResponse(config, 401, { message: "Expired" })
     }
-  )
 
-  describe.each(clients)("%s", (_name, client) => {
+    // Act
+    const request = client.get("/api/items")
+
+    // Assert
+    await expect(request).rejects.toBeInstanceOf(AuthenticationRequiredError)
+    client.defaults.adapter = adapter
+  })
+
+  describe("HTML responses", () => {
     test.each([200, 403, 502])(
       "when marked HTML arrives with status %i, requires challenge recovery",
       async (status) => {

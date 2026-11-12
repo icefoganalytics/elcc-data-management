@@ -1,4 +1,3 @@
-import { createPinia } from "pinia"
 import { flushPromises, mount } from "@vue/test-utils"
 
 import buildingExpensesApi, { type BuildingExpenseAsIndex } from "@/api/building-expenses-api"
@@ -48,7 +47,7 @@ describe("web/src/components/building-expenses/BuildingExpensesEditTable.vue", (
         vi.spyOn(buildingExpensesApi, "update").mockReturnValue(pendingSave.promise)
         const wrapper = mount(BuildingExpensesEditTable, {
           props: { where: { centreId: 1, fiscalPeriodId: 1 } },
-          global: { plugins: [createPinia(), mockVuetify()] },
+          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.findAll("tr.cursor-pointer")[0].trigger("click")

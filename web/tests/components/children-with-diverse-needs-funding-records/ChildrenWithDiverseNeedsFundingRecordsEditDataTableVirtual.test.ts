@@ -1,4 +1,3 @@
-import { createPinia } from "pinia"
 import { flushPromises, mount } from "@vue/test-utils"
 
 import ApiOperationError from "@/api/errors/api-operation-error"
@@ -38,7 +37,7 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
               fiscalPeriodId: childrenWithDiverseNeedsFundingRecord.fiscalPeriodId,
             },
           },
-          global: { plugins: [createPinia(), mockVuetify()] },
+          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
 
@@ -75,7 +74,7 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
             },
           },
           global: {
-            plugins: [createPinia(), mockVuetify()],
+            plugins: [mockVuetify()],
             config: { errorHandler },
           },
         })
@@ -109,7 +108,7 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
         )
         const wrapper = mount(ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual, {
           global: {
-            plugins: [createPinia(), mockVuetify()],
+            plugins: [mockVuetify()],
             config: { errorHandler },
           },
         })
@@ -140,7 +139,7 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
           new Promise(() => {})
         )
         const wrapper = mount(ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual, {
-          global: { plugins: [createPinia(), mockVuetify()] },
+          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
 
@@ -169,7 +168,7 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
             totalCount: 1,
           })
         const wrapper = mount(ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual, {
-          global: { plugins: [createPinia(), mockVuetify()] },
+          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
 
@@ -191,7 +190,7 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
           })
           .mockRejectedValueOnce(new ApiOperationError("Unavailable", 503))
         const wrapper = mount(ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual, {
-          global: { plugins: [createPinia(), mockVuetify()] },
+          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
 

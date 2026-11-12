@@ -1,4 +1,3 @@
-import { createPinia } from "pinia"
 import { flushPromises, mount } from "@vue/test-utils"
 import { VTextField } from "vuetify/components"
 
@@ -44,7 +43,7 @@ describe("web/src/pages/administration/administration-cost-categories/Administra
         const wrapper = mount(AdministrationCostCategoryEditPage, {
           props: { administrationCostCategoryId: "42" },
           global: {
-            plugins: [createPinia(), router, mockVuetify()],
+            plugins: [router, mockVuetify()],
             config: {
               errorHandler(error) {
                 if (error instanceof Error && error.message === "Category unavailable") return

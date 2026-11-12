@@ -1,4 +1,3 @@
-import { createPinia } from "pinia"
 import { DOMWrapper, flushPromises, mount } from "@vue/test-utils"
 import { AxiosError } from "axios"
 
@@ -33,7 +32,7 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         mount(AppSnackbar, { global: { plugins: [mockVuetify()] }, attachTo: document.body })
         const wrapper = mount(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [router, createPinia(), mockVuetify(), apiResponseErrorPlugin] },
+          global: { plugins: [router, mockVuetify(), apiResponseErrorPlugin] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -62,7 +61,7 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         )
         const wrapper = mount(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [createPinia(), mockVuetify()] },
+          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -91,7 +90,7 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         vi.spyOn(qualityEnhancementsApi, "update").mockReturnValue(update.promise)
         const wrapper = mount(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [createPinia(), mockVuetify()] },
+          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -124,7 +123,7 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         )
         const wrapper = mount(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [createPinia(), mockVuetify()] },
+          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -145,7 +144,7 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         const replicate = vi.spyOn(qualityEnhancementsApi, "replicateEstimates")
         const wrapper = mount(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [createPinia(), mockVuetify()] },
+          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
 
@@ -170,7 +169,7 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         })
         const wrapper = mount(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [createPinia(), mockVuetify()] },
+          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.vm.refresh().catch(() => undefined)
@@ -203,7 +202,7 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         )
         const wrapper = mount(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [createPinia(), mockVuetify()] },
+          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -243,7 +242,7 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
           const remove = vi.spyOn(qualityEnhancementsApi, "delete").mockResolvedValue(undefined)
           const wrapper = mount(QualityEnhancementEditTable, {
             props: { where: { centreId: first.centreId, fiscalPeriodId: first.fiscalPeriodId } },
-            global: { plugins: [createPinia(), mockVuetify()] },
+            global: { plugins: [mockVuetify()] },
           })
           await flushPromises()
           const rows = wrapper.findAll("tr.cursor-pointer")
@@ -287,7 +286,7 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
           .mockReturnValue(firstReplication.promise)
         const wrapper = mount(QualityEnhancementEditTable, {
           props: { where: { centreId: record1.centreId, fiscalPeriodId: record1.fiscalPeriodId } },
-          global: { plugins: [createPinia(), mockVuetify()] },
+          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
 

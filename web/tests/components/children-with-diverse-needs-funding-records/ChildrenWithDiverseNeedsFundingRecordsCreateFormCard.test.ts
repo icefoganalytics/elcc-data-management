@@ -1,4 +1,3 @@
-import { createPinia } from "pinia"
 import { flushPromises, mount } from "@vue/test-utils"
 
 import childrenWithDiverseNeedsFundingCategoriesApi from "@/api/children-with-diverse-needs-funding-categories-api"
@@ -46,7 +45,7 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
             fundingPeriodId: 3,
             existingCategoryIds: [],
           },
-          global: { plugins: [createPinia(), mockVuetify()] },
+          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         wrapper
@@ -101,7 +100,7 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
             existingCategoryIds: [],
           },
           global: {
-            plugins: [createPinia(), mockVuetify()],
+            plugins: [mockVuetify()],
             config: { errorHandler },
           },
         })

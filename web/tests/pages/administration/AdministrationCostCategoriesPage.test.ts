@@ -1,4 +1,3 @@
-import { createPinia } from "pinia"
 import { flushPromises, mount } from "@vue/test-utils"
 
 import httpClient from "@/api/http-client"
@@ -55,7 +54,7 @@ describe("web/src/pages/administration/AdministrationCostCategoriesPage.vue", ()
         // Act
         const wrapper = mount(AdministrationCostCategoriesPage, {
           global: {
-            plugins: [router, createPinia(), mockVuetify()],
+            plugins: [router, mockVuetify()],
           },
         })
         await flushPromises()
@@ -123,7 +122,7 @@ describe("web/src/pages/administration/AdministrationCostCategoriesPage.vue", ()
         await router.isReady()
         const wrapper = mount(AdministrationCostCategoriesPage, {
           global: {
-            plugins: [router, createPinia(), mockVuetify()],
+            plugins: [router, mockVuetify()],
           },
         })
         await flushPromises()
