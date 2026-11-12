@@ -27,6 +27,8 @@ export function useChildrenWithDiverseNeedsFundingCategories(
     isErrored: false,
   })
 
+  const snack = useSnack()
+
   let requestController: AbortController | undefined
 
   async function fetch(): Promise<ChildrenWithDiverseNeedsFundingCategoryAsIndex[]> {
@@ -49,6 +51,7 @@ export function useChildrenWithDiverseNeedsFundingCategories(
       state.childrenWithDiverseNeedsFundingCategories = childrenWithDiverseNeedsFundingCategories
       state.totalCount = totalCount
       state.isErrored = false
+
       return childrenWithDiverseNeedsFundingCategories
     } catch (error) {
       if (controller.signal.aborted || isCancel(error)) {
@@ -56,14 +59,18 @@ export function useChildrenWithDiverseNeedsFundingCategories(
       }
 
       state.isErrored = true
-      console.error("Failed to fetch Children with Diverse Needs funding categories", { error })
-      throw error
+      console.error("Failed to fetch Children with Diverse Needs funding categories", {
+        error,
+      })
+      rethrowUnexpectedError(error)
+
+      snack.error(`Failed to load Children with Diverse Needs funding categories: ${error}`)
+      return state.childrenWithDiverseNeedsFundingCategories
     } finally {
       if (!controller.signal.aborted) state.isLoading = false
     }
   }
 
-  const snack = useSnack()
   watch(
     () => [skipWatchIf(), unref(queryOptions)],
     async ([skip]) => {
@@ -71,18 +78,13 @@ export function useChildrenWithDiverseNeedsFundingCategories(
       state.totalCount = 0
       state.isErrored = false
       state.isLoading = false
+
       if (skip) {
         requestController?.abort()
         return
       }
 
-      try {
-        await fetch()
-      } catch (error) {
-        rethrowUnexpectedError(error)
-
-        snack.error(`Failed to load Children with Diverse Needs funding categories: ${error}`)
-      }
+      await fetch()
     },
     {
       deep: true,
@@ -96,6 +98,7 @@ export function useChildrenWithDiverseNeedsFundingCategories(
 
   return {
     ...toRefs(state),
+
     fetch,
     refresh: fetch,
   }
