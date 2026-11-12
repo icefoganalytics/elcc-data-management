@@ -1,7 +1,7 @@
 import { nextTick } from "vue"
 import { mount } from "@vue/test-utils"
 
-import CurrencyInputModelFixture from "@/tests/components/fixtures/CurrencyInputModelFixture.vue"
+import CurrencyInputModel from "@/tests/components/common/CurrencyInputModel.vue"
 import { mockVuetify } from "@/tests/support"
 
 describe("web/src/components/CurrencyInput.vue", () => {
@@ -9,7 +9,7 @@ describe("web/src/components/CurrencyInput.vue", () => {
     describe("decimal editing", () => {
       test("when entering the DECIMAL(15,4) maximum, commits all four decimal places as a string", async () => {
         // Arrange
-        const wrapper = mount(CurrencyInputModelFixture, {
+        const wrapper = mount(CurrencyInputModel, {
           props: {
             initialAmount: "0.0000",
           },
@@ -41,7 +41,7 @@ describe("web/src/components/CurrencyInput.vue", () => {
 
       test("when pasting a formatted amount, commits an unformatted four-decimal string", async () => {
         // Arrange
-        const wrapper = mount(CurrencyInputModelFixture, {
+        const wrapper = mount(CurrencyInputModel, {
           props: {
             initialAmount: "0.0000",
           },
@@ -83,7 +83,7 @@ describe("web/src/components/CurrencyInput.vue", () => {
 
       test("when committing with Enter, passes the four-decimal string to the parent", async () => {
         // Arrange
-        const wrapper = mount(CurrencyInputModelFixture, {
+        const wrapper = mount(CurrencyInputModel, {
           props: {
             initialAmount: "0.0000",
           },
@@ -115,7 +115,7 @@ describe("web/src/components/CurrencyInput.vue", () => {
 
       test("when cancelling with Escape, restores the original decimal string", async () => {
         // Arrange
-        const wrapper = mount(CurrencyInputModelFixture, {
+        const wrapper = mount(CurrencyInputModel, {
           props: {
             initialAmount: "100.0001",
           },
