@@ -76,10 +76,23 @@ const headers = ref([
       class: "text-wrap",
     },
   },
-  { title: "From Age", key: "fromAge" },
-  { title: "To Age", key: "toAge" },
-  { title: "Monthly Amount", key: "monthlyAmount" },
-  { title: "Actions", key: "actions", sortable: false },
+  {
+    title: "From Age",
+    key: "fromAge",
+  },
+  {
+    title: "To Age",
+    key: "toAge",
+  },
+  {
+    title: "Monthly Amount",
+    key: "monthlyAmount",
+  },
+  {
+    title: "Actions",
+    key: "actions",
+    sortable: false,
+  },
 ])
 const page = useRouteQuery<string | undefined, number | undefined>(
   `page${props.routeQuerySuffix}`,
