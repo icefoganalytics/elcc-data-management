@@ -11,6 +11,8 @@ import type {
 } from "@/api/children-with-diverse-needs-funding-categories-api"
 import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 
+import useSnack from "@/use/use-snack"
+
 export function useChildrenWithDiverseNeedsFundingCategory(
   childrenWithDiverseNeedsFundingCategoryId: Ref<number | null | undefined>
 ) {
@@ -138,6 +140,8 @@ export function useChildrenWithDiverseNeedsFundingCategory(
     }
   }
 
+  const snack = useSnack()
+
   watch(
     () => unref(childrenWithDiverseNeedsFundingCategoryId),
     async (id) => {
@@ -148,6 +152,8 @@ export function useChildrenWithDiverseNeedsFundingCategory(
         await fetch()
       } catch (error) {
         rethrowUnexpectedError(error)
+
+        snack.error(`Failed to load Children with Diverse Needs funding category: ${error}`)
       }
     },
     {

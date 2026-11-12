@@ -216,7 +216,7 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
     })
 
     describe("load recovery", () => {
-      test("when the initial category load fails, shows load failure feedback instead of an editor", async () => {
+      test("when the initial category load fails, shows snackbar feedback", async () => {
         // Arrange
         mockHttpGetRoutes({
           "/api/children-with-diverse-needs-funding-categories/8": () => {
@@ -231,7 +231,7 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
         ])
         await router.push("/")
         await router.isReady()
-        const wrapper = mount(ChildrenWithDiverseNeedsFundingCategoryEditPage, {
+        mount(ChildrenWithDiverseNeedsFundingCategoryEditPage, {
           props: { childrenWithDiverseNeedsFundingCategoryId: "8" },
           global: {
             plugins: [createPinia(), router, mockVuetify()],
@@ -240,7 +240,7 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
         await flushPromises()
 
         // Assert
-        expect(wrapper.text()).toContain("Unable to Load Category")
+        expect(useSnack().message.value).toContain("Unavailable")
       })
     })
   })

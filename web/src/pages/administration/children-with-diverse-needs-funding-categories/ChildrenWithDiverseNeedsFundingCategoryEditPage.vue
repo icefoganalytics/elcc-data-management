@@ -3,21 +3,6 @@
     v-if="isLoading"
     type="card"
   />
-  <v-empty-state
-    v-else-if="isErrored"
-    class="ma-5"
-    icon="mdi-alert-circle-outline"
-    headline="Unable to Load Category"
-    title="Diverse need category could not be loaded."
-  >
-    <template #actions>
-      <v-btn
-        color="primary"
-        @click="refreshCategory"
-        >Retry</v-btn
-      >
-    </template>
-  </v-empty-state>
   <ChildrenWithDiverseNeedsFundingCategoryEditForm
     v-else-if="childrenWithDiverseNeedsFundingCategory && policy?.update"
     v-model:children-with-diverse-needs-funding-category="childrenWithDiverseNeedsFundingCategory"
@@ -53,8 +38,6 @@ const {
   childrenWithDiverseNeedsFundingCategory,
   policy,
   isLoading,
-  isErrored,
-  fetch: refreshCategory,
 } = useChildrenWithDiverseNeedsFundingCategory(categoryId)
 const fundingPeriodsQuery = ref({ perPage: -1 })
 const { fundingPeriods } = useFundingPeriods(fundingPeriodsQuery)
