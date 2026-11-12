@@ -4,17 +4,25 @@
     title="New Diverse Need Category"
     @submit.prevent="createCategory"
   >
-    <FundingPeriodSearchableAutocomplete
-      v-model="attributes.fundingPeriodId"
-      :disabled="isCreating"
-      :rules="[required]"
-    />
-    <v-text-field
-      v-model="attributes.categoryName"
-      label="Category Name *"
-      :rules="[required]"
-      :disabled="isCreating"
-    />
+    <v-row>
+      <v-col cols="12">
+        <FundingPeriodSearchableAutocomplete
+          v-model="attributes.fundingPeriodId"
+          :disabled="isCreating"
+          :rules="[required]"
+        />
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col cols="12">
+        <v-text-field
+          v-model="attributes.categoryName"
+          label="Category Name *"
+          :rules="[required]"
+          :disabled="isCreating"
+        />
+      </v-col>
+    </v-row>
     <v-row>
       <v-col
         cols="12"
@@ -41,12 +49,16 @@
         />
       </v-col>
     </v-row>
-    <CurrencyInput
-      v-model="attributes.monthlyAmount"
-      label="Monthly Amount *"
-      :rules="[required]"
-      :disabled="isCreating"
-    />
+    <v-row>
+      <v-col cols="12">
+        <CurrencyInput
+          v-model="attributes.monthlyAmount"
+          label="Monthly Amount *"
+          :rules="[required]"
+          :disabled="isCreating"
+        />
+      </v-col>
+    </v-row>
     <template #actions>
       <v-btn
         type="submit"
