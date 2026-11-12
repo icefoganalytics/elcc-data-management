@@ -22,8 +22,7 @@
     v-else-if="childrenWithDiverseNeedsFundingCategory && policy?.update"
     v-model:children-with-diverse-needs-funding-category="childrenWithDiverseNeedsFundingCategory"
     :funding-period-description="fundingPeriodDescription"
-    :is-saving="isSaving"
-    @save="saveCategory"
+    @saved="policy = $event"
     @cancel="cancelEditing"
   />
   <v-empty-state
@@ -39,12 +38,9 @@
 import { computed, ref } from "vue"
 import { useRouter } from "vue-router"
 
-import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
-
 import useChildrenWithDiverseNeedsFundingCategory from "@/use/use-children-with-diverse-needs-funding-category"
 import useFundingPeriods from "@/use/use-funding-periods"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
-import useSnack from "@/use/use-snack"
 
 import ChildrenWithDiverseNeedsFundingCategoryEditForm from "@/components/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryEditForm.vue"
 
@@ -52,8 +48,6 @@ const props = defineProps<{
   childrenWithDiverseNeedsFundingCategoryId: string
 }>()
 const router = useRouter()
-const isSaving = ref(false)
-const snack = useSnack()
 const categoryId = computed(() => Number(props.childrenWithDiverseNeedsFundingCategoryId))
 const {
   childrenWithDiverseNeedsFundingCategory,
@@ -61,7 +55,6 @@ const {
   isLoading,
   isErrored,
   fetch: refreshCategory,
-  save,
 } = useChildrenWithDiverseNeedsFundingCategory(categoryId)
 const fundingPeriodsQuery = ref({ perPage: -1 })
 const { fundingPeriods } = useFundingPeriods(fundingPeriodsQuery)
@@ -71,22 +64,6 @@ const fundingPeriodDescription = computed(() => {
   )
   return fundingPeriod?.fiscalYear ?? "Unknown"
 })
-
-async function saveCategory() {
-  if (!policy.value?.update || isSaving.value) return
-
-  isSaving.value = true
-  try {
-    await save()
-    snack.success("Diverse need category updated successfully!")
-  } catch (error) {
-    rethrowUnexpectedError(error)
-
-    snack.error(`Failed to update diverse need category: ${error}`)
-  } finally {
-    isSaving.value = false
-  }
-}
 
 async function cancelEditing() {
   await router.push({

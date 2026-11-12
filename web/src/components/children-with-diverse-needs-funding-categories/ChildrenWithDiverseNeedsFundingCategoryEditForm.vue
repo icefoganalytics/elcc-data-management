@@ -80,40 +80,69 @@
 </template>
 
 <script setup lang="ts">
-import { useTemplateRef } from "vue"
+import { ref, useTemplateRef } from "vue"
 
-import type { ChildrenWithDiverseNeedsFundingCategory } from "@/api/children-with-diverse-needs-funding-categories-api"
+import childrenWithDiverseNeedsFundingCategoriesApi, {
+  type ChildrenWithDiverseNeedsFundingCategory,
+  type ChildrenWithDiverseNeedsFundingCategoryPolicy,
+} from "@/api/children-with-diverse-needs-funding-categories-api"
+import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 
 import { required } from "@/utils/validators"
+
+import useSnack from "@/use/use-snack"
 
 import CurrencyInput from "@/components/CurrencyInput.vue"
 import HeaderActionsFormCard from "@/components/common/HeaderActionsFormCard.vue"
 import NumberTextField from "@/components/common/NumberTextField.vue"
 
-const childrenWithDiverseNeedsFundingCategory = defineModel<ChildrenWithDiverseNeedsFundingCategory>("childrenWithDiverseNeedsFundingCategory", {
-  required: true,
-})
+const childrenWithDiverseNeedsFundingCategory =
+  defineModel<ChildrenWithDiverseNeedsFundingCategory>("childrenWithDiverseNeedsFundingCategory", {
+    required: true,
+  })
 
 defineProps<{
   fundingPeriodDescription: string
-  isSaving: boolean
 }>()
 
 const emit = defineEmits<{
-  save: []
   cancel: []
+  saved: [policy: ChildrenWithDiverseNeedsFundingCategoryPolicy]
 }>()
 
 const form = useTemplateRef("form")
 
-defineExpose({ form })
+const isSaving = ref(false)
+const snack = useSnack()
 
 async function submit() {
-  if (form.value === null) return
+  if (isSaving.value || form.value === null) return
 
   const { valid } = await form.value.validate()
   if (!valid) return
 
-  emit("save")
+  isSaving.value = true
+  try {
+    const { id, categoryName, fromAge, toAge, monthlyAmount } =
+      childrenWithDiverseNeedsFundingCategory.value
+    const { childrenWithDiverseNeedsFundingCategory: savedCategory, policy } =
+      await childrenWithDiverseNeedsFundingCategoriesApi.update(id, {
+        categoryName,
+        fromAge,
+        toAge,
+        monthlyAmount,
+      })
+    if (childrenWithDiverseNeedsFundingCategory.value.id !== id) return
+
+    childrenWithDiverseNeedsFundingCategory.value = savedCategory
+    snack.success("Diverse need category updated successfully!")
+    emit("saved", policy)
+  } catch (error) {
+    rethrowUnexpectedError(error)
+
+    snack.error(`Failed to update diverse need category: ${error}`)
+  } finally {
+    isSaving.value = false
+  }
 }
 </script>
