@@ -4,17 +4,25 @@
     title="Edit Diverse Need Category"
     @submit.prevent="submit"
   >
-    <v-text-field
-      :model-value="fundingPeriodDescription"
-      label="Funding Period"
-      readonly
-    />
-    <v-text-field
-      v-model="childrenWithDiverseNeedsFundingCategory.categoryName"
-      :disabled="isSaving"
-      label="Category Name *"
-      :rules="[required]"
-    />
+    <v-row>
+      <v-col cols="12">
+        <v-text-field
+          :model-value="fundingPeriodDescription"
+          label="Funding Period"
+          readonly
+        />
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col cols="12">
+        <v-text-field
+          v-model="childrenWithDiverseNeedsFundingCategory.categoryName"
+          :disabled="isSaving"
+          label="Category Name *"
+          :rules="[required]"
+        />
+      </v-col>
+    </v-row>
     <v-row>
       <v-col
         cols="12"
@@ -41,12 +49,16 @@
         />
       </v-col>
     </v-row>
-    <CurrencyInput
-      v-model="childrenWithDiverseNeedsFundingCategory.monthlyAmount"
-      :disabled="isSaving"
-      label="Monthly Amount *"
-      :rules="[required]"
-    />
+    <v-row>
+      <v-col cols="12">
+        <CurrencyInput
+          v-model="childrenWithDiverseNeedsFundingCategory.monthlyAmount"
+          :disabled="isSaving"
+          label="Monthly Amount *"
+          :rules="[required]"
+        />
+      </v-col>
+    </v-row>
     <template #actions>
       <v-btn
         type="submit"
