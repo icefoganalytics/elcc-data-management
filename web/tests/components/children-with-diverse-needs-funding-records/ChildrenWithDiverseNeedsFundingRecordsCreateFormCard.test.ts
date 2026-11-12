@@ -18,7 +18,11 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
     describe("#create", () => {
       test("when valid occupancies are submitted, preserves decimal strings in the creation payload", async () => {
         // Arrange
-        const record = childrenWithDiverseNeedsFundingRecordFactory.build()
+        const record = childrenWithDiverseNeedsFundingRecordFactory.build({
+          centreId: 11,
+          fiscalPeriodId: 12,
+          categoryId: 13,
+        })
         const category = childrenWithDiverseNeedsFundingCategoryFactory.build({
           id: record.categoryId,
           fundingPeriodId: 3,
@@ -62,9 +66,9 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
 
         // Assert
         expect(create).toHaveBeenCalledWith({
-          centreId: record.centreId,
-          fiscalPeriodId: record.fiscalPeriodId,
-          categoryId: record.categoryId,
+          centreId: 11,
+          fiscalPeriodId: 12,
+          categoryId: 13,
           estimatedChildOccupancyRate: "0.2500",
           actualChildOccupancyRate: "0.1250",
           applyToCurrentAndFutureFiscalPeriods: false,
@@ -73,7 +77,11 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
 
       test("when creation requires authentication, forwards the original error to Vue", async () => {
         // Arrange
-        const record = childrenWithDiverseNeedsFundingRecordFactory.build()
+        const record = childrenWithDiverseNeedsFundingRecordFactory.build({
+          centreId: 11,
+          fiscalPeriodId: 12,
+          categoryId: 13,
+        })
         const category = childrenWithDiverseNeedsFundingCategoryFactory.build({
           id: record.categoryId,
           fundingPeriodId: 3,
@@ -115,11 +123,12 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
         await flushPromises()
 
         // Assert
-        expect(errorHandler).toHaveBeenCalledWith(
-          authenticationError,
-          expect.anything(),
-          expect.any(String)
-        )
+        expect(errorHandler.mock.calls.map(([error]) => error)).toMatchObject([
+          {
+            name: "AuthenticationRequiredError",
+            message: "You must be logged in to access this endpoint",
+          },
+        ])
       })
     })
   })

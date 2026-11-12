@@ -50,47 +50,82 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         expect(wrapper.text()).toContain("Loading worksheets")
       })
 
-      test.each([
-        ["authentication", AuthenticationRequiredError],
-        ["challenge", CloudflareChallengeError],
-      ] as const)(
-        "when a delayed %s failure follows an expected worksheet failure, forwards the original recovery error",
-        async (_kind, RecoveryError) => {
-          // Arrange
-          const fiscalPeriods = Promise.withResolvers<{
-            data: { fiscalPeriods: FiscalPeriod[]; totalCount: number }
-          }>()
-          const recoveryError = new RecoveryError()
-          mockHttpGetRoutes({
-            "/api/funding-submission-line-jsons": async () => {
-              throw new ApiOperationError("Worksheet unavailable", 503)
-            },
-            "/api/fiscal-periods": async () => {
-              return fiscalPeriods.promise
-            },
-          })
-          const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-          await router.push("/")
-          await router.isReady()
-          const errorHandler = vi.fn()
-          mount(MonthlyWorksheetPage, {
-            props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
-            global: {
-              config: { errorHandler },
-              plugins: [router, mockVuetify()],
-            },
-          })
-          await flushPromises()
+      test("when a delayed authentication failure follows an expected worksheet failure, forwards the recovery error", async () => {
+        // Arrange
+        const fiscalPeriods = Promise.withResolvers<{
+          data: { fiscalPeriods: FiscalPeriod[]; totalCount: number }
+        }>()
+        const recoveryError = new AuthenticationRequiredError()
+        mockHttpGetRoutes({
+          "/api/funding-submission-line-jsons": async () => {
+            throw new ApiOperationError("Worksheet unavailable", 503)
+          },
+          "/api/fiscal-periods": async () => {
+            return fiscalPeriods.promise
+          },
+        })
+        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+        await router.push("/")
+        await router.isReady()
+        const errorHandler = vi.fn()
+        mount(MonthlyWorksheetPage, {
+          props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
+          global: {
+            config: { errorHandler },
+            plugins: [router, mockVuetify()],
+          },
+        })
+        await flushPromises()
 
-          // Act
-          fiscalPeriods.reject(recoveryError)
-          await flushPromises()
+        // Act
+        fiscalPeriods.reject(recoveryError)
+        await flushPromises()
 
-          // Assert
-          const receivedErrors = errorHandler.mock.calls.map(([error]) => error)
-          expect(receivedErrors).toEqual([recoveryError])
-        }
-      )
+        // Assert
+        const receivedErrors = errorHandler.mock.calls.map(([error]) => error)
+        expect(receivedErrors).toMatchObject([
+          {
+            name: "AuthenticationRequiredError",
+            message: "You must be logged in to access this endpoint",
+          },
+        ])
+      })
+
+      test("when a delayed challenge failure follows an expected worksheet failure, forwards the recovery error", async () => {
+        // Arrange
+        const fiscalPeriods = Promise.withResolvers<{
+          data: { fiscalPeriods: FiscalPeriod[]; totalCount: number }
+        }>()
+        const recoveryError = new CloudflareChallengeError()
+        mockHttpGetRoutes({
+          "/api/funding-submission-line-jsons": async () => {
+            throw new ApiOperationError("Worksheet unavailable", 503)
+          },
+          "/api/fiscal-periods": async () => {
+            return fiscalPeriods.promise
+          },
+        })
+        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+        await router.push("/")
+        await router.isReady()
+        const errorHandler = vi.fn()
+        mount(MonthlyWorksheetPage, {
+          props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
+          global: {
+            config: { errorHandler },
+            plugins: [router, mockVuetify()],
+          },
+        })
+        await flushPromises()
+
+        // Act
+        fiscalPeriods.reject(recoveryError)
+        await flushPromises()
+
+        // Assert
+        const receivedErrors = errorHandler.mock.calls.map(([error]) => error)
+        expect(receivedErrors).toMatchObject([{ name: "CloudflareChallengeError", message: "" }])
+      })
 
       test("when the fiscal period is pending after replication, withholds worksheet editing", async () => {
         // Arrange
@@ -562,85 +597,234 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         }
       )
 
-      test.each([
-        ["authentication", new AuthenticationRequiredError()],
-        ["challenge", new CloudflareChallengeError()],
-        ["unexpected", new Error("Unexpected refresh failure")],
-      ])(
-        "when a diverse need creation refresh has an %s failure, forwards it to the application boundary",
-        async (_kind, error) => {
-          // Arrange
-          const worksheet = fundingSubmissionLineJsonFactory.build({
-            id: 44,
-            centreId: 1,
-            dateName: "April",
-            lines: [],
-          })
-          const fiscalPeriod = fiscalPeriodFactory.build({
-            id: 4,
-            fundingPeriodId: 1,
-            fiscalYear: "2024-25",
-            month: FiscalPeriodMonths.APRIL,
-          })
-          let hasLoadedDiverseNeeds = false
-          mockHttpGetRoutes({
-            "/api/funding-submission-line-jsons": async () => {
-              return { data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 } }
-            },
-            "/api/fiscal-periods": async () => {
-              return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
-            },
-            "/api/child-care-spaces": async () => {
-              return { data: { childCareSpaces: [], totalCount: 0 } }
-            },
-            "/api/administration-costs": async () => {
-              return { data: { administrationCosts: [], totalCount: 0 } }
-            },
-            "/api/quality-enhancements": async () => {
-              return { data: { qualityEnhancements: [], totalCount: 0 } }
-            },
-            "/api/children-with-diverse-needs-funding-records": async () => {
-              if (hasLoadedDiverseNeeds) throw error
-              hasLoadedDiverseNeeds = true
-              return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
-            },
-            "/api/children-with-diverse-needs-funding-categories": async () => {
-              return { data: { childrenWithDiverseNeedsFundingCategories: [], totalCount: 0 } }
-            },
-            "/api/funding-submission-line-jsons/44": async () => {
-              return { data: { fundingSubmissionLineJson: worksheet } }
-            },
-          })
-          const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-          await router.push("/")
-          await router.isReady()
-          const errorHandler = vi.fn()
-          const wrapper = mount(MonthlyWorksheetPage, {
-            props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
-            global: {
-              config: { errorHandler },
-              plugins: [router, mockVuetify()],
-              stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
-            },
-          })
-          await flushPromises()
-          const addDiverseNeed = wrapper
-            .findAll("button")
-            .find((button) => button.text() === "Add Diverse Need")
-          if (!addDiverseNeed) throw new Error("Expected Add Diverse Need")
-          await addDiverseNeed.trigger("click")
+      test("when a diverse need creation refresh has an authentication failure, forwards it to the application boundary", async () => {
+        // Arrange
+        const error = new AuthenticationRequiredError()
+        const worksheet = fundingSubmissionLineJsonFactory.build({
+          id: 44,
+          centreId: 1,
+          dateName: "April",
+          lines: [],
+        })
+        const fiscalPeriod = fiscalPeriodFactory.build({
+          id: 4,
+          fundingPeriodId: 1,
+          fiscalYear: "2024-25",
+          month: FiscalPeriodMonths.APRIL,
+        })
+        let hasLoadedDiverseNeeds = false
+        mockHttpGetRoutes({
+          "/api/funding-submission-line-jsons": async () => {
+            return { data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 } }
+          },
+          "/api/fiscal-periods": async () => {
+            return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
+          },
+          "/api/child-care-spaces": async () => {
+            return { data: { childCareSpaces: [], totalCount: 0 } }
+          },
+          "/api/administration-costs": async () => {
+            return { data: { administrationCosts: [], totalCount: 0 } }
+          },
+          "/api/quality-enhancements": async () => {
+            return { data: { qualityEnhancements: [], totalCount: 0 } }
+          },
+          "/api/children-with-diverse-needs-funding-records": async () => {
+            if (hasLoadedDiverseNeeds) throw error
+            hasLoadedDiverseNeeds = true
+            return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
+          },
+          "/api/children-with-diverse-needs-funding-categories": async () => {
+            return { data: { childrenWithDiverseNeedsFundingCategories: [], totalCount: 0 } }
+          },
+          "/api/funding-submission-line-jsons/44": async () => {
+            return { data: { fundingSubmissionLineJson: worksheet } }
+          },
+        })
+        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+        await router.push("/")
+        await router.isReady()
+        const errorHandler = vi.fn()
+        const wrapper = mount(MonthlyWorksheetPage, {
+          props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
+          global: {
+            config: { errorHandler },
+            plugins: [router, mockVuetify()],
+            stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
+          },
+        })
+        await flushPromises()
+        const addDiverseNeed = wrapper
+          .findAll("button")
+          .find((button) => button.text() === "Add Diverse Need")
+        if (!addDiverseNeed) throw new Error("Expected Add Diverse Need")
+        await addDiverseNeed.trigger("click")
 
-          // Act
-          wrapper
-            .getComponent({ name: "ChildrenWithDiverseNeedsFundingRecordsCreateFormCard" })
-            .vm.$emit("created", 91)
-          await flushPromises()
+        // Act
+        wrapper
+          .getComponent({ name: "ChildrenWithDiverseNeedsFundingRecordsCreateFormCard" })
+          .vm.$emit("created", 91)
+        await flushPromises()
 
-          // Assert
-          const receivedErrors = errorHandler.mock.calls.map(([error]) => error)
-          expect(receivedErrors).toEqual([error])
-        }
-      )
+        // Assert
+        const receivedErrors = errorHandler.mock.calls.map(([error]) => error)
+        expect(receivedErrors).toMatchObject([
+          {
+            name: "AuthenticationRequiredError",
+            message: "You must be logged in to access this endpoint",
+          },
+        ])
+      })
+
+      test("when a diverse need creation refresh has an challenge failure, forwards it to the application boundary", async () => {
+        // Arrange
+        const error = new CloudflareChallengeError()
+        const worksheet = fundingSubmissionLineJsonFactory.build({
+          id: 44,
+          centreId: 1,
+          dateName: "April",
+          lines: [],
+        })
+        const fiscalPeriod = fiscalPeriodFactory.build({
+          id: 4,
+          fundingPeriodId: 1,
+          fiscalYear: "2024-25",
+          month: FiscalPeriodMonths.APRIL,
+        })
+        let hasLoadedDiverseNeeds = false
+        mockHttpGetRoutes({
+          "/api/funding-submission-line-jsons": async () => {
+            return { data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 } }
+          },
+          "/api/fiscal-periods": async () => {
+            return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
+          },
+          "/api/child-care-spaces": async () => {
+            return { data: { childCareSpaces: [], totalCount: 0 } }
+          },
+          "/api/administration-costs": async () => {
+            return { data: { administrationCosts: [], totalCount: 0 } }
+          },
+          "/api/quality-enhancements": async () => {
+            return { data: { qualityEnhancements: [], totalCount: 0 } }
+          },
+          "/api/children-with-diverse-needs-funding-records": async () => {
+            if (hasLoadedDiverseNeeds) throw error
+            hasLoadedDiverseNeeds = true
+            return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
+          },
+          "/api/children-with-diverse-needs-funding-categories": async () => {
+            return { data: { childrenWithDiverseNeedsFundingCategories: [], totalCount: 0 } }
+          },
+          "/api/funding-submission-line-jsons/44": async () => {
+            return { data: { fundingSubmissionLineJson: worksheet } }
+          },
+        })
+        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+        await router.push("/")
+        await router.isReady()
+        const errorHandler = vi.fn()
+        const wrapper = mount(MonthlyWorksheetPage, {
+          props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
+          global: {
+            config: { errorHandler },
+            plugins: [router, mockVuetify()],
+            stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
+          },
+        })
+        await flushPromises()
+        const addDiverseNeed = wrapper
+          .findAll("button")
+          .find((button) => button.text() === "Add Diverse Need")
+        if (!addDiverseNeed) throw new Error("Expected Add Diverse Need")
+        await addDiverseNeed.trigger("click")
+
+        // Act
+        wrapper
+          .getComponent({ name: "ChildrenWithDiverseNeedsFundingRecordsCreateFormCard" })
+          .vm.$emit("created", 91)
+        await flushPromises()
+
+        // Assert
+        const receivedErrors = errorHandler.mock.calls.map(([error]) => error)
+        expect(receivedErrors).toMatchObject([{ name: "CloudflareChallengeError", message: "" }])
+      })
+
+      test("when a diverse need creation refresh has an unexpected failure, forwards it to the application boundary", async () => {
+        // Arrange
+        const error = new Error("Unexpected refresh failure")
+        const worksheet = fundingSubmissionLineJsonFactory.build({
+          id: 44,
+          centreId: 1,
+          dateName: "April",
+          lines: [],
+        })
+        const fiscalPeriod = fiscalPeriodFactory.build({
+          id: 4,
+          fundingPeriodId: 1,
+          fiscalYear: "2024-25",
+          month: FiscalPeriodMonths.APRIL,
+        })
+        let hasLoadedDiverseNeeds = false
+        mockHttpGetRoutes({
+          "/api/funding-submission-line-jsons": async () => {
+            return { data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 } }
+          },
+          "/api/fiscal-periods": async () => {
+            return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
+          },
+          "/api/child-care-spaces": async () => {
+            return { data: { childCareSpaces: [], totalCount: 0 } }
+          },
+          "/api/administration-costs": async () => {
+            return { data: { administrationCosts: [], totalCount: 0 } }
+          },
+          "/api/quality-enhancements": async () => {
+            return { data: { qualityEnhancements: [], totalCount: 0 } }
+          },
+          "/api/children-with-diverse-needs-funding-records": async () => {
+            if (hasLoadedDiverseNeeds) throw error
+            hasLoadedDiverseNeeds = true
+            return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
+          },
+          "/api/children-with-diverse-needs-funding-categories": async () => {
+            return { data: { childrenWithDiverseNeedsFundingCategories: [], totalCount: 0 } }
+          },
+          "/api/funding-submission-line-jsons/44": async () => {
+            return { data: { fundingSubmissionLineJson: worksheet } }
+          },
+        })
+        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
+        await router.push("/")
+        await router.isReady()
+        const errorHandler = vi.fn()
+        const wrapper = mount(MonthlyWorksheetPage, {
+          props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
+          global: {
+            config: { errorHandler },
+            plugins: [router, mockVuetify()],
+            stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
+          },
+        })
+        await flushPromises()
+        const addDiverseNeed = wrapper
+          .findAll("button")
+          .find((button) => button.text() === "Add Diverse Need")
+        if (!addDiverseNeed) throw new Error("Expected Add Diverse Need")
+        await addDiverseNeed.trigger("click")
+
+        // Act
+        wrapper
+          .getComponent({ name: "ChildrenWithDiverseNeedsFundingRecordsCreateFormCard" })
+          .vm.$emit("created", 91)
+        await flushPromises()
+
+        // Assert
+        const receivedErrors = errorHandler.mock.calls.map(([error]) => error)
+        expect(receivedErrors).toMatchObject([
+          { name: "Error", message: "Unexpected refresh failure" },
+        ])
+      })
     })
   })
 })

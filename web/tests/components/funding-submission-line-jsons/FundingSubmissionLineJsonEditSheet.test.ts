@@ -196,7 +196,14 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         await flushPromises()
 
         // Assert
-        expect(errorHandler.mock.calls[0]?.[0]).toBe(challenge)
+        expect(errorHandler.mock.calls.map(([error]) => error)).toMatchObject([
+          {
+            name: "CloudflareChallengeError",
+            message:
+              "Cloudflare browser verification is required. ELCC could not confirm the request completed.",
+            cloudflareHtml: "<html>Browser verification</html>",
+          },
+        ])
       })
 
       test("when a Spaces save fails, does not save dependent worksheet JSON", async () => {
@@ -311,7 +318,9 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         await flushPromises()
 
         // Assert
-        expect(errorHandler.mock.calls[0]?.[0]).toBe(challenge)
+        expect(errorHandler.mock.calls.map(([error]) => error)).toMatchObject([
+          { name: "CloudflareChallengeError", message: "" },
+        ])
       })
 
       test.each(["/api/child-care-spaces", "/api/funding-submission-line-jsons/11"])(

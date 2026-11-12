@@ -15,7 +15,7 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
       test("when estimated occupancy is edited and committed, persists it through the diverse needs API", async () => {
         // Arrange
         const childrenWithDiverseNeedsFundingRecord =
-          childrenWithDiverseNeedsFundingRecordFactory.build()
+          childrenWithDiverseNeedsFundingRecordFactory.build({ id: 17 })
         vi.spyOn(childrenWithDiverseNeedsFundingRecordsApi, "list").mockResolvedValue({
           childrenWithDiverseNeedsFundingRecords: [childrenWithDiverseNeedsFundingRecord],
           totalCount: 1,
@@ -49,7 +49,7 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
         await flushPromises()
 
         // Assert
-        expect(update).toHaveBeenCalledWith(childrenWithDiverseNeedsFundingRecord.id, {
+        expect(update).toHaveBeenCalledWith(17, {
           estimatedChildOccupancyRate: "0.2500",
         })
       })
@@ -88,7 +88,12 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
         await flushPromises()
 
         // Assert
-        expect(errors).toEqual([authenticationError])
+        expect(errors).toMatchObject([
+          {
+            name: "AuthenticationRequiredError",
+            message: "You must be logged in to access this endpoint",
+          },
+        ])
       })
 
       test("when an occupancy save is rejected as an operation error, shows local recovery feedback", async () => {

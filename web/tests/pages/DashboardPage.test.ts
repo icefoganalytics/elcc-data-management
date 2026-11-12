@@ -137,7 +137,12 @@ describe("web/src/pages/DashboardPage.vue", () => {
         await flushPromises()
 
         // Assert
-        expect(errors).toEqual([error])
+        expect(errors).toMatchObject([
+          {
+            name: "AuthenticationRequiredError",
+            message: "You must be logged in to access this endpoint",
+          },
+        ])
       })
 
       test("when the page is disposed during a request, does not display cancellation feedback", async () => {

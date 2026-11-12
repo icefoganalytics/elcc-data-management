@@ -316,7 +316,7 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         await flushPromises()
 
         // Assert
-        expect(remove).toHaveBeenCalledExactlyOnceWith(second.id)
+        expect(remove).toHaveBeenCalledExactlyOnceWith(2)
       })
 
       test("when an active write fails, does not delete the other row", async () => {
@@ -380,7 +380,7 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         await flushPromises()
 
         // Assert
-        expect(replicate).toHaveBeenCalledExactlyOnceWith(record1.id)
+        expect(replicate).toHaveBeenCalledExactlyOnceWith(1)
       })
     })
   })

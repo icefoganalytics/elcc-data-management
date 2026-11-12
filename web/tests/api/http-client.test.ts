@@ -1,9 +1,6 @@
 import axios, { AxiosError, AxiosHeaders, type InternalAxiosRequestConfig } from "axios"
 
 import httpClient from "@/api/http-client"
-import { AuthenticationRequiredError } from "@/api/errors/authentication-required-error"
-import { CloudflareChallengeError } from "@/api/errors/cloudflare-challenge-error"
-import { UnexpectedHtmlResponseError } from "@/api/errors/unexpected-html-response-error"
 
 vi.hoisted(() => vi.resetModules())
 const getAccessTokenSilentlyMock = vi.hoisted(() => vi.fn())
@@ -53,7 +50,10 @@ describe("web/src/api/http-client.ts", () => {
     const request = httpClient.get("/api/items")
 
     // Assert
-    await expect(request).rejects.toBeInstanceOf(AuthenticationRequiredError)
+    await expect(request).rejects.toMatchObject({
+      name: "AuthenticationRequiredError",
+      message: "Expired",
+    })
     httpClient.defaults.adapter = adapter
   })
 
@@ -85,7 +85,11 @@ describe("web/src/api/http-client.ts", () => {
         const request = httpClient.get("/api/items")
 
         // Assert
-        await expect(request).rejects.toBeInstanceOf(CloudflareChallengeError)
+        await expect(request).rejects.toMatchObject({
+          name: "CloudflareChallengeError",
+          message:
+            "Cloudflare browser verification is required. ELCC could not confirm the request completed.",
+        })
         httpClient.defaults.adapter = adapter
       }
     )
@@ -114,7 +118,11 @@ describe("web/src/api/http-client.ts", () => {
         const request = httpClient.get("/_status")
 
         // Assert
-        await expect(request).rejects.toBeInstanceOf(UnexpectedHtmlResponseError)
+        await expect(request).rejects.toMatchObject({
+          name: "UnexpectedHtmlResponseError",
+          message:
+            "ELCC received an HTML page instead of API data. ELCC could not confirm the request completed.",
+        })
         httpClient.defaults.adapter = adapter
       }
     )
@@ -158,7 +166,7 @@ describe("web/src/api/http-client.ts", () => {
     httpClient.defaults.adapter = adapter
   })
 
-  test("when Axios cancels a request, preserves the cancellation identity", async () => {
+  test("when Axios cancels a request, preserves the cancellation error", async () => {
     // Arrange
     const adapter = httpClient.defaults.adapter
     const cancellation = new axios.CanceledError()
@@ -168,11 +176,15 @@ describe("web/src/api/http-client.ts", () => {
     const request = httpClient.get("/api/items")
 
     // Assert
-    await expect(request).rejects.toBe(cancellation)
+    await expect(request).rejects.toMatchObject({
+      name: "CanceledError",
+      message: "canceled",
+      code: "ERR_CANCELED",
+    })
     httpClient.defaults.adapter = adapter
   })
 
-  test("when the network fails, preserves the transport error identity", async () => {
+  test("when the network fails, preserves the transport error details", async () => {
     // Arrange
     const adapter = httpClient.defaults.adapter
     const networkFailure = new AxiosError("Network unavailable", "ERR_NETWORK")
@@ -182,7 +194,11 @@ describe("web/src/api/http-client.ts", () => {
     const request = httpClient.get("/api/items")
 
     // Assert
-    await expect(request).rejects.toBe(networkFailure)
+    await expect(request).rejects.toMatchObject({
+      name: "AxiosError",
+      message: "Network unavailable",
+      code: "ERR_NETWORK",
+    })
     httpClient.defaults.adapter = adapter
   })
 })
