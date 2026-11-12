@@ -11,7 +11,7 @@ For generic Vue structure and authoring, use the [shared Vue Component Authoring
 - When lookups are complex, the parent absorbs that complexity and passes stable identifiers or already-resolved state to the child.
 - When action visibility depends on page context, compute that state in the parent page and pass a simple boolean prop down to the child component.
 - Handle loading, empty, error, and success states explicitly. For read-only tables, keep the normal table empty state and report ordinary load failures through a named `const snack = useSnack()` instance with `snack.error(...)`; do not add a separate error panel or Retry control solely for list-load failures. Authentication, challenge, and unexpected errors still reach application recovery.
-- For detail/edit pages whose content requires a successfully loaded record, render a load failure in a dedicated `v-if` branch with a standard Vuetify component such as `v-empty-state` or `v-alert`, and put the normal content in `v-else`. Do not disguise errors with inline fallback bindings such as `:items="isErrored ? [] : records"`.
+- For record editors, use record availability for the skeleton/content branches (`isNil(record)` followed by `v-else`) and report ordinary load failures through the snackbar rather than a dedicated error/Retry panel. Keep authentication and unexpected errors in application recovery. Do not disguise errors with inline fallback bindings such as `:items="isErrored ? [] : records"`.
 
 ## Resource Inputs
 
