@@ -1,22 +1,5 @@
 <template>
-  <v-empty-state
-    v-if="isErrored"
-    class="ma-5"
-    icon="mdi-alert-circle-outline"
-    headline="Unable to Load Categories"
-    title="Diverse need categories could not be loaded."
-    text="Try changing a filter or reloading the page."
-  >
-    <template #actions>
-      <v-btn
-        color="primary"
-        @click="reload"
-        >Retry</v-btn
-      >
-    </template>
-  </v-empty-state>
   <v-data-table-server
-    v-else
     v-model:items-per-page="perPage"
     v-model:sort-by="sortBy"
     :page="page"
@@ -27,10 +10,31 @@
     density="comfortable"
     class="row-clickable"
     @dblclick:row="
-      (_event: unknown, { item }: ChildrenWithDiverseNeedsFundingCategoryTableRow) => goToChildrenWithDiverseNeedsFundingCategory(item)
+      (_event: unknown, { item }: ChildrenWithDiverseNeedsFundingCategoryTableRow) =>
+        goToChildrenWithDiverseNeedsFundingCategory(item)
     "
     @update:page="updatePage"
   >
+    <template
+      v-if="isErrored"
+      #no-data
+    >
+      <v-empty-state
+        class="ma-5"
+        icon="mdi-alert-circle-outline"
+        headline="Unable to Load Categories"
+        title="Diverse need categories could not be loaded."
+        text="Try changing a filter or reloading the page."
+      >
+        <template #actions>
+          <v-btn
+            color="primary"
+            @click="reload"
+            >Retry</v-btn
+          >
+        </template>
+      </v-empty-state>
+    </template>
     <template #item.fromAge="{ item }">{{ item.fromAge ?? "—" }}</template>
     <template #item.toAge="{ item }">{{ item.toAge ?? "—" }}</template>
     <template #item.monthlyAmount="{ item }">
@@ -55,6 +59,7 @@ import { useRouter } from "vue-router"
 import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 
 import { formatMoney } from "@/utils/formatters"
+import { integerTransformer } from "@/utils/use-route-query-transformers"
 import useVuetifySortByToSafeRouteQuery from "@/use/vuetify/use-vuetify-sort-by-to-safe-route-query"
 import useVuetifySortByToSequelizeSafeOrder from "@/use/vuetify/use-vuetify-sort-by-to-sequelize-safe-order"
 import useChildrenWithDiverseNeedsFundingCategories from "@/use/use-children-with-diverse-needs-funding-categories"
@@ -94,8 +99,20 @@ const headers = ref([
   { title: "Monthly Amount", key: "monthlyAmount" },
   { title: "Actions", key: "actions", sortable: false },
 ])
-const page = useRouteQuery(`page${props.routeQuerySuffix}`, "1", { transform: Number })
-const perPage = useRouteQuery(`perPage${props.routeQuerySuffix}`, "10", { transform: Number })
+const page = useRouteQuery<string | undefined, number | undefined>(
+  `page${props.routeQuerySuffix}`,
+  "1",
+  {
+    transform: integerTransformer,
+  }
+)
+const perPage = useRouteQuery<string | undefined, number | undefined>(
+  `perPage${props.routeQuerySuffix}`,
+  "10",
+  {
+    transform: integerTransformer,
+  }
+)
 const sortBy = useVuetifySortByToSafeRouteQuery(`sortBy${props.routeQuerySuffix}`, [
   { key: "categoryName", order: "asc" },
 ])
@@ -134,16 +151,22 @@ function updatePage(newPage: number) {
 }
 
 const router = useRouter()
-type ChildrenWithDiverseNeedsFundingCategoryTableRow = { item: ChildrenWithDiverseNeedsFundingCategoryAsIndex }
+type ChildrenWithDiverseNeedsFundingCategoryTableRow = {
+  item: ChildrenWithDiverseNeedsFundingCategoryAsIndex
+}
 
-function buildChildrenWithDiverseNeedsFundingCategoryTo(item: ChildrenWithDiverseNeedsFundingCategoryAsIndex) {
+function buildChildrenWithDiverseNeedsFundingCategoryTo(
+  item: ChildrenWithDiverseNeedsFundingCategoryAsIndex
+) {
   return {
     name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
     params: { childrenWithDiverseNeedsFundingCategoryId: item.id },
   }
 }
 
-function goToChildrenWithDiverseNeedsFundingCategory(item: ChildrenWithDiverseNeedsFundingCategoryAsIndex) {
+function goToChildrenWithDiverseNeedsFundingCategory(
+  item: ChildrenWithDiverseNeedsFundingCategoryAsIndex
+) {
   router.push(buildChildrenWithDiverseNeedsFundingCategoryTo(item))
 }
 </script>
