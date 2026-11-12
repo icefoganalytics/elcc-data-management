@@ -126,7 +126,7 @@ watch(
   { deep: true }
 )
 
-const query = computed(() => ({
+const childrenWithDiverseNeedsFundingCategoriesQuery = computed(() => ({
   filters: props.filters,
   where: props.where,
   order: order.value,
@@ -134,7 +134,7 @@ const query = computed(() => ({
   perPage: perPage.value,
 }))
 const { childrenWithDiverseNeedsFundingCategories, totalCount, isLoading, isErrored, fetch } =
-  useChildrenWithDiverseNeedsFundingCategories(query)
+  useChildrenWithDiverseNeedsFundingCategories(childrenWithDiverseNeedsFundingCategoriesQuery)
 
 async function reload() {
   try {
