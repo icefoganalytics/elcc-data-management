@@ -15,26 +15,6 @@
     "
     @update:page="updatePage"
   >
-    <template
-      v-if="isErrored"
-      #no-data
-    >
-      <v-empty-state
-        class="ma-5"
-        icon="mdi-alert-circle-outline"
-        headline="Unable to Load Categories"
-        title="Diverse need categories could not be loaded."
-        text="Try changing a filter or reloading the page."
-      >
-        <template #actions>
-          <v-btn
-            color="primary"
-            @click="reload"
-            >Retry</v-btn
-          >
-        </template>
-      </v-empty-state>
-    </template>
     <template #item.fromAge="{ item }">{{ item.fromAge ?? "—" }}</template>
     <template #item.toAge="{ item }">{{ item.toAge ?? "—" }}</template>
     <template #item.monthlyAmount="{ item }">
@@ -68,6 +48,7 @@ import { integerTransformer } from "@/utils/use-route-query-transformers"
 import useVuetifySortByToSafeRouteQuery from "@/use/vuetify/use-vuetify-sort-by-to-safe-route-query"
 import useVuetifySortByToSequelizeSafeOrder from "@/use/vuetify/use-vuetify-sort-by-to-sequelize-safe-order"
 import useChildrenWithDiverseNeedsFundingCategories from "@/use/use-children-with-diverse-needs-funding-categories"
+import useSnack from "@/use/use-snack"
 import type {
   ChildrenWithDiverseNeedsFundingCategoryAsIndex,
   ChildrenWithDiverseNeedsFundingCategoryFiltersOptions,
@@ -138,16 +119,25 @@ const childrenWithDiverseNeedsFundingCategoriesQuery = computed(() => ({
   page: page.value,
   perPage: perPage.value,
 }))
-const { childrenWithDiverseNeedsFundingCategories, totalCount, isLoading, isErrored, fetch } =
-  useChildrenWithDiverseNeedsFundingCategories(childrenWithDiverseNeedsFundingCategoriesQuery)
+const { childrenWithDiverseNeedsFundingCategories, totalCount, isLoading, fetch } =
+  useChildrenWithDiverseNeedsFundingCategories(childrenWithDiverseNeedsFundingCategoriesQuery, {
+    skipWatchIf: () => true,
+  })
 
-async function reload() {
-  try {
-    await fetch()
-  } catch (error) {
-    rethrowUnexpectedError(error)
-  }
-}
+const snack = useSnack()
+watch(
+  childrenWithDiverseNeedsFundingCategoriesQuery,
+  async () => {
+    try {
+      await fetch()
+    } catch (error) {
+      rethrowUnexpectedError(error)
+
+      snack.error(`Failed to load Children with Diverse Needs funding categories: ${error}`)
+    }
+  },
+  { deep: true, immediate: true }
+)
 
 function updatePage(newPage: number) {
   if (isLoading.value) return
