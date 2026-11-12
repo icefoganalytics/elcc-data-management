@@ -99,6 +99,7 @@ import { computed, onMounted } from "vue"
 import VueApexCharts from "vue3-apexcharts"
 
 import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
+
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useCentreStatistics from "@/use/use-centre-statistics"
 import useSnack from "@/use/use-snack"
