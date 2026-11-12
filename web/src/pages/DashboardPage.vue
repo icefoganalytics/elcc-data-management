@@ -129,8 +129,6 @@ onMounted(async () => {
   }
 })
 
-useBreadcrumbs("ELCC Home", [])
-
 const chartOptions = {
   chart: {
     id: "vuechart-example",
@@ -146,4 +144,6 @@ const chartSeries = [
     data: [30, 40, 45, 50, 49, 60, 70, 91],
   },
 ]
+
+useBreadcrumbs("ELCC Home", [])
 </script>
