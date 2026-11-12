@@ -1,17 +1,18 @@
 import { nextTick } from "vue"
 import { mount } from "@vue/test-utils"
 
-import CurrencyInputModel from "@/tests/components/common/CurrencyInputModel.vue"
 import { mockVuetify } from "@/tests/support"
+
+import CurrencyInput from "@/components/CurrencyInput.vue"
 
 describe("web/src/components/CurrencyInput.vue", () => {
   describe("CurrencyInput", () => {
     describe("decimal editing", () => {
       test("when entering the DECIMAL(15,4) maximum, commits all four decimal places as a string", async () => {
         // Arrange
-        const wrapper = mount(CurrencyInputModel, {
+        const wrapper = mount(CurrencyInput, {
           props: {
-            initialAmount: "0.0000",
+            modelValue: "0.0000",
           },
           attachTo: document.body,
           global: {
@@ -36,14 +37,14 @@ describe("web/src/components/CurrencyInput.vue", () => {
         await nextTick()
 
         // Assert
-        expect(wrapper.get("output").text()).toBe("string:99999999999.9999")
+        expect(wrapper.emitted("update:modelValue")?.at(-1)).toEqual(["99999999999.9999"])
       })
 
       test("when pasting a formatted amount, commits an unformatted four-decimal string", async () => {
         // Arrange
-        const wrapper = mount(CurrencyInputModel, {
+        const wrapper = mount(CurrencyInput, {
           props: {
-            initialAmount: "0.0000",
+            modelValue: "0.0000",
           },
           attachTo: document.body,
           global: {
@@ -78,14 +79,14 @@ describe("web/src/components/CurrencyInput.vue", () => {
         await nextTick()
 
         // Assert
-        expect(wrapper.get("output").text()).toBe("string:1234.5678")
+        expect(wrapper.emitted("update:modelValue")?.at(-1)).toEqual(["1234.5678"])
       })
 
       test("when committing with Enter, passes the four-decimal string to the parent", async () => {
         // Arrange
-        const wrapper = mount(CurrencyInputModel, {
+        const wrapper = mount(CurrencyInput, {
           props: {
-            initialAmount: "0.0000",
+            modelValue: "0.0000",
           },
           attachTo: document.body,
           global: {
@@ -110,14 +111,14 @@ describe("web/src/components/CurrencyInput.vue", () => {
         await nextTick()
 
         // Assert
-        expect(wrapper.get("output").text()).toBe("string:100.0001")
+        expect(wrapper.emitted("update:modelValue")?.at(-1)).toEqual(["100.0001"])
       })
 
       test("when cancelling with Escape, restores the original decimal string", async () => {
         // Arrange
-        const wrapper = mount(CurrencyInputModel, {
+        const wrapper = mount(CurrencyInput, {
           props: {
-            initialAmount: "100.0001",
+            modelValue: "100.0001",
           },
           attachTo: document.body,
           global: {
@@ -143,7 +144,7 @@ describe("web/src/components/CurrencyInput.vue", () => {
         await nextTick()
 
         // Assert
-        expect(wrapper.get("output").text()).toBe("string:100.0001")
+        expect(wrapper.emitted("update:modelValue")?.at(-1)).toEqual(["100.0001"])
       })
     })
   })
