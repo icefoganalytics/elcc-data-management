@@ -40,14 +40,11 @@ import { computed, ref, watch } from "vue"
 import { useRouteQuery } from "@vueuse/router"
 import { useRouter } from "vue-router"
 
-import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
-
 import { formatMoney } from "@/utils/formatters"
 import { integerTransformer } from "@/utils/use-route-query-transformers"
 import useVuetifySortByToSafeRouteQuery from "@/use/vuetify/use-vuetify-sort-by-to-safe-route-query"
 import useVuetifySortByToSequelizeSafeOrder from "@/use/vuetify/use-vuetify-sort-by-to-sequelize-safe-order"
 import useChildrenWithDiverseNeedsFundingCategories from "@/use/use-children-with-diverse-needs-funding-categories"
-import useSnack from "@/use/use-snack"
 import type {
   ChildrenWithDiverseNeedsFundingCategoryAsIndex,
   ChildrenWithDiverseNeedsFundingCategoryFiltersOptions,
@@ -118,25 +115,8 @@ const childrenWithDiverseNeedsFundingCategoriesQuery = computed(() => ({
   page: page.value,
   perPage: perPage.value,
 }))
-const { childrenWithDiverseNeedsFundingCategories, totalCount, isLoading, fetch } =
-  useChildrenWithDiverseNeedsFundingCategories(childrenWithDiverseNeedsFundingCategoriesQuery, {
-    skipWatchIf: () => true,
-  })
-
-const snack = useSnack()
-watch(
-  childrenWithDiverseNeedsFundingCategoriesQuery,
-  async () => {
-    try {
-      await fetch()
-    } catch (error) {
-      rethrowUnexpectedError(error)
-
-      snack.error(`Failed to load Children with Diverse Needs funding categories: ${error}`)
-    }
-  },
-  { deep: true, immediate: true }
-)
+const { childrenWithDiverseNeedsFundingCategories, totalCount, isLoading } =
+  useChildrenWithDiverseNeedsFundingCategories(childrenWithDiverseNeedsFundingCategoriesQuery)
 
 const router = useRouter()
 type ChildrenWithDiverseNeedsFundingCategoryTableRow = {
