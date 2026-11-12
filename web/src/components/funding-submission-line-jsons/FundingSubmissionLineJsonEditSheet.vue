@@ -84,9 +84,9 @@ import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 import fundingSubmissionLineJsonsApi, {
   type FundingLineValue,
 } from "@/api/funding-submission-line-jsons-api"
-import { useNotificationStore } from "@/store/NotificationStore"
 import useChildCareSpaces from "@/use/use-child-care-spaces"
 import useFundingSubmissionLineJson from "@/use/use-funding-submission-line-json"
+import useSnack from "@/use/use-snack"
 
 import KeyboardShortcutsModal from "@/components/common/KeyboardShortcutsModal.vue"
 import FundingSubmissionLineJsonSectionTable, {
@@ -182,7 +182,7 @@ const sections = computed<{ sectionName: string; lines: FundingLineValue[] }[]>(
 const fundingSubmissionLineJsonSectionTables = useTemplateRef<
   InstanceType<typeof FundingSubmissionLineJsonSectionTable>[]
 >("fundingSubmissionLineJsonSectionTables")
-const notificationStore = useNotificationStore()
+const snack = useSnack()
 
 async function reloadWorksheet() {
   try {
@@ -190,10 +190,7 @@ async function reloadWorksheet() {
   } catch (error) {
     rethrowUnexpectedError(error)
 
-    notificationStore.notify({
-      text: `Failed to load worksheet: ${error}`,
-      variant: "error",
-    })
+    snack.error(`Failed to load worksheet: ${error}`)
   }
 }
 
@@ -251,10 +248,7 @@ async function saveFundingSubmissionLineJson(): Promise<boolean> {
     rethrowUnexpectedError(error)
 
     console.error(`Failed to save worksheet: ${error}`, { error })
-    notificationStore.notify({
-      text: `Failed to save worksheet: ${error}`,
-      variant: "error",
-    })
+    snack.error(`Failed to save worksheet: ${error}`)
     return false
   } finally {
     isSaving.value = false

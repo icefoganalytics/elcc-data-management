@@ -3,13 +3,11 @@ import { uniq, isNil } from "lodash"
 
 import { type Centre, CentreStatuses } from "@/api/centres-api"
 import { type FundingLineValue } from "@/api/funding-submission-line-jsons-api"
-import { useNotificationStore } from "@/store/NotificationStore"
+import useSnack from "@/use/use-snack"
 import { useApiStore } from "@/store/ApiStore"
 import { CENTRE_URL } from "@/urls"
 
 export { type Centre, CentreStatuses }
-
-const m = useNotificationStore()
 
 interface Worksheet {
   id: number
@@ -111,6 +109,7 @@ export const useCentreStore = defineStore("centre", {
     },
 
     async saveWorksheet(worksheet: Worksheet, reload = true) {
+      const snack = useSnack()
       let id = 0
       if (this.selectedCentre != null) id = this.selectedCentre.id || 0
 
@@ -120,7 +119,7 @@ export const useCentreStore = defineStore("centre", {
         .then(async () => {
           if (reload) await this.loadWorksheets(id)
 
-          m.notify({ text: "Worksheet saved", variant: "success" })
+          snack.success("Worksheet saved")
         })
         .finally(() => {})
     },
