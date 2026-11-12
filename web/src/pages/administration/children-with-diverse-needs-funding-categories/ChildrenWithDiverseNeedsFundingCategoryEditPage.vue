@@ -35,18 +35,23 @@ import ChildrenWithDiverseNeedsFundingCategoryEditForm from "@/components/childr
 const props = defineProps<{
   childrenWithDiverseNeedsFundingCategoryId: string
 }>()
-const router = useRouter()
+
 const categoryId = computed(() => Number(props.childrenWithDiverseNeedsFundingCategoryId))
 const { childrenWithDiverseNeedsFundingCategory } =
   useChildrenWithDiverseNeedsFundingCategory(categoryId)
+
 const fundingPeriodsQuery = ref({ perPage: -1 })
 const { fundingPeriods } = useFundingPeriods(fundingPeriodsQuery)
+
 const fundingPeriodDescription = computed(() => {
   const fundingPeriod = fundingPeriods.value.find(
     ({ id }) => id === childrenWithDiverseNeedsFundingCategory.value?.fundingPeriodId
   )
+
   return fundingPeriod?.fiscalYear ?? "Unknown"
 })
+
+const router = useRouter()
 
 async function cancelEditing() {
   await router.push({
