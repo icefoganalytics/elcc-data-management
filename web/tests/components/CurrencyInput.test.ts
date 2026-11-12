@@ -1,28 +1,19 @@
-import { defineComponent, nextTick, ref } from "vue"
+import { nextTick } from "vue"
 import { mount } from "@vue/test-utils"
 
-import CurrencyInput from "@/components/CurrencyInput.vue"
 import { mockVuetify } from "@/tests/support"
+
+import CurrencyInput from "@/components/CurrencyInput.vue"
 
 describe("web/src/components/CurrencyInput.vue", () => {
   describe("CurrencyInput", () => {
     describe("decimal editing", () => {
       test("when entering the DECIMAL(15,4) maximum, commits all four decimal places as a string", async () => {
         // Arrange
-        const Parent = defineComponent({
-          components: { CurrencyInput },
-          setup() {
-            const amount = ref("0.0000")
-            return { amount }
+        const wrapper = mount(CurrencyInput, {
+          props: {
+            modelValue: "0.0000",
           },
-          template: `
-        <div>
-          <CurrencyInput v-model="amount" />
-          <output>{{ typeof amount }}:{{ amount }}</output>
-        </div>
-      `,
-        })
-        const wrapper = mount(Parent, {
           attachTo: document.body,
           global: {
             plugins: [mockVuetify()],
@@ -46,25 +37,15 @@ describe("web/src/components/CurrencyInput.vue", () => {
         await nextTick()
 
         // Assert
-        expect(wrapper.get("output").text()).toBe("string:99999999999.9999")
+        expect(wrapper.emitted("update:modelValue")?.at(-1)).toEqual(["99999999999.9999"])
       })
 
       test("when pasting a formatted amount, commits an unformatted four-decimal string", async () => {
         // Arrange
-        const Parent = defineComponent({
-          components: { CurrencyInput },
-          setup() {
-            const amount = ref("0.0000")
-            return { amount }
+        const wrapper = mount(CurrencyInput, {
+          props: {
+            modelValue: "0.0000",
           },
-          template: `
-        <div>
-          <CurrencyInput v-model="amount" />
-          <output>{{ typeof amount }}:{{ amount }}</output>
-        </div>
-      `,
-        })
-        const wrapper = mount(Parent, {
           attachTo: document.body,
           global: {
             plugins: [mockVuetify()],
@@ -98,25 +79,15 @@ describe("web/src/components/CurrencyInput.vue", () => {
         await nextTick()
 
         // Assert
-        expect(wrapper.get("output").text()).toBe("string:1234.5678")
+        expect(wrapper.emitted("update:modelValue")?.at(-1)).toEqual(["1234.5678"])
       })
 
       test("when committing with Enter, passes the four-decimal string to the parent", async () => {
         // Arrange
-        const Parent = defineComponent({
-          components: { CurrencyInput },
-          setup() {
-            const amount = ref("0.0000")
-            return { amount }
+        const wrapper = mount(CurrencyInput, {
+          props: {
+            modelValue: "0.0000",
           },
-          template: `
-        <div>
-          <CurrencyInput v-model="amount" />
-          <output>{{ typeof amount }}:{{ amount }}</output>
-        </div>
-      `,
-        })
-        const wrapper = mount(Parent, {
           attachTo: document.body,
           global: {
             plugins: [mockVuetify()],
@@ -140,25 +111,15 @@ describe("web/src/components/CurrencyInput.vue", () => {
         await nextTick()
 
         // Assert
-        expect(wrapper.get("output").text()).toBe("string:100.0001")
+        expect(wrapper.emitted("update:modelValue")?.at(-1)).toEqual(["100.0001"])
       })
 
       test("when cancelling with Escape, restores the original decimal string", async () => {
         // Arrange
-        const Parent = defineComponent({
-          components: { CurrencyInput },
-          setup() {
-            const amount = ref("100.0001")
-            return { amount }
+        const wrapper = mount(CurrencyInput, {
+          props: {
+            modelValue: "100.0001",
           },
-          template: `
-        <div>
-          <CurrencyInput v-model="amount" />
-          <output>{{ typeof amount }}:{{ amount }}</output>
-        </div>
-      `,
-        })
-        const wrapper = mount(Parent, {
           attachTo: document.body,
           global: {
             plugins: [mockVuetify()],
@@ -183,7 +144,7 @@ describe("web/src/components/CurrencyInput.vue", () => {
         await nextTick()
 
         // Assert
-        expect(wrapper.get("output").text()).toBe("string:100.0001")
+        expect(wrapper.emitted("update:modelValue")?.at(-1)).toEqual(["100.0001"])
       })
     })
   })

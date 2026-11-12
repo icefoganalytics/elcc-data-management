@@ -1,9 +1,12 @@
 import { defineStore } from "pinia"
 import { uniq, cloneDeep, sortBy, last } from "lodash"
 
+import { type FundingSubmissionLine } from "@/api/funding-submission-lines-api"
 import { useNotificationStore } from "@/store/NotificationStore"
 import { useApiStore } from "@/store/ApiStore"
 import { SUBMISSION_LINES_URL } from "@/urls"
+
+export { type FundingSubmissionLine }
 
 const m = useNotificationStore()
 
@@ -52,8 +55,8 @@ export const useSubmissionLinesStore = defineStore("linesAdmin", {
           this.isLoading = false
         })
     },
-    selectLine(user: any) {
-      this.selectedLine = cloneDeep(user)
+    selectLine(line: FundingSubmissionLine) {
+      this.selectedLine = cloneDeep(line)
     },
     unselectLine() {
       this.selectedLine = undefined
@@ -65,8 +68,7 @@ export const useSubmissionLinesStore = defineStore("linesAdmin", {
       if (this.selectedLine != null) {
         await api
           .secureCall("put", `${SUBMISSION_LINES_URL}/${this.selectedLine.id}`, this.selectedLine)
-          .then((resp) => {
-            // this.lines = resp.data;
+          .then(() => {
             this.unselectLine()
           })
           .finally(() => {
@@ -91,9 +93,7 @@ export const useSubmissionLinesStore = defineStore("linesAdmin", {
       const api = useApiStore()
       await api
         .secureCall("post", `${SUBMISSION_LINES_URL}/fiscal-year`, this.newFiscalYear)
-        .then(async (resp) => {
-          // this.lines = resp.data;
-
+        .then(async () => {
           this.newFiscalYear = undefined
           await this.getAllSubmissionLines()
         })
@@ -103,16 +103,6 @@ export const useSubmissionLinesStore = defineStore("linesAdmin", {
     },
   },
 })
-
-export interface FundingSubmissionLine {
-  id: number
-  fiscalYear: string
-  sectionName: string
-  lineName: string
-  fromAge: number
-  toAge: number
-  monthlyAmount: string
-}
 
 export interface NewFiscalYear {
   fiscalYear: string

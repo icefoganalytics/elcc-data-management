@@ -4,17 +4,17 @@
     :model-value="formattedValue"
     :rules="transformedRules"
     type="text"
-    @focus="onFocus"
-    @blur="onBlur"
+    @focus="captureInitialValue"
+    @blur="commitValueOrRestoreInitialValue"
     @keydown.escape="resetValue"
-    @keydown.enter="onEnter"
+    @keydown.enter="commitValue"
   />
 </template>
 
 <script setup lang="ts">
 import Big from "big.js"
-import { ref, watch, computed } from "vue"
-import { useCurrencyInput, type CurrencyInputOptions, CurrencyDisplay } from "vue-currency-input"
+import { computed, ref, watch } from "vue"
+import { CurrencyDisplay, type CurrencyInputOptions, useCurrencyInput } from "vue-currency-input"
 import { isNil, isString } from "lodash"
 
 type ValidationRule = (value: unknown) => boolean | string
@@ -24,7 +24,6 @@ const DEFAULT_OPTIONS = {
   locale: "en-CA",
   currencyDisplay: CurrencyDisplay.symbol,
   precision: 4,
-  // accountingSign: true,
   hideCurrencySymbolOnFocus: true,
 }
 
@@ -40,8 +39,9 @@ const props = withDefaults(
   }
 )
 
-const initialNumberValue = ref(props.modelValue)
 const emit = defineEmits(["update:modelValue"])
+
+const initialNumberValue = ref(props.modelValue)
 
 const { inputRef, numberValue, setValue, setOptions, formattedValue } = useCurrencyInput(
   {
@@ -51,8 +51,7 @@ const { inputRef, numberValue, setValue, setOptions, formattedValue } = useCurre
   false
 )
 
-// NOTE: This is required to validate against numberValue instead of formattedValue
-// formatedValue includes currency symbol and thousand separators and is impractical to validate against.
+// Validate against numberValue because formattedValue includes the currency symbol and separators.
 const transformedRules = computed(() =>
   props.rules.map((rule) => {
     return () => rule(numberValue.value)
@@ -83,19 +82,20 @@ watch(
   }
 )
 
-function onFocus() {
+function captureInitialValue() {
   initialNumberValue.value = props.modelValue
 }
 
-async function onBlur() {
+function commitValueOrRestoreInitialValue() {
   if (numberValue.value === null) {
     resetValue()
-  } else {
-    emit("update:modelValue", new Big(numberValue.value).toFixed(4))
+    return
   }
+
+  emit("update:modelValue", new Big(numberValue.value).toFixed(4))
 }
 
-function onEnter() {
+function commitValue() {
   if (numberValue.value === null) {
     emit("update:modelValue", null)
     return
@@ -113,6 +113,7 @@ function resetValue() {
   } else {
     setValue(initialNumberValue.value)
   }
+
   emit("update:modelValue", initialNumberValue.value)
 }
 </script>
