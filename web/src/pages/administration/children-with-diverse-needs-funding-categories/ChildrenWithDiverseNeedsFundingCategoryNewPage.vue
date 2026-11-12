@@ -1,13 +1,5 @@
 <template>
-  <v-empty-state
-    v-if="!isSystemAdmin"
-    class="ma-5"
-    icon="mdi-lock-outline"
-    headline="Editing Not Allowed"
-    title="Only system administrators can create diverse need categories."
-  />
   <HeaderActionsFormCard
-    v-else
     ref="form"
     title="New Diverse Need Category"
     @submit.prevent="createCategory"
@@ -83,7 +75,6 @@ import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 import { required } from "@/utils/validators"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useSnack from "@/use/use-snack"
-import useCurrentUser from "@/use/use-current-user"
 import CurrencyInput from "@/components/CurrencyInput.vue"
 import HeaderActionsFormCard from "@/components/common/HeaderActionsFormCard.vue"
 import NumberTextField from "@/components/common/NumberTextField.vue"
@@ -101,13 +92,12 @@ const attributes = reactive({
 const isCreating = ref(false)
 const form = useTemplateRef("form")
 const snack = useSnack()
-const { isSystemAdmin } = useCurrentUser()
 const cancelRoute = {
   name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage",
 }
 
 async function createCategory() {
-  if (!form.value || !isSystemAdmin.value || isCreating.value) return
+  if (!form.value || isCreating.value) return
   const { valid } = await form.value.validate()
   if (!valid || attributes.fundingPeriodId === null) return
 
