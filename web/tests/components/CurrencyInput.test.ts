@@ -1,7 +1,7 @@
-import { defineComponent, nextTick, ref } from "vue"
+import { nextTick } from "vue"
 import { mount } from "@vue/test-utils"
 
-import CurrencyInput from "@/components/CurrencyInput.vue"
+import CurrencyInputModelFixture from "@/tests/components/fixtures/CurrencyInputModelFixture.vue"
 import { mockVuetify } from "@/tests/support"
 
 describe("web/src/components/CurrencyInput.vue", () => {
@@ -9,20 +9,10 @@ describe("web/src/components/CurrencyInput.vue", () => {
     describe("decimal editing", () => {
       test("when entering the DECIMAL(15,4) maximum, commits all four decimal places as a string", async () => {
         // Arrange
-        const Parent = defineComponent({
-          components: { CurrencyInput },
-          setup() {
-            const amount = ref("0.0000")
-            return { amount }
+        const wrapper = mount(CurrencyInputModelFixture, {
+          props: {
+            initialAmount: "0.0000",
           },
-          template: `
-        <div>
-          <CurrencyInput v-model="amount" />
-          <output>{{ typeof amount }}:{{ amount }}</output>
-        </div>
-      `,
-        })
-        const wrapper = mount(Parent, {
           attachTo: document.body,
           global: {
             plugins: [mockVuetify()],
@@ -51,20 +41,10 @@ describe("web/src/components/CurrencyInput.vue", () => {
 
       test("when pasting a formatted amount, commits an unformatted four-decimal string", async () => {
         // Arrange
-        const Parent = defineComponent({
-          components: { CurrencyInput },
-          setup() {
-            const amount = ref("0.0000")
-            return { amount }
+        const wrapper = mount(CurrencyInputModelFixture, {
+          props: {
+            initialAmount: "0.0000",
           },
-          template: `
-        <div>
-          <CurrencyInput v-model="amount" />
-          <output>{{ typeof amount }}:{{ amount }}</output>
-        </div>
-      `,
-        })
-        const wrapper = mount(Parent, {
           attachTo: document.body,
           global: {
             plugins: [mockVuetify()],
@@ -103,20 +83,10 @@ describe("web/src/components/CurrencyInput.vue", () => {
 
       test("when committing with Enter, passes the four-decimal string to the parent", async () => {
         // Arrange
-        const Parent = defineComponent({
-          components: { CurrencyInput },
-          setup() {
-            const amount = ref("0.0000")
-            return { amount }
+        const wrapper = mount(CurrencyInputModelFixture, {
+          props: {
+            initialAmount: "0.0000",
           },
-          template: `
-        <div>
-          <CurrencyInput v-model="amount" />
-          <output>{{ typeof amount }}:{{ amount }}</output>
-        </div>
-      `,
-        })
-        const wrapper = mount(Parent, {
           attachTo: document.body,
           global: {
             plugins: [mockVuetify()],
@@ -145,20 +115,10 @@ describe("web/src/components/CurrencyInput.vue", () => {
 
       test("when cancelling with Escape, restores the original decimal string", async () => {
         // Arrange
-        const Parent = defineComponent({
-          components: { CurrencyInput },
-          setup() {
-            const amount = ref("100.0001")
-            return { amount }
+        const wrapper = mount(CurrencyInputModelFixture, {
+          props: {
+            initialAmount: "100.0001",
           },
-          template: `
-        <div>
-          <CurrencyInput v-model="amount" />
-          <output>{{ typeof amount }}:{{ amount }}</output>
-        </div>
-      `,
-        })
-        const wrapper = mount(Parent, {
           attachTo: document.body,
           global: {
             plugins: [mockVuetify()],
