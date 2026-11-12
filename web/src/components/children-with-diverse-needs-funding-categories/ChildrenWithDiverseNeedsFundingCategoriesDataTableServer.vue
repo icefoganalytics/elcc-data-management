@@ -11,7 +11,7 @@
     class="row-clickable"
     @dblclick:row="
       (_event: unknown, { item }: ChildrenWithDiverseNeedsFundingCategoryTableRow) =>
-        goToChildrenWithDiverseNeedsFundingCategory(item)
+        goToChildrenWithDiverseNeedsFundingCategory(item.id)
     "
     @update:page="updatePage"
   >
@@ -44,7 +44,12 @@
       <v-btn
         color="secondary"
         variant="outlined"
-        :to="buildChildrenWithDiverseNeedsFundingCategoryTo(item)"
+        :to="{
+          name: 'administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage',
+          params: {
+            childrenWithDiverseNeedsFundingCategoryId: item.id,
+          },
+        }"
         >View</v-btn
       >
     </template>
@@ -155,18 +160,14 @@ type ChildrenWithDiverseNeedsFundingCategoryTableRow = {
   item: ChildrenWithDiverseNeedsFundingCategoryAsIndex
 }
 
-function buildChildrenWithDiverseNeedsFundingCategoryTo(
-  item: ChildrenWithDiverseNeedsFundingCategoryAsIndex
-) {
-  return {
-    name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
-    params: { childrenWithDiverseNeedsFundingCategoryId: item.id },
-  }
-}
-
 function goToChildrenWithDiverseNeedsFundingCategory(
-  item: ChildrenWithDiverseNeedsFundingCategoryAsIndex
+  childrenWithDiverseNeedsFundingCategoryId: number
 ) {
-  router.push(buildChildrenWithDiverseNeedsFundingCategoryTo(item))
+  router.push({
+    name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
+    params: {
+      childrenWithDiverseNeedsFundingCategoryId,
+    },
+  })
 }
 </script>
