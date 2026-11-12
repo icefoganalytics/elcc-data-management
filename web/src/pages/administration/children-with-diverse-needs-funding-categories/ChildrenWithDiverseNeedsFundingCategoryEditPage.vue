@@ -61,16 +61,25 @@ async function cancelEditing() {
 }
 
 useBreadcrumbs("Edit Diverse Need Category", [
-  { title: "Administration", to: { name: "AdministrationPage" } },
+  {
+    title: "Administration",
+    to: {
+      name: "AdministrationPage",
+    },
+  },
   {
     title: "Diverse Need Categories",
-    to: { name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage" },
+    to: {
+      name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage",
+    },
   },
   {
     title: "Edit Category",
     to: {
       name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryEditPage",
-      params: { childrenWithDiverseNeedsFundingCategoryId: categoryId.value },
+      params: {
+        childrenWithDiverseNeedsFundingCategoryId: categoryId.value,
+      },
     },
   },
 ])
