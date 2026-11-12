@@ -4,7 +4,7 @@
     :model-value="formattedValue"
     :rules="transformedRules"
     type="text"
-    @focus="rememberInitialValue"
+    @focus="captureInitialValue"
     @blur="commitValueOrRestoreInitialValue"
     @keydown.escape="resetValue"
     @keydown.enter="commitValue"
@@ -82,7 +82,7 @@ watch(
   }
 )
 
-function rememberInitialValue() {
+function captureInitialValue() {
   initialNumberValue.value = props.modelValue
 }
 
