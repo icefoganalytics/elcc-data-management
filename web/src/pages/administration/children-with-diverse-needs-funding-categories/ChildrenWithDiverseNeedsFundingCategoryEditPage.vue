@@ -3,7 +3,7 @@
     v-if="isLoading"
     type="card"
   />
-  <template v-else-if="childrenWithDiverseNeedsFundingCategory && policy?.update">
+  <template v-else-if="childrenWithDiverseNeedsFundingCategory">
     <v-row>
       <v-col cols="12">
         <v-text-field
@@ -19,13 +19,6 @@
       @cancel="cancelEditing"
     />
   </template>
-  <v-empty-state
-    v-else-if="childrenWithDiverseNeedsFundingCategory"
-    class="ma-5"
-    icon="mdi-lock-outline"
-    headline="Editing Not Allowed"
-    title="You do not have permission to edit this category."
-  />
 </template>
 
 <script setup lang="ts">
@@ -43,7 +36,7 @@ const props = defineProps<{
 }>()
 const router = useRouter()
 const categoryId = computed(() => Number(props.childrenWithDiverseNeedsFundingCategoryId))
-const { childrenWithDiverseNeedsFundingCategory, policy, isLoading } =
+const { childrenWithDiverseNeedsFundingCategory, isLoading } =
   useChildrenWithDiverseNeedsFundingCategory(categoryId)
 const fundingPeriodsQuery = ref({ perPage: -1 })
 const { fundingPeriods } = useFundingPeriods(fundingPeriodsQuery)
