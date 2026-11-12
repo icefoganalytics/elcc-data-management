@@ -96,16 +96,22 @@ defineProps<{
   fundingPeriodDescription: string
   isSaving: boolean
 }>()
+
 const emit = defineEmits<{
   save: []
   cancel: []
 }>()
+
 const form = useTemplateRef("form")
 
 defineExpose({ form })
 
 async function submit() {
-  const { valid } = (await form.value?.validate()) ?? { valid: false }
-  if (valid) emit("save")
+  if (form.value === null) return
+
+  const { valid } = await form.value.validate()
+  if (!valid) return
+
+  emit("save")
 }
 </script>
