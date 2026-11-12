@@ -1,3 +1,5 @@
+import { QualityEnhancementCategory } from "@/models"
+
 import {
   fiscalPeriodFactory,
   qualityEnhancementCategoryFactory,
@@ -15,7 +17,12 @@ describe("api/src/services/quality-enhancement-categories/destroy-service.ts", (
         const fiscalPeriod = await fiscalPeriodFactory.create({
           fundingPeriodId: category.fundingPeriodId,
         })
-        await qualityEnhancementFactory.associations({ category, fiscalPeriod }).create()
+        await qualityEnhancementFactory
+          .associations({
+            category,
+            fiscalPeriod,
+          })
+          .create()
 
         // Act
         const retirementPromise = DestroyService.perform(category)
@@ -33,10 +40,10 @@ describe("api/src/services/quality-enhancement-categories/destroy-service.ts", (
 
         // Act
         await DestroyService.perform(category)
-        await category.reload({ paranoid: false })
 
         // Assert
-        expect(category.deletedAt).toBeInstanceOf(Date)
+        const retiredCategory = await QualityEnhancementCategory.findByPk(category.id)
+        expect(retiredCategory).toBeNull()
       })
 
       test("when all records using a category have been deleted, allows retirement", async () => {
@@ -46,16 +53,19 @@ describe("api/src/services/quality-enhancement-categories/destroy-service.ts", (
           fundingPeriodId: category.fundingPeriodId,
         })
         const qualityEnhancement = await qualityEnhancementFactory
-          .associations({ category, fiscalPeriod })
+          .associations({
+            category,
+            fiscalPeriod,
+          })
           .create()
         await qualityEnhancement.destroy()
 
         // Act
         await DestroyService.perform(category)
-        await category.reload({ paranoid: false })
 
         // Assert
-        expect(category.deletedAt).toBeInstanceOf(Date)
+        const retiredCategory = await QualityEnhancementCategory.findByPk(category.id)
+        expect(retiredCategory).toBeNull()
       })
     })
   })

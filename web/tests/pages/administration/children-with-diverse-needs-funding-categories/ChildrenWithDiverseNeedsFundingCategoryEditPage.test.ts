@@ -5,6 +5,7 @@ import { VTextField } from "vuetify/components"
 import httpClient from "@/api/http-client"
 import ApiOperationError from "@/api/errors/api-operation-error"
 import AuthenticationRequiredError from "@/api/errors/authentication-required-error"
+
 import useSnack from "@/use/use-snack"
 
 import { childrenWithDiverseNeedsFundingCategoryFactory } from "@/tests/factories"
@@ -17,21 +18,36 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
     describe("save recovery", () => {
       test("when a save is rejected, retains the edited category name for correction", async () => {
         // Arrange
-        const category = childrenWithDiverseNeedsFundingCategoryFactory.build({ id: 8 })
+        const category = childrenWithDiverseNeedsFundingCategoryFactory.build({
+          id: 8,
+        })
         mockHttpGetRoutes({
           "/api/children-with-diverse-needs-funding-categories/8": () => ({
-            data: { childrenWithDiverseNeedsFundingCategory: category, policy: category.policy },
+            data: {
+              childrenWithDiverseNeedsFundingCategory: category,
+              policy: category.policy,
+            },
           }),
-          "/api/funding-periods": () => ({ data: { fundingPeriods: [], totalCount: 0 } }),
+          "/api/funding-periods": () => ({
+            data: {
+              fundingPeriods: [],
+              totalCount: 0,
+            },
+          }),
         })
         vi.mocked(httpClient.patch).mockRejectedValue(new ApiOperationError("Name is taken", 422))
         const router = mockRouter([
-          { path: "/", component: ChildrenWithDiverseNeedsFundingCategoryEditPage },
+          {
+            path: "/",
+            component: ChildrenWithDiverseNeedsFundingCategoryEditPage,
+          },
         ])
         await router.push("/")
         await router.isReady()
         const wrapper = mount(ChildrenWithDiverseNeedsFundingCategoryEditPage, {
-          props: { childrenWithDiverseNeedsFundingCategoryId: "8" },
+          props: {
+            childrenWithDiverseNeedsFundingCategoryId: "8",
+          },
           global: {
             plugins: [createPinia(), router, mockVuetify()],
           },
@@ -65,25 +81,41 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
         })
         mockHttpGetRoutes({
           "/api/children-with-diverse-needs-funding-categories/8": () => ({
-            data: { childrenWithDiverseNeedsFundingCategory: category, policy: category.policy },
+            data: {
+              childrenWithDiverseNeedsFundingCategory: category,
+              policy: category.policy,
+            },
           }),
-          "/api/funding-periods": () => ({ data: { fundingPeriods: [], totalCount: 0 } }),
+          "/api/funding-periods": () => ({
+            data: {
+              fundingPeriods: [],
+              totalCount: 0,
+            },
+          }),
         })
         vi.mocked(httpClient.patch)
           .mockRejectedValueOnce(new ApiOperationError("Name is taken", 422))
           .mockResolvedValueOnce({
             data: {
-              childrenWithDiverseNeedsFundingCategory: { ...category, categoryName: "Corrected" },
+              childrenWithDiverseNeedsFundingCategory: {
+                ...category,
+                categoryName: "Corrected",
+              },
               policy: category.policy,
             },
           })
         const router = mockRouter([
-          { path: "/", component: ChildrenWithDiverseNeedsFundingCategoryEditPage },
+          {
+            path: "/",
+            component: ChildrenWithDiverseNeedsFundingCategoryEditPage,
+          },
         ])
         await router.push("/")
         await router.isReady()
         const wrapper = mount(ChildrenWithDiverseNeedsFundingCategoryEditPage, {
-          props: { childrenWithDiverseNeedsFundingCategoryId: "8" },
+          props: {
+            childrenWithDiverseNeedsFundingCategoryId: "8",
+          },
           global: {
             plugins: [createPinia(), router, mockVuetify()],
           },
@@ -106,27 +138,47 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
         expect(httpClient.patch).toHaveBeenNthCalledWith(
           2,
           "/api/children-with-diverse-needs-funding-categories/8",
-          { categoryName: "Corrected", fromAge: 0, toAge: 5, monthlyAmount: "54.9600" }
+          {
+            categoryName: "Corrected",
+            fromAge: 0,
+            toAge: 5,
+            monthlyAmount: "54.9600",
+          }
         )
       })
 
       test("when a save is pending, keeps the edited field mounted and disabled", async () => {
         // Arrange
-        const category = childrenWithDiverseNeedsFundingCategoryFactory.build({ id: 8 })
+        const category = childrenWithDiverseNeedsFundingCategoryFactory.build({
+          id: 8,
+        })
         mockHttpGetRoutes({
           "/api/children-with-diverse-needs-funding-categories/8": () => ({
-            data: { childrenWithDiverseNeedsFundingCategory: category, policy: category.policy },
+            data: {
+              childrenWithDiverseNeedsFundingCategory: category,
+              policy: category.policy,
+            },
           }),
-          "/api/funding-periods": () => ({ data: { fundingPeriods: [], totalCount: 0 } }),
+          "/api/funding-periods": () => ({
+            data: {
+              fundingPeriods: [],
+              totalCount: 0,
+            },
+          }),
         })
         vi.mocked(httpClient.patch).mockReturnValue(new Promise(() => {}))
         const router = mockRouter([
-          { path: "/", component: ChildrenWithDiverseNeedsFundingCategoryEditPage },
+          {
+            path: "/",
+            component: ChildrenWithDiverseNeedsFundingCategoryEditPage,
+          },
         ])
         await router.push("/")
         await router.isReady()
         const wrapper = mount(ChildrenWithDiverseNeedsFundingCategoryEditPage, {
-          props: { childrenWithDiverseNeedsFundingCategoryId: "8" },
+          props: {
+            childrenWithDiverseNeedsFundingCategoryId: "8",
+          },
           global: {
             plugins: [createPinia(), router, mockVuetify()],
           },
@@ -146,23 +198,38 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
 
       test("when saving requires authentication, delivers the original error to the application boundary", async () => {
         // Arrange
-        const category = childrenWithDiverseNeedsFundingCategoryFactory.build({ id: 8 })
-        const error = new AuthenticationRequiredError()
+        const category = childrenWithDiverseNeedsFundingCategoryFactory.build({
+          id: 8,
+        })
+        const authenticationError = new AuthenticationRequiredError()
         const receivedErrors: unknown[] = []
         mockHttpGetRoutes({
           "/api/children-with-diverse-needs-funding-categories/8": () => ({
-            data: { childrenWithDiverseNeedsFundingCategory: category, policy: category.policy },
+            data: {
+              childrenWithDiverseNeedsFundingCategory: category,
+              policy: category.policy,
+            },
           }),
-          "/api/funding-periods": () => ({ data: { fundingPeriods: [], totalCount: 0 } }),
+          "/api/funding-periods": () => ({
+            data: {
+              fundingPeriods: [],
+              totalCount: 0,
+            },
+          }),
         })
-        vi.mocked(httpClient.patch).mockRejectedValue(error)
+        vi.mocked(httpClient.patch).mockRejectedValue(authenticationError)
         const router = mockRouter([
-          { path: "/", component: ChildrenWithDiverseNeedsFundingCategoryEditPage },
+          {
+            path: "/",
+            component: ChildrenWithDiverseNeedsFundingCategoryEditPage,
+          },
         ])
         await router.push("/")
         await router.isReady()
         const wrapper = mount(ChildrenWithDiverseNeedsFundingCategoryEditPage, {
-          props: { childrenWithDiverseNeedsFundingCategoryId: "8" },
+          props: {
+            childrenWithDiverseNeedsFundingCategoryId: "8",
+          },
           global: {
             plugins: [createPinia(), router, mockVuetify()],
             config: {
@@ -179,27 +246,42 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
         await flushPromises()
 
         // Assert
-        expect(receivedErrors).toEqual([error])
+        expect(receivedErrors).toEqual([authenticationError])
       })
 
       test("when saving returns an ordinary operation error, shows local update feedback", async () => {
         // Arrange
-        const category = childrenWithDiverseNeedsFundingCategoryFactory.build({ id: 8 })
-        const error = new ApiOperationError("Name is taken", 422)
+        const category = childrenWithDiverseNeedsFundingCategoryFactory.build({
+          id: 8,
+        })
+        const operationError = new ApiOperationError("Name is taken", 422)
         mockHttpGetRoutes({
           "/api/children-with-diverse-needs-funding-categories/8": () => ({
-            data: { childrenWithDiverseNeedsFundingCategory: category, policy: category.policy },
+            data: {
+              childrenWithDiverseNeedsFundingCategory: category,
+              policy: category.policy,
+            },
           }),
-          "/api/funding-periods": () => ({ data: { fundingPeriods: [], totalCount: 0 } }),
+          "/api/funding-periods": () => ({
+            data: {
+              fundingPeriods: [],
+              totalCount: 0,
+            },
+          }),
         })
-        vi.mocked(httpClient.patch).mockRejectedValue(error)
+        vi.mocked(httpClient.patch).mockRejectedValue(operationError)
         const router = mockRouter([
-          { path: "/", component: ChildrenWithDiverseNeedsFundingCategoryEditPage },
+          {
+            path: "/",
+            component: ChildrenWithDiverseNeedsFundingCategoryEditPage,
+          },
         ])
         await router.push("/")
         await router.isReady()
         const wrapper = mount(ChildrenWithDiverseNeedsFundingCategoryEditPage, {
-          props: { childrenWithDiverseNeedsFundingCategoryId: "8" },
+          props: {
+            childrenWithDiverseNeedsFundingCategoryId: "8",
+          },
           global: {
             plugins: [createPinia(), router, mockVuetify()],
           },
@@ -222,17 +304,27 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
           "/api/children-with-diverse-needs-funding-categories/8": () => {
             throw new ApiOperationError("Unavailable", 503)
           },
-          "/api/funding-periods": () => ({ data: { fundingPeriods: [], totalCount: 0 } }),
+          "/api/funding-periods": () => ({
+            data: {
+              fundingPeriods: [],
+              totalCount: 0,
+            },
+          }),
         })
 
         // Act
         const router = mockRouter([
-          { path: "/", component: ChildrenWithDiverseNeedsFundingCategoryEditPage },
+          {
+            path: "/",
+            component: ChildrenWithDiverseNeedsFundingCategoryEditPage,
+          },
         ])
         await router.push("/")
         await router.isReady()
         mount(ChildrenWithDiverseNeedsFundingCategoryEditPage, {
-          props: { childrenWithDiverseNeedsFundingCategoryId: "8" },
+          props: {
+            childrenWithDiverseNeedsFundingCategoryId: "8",
+          },
           global: {
             plugins: [createPinia(), router, mockVuetify()],
           },

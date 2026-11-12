@@ -31,14 +31,21 @@ describe("web/src/components/children-with-diverse-needs-funding-categories/Chil
         )
         const receivedErrors: unknown[] = []
         const router = mockRouter([
-          { path: "/", component: ChildrenWithDiverseNeedsFundingCategoriesDataTableServer },
+          {
+            path: "/",
+            component: ChildrenWithDiverseNeedsFundingCategoriesDataTableServer,
+          },
         ])
         await router.push("/")
         await router.isReady()
 
         // Act
         mount(ChildrenWithDiverseNeedsFundingCategoriesDataTableServer, {
-          props: { where: { fundingPeriodId: 5 } },
+          props: {
+            where: {
+              fundingPeriodId: 5,
+            },
+          },
           global: {
             plugins: [router, mockVuetify()],
             config: {
@@ -61,15 +68,24 @@ describe("web/src/components/children-with-diverse-needs-funding-categories/Chil
           new ApiOperationError("Categories are unavailable", 503)
         )
         const router = mockRouter([
-          { path: "/", component: ChildrenWithDiverseNeedsFundingCategoriesDataTableServer },
+          {
+            path: "/",
+            component: ChildrenWithDiverseNeedsFundingCategoriesDataTableServer,
+          },
         ])
         await router.push("/")
         await router.isReady()
 
         // Act
         mount(ChildrenWithDiverseNeedsFundingCategoriesDataTableServer, {
-          props: { where: { fundingPeriodId: 5 } },
-          global: { plugins: [router, mockVuetify()] },
+          props: {
+            where: {
+              fundingPeriodId: 5,
+            },
+          },
+          global: {
+            plugins: [router, mockVuetify()],
+          },
         })
         await flushPromises()
 
@@ -83,15 +99,24 @@ describe("web/src/components/children-with-diverse-needs-funding-categories/Chil
           new ApiOperationError("Categories are unavailable", 503)
         )
         const router = mockRouter([
-          { path: "/", component: ChildrenWithDiverseNeedsFundingCategoriesDataTableServer },
+          {
+            path: "/",
+            component: ChildrenWithDiverseNeedsFundingCategoriesDataTableServer,
+          },
         ])
         await router.push("/")
         await router.isReady()
 
         // Act
         const wrapper = mount(ChildrenWithDiverseNeedsFundingCategoriesDataTableServer, {
-          props: { where: { fundingPeriodId: 5 } },
-          global: { plugins: [router, mockVuetify()] },
+          props: {
+            where: {
+              fundingPeriodId: 5,
+            },
+          },
+          global: {
+            plugins: [router, mockVuetify()],
+          },
         })
         await flushPromises()
 

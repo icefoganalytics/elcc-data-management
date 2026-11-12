@@ -1,3 +1,5 @@
+import { AdministrationCostCategory } from "@/models"
+
 import {
   administrationCostCategoryFactory,
   administrationCostFactory,
@@ -15,7 +17,12 @@ describe("api/src/services/administration-cost-categories/destroy-service.ts", (
         const fiscalPeriod = await fiscalPeriodFactory.create({
           fundingPeriodId: category.fundingPeriodId,
         })
-        await administrationCostFactory.associations({ category, fiscalPeriod }).create()
+        await administrationCostFactory
+          .associations({
+            category,
+            fiscalPeriod,
+          })
+          .create()
 
         // Act
         const retirementPromise = DestroyService.perform(category)
@@ -33,10 +40,10 @@ describe("api/src/services/administration-cost-categories/destroy-service.ts", (
 
         // Act
         await DestroyService.perform(category)
-        await category.reload({ paranoid: false })
 
         // Assert
-        expect(category.deletedAt).toBeInstanceOf(Date)
+        const retiredCategory = await AdministrationCostCategory.findByPk(category.id)
+        expect(retiredCategory).toBeNull()
       })
 
       test("when all records using a category have been deleted, allows retirement", async () => {
@@ -46,16 +53,19 @@ describe("api/src/services/administration-cost-categories/destroy-service.ts", (
           fundingPeriodId: category.fundingPeriodId,
         })
         const administrationCost = await administrationCostFactory
-          .associations({ category, fiscalPeriod })
+          .associations({
+            category,
+            fiscalPeriod,
+          })
           .create()
         await administrationCost.destroy()
 
         // Act
         await DestroyService.perform(category)
-        await category.reload({ paranoid: false })
 
         // Assert
-        expect(category.deletedAt).toBeInstanceOf(Date)
+        const retiredCategory = await AdministrationCostCategory.findByPk(category.id)
+        expect(retiredCategory).toBeNull()
       })
     })
   })

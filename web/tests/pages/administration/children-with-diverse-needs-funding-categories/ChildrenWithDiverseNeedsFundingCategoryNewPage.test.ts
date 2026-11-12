@@ -5,6 +5,7 @@ import { VTextField } from "vuetify/components"
 import httpClient from "@/api/http-client"
 import { UserRoles } from "@/api/current-user-api"
 import ApiOperationError from "@/api/errors/api-operation-error"
+
 import useCurrentUser from "@/use/use-current-user"
 import useSnack from "@/use/use-snack"
 
@@ -13,6 +14,7 @@ import { mockCurrentUserApi, mockHttpGetRoutes, mockRouter, mockVuetify } from "
 import { DEFAULT_USER } from "@/tests/support/mock-current-user-api"
 
 import CurrencyInput from "@/components/CurrencyInput.vue"
+
 import ChildrenWithDiverseNeedsFundingCategoryNewPage from "@/pages/administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryNewPage.vue"
 
 describe("web/src/pages/administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryNewPage.vue", () => {
@@ -28,27 +30,49 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
           id: 8,
           fundingPeriodId: 3,
         })
-        const error = new Error("Connection interrupted")
+        const unexpectedError = new Error("Connection interrupted")
         const receivedErrors: unknown[] = []
         mockHttpGetRoutes({
           "/api/funding-periods": () => ({
-            data: { fundingPeriods: [{ id: 3, fiscalYear: "2026-2027" }], totalCount: 1 },
+            data: {
+              fundingPeriods: [
+                {
+                  id: 3,
+                  fiscalYear: "2026-2027",
+                },
+              ],
+              totalCount: 1,
+            },
           }),
           "/api/funding-periods/3": () => ({
-            data: { fundingPeriod: { id: 3, fiscalYear: "2026-2027" }, policy: {} },
+            data: {
+              fundingPeriod: {
+                id: 3,
+                fiscalYear: "2026-2027",
+              },
+              policy: {},
+            },
           }),
         })
-        vi.mocked(httpClient.post).mockRejectedValue(error)
+        vi.mocked(httpClient.post).mockRejectedValue(unexpectedError)
         mockCurrentUserApi({
-          user: { ...DEFAULT_USER, roles: [UserRoles.SYSTEM_ADMINISTRATOR] },
+          user: {
+            ...DEFAULT_USER,
+            roles: [UserRoles.SYSTEM_ADMINISTRATOR],
+          },
         })
         await useCurrentUser().fetch()
         const router = mockRouter([
-          { path: "/", component: ChildrenWithDiverseNeedsFundingCategoryNewPage },
+          {
+            path: "/",
+            component: ChildrenWithDiverseNeedsFundingCategoryNewPage,
+          },
           {
             path: "/categories",
             name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage",
-            component: { template: "<div />" },
+            component: {
+              template: "<div />",
+            },
           },
         ])
         await router.push("/?fundingPeriodId=3")
@@ -77,7 +101,7 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
         await flushPromises()
 
         // Assert
-        expect(receivedErrors).toEqual([error])
+        expect(receivedErrors).toEqual([unexpectedError])
       })
 
       test("when creation is rejected, retains the entered name for correction", async () => {
@@ -89,23 +113,45 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
         })
         mockHttpGetRoutes({
           "/api/funding-periods": () => ({
-            data: { fundingPeriods: [{ id: 3, fiscalYear: "2026-2027" }], totalCount: 1 },
+            data: {
+              fundingPeriods: [
+                {
+                  id: 3,
+                  fiscalYear: "2026-2027",
+                },
+              ],
+              totalCount: 1,
+            },
           }),
           "/api/funding-periods/3": () => ({
-            data: { fundingPeriod: { id: 3, fiscalYear: "2026-2027" }, policy: {} },
+            data: {
+              fundingPeriod: {
+                id: 3,
+                fiscalYear: "2026-2027",
+              },
+              policy: {},
+            },
           }),
         })
         vi.mocked(httpClient.post).mockRejectedValue(new ApiOperationError("Name is taken", 422))
         mockCurrentUserApi({
-          user: { ...DEFAULT_USER, roles: [UserRoles.SYSTEM_ADMINISTRATOR] },
+          user: {
+            ...DEFAULT_USER,
+            roles: [UserRoles.SYSTEM_ADMINISTRATOR],
+          },
         })
         await useCurrentUser().fetch()
         const router = mockRouter([
-          { path: "/", component: ChildrenWithDiverseNeedsFundingCategoryNewPage },
+          {
+            path: "/",
+            component: ChildrenWithDiverseNeedsFundingCategoryNewPage,
+          },
           {
             path: "/categories",
             name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage",
-            component: { template: "<div />" },
+            component: {
+              template: "<div />",
+            },
           },
         ])
         await router.push("/?fundingPeriodId=3")
@@ -138,26 +184,48 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
           id: 8,
           fundingPeriodId: 3,
         })
-        const error = new ApiOperationError("Name is taken", 422)
+        const operationError = new ApiOperationError("Name is taken", 422)
         mockHttpGetRoutes({
           "/api/funding-periods": () => ({
-            data: { fundingPeriods: [{ id: 3, fiscalYear: "2026-2027" }], totalCount: 1 },
+            data: {
+              fundingPeriods: [
+                {
+                  id: 3,
+                  fiscalYear: "2026-2027",
+                },
+              ],
+              totalCount: 1,
+            },
           }),
           "/api/funding-periods/3": () => ({
-            data: { fundingPeriod: { id: 3, fiscalYear: "2026-2027" }, policy: {} },
+            data: {
+              fundingPeriod: {
+                id: 3,
+                fiscalYear: "2026-2027",
+              },
+              policy: {},
+            },
           }),
         })
-        vi.mocked(httpClient.post).mockRejectedValue(error)
+        vi.mocked(httpClient.post).mockRejectedValue(operationError)
         mockCurrentUserApi({
-          user: { ...DEFAULT_USER, roles: [UserRoles.SYSTEM_ADMINISTRATOR] },
+          user: {
+            ...DEFAULT_USER,
+            roles: [UserRoles.SYSTEM_ADMINISTRATOR],
+          },
         })
         await useCurrentUser().fetch()
         const router = mockRouter([
-          { path: "/", component: ChildrenWithDiverseNeedsFundingCategoryNewPage },
+          {
+            path: "/",
+            component: ChildrenWithDiverseNeedsFundingCategoryNewPage,
+          },
           {
             path: "/categories",
             name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage",
-            component: { template: "<div />" },
+            component: {
+              template: "<div />",
+            },
           },
         ])
         await router.push("/?fundingPeriodId=3")

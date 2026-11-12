@@ -1,3 +1,5 @@
+import { ChildCareSpaceCategory } from "@/models"
+
 import {
   administrationCostCategoryFactory,
   administrationCostFactory,
@@ -20,7 +22,12 @@ describe("api/src/services/child-care-space-categories/destroy-service.ts", () =
         const fiscalPeriod = await fiscalPeriodFactory.create({
           fundingPeriodId: category.fundingPeriodId,
         })
-        await childCareSpaceFactory.associations({ category, fiscalPeriod }).create()
+        await childCareSpaceFactory
+          .associations({
+            category,
+            fiscalPeriod,
+          })
+          .create()
 
         // Act
         const retirementPromise = DestroyService.perform(category)
@@ -72,8 +79,12 @@ describe("api/src/services/child-care-space-categories/destroy-service.ts", () =
           fundingPeriodId: category.fundingPeriodId,
         })
         await administrationCostFactory
-          .associations({ fiscalPeriod })
-          .create({ childCareSpaceCategoryId: category.id })
+          .associations({
+            fiscalPeriod,
+          })
+          .create({
+            childCareSpaceCategoryId: category.id,
+          })
 
         // Act
         const retirementPromise = DestroyService.perform(category)
@@ -91,8 +102,12 @@ describe("api/src/services/child-care-space-categories/destroy-service.ts", () =
           fundingPeriodId: category.fundingPeriodId,
         })
         await qualityEnhancementFactory
-          .associations({ fiscalPeriod })
-          .create({ childCareSpaceCategoryId: category.id })
+          .associations({
+            fiscalPeriod,
+          })
+          .create({
+            childCareSpaceCategoryId: category.id,
+          })
 
         // Act
         const retirementPromise = DestroyService.perform(category)
@@ -106,7 +121,9 @@ describe("api/src/services/child-care-space-categories/destroy-service.ts", () =
       test("when a funding submission line references the category, rejects retirement", async () => {
         // Arrange
         const category = await childCareSpaceCategoryFactory.create()
-        await fundingSubmissionLineFactory.create({ childCareSpaceCategoryId: category.id })
+        await fundingSubmissionLineFactory.create({
+          childCareSpaceCategoryId: category.id,
+        })
 
         // Act
         const retirementPromise = DestroyService.perform(category)
@@ -124,10 +141,10 @@ describe("api/src/services/child-care-space-categories/destroy-service.ts", () =
 
         // Act
         await DestroyService.perform(category)
-        await category.reload({ paranoid: false })
 
         // Assert
-        expect(category.deletedAt).toBeInstanceOf(Date)
+        const retiredCategory = await ChildCareSpaceCategory.findByPk(category.id)
+        expect(retiredCategory).toBeNull()
       })
 
       test("when all dependent records and categories have been deleted, allows retirement", async () => {
@@ -137,7 +154,10 @@ describe("api/src/services/child-care-space-categories/destroy-service.ts", () =
           fundingPeriodId: category.fundingPeriodId,
         })
         const childCareSpace = await childCareSpaceFactory
-          .associations({ category, fiscalPeriod })
+          .associations({
+            category,
+            fiscalPeriod,
+          })
           .create()
         const administrationCostCategory = await administrationCostCategoryFactory.create({
           fundingPeriodId: category.fundingPeriodId,
@@ -148,10 +168,16 @@ describe("api/src/services/child-care-space-categories/destroy-service.ts", () =
           childCareSpaceCategoryId: category.id,
         })
         const administrationCost = await administrationCostFactory
-          .associations({ category: administrationCostCategory, fiscalPeriod })
+          .associations({
+            category: administrationCostCategory,
+            fiscalPeriod,
+          })
           .create()
         const qualityEnhancement = await qualityEnhancementFactory
-          .associations({ category: qualityEnhancementCategory, fiscalPeriod })
+          .associations({
+            category: qualityEnhancementCategory,
+            fiscalPeriod,
+          })
           .create()
         const fundingSubmissionLine = await fundingSubmissionLineFactory.create({
           childCareSpaceCategoryId: category.id,
@@ -165,10 +191,10 @@ describe("api/src/services/child-care-space-categories/destroy-service.ts", () =
 
         // Act
         await DestroyService.perform(category)
-        await category.reload({ paranoid: false })
 
         // Assert
-        expect(category.deletedAt).toBeInstanceOf(Date)
+        const retiredCategory = await ChildCareSpaceCategory.findByPk(category.id)
+        expect(retiredCategory).toBeNull()
       })
     })
   })
