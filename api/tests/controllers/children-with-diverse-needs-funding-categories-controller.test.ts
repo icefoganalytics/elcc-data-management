@@ -2,6 +2,8 @@ import { User } from "@/models"
 
 import {
   childrenWithDiverseNeedsFundingCategoryFactory,
+  childrenWithDiverseNeedsFundingRecordFactory,
+  fiscalPeriodFactory,
   fundingPeriodFactory,
   userFactory,
 } from "@/factories"
@@ -126,6 +128,31 @@ describe("api/src/controllers/children-with-diverse-needs-funding-categories-con
         expect(response.body).toEqual({
           message:
             "You are not authorized to delete this Children with Diverse Needs funding category",
+        })
+      })
+
+      test("when an administrator retires a category with active records, returns the usage error", async () => {
+        // Arrange
+        const currentUser = await userFactory.create({ roles: [User.Roles.SYSTEM_ADMINISTRATOR] })
+        mockCurrentUser(currentUser)
+        const category = await childrenWithDiverseNeedsFundingCategoryFactory.create()
+        const fiscalPeriod = await fiscalPeriodFactory.create({
+          fundingPeriodId: category.fundingPeriodId,
+        })
+        await childrenWithDiverseNeedsFundingRecordFactory
+          .associations({ category, fiscalPeriod })
+          .create()
+
+        // Act
+        const response = await request().delete(
+          `/api/children-with-diverse-needs-funding-categories/${category.id}`
+        )
+
+        // Assert
+        expect(response.status).toEqual(422)
+        expect(response.body).toEqual({
+          message:
+            "Error deleting Children with Diverse Needs funding category: Error: Cannot delete a category used by Children with Diverse Needs funding records",
         })
       })
     })
