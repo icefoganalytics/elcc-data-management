@@ -3,13 +3,22 @@
     v-if="isLoading"
     type="card"
   />
-  <ChildrenWithDiverseNeedsFundingCategoryEditForm
-    v-else-if="childrenWithDiverseNeedsFundingCategory && policy?.update"
-    v-model:children-with-diverse-needs-funding-category="childrenWithDiverseNeedsFundingCategory"
-    :funding-period-description="fundingPeriodDescription"
-    @saved="policy = $event"
-    @cancel="cancelEditing"
-  />
+  <template v-else-if="childrenWithDiverseNeedsFundingCategory && policy?.update">
+    <v-row>
+      <v-col cols="12">
+        <v-text-field
+          :model-value="fundingPeriodDescription"
+          append-inner-icon="mdi-lock"
+          label="Funding Period"
+          readonly
+        />
+      </v-col>
+    </v-row>
+    <ChildrenWithDiverseNeedsFundingCategoryEditForm
+      :children-with-diverse-needs-funding-category-id="categoryId"
+      @cancel="cancelEditing"
+    />
+  </template>
   <v-empty-state
     v-else-if="childrenWithDiverseNeedsFundingCategory"
     class="ma-5"
@@ -34,11 +43,8 @@ const props = defineProps<{
 }>()
 const router = useRouter()
 const categoryId = computed(() => Number(props.childrenWithDiverseNeedsFundingCategoryId))
-const {
-  childrenWithDiverseNeedsFundingCategory,
-  policy,
-  isLoading,
-} = useChildrenWithDiverseNeedsFundingCategory(categoryId)
+const { childrenWithDiverseNeedsFundingCategory, policy, isLoading } =
+  useChildrenWithDiverseNeedsFundingCategory(categoryId)
 const fundingPeriodsQuery = ref({ perPage: -1 })
 const { fundingPeriods } = useFundingPeriods(fundingPeriodsQuery)
 const fundingPeriodDescription = computed(() => {

@@ -1,19 +1,14 @@
 <template>
+  <v-skeleton-loader
+    v-if="isLoading"
+    type="card"
+  />
   <HeaderActionsFormCard
+    v-else-if="childrenWithDiverseNeedsFundingCategory && policy?.update"
     ref="form"
     title="Edit Diverse Need Category"
     @submit.prevent="submit"
   >
-    <v-row>
-      <v-col cols="12">
-        <v-text-field
-          :model-value="fundingPeriodDescription"
-          append-inner-icon="mdi-lock"
-          label="Funding Period"
-          readonly
-        />
-      </v-col>
-    </v-row>
     <v-row>
       <v-col cols="12">
         <v-text-field
@@ -77,38 +72,41 @@
       >
     </template>
   </HeaderActionsFormCard>
+  <v-empty-state
+    v-else-if="childrenWithDiverseNeedsFundingCategory"
+    class="ma-5"
+    icon="mdi-lock-outline"
+    headline="Editing Not Allowed"
+    title="You do not have permission to edit this category."
+  />
 </template>
 
 <script setup lang="ts">
-import { ref, useTemplateRef } from "vue"
+import { ref, toRef, useTemplateRef } from "vue"
 
-import childrenWithDiverseNeedsFundingCategoriesApi, {
-  type ChildrenWithDiverseNeedsFundingCategory,
-  type ChildrenWithDiverseNeedsFundingCategoryPolicy,
-} from "@/api/children-with-diverse-needs-funding-categories-api"
 import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 
 import { required } from "@/utils/validators"
 
+import useChildrenWithDiverseNeedsFundingCategory from "@/use/use-children-with-diverse-needs-funding-category"
 import useSnack from "@/use/use-snack"
 
 import CurrencyInput from "@/components/CurrencyInput.vue"
 import HeaderActionsFormCard from "@/components/common/HeaderActionsFormCard.vue"
 import NumberTextField from "@/components/common/NumberTextField.vue"
 
-const childrenWithDiverseNeedsFundingCategory =
-  defineModel<ChildrenWithDiverseNeedsFundingCategory>("childrenWithDiverseNeedsFundingCategory", {
-    required: true,
-  })
-
-defineProps<{
-  fundingPeriodDescription: string
+const props = defineProps<{
+  childrenWithDiverseNeedsFundingCategoryId: number
 }>()
 
 const emit = defineEmits<{
   cancel: []
-  saved: [policy: ChildrenWithDiverseNeedsFundingCategoryPolicy]
+  saved: [childrenWithDiverseNeedsFundingCategoryId: number]
 }>()
+
+const categoryId = toRef(props, "childrenWithDiverseNeedsFundingCategoryId")
+const { childrenWithDiverseNeedsFundingCategory, policy, isLoading, save } =
+  useChildrenWithDiverseNeedsFundingCategory(categoryId)
 
 const form = useTemplateRef("form")
 
@@ -117,26 +115,19 @@ const snack = useSnack()
 
 async function submit() {
   if (isSaving.value || form.value === null) return
+  if (!childrenWithDiverseNeedsFundingCategory.value || !policy.value?.update) return
 
   const { valid } = await form.value.validate()
   if (!valid) return
 
   isSaving.value = true
   try {
-    const { id, categoryName, fromAge, toAge, monthlyAmount } =
-      childrenWithDiverseNeedsFundingCategory.value
-    const { childrenWithDiverseNeedsFundingCategory: savedCategory, policy } =
-      await childrenWithDiverseNeedsFundingCategoriesApi.update(id, {
-        categoryName,
-        fromAge,
-        toAge,
-        monthlyAmount,
-      })
-    if (childrenWithDiverseNeedsFundingCategory.value.id !== id) return
+    const id = categoryId.value
+    await save()
+    if (categoryId.value !== id) return
 
-    childrenWithDiverseNeedsFundingCategory.value = savedCategory
     snack.success("Diverse need category updated successfully!")
-    emit("saved", policy)
+    emit("saved", id)
   } catch (error) {
     rethrowUnexpectedError(error)
 
