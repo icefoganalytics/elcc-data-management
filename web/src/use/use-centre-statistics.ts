@@ -1,7 +1,6 @@
 import { isCancel } from "axios"
 import { onScopeDispose, reactive, toRefs, watch } from "vue"
 
-import { MAX_PER_PAGE } from "@/api/base-api"
 import centresApi from "@/api/centres-api"
 
 export type CentreStatistics = {
@@ -34,32 +33,16 @@ export function useCentreStatistics({
     state.isErrored = false
 
     try {
-      const communities = new Set<string>()
-      let centreCount = 0
-      let page = 1
-      let hasMoreCentres = true
+      const { totalCount, summaries } = await centresApi.list(
+        { perPage: 1 },
+        { signal: controller.signal }
+      )
+      if (controller.signal.aborted) return
 
-      // The API caps every page, including perPage: -1. Count all authorized centres.
-      while (hasMoreCentres) {
-        const { centres, totalCount } = await centresApi.list(
-          {
-            order: [["id", "ASC"]],
-            page,
-            perPage: MAX_PER_PAGE,
-          },
-          { signal: controller.signal }
-        )
-        if (controller.signal.aborted) return
-
-        centreCount += centres.length
-        for (const centre of centres) {
-          communities.add(centre.community)
-        }
-        hasMoreCentres = centres.length > 0 && centreCount < totalCount
-        page += 1
+      const statistics = {
+        centreCount: totalCount,
+        communityCount: summaries.communityCount,
       }
-
-      const statistics = { centreCount, communityCount: communities.size }
       state.statistics = statistics
       return statistics
     } catch (error) {

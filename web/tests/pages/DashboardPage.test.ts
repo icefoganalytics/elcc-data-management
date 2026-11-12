@@ -38,7 +38,7 @@ describe("web/src/pages/DashboardPage.vue", () => {
       test("when no authorized centres exist, displays the real zero count", async () => {
         // Arrange
         vi.mocked(httpClient, true).get.mockResolvedValueOnce({
-          data: { centres: [], totalCount: 0 },
+          data: { centres: [], totalCount: 0, summaries: { communityCount: 0 } },
         })
         const router = mockRouter([
           { path: "/", name: "DashboardPage", component: { template: "<div />" } },
