@@ -2,21 +2,27 @@
   <HeaderActionsCard title="Diverse Need Categories">
     <template #header-actions>
       <v-btn
-        v-if="isSystemAdmin && fundingPeriodsCount > 0 && fundingPeriodId !== null"
+        v-if="fundingPeriodsCount > 0"
         color="primary"
         :to="{
           name: 'administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryNewPage',
-          query: { fundingPeriodId },
+          query: {
+            fundingPeriodId,
+          },
         }"
       >
         <v-icon class="mr-2">mdi-plus</v-icon>
         New Diverse Need Category
       </v-btn>
     </template>
-    <FundingPeriodSearchableAutocomplete
-      v-model="fundingPeriodId"
-      clearable
-    />
+    <v-row>
+      <v-col cols="12">
+        <FundingPeriodSearchableAutocomplete
+          v-model="fundingPeriodId"
+          clearable
+        />
+      </v-col>
+    </v-row>
     <ChildrenWithDiverseNeedsFundingCategoriesDataTableServer
       :where="childrenWithDiverseNeedsFundingCategoriesWhere"
     />
@@ -28,16 +34,17 @@ import { computed, ref } from "vue"
 
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useFundingPeriods from "@/use/use-funding-periods"
-import useCurrentUser from "@/use/use-current-user"
 
 import ChildrenWithDiverseNeedsFundingCategoriesDataTableServer from "@/components/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoriesDataTableServer.vue"
 import FundingPeriodSearchableAutocomplete from "@/components/funding-periods/FundingPeriodSearchableAutocomplete.vue"
 import HeaderActionsCard from "@/components/common/HeaderActionsCard.vue"
 
-const fundingPeriodsQuery = ref({ perPage: 1 })
+const fundingPeriodsQuery = ref({
+  perPage: 1,
+})
 const { totalCount: fundingPeriodsCount } = useFundingPeriods(fundingPeriodsQuery)
+
 const fundingPeriodId = ref<number | null>(null)
-const { isSystemAdmin } = useCurrentUser()
 const childrenWithDiverseNeedsFundingCategoriesWhere = computed(() => ({
   fundingPeriodId: fundingPeriodId.value ?? undefined,
 }))
@@ -45,11 +52,15 @@ const childrenWithDiverseNeedsFundingCategoriesWhere = computed(() => ({
 useBreadcrumbs("Diverse Need Categories", [
   {
     title: "Administration",
-    to: { name: "AdministrationPage" },
+    to: {
+      name: "AdministrationPage",
+    },
   },
   {
     title: "Diverse Need Categories",
-    to: { name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage" },
+    to: {
+      name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage",
+    },
   },
 ])
 </script>

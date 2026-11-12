@@ -15,19 +15,19 @@
       </v-col>
     </v-row>
     <ChildrenWithDiverseNeedsFundingCategoryEditForm
-      :children-with-diverse-needs-funding-category-id="categoryId"
+      :children-with-diverse-needs-funding-category-id="childrenWithDiverseNeedsFundingCategoryId"
       @cancel="cancelEditing"
     />
   </template>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue"
+import { computed } from "vue"
 import { useRouter } from "vue-router"
 import { isNil } from "lodash"
 
 import useChildrenWithDiverseNeedsFundingCategory from "@/use/use-children-with-diverse-needs-funding-category"
-import useFundingPeriods from "@/use/use-funding-periods"
+import useFundingPeriod from "@/use/use-funding-period"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 
 import ChildrenWithDiverseNeedsFundingCategoryEditForm from "@/components/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryEditForm.vue"
@@ -36,27 +36,27 @@ const props = defineProps<{
   childrenWithDiverseNeedsFundingCategoryId: string
 }>()
 
-const categoryId = computed(() => Number(props.childrenWithDiverseNeedsFundingCategoryId))
-const { childrenWithDiverseNeedsFundingCategory } =
-  useChildrenWithDiverseNeedsFundingCategory(categoryId)
+const childrenWithDiverseNeedsFundingCategoryId = computed(() =>
+  Number(props.childrenWithDiverseNeedsFundingCategoryId)
+)
+const { childrenWithDiverseNeedsFundingCategory } = useChildrenWithDiverseNeedsFundingCategory(
+  childrenWithDiverseNeedsFundingCategoryId
+)
 
-const fundingPeriodsQuery = ref({ perPage: -1 })
-const { fundingPeriods } = useFundingPeriods(fundingPeriodsQuery)
-
-const fundingPeriodDescription = computed(() => {
-  const fundingPeriod = fundingPeriods.value.find(
-    ({ id }) => id === childrenWithDiverseNeedsFundingCategory.value?.fundingPeriodId
-  )
-
-  return fundingPeriod?.fiscalYear ?? "Unknown"
-})
+const fundingPeriodId = computed(
+  () => childrenWithDiverseNeedsFundingCategory.value?.fundingPeriodId
+)
+const { fundingPeriod } = useFundingPeriod(fundingPeriodId)
+const fundingPeriodDescription = computed(() => fundingPeriod.value?.fiscalYear ?? "Unknown")
 
 const router = useRouter()
 
 async function cancelEditing() {
   await router.push({
     name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
-    params: { childrenWithDiverseNeedsFundingCategoryId: categoryId.value },
+    params: {
+      childrenWithDiverseNeedsFundingCategoryId: childrenWithDiverseNeedsFundingCategoryId.value,
+    },
   })
 }
 
@@ -78,7 +78,7 @@ useBreadcrumbs("Edit Diverse Need Category", [
     to: {
       name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryEditPage",
       params: {
-        childrenWithDiverseNeedsFundingCategoryId: categoryId.value,
+        childrenWithDiverseNeedsFundingCategoryId: childrenWithDiverseNeedsFundingCategoryId.value,
       },
     },
   },

@@ -75,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, toRef, useTemplateRef } from "vue"
+import { ref, toRefs, useTemplateRef } from "vue"
 import { isNil } from "lodash"
 
 import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
@@ -98,18 +98,18 @@ const emit = defineEmits<{
   saved: [childrenWithDiverseNeedsFundingCategoryId: number]
 }>()
 
-const categoryId = toRef(props, "childrenWithDiverseNeedsFundingCategoryId")
+const { childrenWithDiverseNeedsFundingCategoryId } = toRefs(props)
 const { childrenWithDiverseNeedsFundingCategory, save } =
-  useChildrenWithDiverseNeedsFundingCategory(categoryId)
+  useChildrenWithDiverseNeedsFundingCategory(childrenWithDiverseNeedsFundingCategoryId)
 
 const form = useTemplateRef("form")
 
 const isSaving = ref(false)
+
 const snack = useSnack()
 
 async function submit() {
   if (isSaving.value || form.value === null) return
-  if (isNil(childrenWithDiverseNeedsFundingCategory.value)) return
 
   const { valid } = await form.value.validate()
   if (!valid) return

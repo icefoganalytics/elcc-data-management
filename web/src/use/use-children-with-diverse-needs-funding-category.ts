@@ -28,6 +28,8 @@ export function useChildrenWithDiverseNeedsFundingCategory(
     isErrored: false,
   })
 
+  const snack = useSnack()
+
   let requestController: AbortController | undefined
 
   function clearRecord() {
@@ -58,7 +60,9 @@ export function useChildrenWithDiverseNeedsFundingCategory(
       const { childrenWithDiverseNeedsFundingCategory, policy } =
         await childrenWithDiverseNeedsFundingCategoriesApi.get(
           staticChildrenWithDiverseNeedsFundingCategoryId,
-          { signal: controller.signal }
+          {
+            signal: controller.signal,
+          }
         )
       if (
         controller.signal.aborted ||
@@ -71,20 +75,27 @@ export function useChildrenWithDiverseNeedsFundingCategory(
       state.childrenWithDiverseNeedsFundingCategory = childrenWithDiverseNeedsFundingCategory
       state.policy = policy
       state.isErrored = false
+
       return childrenWithDiverseNeedsFundingCategory
     } catch (error) {
       if (controller.signal.aborted || isCancel(error)) {
         return state.childrenWithDiverseNeedsFundingCategory
       }
 
-      console.error("Failed to fetch Children with Diverse Needs funding category", { error })
+      console.error("Failed to fetch Children with Diverse Needs funding category", {
+        error,
+      })
       if (
         unref(childrenWithDiverseNeedsFundingCategoryId) ===
         staticChildrenWithDiverseNeedsFundingCategoryId
       ) {
         state.isErrored = true
       }
-      throw error
+
+      rethrowUnexpectedError(error)
+
+      snack.error(`Failed to load Children with Diverse Needs funding category: ${error}`)
+      return state.childrenWithDiverseNeedsFundingCategory
     } finally {
       if (
         !controller.signal.aborted &&
@@ -133,28 +144,23 @@ export function useChildrenWithDiverseNeedsFundingCategory(
         state.childrenWithDiverseNeedsFundingCategory = childrenWithDiverseNeedsFundingCategory
         state.policy = policy
       }
+
       return childrenWithDiverseNeedsFundingCategory
     } catch (error) {
-      console.error("Failed to save Children with Diverse Needs funding category", { error })
+      console.error("Failed to save Children with Diverse Needs funding category", {
+        error,
+      })
       throw error
     }
   }
 
-  const snack = useSnack()
-
   watch(
     () => unref(childrenWithDiverseNeedsFundingCategoryId),
-    async (id) => {
+    async (newChildrenWithDiverseNeedsFundingCategoryId) => {
       clearRecord()
-      if (isNil(id)) return
+      if (isNil(newChildrenWithDiverseNeedsFundingCategoryId)) return
 
-      try {
-        await fetch()
-      } catch (error) {
-        rethrowUnexpectedError(error)
-
-        snack.error(`Failed to load Children with Diverse Needs funding category: ${error}`)
-      }
+      await fetch()
     },
     {
       immediate: true,
@@ -167,6 +173,7 @@ export function useChildrenWithDiverseNeedsFundingCategory(
 
   return {
     ...toRefs(state),
+
     fetch,
     refresh: fetch,
     save,

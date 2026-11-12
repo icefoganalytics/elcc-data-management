@@ -2,12 +2,12 @@
   <HeaderActionsFormCard
     ref="form"
     title="New Diverse Need Category"
-    @submit.prevent="createCategory"
+    @submit.prevent="createChildrenWithDiverseNeedsFundingCategory"
   >
     <v-row>
       <v-col cols="12">
         <FundingPeriodSearchableAutocomplete
-          v-model="attributes.fundingPeriodId"
+          v-model="childrenWithDiverseNeedsFundingCategoryAttributes.fundingPeriodId"
           :disabled="isCreating"
           :rules="[required]"
         />
@@ -16,7 +16,7 @@
     <v-row>
       <v-col cols="12">
         <v-text-field
-          v-model="attributes.categoryName"
+          v-model="childrenWithDiverseNeedsFundingCategoryAttributes.categoryName"
           label="Category Name *"
           :rules="[required]"
           :disabled="isCreating"
@@ -29,7 +29,7 @@
         md="6"
       >
         <NumberTextField
-          v-model="attributes.fromAge"
+          v-model="childrenWithDiverseNeedsFundingCategoryAttributes.fromAge"
           label="From Age"
           min="0"
           step="1"
@@ -41,7 +41,7 @@
         md="6"
       >
         <NumberTextField
-          v-model="attributes.toAge"
+          v-model="childrenWithDiverseNeedsFundingCategoryAttributes.toAge"
           label="To Age"
           min="0"
           step="1"
@@ -52,7 +52,7 @@
     <v-row>
       <v-col cols="12">
         <CurrencyInput
-          v-model="attributes.monthlyAmount"
+          v-model="childrenWithDiverseNeedsFundingCategoryAttributes.monthlyAmount"
           label="Monthly Amount *"
           :rules="[required]"
           :disabled="isCreating"
@@ -79,11 +79,13 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, useTemplateRef } from "vue"
+import { ref, useTemplateRef } from "vue"
 import { useRouteQuery } from "@vueuse/router"
 import { useRoute, useRouter } from "vue-router"
 
-import childrenWithDiverseNeedsFundingCategoriesApi from "@/api/children-with-diverse-needs-funding-categories-api"
+import childrenWithDiverseNeedsFundingCategoriesApi, {
+  type ChildrenWithDiverseNeedsFundingCategoryCreationAttributes,
+} from "@/api/children-with-diverse-needs-funding-categories-api"
 import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 
 import { required } from "@/utils/validators"
@@ -108,43 +110,45 @@ const fundingPeriodId = useRouteQuery<string | undefined, number | undefined>(
   }
 )
 
-type CategoryFormAttributes = {
-  fundingPeriodId: number | null
-  categoryName: string
-  fromAge: number | null
-  toAge: number | null
-  monthlyAmount: string
-}
-
-const attributes = reactive<CategoryFormAttributes>({
+const childrenWithDiverseNeedsFundingCategoryAttributes = ref<
+  Omit<ChildrenWithDiverseNeedsFundingCategoryCreationAttributes, "fundingPeriodId"> & {
+    fundingPeriodId: number | null
+  }
+>({
   fundingPeriodId: fundingPeriodId.value ?? null,
   categoryName: "",
   fromAge: null,
   toAge: null,
   monthlyAmount: "",
 })
+
 const isCreating = ref(false)
+
 const form = useTemplateRef("form")
+
 const snack = useSnack()
+
 const cancelRoute = {
   name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage",
 }
 
-async function createCategory() {
-  if (!form.value || isCreating.value) return
+async function createChildrenWithDiverseNeedsFundingCategory() {
+  if (isCreating.value || form.value === null) return
+
   const { valid } = await form.value.validate()
-  if (!valid || attributes.fundingPeriodId === null) return
+  if (!valid) return
+
+  const { fundingPeriodId } = childrenWithDiverseNeedsFundingCategoryAttributes.value
+  if (fundingPeriodId === null) return
 
   isCreating.value = true
   try {
     const { childrenWithDiverseNeedsFundingCategory } =
       await childrenWithDiverseNeedsFundingCategoriesApi.create({
-        fundingPeriodId: attributes.fundingPeriodId,
-        categoryName: attributes.categoryName,
-        fromAge: attributes.fromAge,
-        toAge: attributes.toAge,
-        monthlyAmount: attributes.monthlyAmount,
+        ...childrenWithDiverseNeedsFundingCategoryAttributes.value,
+        fundingPeriodId,
       })
+
     snack.success("Diverse need category created successfully!")
     await router.push({
       name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
@@ -162,10 +166,17 @@ async function createCategory() {
 }
 
 useBreadcrumbs("New Diverse Need Category", [
-  { title: "Administration", to: { name: "AdministrationPage" } },
+  {
+    title: "Administration",
+    to: {
+      name: "AdministrationPage",
+    },
+  },
   {
     title: "Diverse Need Categories",
-    to: { name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage" },
+    to: {
+      name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage",
+    },
   },
   {
     title: "New Category",

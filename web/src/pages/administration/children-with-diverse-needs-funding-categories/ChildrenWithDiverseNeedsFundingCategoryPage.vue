@@ -1,25 +1,10 @@
 <template>
   <v-skeleton-loader
-    v-if="isLoading"
+    v-if="isNil(childrenWithDiverseNeedsFundingCategory)"
     type="card"
   />
-  <v-empty-state
-    v-else-if="isErrored"
-    class="ma-5"
-    icon="mdi-alert-circle-outline"
-    headline="Unable to Load Category"
-    title="Diverse need category could not be loaded."
-  >
-    <template #actions>
-      <v-btn
-        color="primary"
-        @click="refreshCategory"
-        >Retry</v-btn
-      >
-    </template>
-  </v-empty-state>
   <HeaderActionsCard
-    v-else-if="childrenWithDiverseNeedsFundingCategory"
+    v-else
     title="Diverse Need Category Details"
   >
     <template #header-actions>
@@ -28,7 +13,9 @@
         color="primary"
         :to="{
           name: 'administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryEditPage',
-          params: { childrenWithDiverseNeedsFundingCategoryId: categoryId },
+          params: {
+            childrenWithDiverseNeedsFundingCategoryId,
+          },
         }"
       >
         Edit
@@ -38,24 +25,11 @@
         color="error"
         :loading="isDeleting"
         :disabled="isDeleting"
-        @click="retireCategory"
+        @click="retireChildrenWithDiverseNeedsFundingCategory"
       >
         Retire
       </v-btn>
     </template>
-    <v-alert
-      v-if="isFundingPeriodErrored"
-      type="error"
-      variant="tonal"
-      class="mb-4"
-    >
-      The funding period could not be loaded.
-      <v-btn
-        variant="text"
-        @click="refreshFundingPeriod"
-        >Retry</v-btn
-      >
-    </v-alert>
     <v-row>
       <v-col
         cols="12"
@@ -121,15 +95,18 @@
 <script setup lang="ts">
 import { computed, ref } from "vue"
 import { useRouter } from "vue-router"
+import { isNil } from "lodash"
 
 import childrenWithDiverseNeedsFundingCategoriesApi from "@/api/children-with-diverse-needs-funding-categories-api"
 import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
+
+import { formatMoney } from "@/utils/formatters"
+import blockedToTrueConfirm from "@/utils/blocked-to-true-confirm"
+
 import useChildrenWithDiverseNeedsFundingCategory from "@/use/use-children-with-diverse-needs-funding-category"
 import useFundingPeriod from "@/use/use-funding-period"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useSnack from "@/use/use-snack"
-import { formatMoney } from "@/utils/formatters"
-import blockedToTrueConfirm from "@/utils/blocked-to-true-confirm"
 
 import HeaderActionsCard from "@/components/common/HeaderActionsCard.vue"
 import DescriptionElement from "@/components/common/DescriptionElement.vue"
@@ -137,41 +114,43 @@ import DescriptionElement from "@/components/common/DescriptionElement.vue"
 const props = defineProps<{
   childrenWithDiverseNeedsFundingCategoryId: string
 }>()
-const router = useRouter()
-const categoryId = computed(() => Number(props.childrenWithDiverseNeedsFundingCategoryId))
-const {
-  childrenWithDiverseNeedsFundingCategory,
-  policy,
-  isLoading,
-  isErrored,
-  fetch: refreshCategory,
-} = useChildrenWithDiverseNeedsFundingCategory(categoryId)
+
+const childrenWithDiverseNeedsFundingCategoryId = computed(() =>
+  Number(props.childrenWithDiverseNeedsFundingCategoryId)
+)
+const { childrenWithDiverseNeedsFundingCategory, policy } =
+  useChildrenWithDiverseNeedsFundingCategory(childrenWithDiverseNeedsFundingCategoryId)
+
 const fundingPeriodId = computed(
   () => childrenWithDiverseNeedsFundingCategory.value?.fundingPeriodId
 )
-const {
-  fundingPeriod,
-  isLoading: isLoadingFundingPeriod,
-  isErrored: isFundingPeriodErrored,
-  refresh: refreshFundingPeriod,
-} = useFundingPeriod(fundingPeriodId)
+const { fundingPeriod, isLoading: isLoadingFundingPeriod } = useFundingPeriod(fundingPeriodId)
 const fundingPeriodDescription = computed(() => fundingPeriod.value?.fiscalYear ?? "Unavailable")
+
 const isDeleting = ref(false)
+
 const snack = useSnack()
 
-async function retireCategory() {
+const router = useRouter()
+
+async function retireChildrenWithDiverseNeedsFundingCategory() {
   if (
     !policy.value?.destroy ||
     isDeleting.value ||
     !blockedToTrueConfirm("Are you sure you want to retire this diverse need category?")
-  )
+  ) {
     return
+  }
 
   isDeleting.value = true
   try {
-    await childrenWithDiverseNeedsFundingCategoriesApi.delete(categoryId.value)
+    await childrenWithDiverseNeedsFundingCategoriesApi.delete(
+      childrenWithDiverseNeedsFundingCategoryId.value
+    )
     snack.success("Diverse need category retired successfully!")
-    await router.push({ name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage" })
+    await router.push({
+      name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage",
+    })
   } catch (error) {
     rethrowUnexpectedError(error)
 
@@ -182,16 +161,25 @@ async function retireCategory() {
 }
 
 useBreadcrumbs("Diverse Need Category Details", [
-  { title: "Administration", to: { name: "AdministrationPage" } },
+  {
+    title: "Administration",
+    to: {
+      name: "AdministrationPage",
+    },
+  },
   {
     title: "Diverse Need Categories",
-    to: { name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage" },
+    to: {
+      name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage",
+    },
   },
   {
     title: "Details",
     to: {
       name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
-      params: { childrenWithDiverseNeedsFundingCategoryId: categoryId.value },
+      params: {
+        childrenWithDiverseNeedsFundingCategoryId: childrenWithDiverseNeedsFundingCategoryId.value,
+      },
     },
   },
 ])

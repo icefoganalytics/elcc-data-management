@@ -14,14 +14,14 @@
         goToChildrenWithDiverseNeedsFundingCategory(item.id)
     "
   >
-    <template #item.fromAge="{ item }">{{ item.fromAge ?? "—" }}</template>
-    <template #item.toAge="{ item }">{{ item.toAge ?? "—" }}</template>
+    <template #item.fromAge="{ item }">
+      {{ item.fromAge ?? "—" }}
+    </template>
+    <template #item.toAge="{ item }">
+      {{ item.toAge ?? "—" }}
+    </template>
     <template #item.monthlyAmount="{ item }">
-      {{
-        formatMoney(item.monthlyAmount, {
-          maximumFractionDigits: 4,
-        })
-      }}
+      {{ formatMoney(item.monthlyAmount, monthlyAmountFormatOptions) }}
     </template>
     <template #item.actions="{ item }">
       <v-btn
@@ -70,6 +70,72 @@ const props = withDefaults(
   }
 )
 
+const page = useRouteQuery<string | undefined, number | undefined>(
+  `page${props.routeQuerySuffix}`,
+  "1",
+  {
+    transform: integerTransformer,
+  }
+)
+
+const perPage = useRouteQuery<string | undefined, number | undefined>(
+  `perPage${props.routeQuerySuffix}`,
+  "10",
+  {
+    transform: integerTransformer,
+  }
+)
+
+const sortBy = useVuetifySortByToSafeRouteQuery(`sortBy${props.routeQuerySuffix}`, [
+  {
+    key: "categoryName",
+    order: "asc",
+  },
+])
+
+const order = useVuetifySortByToSequelizeSafeOrder(sortBy)
+
+watch(
+  () => [props.where, props.filters],
+  () => {
+    page.value = 1
+  },
+  {
+    deep: true,
+  }
+)
+
+const childrenWithDiverseNeedsFundingCategoriesQuery = computed(() => ({
+  filters: props.filters,
+  where: props.where,
+  order: order.value,
+  page: page.value,
+  perPage: perPage.value,
+}))
+const { childrenWithDiverseNeedsFundingCategories, totalCount, isLoading } =
+  useChildrenWithDiverseNeedsFundingCategories(childrenWithDiverseNeedsFundingCategoriesQuery)
+
+const router = useRouter()
+
+type ChildrenWithDiverseNeedsFundingCategoryTableRow = {
+  item: ChildrenWithDiverseNeedsFundingCategoryAsIndex
+}
+
+function goToChildrenWithDiverseNeedsFundingCategory(
+  childrenWithDiverseNeedsFundingCategoryId: number
+) {
+  router.push({
+    name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
+    params: {
+      childrenWithDiverseNeedsFundingCategoryId,
+    },
+  })
+}
+
+const monthlyAmountFormatOptions = {
+  maximumFractionDigits: 4,
+}
+
 const headers = ref([
   {
     title: "Category Name",
@@ -97,56 +163,4 @@ const headers = ref([
     sortable: false,
   },
 ])
-const page = useRouteQuery<string | undefined, number | undefined>(
-  `page${props.routeQuerySuffix}`,
-  "1",
-  {
-    transform: integerTransformer,
-  }
-)
-const perPage = useRouteQuery<string | undefined, number | undefined>(
-  `perPage${props.routeQuerySuffix}`,
-  "10",
-  {
-    transform: integerTransformer,
-  }
-)
-const sortBy = useVuetifySortByToSafeRouteQuery(`sortBy${props.routeQuerySuffix}`, [
-  { key: "categoryName", order: "asc" },
-])
-const order = useVuetifySortByToSequelizeSafeOrder(sortBy)
-
-watch(
-  () => [props.where, props.filters],
-  () => {
-    page.value = 1
-  },
-  { deep: true }
-)
-
-const childrenWithDiverseNeedsFundingCategoriesQuery = computed(() => ({
-  filters: props.filters,
-  where: props.where,
-  order: order.value,
-  page: page.value,
-  perPage: perPage.value,
-}))
-const { childrenWithDiverseNeedsFundingCategories, totalCount, isLoading } =
-  useChildrenWithDiverseNeedsFundingCategories(childrenWithDiverseNeedsFundingCategoriesQuery)
-
-const router = useRouter()
-type ChildrenWithDiverseNeedsFundingCategoryTableRow = {
-  item: ChildrenWithDiverseNeedsFundingCategoryAsIndex
-}
-
-function goToChildrenWithDiverseNeedsFundingCategory(
-  childrenWithDiverseNeedsFundingCategoryId: number
-) {
-  router.push({
-    name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
-    params: {
-      childrenWithDiverseNeedsFundingCategoryId,
-    },
-  })
-}
 </script>
