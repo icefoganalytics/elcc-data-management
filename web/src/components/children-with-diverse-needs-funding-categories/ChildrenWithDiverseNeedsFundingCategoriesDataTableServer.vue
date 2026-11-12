@@ -44,16 +44,18 @@ import { computed, ref, watch } from "vue"
 import { useRouteQuery } from "@vueuse/router"
 import { useRouter } from "vue-router"
 
-import { formatMoney } from "@/utils/formatters"
-import { integerTransformer } from "@/utils/use-route-query-transformers"
-import useVuetifySortByToSafeRouteQuery from "@/use/vuetify/use-vuetify-sort-by-to-safe-route-query"
-import useVuetifySortByToSequelizeSafeOrder from "@/use/vuetify/use-vuetify-sort-by-to-sequelize-safe-order"
-import useChildrenWithDiverseNeedsFundingCategories from "@/use/use-children-with-diverse-needs-funding-categories"
 import type {
   ChildrenWithDiverseNeedsFundingCategoryAsIndex,
   ChildrenWithDiverseNeedsFundingCategoryFiltersOptions,
   ChildrenWithDiverseNeedsFundingCategoryWhereOptions,
 } from "@/api/children-with-diverse-needs-funding-categories-api"
+
+import { formatMoney } from "@/utils/formatters"
+import { integerTransformer } from "@/utils/use-route-query-transformers"
+
+import useVuetifySortByToSafeRouteQuery from "@/use/vuetify/use-vuetify-sort-by-to-safe-route-query"
+import useVuetifySortByToSequelizeSafeOrder from "@/use/vuetify/use-vuetify-sort-by-to-sequelize-safe-order"
+import useChildrenWithDiverseNeedsFundingCategories from "@/use/use-children-with-diverse-needs-funding-categories"
 
 const props = withDefaults(
   defineProps<{
