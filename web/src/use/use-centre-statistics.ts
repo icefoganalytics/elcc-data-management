@@ -11,10 +11,8 @@ export type CentreStatistics = {
 
 export function useCentreStatistics({
   skipWatchIf = () => false,
-  onError,
 }: {
   skipWatchIf?: () => boolean
-  onError?: (error: unknown) => void
 } = {}) {
   const state = reactive<{
     statistics: CentreStatistics | null
@@ -86,15 +84,7 @@ export function useCentreStatistics({
     async (skip) => {
       if (skip) return
 
-      try {
-        await fetch()
-      } catch (error) {
-        if (onError) {
-          onError(error)
-          return
-        }
-        throw error
-      }
+      await fetch()
     },
     { immediate: true }
   )

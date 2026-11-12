@@ -65,6 +65,7 @@ describe("web/src/pages/DashboardPage.vue", () => {
         vi.mocked(httpClient, true).get.mockRejectedValueOnce(
           new ApiOperationError("Unavailable", 503)
         )
+        const errors: unknown[] = []
         const router = mockRouter([
           { path: "/", name: "DashboardPage", component: { template: "<div />" } },
           { path: "/centres", name: "ChildCareCentresPage", component: { template: "<div />" } },
@@ -77,6 +78,7 @@ describe("web/src/pages/DashboardPage.vue", () => {
           global: {
             plugins: [router, mockVuetify()],
             stubs: { apexchart: true },
+            config: { errorHandler: (error) => errors.push(error) },
           },
         })
         await flushPromises()
@@ -85,13 +87,12 @@ describe("web/src/pages/DashboardPage.vue", () => {
         expect(wrapper.get('[aria-label="Community count"]').text()).toEqual("Unavailable")
       })
 
-      test("when loading fails with an operation error, presents shared error feedback", async () => {
+      test("when loading fails with an operation error, forwards its message to application recovery", async () => {
         // Arrange
         vi.mocked(httpClient, true).get.mockRejectedValueOnce(
           new ApiOperationError("Unavailable", 503)
         )
-        const snack = useSnack()
-        snack.reset()
+        const errors: unknown[] = []
         const router = mockRouter([
           { path: "/", name: "DashboardPage", component: { template: "<div />" } },
           { path: "/centres", name: "ChildCareCentresPage", component: { template: "<div />" } },
@@ -104,12 +105,13 @@ describe("web/src/pages/DashboardPage.vue", () => {
           global: {
             plugins: [router, mockVuetify()],
             stubs: { apexchart: true },
+            config: { errorHandler: (error) => errors.push(error) },
           },
         })
         await flushPromises()
 
         // Assert
-        expect(snack.message.value).toEqual("Failed to load centre statistics.")
+        expect(errors).toMatchObject([{ message: "Unavailable" }])
       })
 
       test("when authentication is required, forwards the original error to application recovery", async () => {
