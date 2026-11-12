@@ -4,10 +4,10 @@
     :model-value="formattedValue"
     :rules="transformedRules"
     type="text"
-    @focus="onFocus"
-    @blur="onBlur"
+    @focus="rememberInitialValue"
+    @blur="commitValueOrRestoreInitialValue"
     @keydown.escape="resetValue"
-    @keydown.enter="onEnter"
+    @keydown.enter="commitValue"
   />
 </template>
 
@@ -82,11 +82,11 @@ watch(
   }
 )
 
-function onFocus() {
+function rememberInitialValue() {
   initialNumberValue.value = props.modelValue
 }
 
-function onBlur() {
+function commitValueOrRestoreInitialValue() {
   if (numberValue.value === null) {
     resetValue()
     return
@@ -95,7 +95,7 @@ function onBlur() {
   emit("update:modelValue", new Big(numberValue.value).toFixed(4))
 }
 
-function onEnter() {
+function commitValue() {
   if (numberValue.value === null) {
     emit("update:modelValue", null)
     return
