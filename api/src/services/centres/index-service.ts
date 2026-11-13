@@ -3,6 +3,7 @@ import { type Attributes, type WhereOptions } from "@sequelize/core"
 import { Centre, User } from "@/models"
 import CentrePolicy from "@/policies/centre-policy"
 import { type BaseScopeOptions, type ModelOrder } from "@/controllers/base-controller"
+
 import BaseService from "@/services/base-service"
 
 export type CentreIndexSummaries = {
