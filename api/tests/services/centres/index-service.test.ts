@@ -12,56 +12,114 @@ describe("api/src/services/centres/index-service.ts", () => {
       test("when results are paginated, summarizes all matching centres", async () => {
         // Arrange
         const currentUser = await userFactory.create()
-        await centreFactory.create({ community: "Whitehorse" })
-        await centreFactory.create({ community: "Whitehorse" })
-        await centreFactory.create({ community: "Dawson" })
+        await centreFactory.create({
+          community: "Whitehorse",
+        })
+        await centreFactory.create({
+          community: "Whitehorse",
+        })
+        await centreFactory.create({
+          community: "Dawson",
+        })
 
         // Act
-        const result = await IndexService.perform({}, [], [["id", "ASC"]], 1, 1, currentUser)
+        const result = await IndexService.perform(
+          {},
+          [],
+          [["id", "ASC"]],
+          1,
+          1,
+          currentUser
+        )
 
         // Assert
         expect(result).toEqual({
           centres: [expect.any(Centre)],
           totalCount: 3,
-          summaries: { communityCount: 2 },
+          summaries: {
+            communityCount: 2,
+          },
         })
       })
 
       test("when filters and policy scope exclude centres, excludes them from summaries", async () => {
         // Arrange
         const currentUser = await userFactory.create()
-        await centreFactory.create({ community: "Whitehorse", status: Centre.Statuses.ACTIVE })
-        await centreFactory.create({ community: "Dawson", status: Centre.Statuses.INACTIVE })
-        await centreFactory.create({ community: "Teslin", status: Centre.Statuses.ACTIVE })
+        await centreFactory.create({
+          community: "Whitehorse",
+          status: Centre.Statuses.ACTIVE,
+        })
+        await centreFactory.create({
+          community: "Dawson",
+          status: Centre.Statuses.INACTIVE,
+        })
+        await centreFactory.create({
+          community: "Teslin",
+          status: Centre.Statuses.ACTIVE,
+        })
         vi.spyOn(CentrePolicy, "applyScope").mockReturnValue(
-          Centre.withScope({ where: { community: { [Op.ne]: "Teslin" } } })
+          Centre.withScope({
+            where: {
+              community: {
+                [Op.ne]: "Teslin",
+              },
+            },
+          })
         )
 
         // Act
         const result = await IndexService.perform(
-          { status: Centre.Statuses.ACTIVE }, [], [["id", "ASC"]], 1, 0, currentUser
+          {
+            status: Centre.Statuses.ACTIVE,
+          },
+          [],
+          [["id", "ASC"]],
+          1,
+          0,
+          currentUser
         )
 
         // Assert
         expect(result).toEqual({
-          centres: [expect.objectContaining({ community: "Whitehorse" })],
+          centres: [
+            expect.objectContaining({
+              community: "Whitehorse",
+            }),
+          ],
           totalCount: 1,
-          summaries: { communityCount: 1 },
+          summaries: {
+            communityCount: 1,
+          },
         })
       })
 
       test("when no centres match, returns zero summaries", async () => {
         // Arrange
         const currentUser = await userFactory.create()
-        await centreFactory.create({ community: "Whitehorse" })
+        await centreFactory.create({
+          community: "Whitehorse",
+        })
 
         // Act
         const result = await IndexService.perform(
-          { community: "Dawson" }, [], [["id", "ASC"]], 1, 0, currentUser
+          {
+            community: "Dawson",
+          },
+          [],
+          [["id", "ASC"]],
+          1,
+          0,
+          currentUser
         )
 
         // Assert
-        expect(result).toEqual({ centres: [], totalCount: 0, summaries: { communityCount: 0 } })
+        expect(result).toEqual({
+          centres: [],
+          totalCount: 0,
+          summaries: {
+            communityCount: 0,
+          },
+        })
       })
     })
   })
