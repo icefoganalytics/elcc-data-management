@@ -1,4 +1,4 @@
-import { flushPromises, mount } from "@vue/test-utils"
+import { flushPromises } from "@vue/test-utils"
 
 import childrenWithDiverseNeedsFundingCategoriesApi from "@/api/children-with-diverse-needs-funding-categories-api"
 import childrenWithDiverseNeedsFundingRecordsApi from "@/api/children-with-diverse-needs-funding-records-api"
@@ -8,7 +8,7 @@ import {
   childrenWithDiverseNeedsFundingCategoryFactory,
   childrenWithDiverseNeedsFundingRecordFactory,
 } from "@/tests/factories"
-import { mockVuetify } from "@/tests/support"
+import { mountWithDefaultPlugins } from "@/tests/support"
 
 import ChildrenWithDiverseNeedsFundingCategorySearchableAutocomplete from "@/components/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategorySearchableAutocomplete.vue"
 
@@ -43,14 +43,13 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
             childrenWithDiverseNeedsFundingRecord: record,
             policy: record.policy,
           })
-        const wrapper = mount(ChildrenWithDiverseNeedsFundingRecordsCreateFormCard, {
+        const wrapper = mountWithDefaultPlugins(ChildrenWithDiverseNeedsFundingRecordsCreateFormCard, {
           props: {
             centreId: record.centreId,
             fiscalPeriodId: record.fiscalPeriodId,
             fundingPeriodId: 3,
             existingCategoryIds: [],
           },
-          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         wrapper
@@ -101,7 +100,8 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
         vi.spyOn(childrenWithDiverseNeedsFundingRecordsApi, "create").mockRejectedValue(
           authenticationError
         )
-        const wrapper = mount(ChildrenWithDiverseNeedsFundingRecordsCreateFormCard, {
+        const wrapper = mountWithDefaultPlugins(ChildrenWithDiverseNeedsFundingRecordsCreateFormCard, {
+          apiResponseErrorHandling: false,
           props: {
             centreId: record.centreId,
             fiscalPeriodId: record.fiscalPeriodId,
@@ -109,7 +109,6 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
             existingCategoryIds: [],
           },
           global: {
-            plugins: [mockVuetify()],
             config: { errorHandler },
           },
         })
