@@ -70,7 +70,7 @@
         color="warning"
         variant="outlined"
         :to="cancelRoute"
-        :disabled="isCreating"
+        :loading="isCreating"
         >Cancel</v-btn
       >
     </template>
@@ -81,6 +81,7 @@
 import { ref, useTemplateRef } from "vue"
 import { useRouteQuery } from "@vueuse/router"
 import { useRoute, useRouter } from "vue-router"
+import { isNil } from "lodash"
 
 import childrenWithDiverseNeedsFundingCategoriesApi, {
   type ChildrenWithDiverseNeedsFundingCategoryCreationAttributes,
@@ -110,11 +111,9 @@ const fundingPeriodId = useRouteQuery<string | undefined, number | undefined>(
 )
 
 const childrenWithDiverseNeedsFundingCategoryAttributes = ref<
-  Omit<ChildrenWithDiverseNeedsFundingCategoryCreationAttributes, "fundingPeriodId"> & {
-    fundingPeriodId: number | null
-  }
+  Partial<ChildrenWithDiverseNeedsFundingCategoryCreationAttributes>
 >({
-  fundingPeriodId: fundingPeriodId.value ?? null,
+  fundingPeriodId: fundingPeriodId.value,
   categoryName: "",
   fromAge: null,
   toAge: null,
@@ -137,8 +136,9 @@ async function createChildrenWithDiverseNeedsFundingCategory() {
   const { valid } = await form.value.validate()
   if (!valid) return
 
-  const { fundingPeriodId } = childrenWithDiverseNeedsFundingCategoryAttributes.value
-  if (fundingPeriodId === null) return
+  const { fundingPeriodId, categoryName, monthlyAmount } =
+    childrenWithDiverseNeedsFundingCategoryAttributes.value
+  if (isNil(fundingPeriodId) || isNil(categoryName) || isNil(monthlyAmount)) return
 
   isCreating.value = true
   try {
@@ -146,6 +146,8 @@ async function createChildrenWithDiverseNeedsFundingCategory() {
       await childrenWithDiverseNeedsFundingCategoriesApi.create({
         ...childrenWithDiverseNeedsFundingCategoryAttributes.value,
         fundingPeriodId,
+        categoryName,
+        monthlyAmount,
       })
 
     snack.success("Diverse need category created successfully!")
