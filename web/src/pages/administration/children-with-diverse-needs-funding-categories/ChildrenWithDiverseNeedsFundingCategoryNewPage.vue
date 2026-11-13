@@ -69,10 +69,10 @@
       <v-btn
         color="warning"
         variant="outlined"
+        :loading="isCreating"
         :to="{
           name: 'administration/ChildrenWithDiverseNeedsFundingCategoriesPage',
         }"
-        :loading="isCreating"
         >Cancel</v-btn
       >
     </template>
