@@ -10,7 +10,10 @@
           {{ title }}
         </component>
       </slot>
-      <v-spacer class="mt-4 mt-md-0" />
+      <v-spacer
+        class="mt-4 mt-md-0"
+        :class="{ 'flex-grow-0': $slots.header }"
+      />
       <slot name="header-actions"></slot>
     </v-card-title>
     <v-divider :class="dividerClass" />
