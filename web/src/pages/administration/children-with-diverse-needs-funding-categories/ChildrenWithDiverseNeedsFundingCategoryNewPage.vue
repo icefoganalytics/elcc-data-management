@@ -129,7 +129,7 @@ const form = useTemplateRef("form")
 const snack = useSnack()
 
 async function createChildrenWithDiverseNeedsFundingCategory() {
-  if (isCreating.value || form.value === null) return
+  if (isNil(form.value)) return
 
   const { valid } = await form.value.validate()
   if (!valid) return
