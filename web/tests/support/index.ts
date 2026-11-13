@@ -1,4 +1,5 @@
 export { directiveStubs } from "./directive-stubs"
+export { mockAuth0 } from "./mock-auth0"
 export { mockAxios } from "./mock-axios"
 export { mockCurrentUserApi } from "./mock-current-user-api"
 export { mockHttpClient, mockHttpGetRoutes } from "./mock-http-client"

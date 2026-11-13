@@ -4,7 +4,7 @@ import { AxiosHeaders } from "axios"
 import httpClient from "@/api/http-client"
 import ApiOperationError from "@/api/errors/api-operation-error"
 import CloudflareChallengeError from "@/api/errors/cloudflare-challenge-error"
-import { mockRouter, mountWithDefaultPlugins } from "@/tests/support"
+import { mountWithDefaultPlugins } from "@/tests/support"
 import { childCareSpaceFactory, fundingSubmissionLineJsonFactory } from "@/tests/factories"
 
 import FundingSubmissionLineJsonEditSheet from "@/components/funding-submission-line-jsons/FundingSubmissionLineJsonEditSheet.vue"
@@ -29,12 +29,8 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           }
           return { data: { fundingSubmissionLineJson: worksheet } }
         })
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-        await router.push("/")
-        await router.isReady()
         const wrapper = mountWithDefaultPlugins(FundingSubmissionLineJsonEditSheet, {
           props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
-          global: { plugins: [router] },
         })
         await flushPromises()
         const [estimateInput, actualInput] = wrapper.findAll("tbody input")
@@ -66,12 +62,8 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           if (url === "/api/child-care-spaces/1") return save.promise
           return { data: { fundingSubmissionLineJson: worksheet } }
         })
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-        await router.push("/")
-        await router.isReady()
         const wrapper = mountWithDefaultPlugins(FundingSubmissionLineJsonEditSheet, {
           props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
-          global: { plugins: [router] },
         })
         await flushPromises()
         const estimateInput = wrapper.get("tbody input")
@@ -109,12 +101,8 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           }
           return { data: { fundingSubmissionLineJson: worksheet } }
         })
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-        await router.push("/")
-        await router.isReady()
         const wrapper = mountWithDefaultPlugins(FundingSubmissionLineJsonEditSheet, {
           props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
-          global: { plugins: [router] },
         })
         await flushPromises()
         const inputs = wrapper.findAll("tbody input")
@@ -171,15 +159,12 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           }
           return { data: { fundingSubmissionLineJson: worksheet } }
         })
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-        await router.push("/")
-        await router.isReady()
         const errorHandler = vi.fn()
         const wrapper = mountWithDefaultPlugins(FundingSubmissionLineJsonEditSheet, {
+          apiResponseErrorHandling: false,
           props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
           global: {
             config: { errorHandler: (error) => errorHandler(error) },
-            plugins: [router],
           },
         })
         await flushPromises()
@@ -227,12 +212,8 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
             throw new ApiOperationError("Spaces save failed", 422)
           return saveJson()
         })
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-        await router.push("/")
-        await router.isReady()
         const wrapper = mountWithDefaultPlugins(FundingSubmissionLineJsonEditSheet, {
           props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
-          global: { plugins: [router] },
         })
         await flushPromises()
         const estimateInput = wrapper.get("tbody input")
@@ -260,15 +241,11 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
             }
             return { data: { fundingSubmissionLineJson: worksheet } }
           })
-          const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-          await router.push("/")
-          await router.isReady()
           const errorHandler = vi.fn()
           const wrapper = mountWithDefaultPlugins(FundingSubmissionLineJsonEditSheet, {
             props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
             global: {
               config: { errorHandler },
-              plugins: [router],
             },
           })
 
@@ -295,15 +272,12 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           if (isReloading) return pendingWorksheet.promise
           return { data: { fundingSubmissionLineJson: worksheet } }
         })
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-        await router.push("/")
-        await router.isReady()
         const errorHandler = vi.fn()
         const wrapper = mountWithDefaultPlugins(FundingSubmissionLineJsonEditSheet, {
+          apiResponseErrorHandling: false,
           props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
           global: {
             config: { errorHandler: (error) => errorHandler(error) },
-            plugins: [router],
           },
         })
         await flushPromises()
@@ -344,15 +318,11 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
             }
             return { data: { fundingSubmissionLineJson: worksheet } }
           })
-          const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-          await router.push("/")
-          await router.isReady()
           const errorHandler = vi.fn()
           const wrapper = mountWithDefaultPlugins(FundingSubmissionLineJsonEditSheet, {
             props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
             global: {
               config: { errorHandler },
-              plugins: [router],
             },
           })
           await flushPromises()
