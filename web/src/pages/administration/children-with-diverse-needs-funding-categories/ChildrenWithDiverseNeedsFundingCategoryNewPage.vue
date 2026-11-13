@@ -134,19 +134,12 @@ async function createChildrenWithDiverseNeedsFundingCategory() {
   const { valid } = await form.value.validate()
   if (!valid) return
 
-  const { fundingPeriodId, categoryName, monthlyAmount } =
-    childrenWithDiverseNeedsFundingCategoryAttributes.value
-  if (isNil(fundingPeriodId) || isNil(categoryName) || isNil(monthlyAmount)) return
-
   isCreating.value = true
   try {
     const { childrenWithDiverseNeedsFundingCategory } =
-      await childrenWithDiverseNeedsFundingCategoriesApi.create({
-        ...childrenWithDiverseNeedsFundingCategoryAttributes.value,
-        fundingPeriodId,
-        categoryName,
-        monthlyAmount,
-      })
+      await childrenWithDiverseNeedsFundingCategoriesApi.create(
+        childrenWithDiverseNeedsFundingCategoryAttributes.value as ChildrenWithDiverseNeedsFundingCategoryCreationAttributes
+      )
 
     snack.success("Diverse need category created successfully!")
     await router.push({
