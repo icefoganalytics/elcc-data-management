@@ -6,8 +6,6 @@ import AuthenticationRequiredError from "@/api/errors/authentication-required-er
 import CloudflareChallengeError from "@/api/errors/cloudflare-challenge-error"
 import UnexpectedApiResponseError from "@/api/errors/unexpected-api-response-error"
 
-import auth0 from "@/plugins/auth0-plugin"
-
 import useCloudflareChallenge from "@/use/use-cloudflare-challenge"
 import useSnack from "@/use/use-snack"
 
@@ -15,6 +13,7 @@ export function apiResponseErrorPlugin(application: App): void {
   const previousErrorHandler = application.config.errorHandler
   const { error: cloudflareChallengeError } = useCloudflareChallenge()
   const router = application.config.globalProperties.$router
+  const auth0 = application.config.globalProperties.$auth0
   const snack = useSnack()
 
   const stopNavigationErrorWatch = router.onError((error, to) => {
