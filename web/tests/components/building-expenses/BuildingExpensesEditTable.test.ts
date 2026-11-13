@@ -1,8 +1,8 @@
-import { flushPromises, mount } from "@vue/test-utils"
+import { flushPromises } from "@vue/test-utils"
 
 import buildingExpensesApi, { type BuildingExpenseAsIndex } from "@/api/building-expenses-api"
 
-import { mockVuetify } from "@/tests/support"
+import { mountWithDefaultPlugins } from "@/tests/support"
 
 import BuildingExpensesEditTable from "@/components/building-expenses/BuildingExpensesEditTable.vue"
 
@@ -47,9 +47,8 @@ describe("web/src/components/building-expenses/BuildingExpensesEditTable.vue", (
         const pendingSave =
           Promise.withResolvers<Awaited<ReturnType<typeof buildingExpensesApi.update>>>()
         vi.spyOn(buildingExpensesApi, "update").mockReturnValue(pendingSave.promise)
-        const wrapper = mount(BuildingExpensesEditTable, {
+        const wrapper = mountWithDefaultPlugins(BuildingExpensesEditTable, {
           props: { where: { centreId: 1, fiscalPeriodId: 1 } },
-          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.findAll("tr.cursor-pointer")[0].trigger("click")
