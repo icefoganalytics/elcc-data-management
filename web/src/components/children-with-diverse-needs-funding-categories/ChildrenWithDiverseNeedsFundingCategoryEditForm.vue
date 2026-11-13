@@ -113,7 +113,7 @@ const isSaving = ref(false)
 const snack = useSnack()
 
 async function submit() {
-  if (form.value === null) return
+  if (isNil(form.value)) return
 
   const { valid } = await form.value.validate()
   if (!valid) return
