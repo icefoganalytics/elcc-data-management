@@ -1,10 +1,10 @@
-import { flushPromises, mount } from "@vue/test-utils"
+import { flushPromises } from "@vue/test-utils"
 import { AxiosHeaders } from "axios"
 
 import httpClient from "@/api/http-client"
 import ApiOperationError from "@/api/errors/api-operation-error"
 import CloudflareChallengeError from "@/api/errors/cloudflare-challenge-error"
-import { mockRouter, mockVuetify } from "@/tests/support"
+import { mockRouter, mountWithDefaultPlugins } from "@/tests/support"
 import { childCareSpaceFactory, fundingSubmissionLineJsonFactory } from "@/tests/factories"
 
 import FundingSubmissionLineJsonEditSheet from "@/components/funding-submission-line-jsons/FundingSubmissionLineJsonEditSheet.vue"
@@ -32,9 +32,9 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
         await router.push("/")
         await router.isReady()
-        const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
+        const wrapper = mountWithDefaultPlugins(FundingSubmissionLineJsonEditSheet, {
           props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
-          global: { plugins: [router, mockVuetify()] },
+          global: { plugins: [router] },
         })
         await flushPromises()
         const [estimateInput, actualInput] = wrapper.findAll("tbody input")
@@ -69,9 +69,9 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
         await router.push("/")
         await router.isReady()
-        const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
+        const wrapper = mountWithDefaultPlugins(FundingSubmissionLineJsonEditSheet, {
           props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
-          global: { plugins: [router, mockVuetify()] },
+          global: { plugins: [router] },
         })
         await flushPromises()
         const estimateInput = wrapper.get("tbody input")
@@ -112,9 +112,9 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
         await router.push("/")
         await router.isReady()
-        const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
+        const wrapper = mountWithDefaultPlugins(FundingSubmissionLineJsonEditSheet, {
           props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
-          global: { plugins: [router, mockVuetify()] },
+          global: { plugins: [router] },
         })
         await flushPromises()
         const inputs = wrapper.findAll("tbody input")
@@ -175,11 +175,11 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         await router.push("/")
         await router.isReady()
         const errorHandler = vi.fn()
-        const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
+        const wrapper = mountWithDefaultPlugins(FundingSubmissionLineJsonEditSheet, {
           props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
           global: {
             config: { errorHandler: (error) => errorHandler(error) },
-            plugins: [router, mockVuetify()],
+            plugins: [router],
           },
         })
         await flushPromises()
@@ -230,9 +230,9 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
         await router.push("/")
         await router.isReady()
-        const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
+        const wrapper = mountWithDefaultPlugins(FundingSubmissionLineJsonEditSheet, {
           props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
-          global: { plugins: [router, mockVuetify()] },
+          global: { plugins: [router] },
         })
         await flushPromises()
         const estimateInput = wrapper.get("tbody input")
@@ -264,11 +264,11 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           await router.push("/")
           await router.isReady()
           const errorHandler = vi.fn()
-          const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
+          const wrapper = mountWithDefaultPlugins(FundingSubmissionLineJsonEditSheet, {
             props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
             global: {
               config: { errorHandler },
-              plugins: [router, mockVuetify()],
+              plugins: [router],
             },
           })
 
@@ -299,11 +299,11 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         await router.push("/")
         await router.isReady()
         const errorHandler = vi.fn()
-        const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
+        const wrapper = mountWithDefaultPlugins(FundingSubmissionLineJsonEditSheet, {
           props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
           global: {
             config: { errorHandler: (error) => errorHandler(error) },
-            plugins: [router, mockVuetify()],
+            plugins: [router],
           },
         })
         await flushPromises()
@@ -348,11 +348,11 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           await router.push("/")
           await router.isReady()
           const errorHandler = vi.fn()
-          const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
+          const wrapper = mountWithDefaultPlugins(FundingSubmissionLineJsonEditSheet, {
             props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
             global: {
               config: { errorHandler },
-              plugins: [router, mockVuetify()],
+              plugins: [router],
             },
           })
           await flushPromises()

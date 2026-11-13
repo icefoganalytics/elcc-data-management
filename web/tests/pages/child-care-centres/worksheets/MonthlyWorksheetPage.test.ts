@@ -1,4 +1,4 @@
-import { flushPromises, mount } from "@vue/test-utils"
+import { flushPromises } from "@vue/test-utils"
 
 import httpClient from "@/api/http-client"
 import ApiOperationError from "@/api/errors/api-operation-error"
@@ -15,7 +15,7 @@ import {
   fundingSubmissionLineJsonFactory,
   qualityEnhancementFactory,
 } from "@/tests/factories"
-import { mockHttpGetRoutes, mockRouter, mockVuetify } from "@/tests/support"
+import { mockHttpGetRoutes, mockRouter, mountWithDefaultPlugins } from "@/tests/support"
 
 import MonthlyWorksheetPage from "@/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue"
 
@@ -40,9 +40,9 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         await router.isReady()
 
         // Act
-        const wrapper = mount(MonthlyWorksheetPage, {
+        const wrapper = mountWithDefaultPlugins(MonthlyWorksheetPage, {
           props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
-          global: { plugins: [router, mockVuetify()] },
+          global: { plugins: [router] },
         })
         await flushPromises()
 
@@ -68,11 +68,11 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         await router.push("/")
         await router.isReady()
         const errorHandler = vi.fn()
-        mount(MonthlyWorksheetPage, {
+        mountWithDefaultPlugins(MonthlyWorksheetPage, {
           props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
           global: {
             config: { errorHandler: (error) => errorHandler(error) },
-            plugins: [router, mockVuetify()],
+            plugins: [router],
           },
         })
         await flushPromises()
@@ -110,11 +110,11 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         await router.push("/")
         await router.isReady()
         const errorHandler = vi.fn()
-        mount(MonthlyWorksheetPage, {
+        mountWithDefaultPlugins(MonthlyWorksheetPage, {
           props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
           global: {
             config: { errorHandler: (error) => errorHandler(error) },
-            plugins: [router, mockVuetify()],
+            plugins: [router],
           },
         })
         await flushPromises()
@@ -233,14 +233,14 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         ])
         await router.push("/")
         await router.isReady()
-        const wrapper = mount(MonthlyWorksheetPage, {
+        const wrapper = mountWithDefaultPlugins(MonthlyWorksheetPage, {
           props: {
             centreId: 1,
             fiscalYearSlug: "2024-25",
             month: FiscalPeriodMonths.APRIL,
           },
           global: {
-            plugins: [router, mockVuetify()],
+            plugins: [router],
             stubs: {
               BuildingExpenseCreateFormCard: true,
               BuildingExpensesEditTable: true,
@@ -333,7 +333,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         ])
         await router.push("/")
         await router.isReady()
-        const wrapper = mount(MonthlyWorksheetPage, {
+        const wrapper = mountWithDefaultPlugins(MonthlyWorksheetPage, {
           props: {
             centreId: 1,
             fiscalYearSlug: "2024-25",
@@ -343,7 +343,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             config: {
               errorHandler: vi.fn(),
             },
-            plugins: [router, mockVuetify()],
+            plugins: [router],
             stubs: {
               BuildingExpenseCreateFormCard: true,
               BuildingExpensesEditTable: true,
@@ -418,10 +418,10 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
         await router.push("/")
         await router.isReady()
-        const wrapper = mount(MonthlyWorksheetPage, {
+        const wrapper = mountWithDefaultPlugins(MonthlyWorksheetPage, {
           props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
           global: {
-            plugins: [router, mockVuetify()],
+            plugins: [router],
             stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
           },
         })
@@ -497,10 +497,10 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
         await router.push("/")
         await router.isReady()
-        const wrapper = mount(MonthlyWorksheetPage, {
+        const wrapper = mountWithDefaultPlugins(MonthlyWorksheetPage, {
           props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
           global: {
-            plugins: [router, mockVuetify()],
+            plugins: [router],
             stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
           },
         })
@@ -581,10 +581,10 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
           await router.push("/")
           await router.isReady()
-          const wrapper = mount(MonthlyWorksheetPage, {
+          const wrapper = mountWithDefaultPlugins(MonthlyWorksheetPage, {
             props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
             global: {
-              plugins: [router, mockVuetify()],
+              plugins: [router],
               stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
             },
           })
@@ -652,11 +652,11 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         await router.push("/")
         await router.isReady()
         const errorHandler = vi.fn()
-        const wrapper = mount(MonthlyWorksheetPage, {
+        const wrapper = mountWithDefaultPlugins(MonthlyWorksheetPage, {
           props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
           global: {
             config: { errorHandler: (error) => errorHandler(error) },
-            plugins: [router, mockVuetify()],
+            plugins: [router],
             stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
           },
         })
@@ -732,11 +732,11 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         await router.push("/")
         await router.isReady()
         const errorHandler = vi.fn()
-        const wrapper = mount(MonthlyWorksheetPage, {
+        const wrapper = mountWithDefaultPlugins(MonthlyWorksheetPage, {
           props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
           global: {
             config: { errorHandler: (error) => errorHandler(error) },
-            plugins: [router, mockVuetify()],
+            plugins: [router],
             stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
           },
         })
@@ -812,11 +812,11 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         await router.push("/")
         await router.isReady()
         const errorHandler = vi.fn()
-        const wrapper = mount(MonthlyWorksheetPage, {
+        const wrapper = mountWithDefaultPlugins(MonthlyWorksheetPage, {
           props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
           global: {
             config: { errorHandler: (error) => errorHandler(error) },
-            plugins: [router, mockVuetify()],
+            plugins: [router],
             stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
           },
         })

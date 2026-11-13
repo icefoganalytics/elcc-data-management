@@ -27,6 +27,12 @@ Follow [Scenario-Oriented Verification in the shared Code Organization Reference
 - Keep suite-specific lifecycle state and hooks inside the suite's outer `describe`. Reserve shared setup for infrastructure needed across suites; do not introduce a global fixture for locally owned resources.
 - For slow-save scenarios, a local deferred promise can hold the API spy pending. Keep stale server responses separate from editable records so subsequent edits cannot mutate the response fixture.
 
+### Mounting with Default Plugins
+
+Use `mountWithDefaultPlugins(Component, options)` from `@/tests/support` for component tests needing Vuetify. It preserves Vue Test Utils' `mount` typing, creates a fresh Vuetify instance per mount, and appends caller-supplied `global.plugins`. Other mount options, including props, stubs, and error handlers, remain unchanged.
+
+Keep router creation and navigation, scenario data, and assertions in each test. This shared infrastructure helper replaces repeated plugin setup, not scenario-specific mounting helpers. Use Vue Test Utils' `mount` directly when a test intentionally needs no default plugins.
+
 ### Testing HTTP Client Interceptors
 
 Use `mockAxios(httpClient)` from `@/tests/support/mock-axios` inside each scenario when testing the real HTTP client. Unmock `@/api/http-client` in that suite; keep authentication dependencies mocked. The helper installs `axios-mock-adapter`, rejects unmatched requests, and restores the original adapter with `onTestFinished`, including when assertions fail.
