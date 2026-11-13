@@ -69,7 +69,9 @@
       <v-btn
         color="warning"
         variant="outlined"
-        :to="cancelRoute"
+        :to="{
+          name: 'administration/ChildrenWithDiverseNeedsFundingCategoriesPage',
+        }"
         :loading="isCreating"
         >Cancel</v-btn
       >
@@ -125,10 +127,6 @@ const isCreating = ref(false)
 const form = useTemplateRef("form")
 
 const snack = useSnack()
-
-const cancelRoute = {
-  name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage",
-}
 
 async function createChildrenWithDiverseNeedsFundingCategory() {
   if (isCreating.value || form.value === null) return
