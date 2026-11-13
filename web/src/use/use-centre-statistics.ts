@@ -39,12 +39,11 @@ export function useCentreStatistics({
       )
       if (controller.signal.aborted) return
 
-      const statistics = {
+      state.statistics = {
         centreCount: totalCount,
         communityCount: summaries.communityCount,
       }
-      state.statistics = statistics
-      return statistics
+      return state.statistics
     } catch (error) {
       if (controller.signal.aborted || isCancel(error)) return
 
