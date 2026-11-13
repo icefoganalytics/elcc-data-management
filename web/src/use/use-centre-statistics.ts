@@ -1,18 +1,17 @@
 import { isCancel } from "axios"
-import { onScopeDispose, reactive, toRefs, watch } from "vue"
+import { type Ref, onScopeDispose, reactive, ref, toRefs, unref, watch } from "vue"
 
-import centresApi from "@/api/centres-api"
+import centresApi, { type CentreQueryOptions } from "@/api/centres-api"
 
 export type CentreStatistics = {
   centreCount: number
   communityCount: number
 }
 
-export function useCentreStatistics({
-  skipWatchIf = () => false,
-}: {
-  skipWatchIf?: () => boolean
-} = {}) {
+export function useCentreStatistics(
+  queryOptions: Ref<CentreQueryOptions> = ref({}),
+  { skipWatchIf = () => false }: { skipWatchIf?: () => boolean } = {}
+) {
   const state = reactive<{
     statistics: CentreStatistics | null
     isLoading: boolean
@@ -34,7 +33,10 @@ export function useCentreStatistics({
 
     try {
       const { totalCount, summaries } = await centresApi.list(
-        { perPage: 1 },
+        {
+          ...unref(queryOptions),
+          perPage: 1,
+        },
         { signal: controller.signal }
       )
       if (controller.signal.aborted) return
@@ -62,13 +64,13 @@ export function useCentreStatistics({
   })
 
   watch(
-    skipWatchIf,
-    async (skip) => {
+    () => [skipWatchIf(), unref(queryOptions)],
+    async ([skip]) => {
       if (skip) return
 
       await fetch()
     },
-    { immediate: true }
+    { deep: true, immediate: true }
   )
 
   return {
