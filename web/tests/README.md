@@ -29,9 +29,11 @@ Follow [Scenario-Oriented Verification in the shared Code Organization Reference
 
 ### Mounting with Default Plugins
 
-Use `mountWithDefaultPlugins(Component, options)` from `@/tests/support` for component tests needing Vuetify. It preserves Vue Test Utils' `mount` typing, creates a fresh Vuetify instance per mount, and appends caller-supplied `global.plugins`. Other mount options, including props, stubs, and error handlers, remain unchanged.
+Use `mountWithDefaultPlugins(Component, options)` from `@/tests/support` for component tests needing application plugins. It preserves Vue Test Utils' component props and wrapper typing and installs a fresh memory router, Vuetify, mocked Auth0, and API-error recovery per mount. Additional `global.plugins` are appended with Lodash `mergeWith`; props, stubs, and other mount options remain available.
 
-Keep router creation and navigation, scenario data, and assertions in each test. This shared infrastructure helper replaces repeated plugin setup, not scenario-specific mounting helpers. Use Vue Test Utils' `mount` directly when a test intentionally needs no default plugins.
+For specific routes or navigation, pass a scenario-owned `router` option instead of adding a second router to `global.plugins`. Pass `auth0: mockAuth0()` to configure authentication state or inspect login/logout calls; no live authentication runs. Set `apiResponseErrorHandling: false` when asserting errors at Vue's application boundary before recovery consumes them.
+
+Keep scenario data, navigation, and assertions in each test. This shared infrastructure helper replaces repeated plugin setup, not scenario-specific mounting helpers. Use Vue Test Utils' `mount` directly when a test intentionally needs no default plugins.
 
 ### Testing HTTP Client Interceptors
 
