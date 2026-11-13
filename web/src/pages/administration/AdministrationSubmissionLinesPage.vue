@@ -1,34 +1,36 @@
 <template>
-  <HeaderActionsCard title="Submission Lines">
+  <HeaderActionsCard>
     <template #header>
-      <v-row>
+      <v-row
+        align="center"
+        class="ma-0 mr-md-4"
+        no-gutters
+      >
         <v-col
           cols="12"
-          md="6"
-        >
-          <FundingPeriodFiscalYearSelect
-            v-model="fiscalYear"
-            label="Fiscal year"
-            single-line
-            hide-details
-            density="compact"
-            clearable
-            clear-icon="mdi-restore"
-            @click:clear="fiscalYear = CURRENT_FISCAL_YEAR"
-          />
-        </v-col>
-        <v-col
-          cols="12"
-          md="6"
+          md="8"
+          class="pb-4 pb-md-0 pr-md-4"
         >
           <v-text-field
             v-model="search"
             label="Search"
-            single-line
-            hide-details
             append-inner-icon="mdi-magnify"
             density="compact"
-            class="ml-2"
+            hide-details
+          />
+        </v-col>
+        <v-col
+          cols="12"
+          md="4"
+        >
+          <FundingPeriodFiscalYearSelect
+            v-model="fiscalYear"
+            label="Fiscal Year"
+            density="compact"
+            hide-details
+            clearable
+            clear-icon="mdi-restore"
+            @click:clear="fiscalYear = CURRENT_FISCAL_YEAR"
           />
         </v-col>
       </v-row>

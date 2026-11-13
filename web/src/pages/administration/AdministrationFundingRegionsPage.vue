@@ -1,13 +1,13 @@
 <template>
   <HeaderActionsCard>
     <template #header>
-      <!-- TODO: pull in debounced search field from other projects -->
       <v-text-field
         :model-value="search"
         label="Search"
         append-inner-icon="mdi-magnify"
         density="compact"
         hide-details
+        class="mr-md-4"
         @update:model-value="debounceUpdateSearch"
       />
     </template>

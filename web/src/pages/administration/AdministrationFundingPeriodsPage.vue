@@ -7,6 +7,7 @@
         append-inner-icon="mdi-magnify"
         density="compact"
         hide-details
+        class="mr-md-4"
       />
     </template>
     <template #header-actions>
@@ -24,6 +25,7 @@
     <FundingPeriodsDataTableServer :filters="fundingPeriodsFilters" />
   </HeaderActionsCard>
 </template>
+
 <script setup lang="ts">
 import { ref, computed } from "vue"
 
