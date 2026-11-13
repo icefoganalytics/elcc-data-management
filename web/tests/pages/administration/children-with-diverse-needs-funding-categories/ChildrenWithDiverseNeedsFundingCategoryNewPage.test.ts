@@ -1,4 +1,3 @@
-import { createPinia } from "pinia"
 import { flushPromises, mount } from "@vue/test-utils"
 import { VTextField } from "vuetify/components"
 
@@ -79,7 +78,7 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
         await router.isReady()
         const wrapper = mount(ChildrenWithDiverseNeedsFundingCategoryNewPage, {
           global: {
-            plugins: [createPinia(), router, mockVuetify()],
+            plugins: [router, mockVuetify()],
             config: {
               errorHandler(error) {
                 receivedErrors.push(error)
@@ -158,7 +157,7 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
         await router.isReady()
         const wrapper = mount(ChildrenWithDiverseNeedsFundingCategoryNewPage, {
           global: {
-            plugins: [createPinia(), router, mockVuetify()],
+            plugins: [router, mockVuetify()],
           },
         })
         await flushPromises()
@@ -232,7 +231,7 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
         await router.isReady()
         const wrapper = mount(ChildrenWithDiverseNeedsFundingCategoryNewPage, {
           global: {
-            plugins: [createPinia(), router, mockVuetify()],
+            plugins: [router, mockVuetify()],
           },
         })
         await flushPromises()
