@@ -1,5 +1,5 @@
 import { mount } from "@vue/test-utils"
-import { mergeWith } from "lodash"
+import { isArray, mergeWith } from "lodash"
 
 import mockVuetify from "@/tests/support/mock-vuetify"
 
@@ -10,10 +10,14 @@ export const mountWithDefaultPlugins: typeof mount = (component, options) => {
       {},
       { plugins: [mockVuetify()] },
       options?.global,
-      (value: unknown, source: unknown, key: string) => {
+      (defaultValue: unknown, suppliedValue: unknown, key: string) => {
         if (key !== "plugins") return
-        if (Array.isArray(value) && Array.isArray(source)) return value.concat(source)
-        return source
+
+        if (isArray(defaultValue) && isArray(suppliedValue)) {
+          return defaultValue.concat(suppliedValue)
+        }
+
+        return suppliedValue
       }
     ),
   })
