@@ -44,7 +44,9 @@ export class IndexService extends BaseService {
     return {
       centres,
       totalCount,
-      summaries: { communityCount },
+      summaries: {
+        communityCount,
+      },
     }
   }
 }
