@@ -26,7 +26,7 @@ import { DestroyService } from "@/services/funding-periods/destroy-service"
 describe("api/src/services/funding-periods/destroy-service.ts", () => {
   describe("DestroyService", () => {
     describe("#perform", () => {
-      test("when deleting a funding period, retires only its Diverse Needs rows", async () => {
+      test("when deleting a funding period, retires only its Children with Diverse Needs rows", async () => {
         // Arrange
         const centre = await centreFactory.create()
         const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2026-2027" })
@@ -53,9 +53,9 @@ describe("api/src/services/funding-periods/destroy-service.ts", () => {
         await DestroyService.perform(fundingPeriod)
 
         // Assert
-        const remainingChildrenWithDiverseNeedsFundingRecords =
+        const remainingChildrenWithDiverseNeedsFundingRecord =
           await ChildrenWithDiverseNeedsFundingRecord.findAll()
-        expect(remainingChildrenWithDiverseNeedsFundingRecords).toEqual([
+        expect(remainingChildrenWithDiverseNeedsFundingRecord).toEqual([
           expect.objectContaining({
             id: otherChildrenWithDiverseNeedsFundingRecord.id,
             fiscalPeriodId: otherFiscalPeriod.id,
@@ -63,7 +63,7 @@ describe("api/src/services/funding-periods/destroy-service.ts", () => {
         ])
       })
 
-      test("when deleting a funding period, retires only its Diverse Needs categories", async () => {
+      test("when deleting a funding period, retires only its Children with Diverse Needs categories", async () => {
         // Arrange
         const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2026-2027" })
         const otherFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2027-2028" })

@@ -121,12 +121,12 @@ async function submit() {
   try {
     const updatedChildrenWithDiverseNeedsFundingCategory = await save()
 
-    snack.success("Diverse need category updated successfully!")
+    snack.success("Children with Diverse Needs category updated successfully!")
     emit("saved", updatedChildrenWithDiverseNeedsFundingCategory.id)
   } catch (error) {
     rethrowUnexpectedError(error)
 
-    snack.error(`Failed to update diverse need category: ${error}`)
+    snack.error(`Failed to update Children with Diverse Needs category: ${error}`)
   } finally {
     isSaving.value = false
   }

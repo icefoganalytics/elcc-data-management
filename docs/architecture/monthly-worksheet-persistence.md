@@ -4,13 +4,13 @@ A monthly worksheet combines records with different persistence owners. The shar
 
 ## Persistence ownership
 
-| Worksheet data                 | Authoritative store                                                                              | Save boundary                                                                   |
-| ------------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
-| Child Care Spaces              | `child_care_spaces`, identified by centre, fiscal period, and category                           | Only the two occupancy inputs are updated through the Child Care Spaces API.    |
-| Children with Diverse Needs    | `children_with_diverse_needs_funding_records`, identified by centre, fiscal period, and category | Only the two occupancy inputs are updated through the Diverse Needs API.        |
-| Administration (10% of Spaces) | `administration_costs`, identified by centre, fiscal period, and category                        | Only the two occupancy inputs are updated through the Administration Costs API. |
-| Quality Enhancement Program    | `quality_enhancements`, identified by centre, fiscal period, and category                        | Only the two occupancy inputs are updated through the Quality Enhancements API. |
-| Remaining JSON-backed sections | `funding_submission_line_jsons.values`                                                           | The worksheet JSON API receives only its own sections.                          |
+| Worksheet data                 | Authoritative store                                                              | Save boundary                                                                          |
+| ------------------------------ | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Child Care Spaces              | `child_care_spaces`, identified by centre, fiscal period, and category           | Only the two occupancy inputs are updated through the Child Care Spaces API.           |
+| Children with Diverse Needs    | `children_with_diverse_needs_funding_records`, identified by centre, fiscal period, and category | Only the two occupancy inputs are updated through the Children with Diverse Needs API. |
+| Administration (10% of Spaces) | `administration_costs`, identified by centre, fiscal period, and category        | Only the two occupancy inputs are updated through the Administration Costs API.        |
+| Quality Enhancement Program    | `quality_enhancements`, identified by centre, fiscal period, and category        | Only the two occupancy inputs are updated through the Quality Enhancements API.        |
+| Remaining JSON-backed sections | `funding_submission_line_jsons.values`                                           | The worksheet JSON API receives only its own sections.                                 |
 
 The [JSON model](../../api/src/models/funding-submission-line-json.ts) rejects ledger-owned sections through validation of `values`, covering both virtual `lines` and raw `values` writes. Shared configuration writes and bulk cloning reject the same retired sections. This prevents clients opened before a deployment from reintroducing competing copies and double-counting reconciliation.
 
@@ -62,7 +62,7 @@ Missing funding-period mappings or conflicting category references abort the bac
 
 ## Diverse Needs ownership
 
-`children_with_diverse_needs_funding_categories` owns annual names, optional age ranges, and monthly amounts. Its API permits only system administrators to create, edit, and retire configuration, and keeps the funding period immutable after creation. Editing annual configuration leaves existing monthly snapshots unchanged. Retirement requires the category to have no active funding records.
+`children_with_diverse_needs_funding_categories` owns annual names, optional age ranges, and monthly amounts. **Administration → Children with Diverse Needs Categories** provides funding-period filtering and dedicated create, detail, edit, and retire pages. Only system administrators can mutate configuration; the funding period is immutable after creation. Editing annual configuration leaves existing monthly snapshots unchanged. Retirement requires the category to have no active funding records.
 
 `ChildrenWithDiverseNeedsFundingCategory.DEFAULTS` owns the initial Diverse Needs catalog. `FundingSubmissionLine` still owns sections not yet individualized; its now-empty defaults catalog, model property, and provisioning fallback remain wired until the remaining shared model and its consumers are retired together.
 

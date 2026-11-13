@@ -141,7 +141,7 @@ async function createChildrenWithDiverseNeedsFundingCategory() {
         childrenWithDiverseNeedsFundingCategoryAttributes.value as ChildrenWithDiverseNeedsFundingCategoryCreationAttributes
       )
 
-    snack.success("Diverse need category created successfully!")
+    snack.success("Children with Diverse Needs category created successfully!")
     await router.push({
       name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
       params: {
@@ -151,13 +151,13 @@ async function createChildrenWithDiverseNeedsFundingCategory() {
   } catch (error) {
     rethrowUnexpectedError(error)
 
-    snack.error(`Failed to create diverse need category: ${error}`)
+    snack.error(`Failed to create Children with Diverse Needs category: ${error}`)
   } finally {
     isCreating.value = false
   }
 }
 
-useBreadcrumbs("New Diverse Need Category", [
+useBreadcrumbs("New Children with Diverse Needs Category", [
   {
     title: "Administration",
     to: {
@@ -165,7 +165,7 @@ useBreadcrumbs("New Diverse Need Category", [
     },
   },
   {
-    title: "Diverse Need Categories",
+    title: "Children with Diverse Needs Categories",
     to: {
       name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage",
     },

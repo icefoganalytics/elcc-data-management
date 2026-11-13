@@ -49,7 +49,7 @@ const fundingPeriodId = computed(
 const { fundingPeriod } = useFundingPeriod(fundingPeriodId)
 const fundingPeriodDescription = computed(() => fundingPeriod.value?.fiscalYear ?? "Unknown")
 
-useBreadcrumbs("Edit Diverse Need Category", [
+useBreadcrumbs("Edit Children with Diverse Needs Category", [
   {
     title: "Administration",
     to: {
@@ -57,7 +57,7 @@ useBreadcrumbs("Edit Diverse Need Category", [
     },
   },
   {
-    title: "Diverse Need Categories",
+    title: "Children with Diverse Needs Categories",
     to: {
       name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage",
     },

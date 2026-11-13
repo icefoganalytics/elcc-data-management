@@ -66,7 +66,9 @@ export class ChildrenWithDiverseNeedsFundingCategory extends BaseModel<
     supportsFourDecimalPlaces(value: string) {
       const monthlyAmount = Big(value)
       if (!monthlyAmount.eq(monthlyAmount.toFixed(4))) {
-        throw new Error("Diverse Need category monthly amounts support at most four decimal places")
+        throw new Error(
+          "Children with Diverse Needs category monthly amounts support at most four decimal places"
+        )
       }
     },
   })

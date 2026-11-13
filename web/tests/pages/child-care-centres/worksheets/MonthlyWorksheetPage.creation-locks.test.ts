@@ -13,7 +13,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
       test.each([
         ["AdministrationCostCreateFormCard", "Add Administration Cost"],
         ["QualityEnhancementCreateFormCard", "Add Quality Enhancement"],
-        ["ChildrenWithDiverseNeedsFundingRecordsCreateFormCard", "Add Diverse Need"],
+        ["ChildrenWithDiverseNeedsFundingRecordsCreateFormCard", "Add Children with Diverse Needs"],
       ])(
         "when a %s unmounts during month navigation, releases its creation lock",
         async (formName, addLabel) => {
@@ -114,7 +114,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
       test.each([
         ["AdministrationCostCreateFormCard", "Add Administration Cost"],
         ["QualityEnhancementCreateFormCard", "Add Quality Enhancement"],
-        ["ChildrenWithDiverseNeedsFundingRecordsCreateFormCard", "Add Diverse Need"],
+        ["ChildrenWithDiverseNeedsFundingRecordsCreateFormCard", "Add Children with Diverse Needs"],
       ])(
         "when an old %s reports completion after month navigation, keeps the newer creation locked",
         async (formName, addLabel) => {
@@ -222,7 +222,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
       test.each([
         ["AdministrationCostCreateFormCard", "Add Administration Cost"],
         ["QualityEnhancementCreateFormCard", "Add Quality Enhancement"],
-        ["ChildrenWithDiverseNeedsFundingRecordsCreateFormCard", "Add Diverse Need"],
+        ["ChildrenWithDiverseNeedsFundingRecordsCreateFormCard", "Add Children with Diverse Needs"],
       ])(
         "when the current %s finishes after month navigation, releases its creation lock",
         async (formName, addLabel) => {

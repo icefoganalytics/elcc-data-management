@@ -115,7 +115,7 @@ describe("api/src/services/funding-reconciliations/calculate-eligible-expenses-p
         expect(result).toBe("70.0000")
       })
 
-      test("when a Diverse Need exists, includes its actual total exactly once alongside JSON expenses", async () => {
+      test("when a Children with Diverse Needs exists, includes its actual total exactly once alongside JSON expenses", async () => {
         // Arrange
         const centre = await centreFactory.create()
         const fundingPeriod = await fundingPeriodFactory.create({

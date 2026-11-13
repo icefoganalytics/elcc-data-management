@@ -644,8 +644,8 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         await flushPromises()
         const addDiverseNeed = wrapper
           .findAll("button")
-          .find((button) => button.text() === "Add Diverse Need")
-        if (!addDiverseNeed) throw new Error("Expected Add Diverse Need")
+          .find((button) => button.text() === "Add Children with Diverse Needs")
+        if (!addDiverseNeed) throw new Error("Expected Add Children with Diverse Needs")
         await addDiverseNeed.trigger("click")
 
         // Act
@@ -721,8 +721,8 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         await flushPromises()
         const addDiverseNeed = wrapper
           .findAll("button")
-          .find((button) => button.text() === "Add Diverse Need")
-        if (!addDiverseNeed) throw new Error("Expected Add Diverse Need")
+          .find((button) => button.text() === "Add Children with Diverse Needs")
+        if (!addDiverseNeed) throw new Error("Expected Add Children with Diverse Needs")
         await addDiverseNeed.trigger("click")
 
         // Act
@@ -798,8 +798,8 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         await flushPromises()
         const addDiverseNeed = wrapper
           .findAll("button")
-          .find((button) => button.text() === "Add Diverse Need")
-        if (!addDiverseNeed) throw new Error("Expected Add Diverse Need")
+          .find((button) => button.text() === "Add Children with Diverse Needs")
+        if (!addDiverseNeed) throw new Error("Expected Add Children with Diverse Needs")
         await addDiverseNeed.trigger("click")
 
         // Act

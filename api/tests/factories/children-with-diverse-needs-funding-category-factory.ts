@@ -11,7 +11,7 @@ export const childrenWithDiverseNeedsFundingCategoryFactory =
       associate("fundingPeriod", fundingPeriodFactory)
 
       return {
-        categoryName: `Diverse Need Category ${sequence}`,
+        categoryName: `Children with Diverse Needs Category ${sequence}`,
         fromAge: 2,
         toAge: 3,
         monthlyAmount: "54.9600",

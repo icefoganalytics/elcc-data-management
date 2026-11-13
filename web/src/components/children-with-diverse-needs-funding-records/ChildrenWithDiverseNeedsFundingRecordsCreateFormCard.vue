@@ -3,7 +3,7 @@
     ref="headerActionsFormCard"
     @submit.prevent="create"
   >
-    <template #header><h4>Add Diverse Need</h4></template>
+    <template #header><h4>Add Children with Diverse Needs</h4></template>
     <v-row>
       <v-col cols="12">
         <ChildrenWithDiverseNeedsFundingCategorySearchableAutocomplete
@@ -141,12 +141,12 @@ async function create() {
       })
 
     emit("created", childrenWithDiverseNeedsFundingRecord.id)
-    snack.success("Diverse need created successfully")
+    snack.success("Children with Diverse Needs funding record created successfully")
   } catch (error) {
     console.error("Failed to create diverse need", { error })
     rethrowUnexpectedError(error)
 
-    snack.error(`Failed to create diverse need: ${error}`)
+    snack.error(`Failed to create Children with Diverse Needs: ${error}`)
   } finally {
     isCreating.value = false
     emit("saving", false)
