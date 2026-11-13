@@ -11,7 +11,8 @@
         :to="{
           name: 'administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryEditPage',
           params: {
-            childrenWithDiverseNeedsFundingCategoryId,
+            childrenWithDiverseNeedsFundingCategoryId:
+              childrenWithDiverseNeedsFundingCategoryIdAsNumber,
           },
         }"
       >
@@ -112,11 +113,11 @@ const props = defineProps<{
   childrenWithDiverseNeedsFundingCategoryId: string
 }>()
 
-const childrenWithDiverseNeedsFundingCategoryId = computed(() =>
+const childrenWithDiverseNeedsFundingCategoryIdAsNumber = computed(() =>
   Number(props.childrenWithDiverseNeedsFundingCategoryId)
 )
 const { childrenWithDiverseNeedsFundingCategory, policy } =
-  useChildrenWithDiverseNeedsFundingCategory(childrenWithDiverseNeedsFundingCategoryId)
+  useChildrenWithDiverseNeedsFundingCategory(childrenWithDiverseNeedsFundingCategoryIdAsNumber)
 
 const fundingPeriodId = computed(
   () => childrenWithDiverseNeedsFundingCategory.value?.fundingPeriodId
@@ -142,7 +143,7 @@ async function retireChildrenWithDiverseNeedsFundingCategory() {
   isDeleting.value = true
   try {
     await childrenWithDiverseNeedsFundingCategoriesApi.delete(
-      childrenWithDiverseNeedsFundingCategoryId.value
+      childrenWithDiverseNeedsFundingCategoryIdAsNumber.value
     )
     snack.success("Diverse need category retired successfully!")
     await router.push({
@@ -175,7 +176,8 @@ useBreadcrumbs("Diverse Need Category Details", [
     to: {
       name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
       params: {
-        childrenWithDiverseNeedsFundingCategoryId: childrenWithDiverseNeedsFundingCategoryId.value,
+        childrenWithDiverseNeedsFundingCategoryId:
+          childrenWithDiverseNeedsFundingCategoryIdAsNumber.value,
       },
     },
   },
