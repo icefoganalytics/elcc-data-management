@@ -19,7 +19,13 @@
               >mdi-home</v-icon
             >
             <div>Managing</div>
-            <div style="font-size: 52px; line-height: 52px">{{ centreCount }}</div>
+            <div
+              aria-label="Child care centre count"
+              aria-live="polite"
+              style="font-size: 52px; line-height: 52px"
+            >
+              {{ centreCount }}
+            </div>
             <div>Child Care Centres</div>
           </v-card-text>
         </v-card>
@@ -39,7 +45,13 @@
               >mdi-map</v-icon
             >
             <div>Located In</div>
-            <div style="font-size: 52px; line-height: 52px">{{ communityCount }}</div>
+            <div
+              aria-label="Community count"
+              aria-live="polite"
+              style="font-size: 52px; line-height: 52px"
+            >
+              {{ communityCount }}
+            </div>
             <div>Communities</div>
           </v-card-text>
         </v-card>
@@ -82,37 +94,43 @@
   </div>
 </template>
 
-<script lang="ts">
-import { useCentreStore } from "@/modules/centre/store"
-import { mapState } from "pinia"
+<script setup lang="ts">
+import { computed } from "vue"
 import VueApexCharts from "vue3-apexcharts"
-import useBreadcrumbs from "@/use/use-breadcrumbs"
 
-export default {
-  name: "DashboardPage",
-  components: { VueApexCharts },
-  setup() {
-    useBreadcrumbs("ELCC Home", [])
+import useBreadcrumbs from "@/use/use-breadcrumbs"
+import useCentreStatistics from "@/use/use-centre-statistics"
+
+const { statistics, isLoading } = useCentreStatistics()
+
+const centreCount = computed(() => {
+  if (isLoading.value) return "Loading…"
+  if (statistics.value === null) return "Unavailable"
+
+  return statistics.value.centreCount
+})
+const communityCount = computed(() => {
+  if (isLoading.value) return "Loading…"
+  if (statistics.value === null) return "Unavailable"
+
+  return statistics.value.communityCount
+})
+
+const chartOptions = {
+  chart: {
+    id: "vuechart-example",
   },
-  data: () => ({
-    chartOptions: {
-      chart: {
-        id: "vuechart-example",
-      },
-      xaxis: {
-        categories: [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023],
-      },
-    },
-    chartSeries: [
-      {
-        name: "Enrollment",
-        color: "#7A9A01",
-        data: [30, 40, 45, 50, 49, 60, 70, 91],
-      },
-    ],
-  }),
-  computed: {
-    ...mapState(useCentreStore, ["centreCount", "communityCount"]),
+  xaxis: {
+    categories: [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023],
   },
 }
+const chartSeries = [
+  {
+    name: "Enrollment",
+    color: "#7A9A01",
+    data: [30, 40, 45, 50, 49, 60, 70, 91],
+  },
+]
+
+useBreadcrumbs("ELCC Home", [])
 </script>

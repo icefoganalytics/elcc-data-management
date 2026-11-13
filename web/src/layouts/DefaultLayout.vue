@@ -8,8 +8,6 @@
       fluid
       class="page-wrapper"
     >
-      <PageLoader v-if="isLoading" />
-
       <ExactingBreadcrumbs
         class="pl-4 mb-4 mb-2 mt-n3 mx-n4 text-body-1 font-weight-bold"
         bg-color="yg-moss"
@@ -25,28 +23,10 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue"
-
-import { useCentreStore } from "@/modules/centre/store"
-import { useSubmissionLinesStore } from "@/modules/submission-lines/store"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 
-import PageLoader from "@/components/common/PageLoader.vue"
 import DefaultAppBar from "@/components/layouts/DefaultAppBar.vue"
 import ExactingBreadcrumbs from "@/components/layouts/ExactingBreadcrumbs.vue"
-
-const centreStore = useCentreStore()
-const submissionLinesStore = useSubmissionLinesStore()
-
-const isLoading = ref(true)
-
-onMounted(async () => {
-  try {
-    await Promise.all([centreStore.initialize(), submissionLinesStore.initialize()])
-  } finally {
-    isLoading.value = false
-  }
-})
 
 const { title, breadcrumbs } = useBreadcrumbs()
 </script>

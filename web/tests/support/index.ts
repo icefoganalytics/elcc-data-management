@@ -1,5 +1,8 @@
 export { directiveStubs } from "./directive-stubs"
+export { mockAuth0 } from "./mock-auth0"
+export { mockAxios } from "./mock-axios"
 export { mockCurrentUserApi } from "./mock-current-user-api"
 export { mockHttpClient, mockHttpGetRoutes } from "./mock-http-client"
 export { mockRouter } from "./mock-router"
 export { mockVuetify } from "./mock-vuetify"
+export { mountWithDefaultPlugins } from "./mount-with-default-plugins"

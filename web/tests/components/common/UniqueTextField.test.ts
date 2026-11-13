@@ -4,12 +4,15 @@ import { AxiosHeaders } from "axios"
 import ApiOperationError from "@/api/errors/api-operation-error"
 import AuthenticationRequiredError from "@/api/errors/authentication-required-error"
 import CloudflareChallengeError from "@/api/errors/cloudflare-challenge-error"
+
 import apiResponseErrorPlugin from "@/plugins/api-response-error-plugin"
-import auth0 from "@/plugins/auth0-plugin"
+
 import useCloudflareChallenge from "@/use/use-cloudflare-challenge"
-import { mockRouter, mockVuetify } from "@/tests/support"
+
+import { mockAuth0, mockRouter, mockVuetify, mountWithDefaultPlugins } from "@/tests/support"
 
 import CloudflareChallengeDialog from "@/components/CloudflareChallengeDialog.vue"
+
 import UniqueTextField from "@/components/common/UniqueTextField.vue"
 
 describe("web/src/components/common/UniqueTextField.vue", () => {
@@ -33,14 +36,15 @@ describe("web/src/components/common/UniqueTextField.vue", () => {
         ])
         await router.push("/funding-regions/7/edit?filter=mine#name")
         await router.isReady()
-        const login = vi.spyOn(auth0, "loginWithRedirect").mockResolvedValue(undefined)
-        const wrapper = mount(UniqueTextField, {
+        const auth0 = mockAuth0()
+        const wrapper = mountWithDefaultPlugins(UniqueTextField, {
+          router,
+          auth0,
           props: {
             modelValue: "",
             label: "Name",
             checkAvailability: vi.fn().mockRejectedValue(new AuthenticationRequiredError()),
           },
-          global: { plugins: [router, mockVuetify(), apiResponseErrorPlugin] },
         })
 
         // Act
@@ -49,7 +53,7 @@ describe("web/src/components/common/UniqueTextField.vue", () => {
         await flushPromises()
 
         // Assert
-        expect(login).toHaveBeenCalledWith({
+        expect(auth0.loginWithRedirect).toHaveBeenCalledWith({
           appState: { target: "/funding-regions/7/edit?filter=mine#name" },
         })
       })

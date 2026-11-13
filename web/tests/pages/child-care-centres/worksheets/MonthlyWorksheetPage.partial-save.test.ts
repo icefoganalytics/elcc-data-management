@@ -1,10 +1,10 @@
-import { createPinia } from "pinia"
 import { flushPromises, mount } from "@vue/test-utils"
 
 import httpClient from "@/api/http-client"
 import administrationCostsApi from "@/api/administration-costs-api"
 import qualityEnhancementsApi from "@/api/quality-enhancements-api"
 import ApiOperationError from "@/api/errors/api-operation-error"
+
 import { FiscalPeriodMonths } from "@/use/use-fiscal-periods"
 
 import {
@@ -87,7 +87,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         const wrapper = mount(MonthlyWorksheetPage, {
           props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
           global: {
-            plugins: [router, createPinia(), mockVuetify()],
+            plugins: [router, mockVuetify()],
             stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
           },
         })
@@ -183,7 +183,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         const wrapper = mount(MonthlyWorksheetPage, {
           props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
           global: {
-            plugins: [router, createPinia(), mockVuetify()],
+            plugins: [router, mockVuetify()],
             stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
           },
         })
@@ -268,7 +268,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         const wrapper = mount(MonthlyWorksheetPage, {
           props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
           global: {
-            plugins: [router, createPinia(), mockVuetify()],
+            plugins: [router, mockVuetify()],
             stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
           },
         })

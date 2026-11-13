@@ -1,4 +1,3 @@
-import { createPinia } from "pinia"
 import { flushPromises, mount } from "@vue/test-utils"
 
 import childrenWithDiverseNeedsFundingCategoriesApi from "@/api/children-with-diverse-needs-funding-categories-api"
@@ -30,7 +29,7 @@ describe("web/src/components/children-with-diverse-needs-funding-categories/Chil
         // Act
         const wrapper = mount(ChildrenWithDiverseNeedsFundingCategorySearchableAutocomplete, {
           props: { modelValue: 8, fundingPeriodId: 3 },
-          global: { plugins: [createPinia(), mockVuetify()] },
+          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
 

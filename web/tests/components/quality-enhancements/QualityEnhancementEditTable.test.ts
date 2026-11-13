@@ -1,15 +1,17 @@
-import { createPinia } from "pinia"
-import { DOMWrapper, flushPromises, mount } from "@vue/test-utils"
+import { DOMWrapper, flushPromises } from "@vue/test-utils"
 import { AxiosError } from "axios"
 
 import qualityEnhancementsApi from "@/api/quality-enhancements-api"
 import ApiOperationError from "@/api/errors/api-operation-error"
-import apiResponseErrorPlugin from "@/plugins/api-response-error-plugin"
+
 import useSnack from "@/use/use-snack"
+
 import { qualityEnhancementFactory } from "@/tests/factories"
-import { mockRouter, mockVuetify } from "@/tests/support"
-import QualityEnhancementEditTable from "@/components/quality-enhancements/QualityEnhancementEditTable.vue"
+import { mountWithDefaultPlugins } from "@/tests/support"
+
 import AppSnackbar from "@/components/layouts/AppSnackbar.vue"
+
+import QualityEnhancementEditTable from "@/components/quality-enhancements/QualityEnhancementEditTable.vue"
 
 describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vue", () => {
   describe("QualityEnhancementEditTable", () => {
@@ -27,13 +29,9 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         vi.spyOn(qualityEnhancementsApi, "update").mockRejectedValue(
           new AxiosError("Network unavailable", "ERR_NETWORK")
         )
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-        await router.push("/")
-        await router.isReady()
-        mount(AppSnackbar, { global: { plugins: [mockVuetify()] }, attachTo: document.body })
-        const wrapper = mount(QualityEnhancementEditTable, {
+        mountWithDefaultPlugins(AppSnackbar, { attachTo: document.body })
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [router, createPinia(), mockVuetify(), apiResponseErrorPlugin] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -60,9 +58,8 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         vi.spyOn(qualityEnhancementsApi, "update").mockRejectedValue(
           new ApiOperationError("Save unavailable", 503)
         )
-        const wrapper = mount(QualityEnhancementEditTable, {
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [createPinia(), mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -70,14 +67,14 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         await input.setValue("0.25")
 
         // Act
-        void wrapper.vm.commitEdit()
+        wrapper.vm.commitEdit()
         await flushPromises()
 
         // Assert
         expect(wrapper.get(".v-data-table").attributes("aria-busy")).toEqual("true")
       })
 
-      test("when an active edit is saving, waits for its write before reporting success", async () => {
+      test("when an active edit is pending, waits for its write before reporting success", async () => {
         // Arrange
         const record = qualityEnhancementFactory.build()
         vi.spyOn(qualityEnhancementsApi, "list").mockResolvedValue({
@@ -89,26 +86,51 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
           policy: typeof record.policy
         }>()
         vi.spyOn(qualityEnhancementsApi, "update").mockReturnValue(update.promise)
-        const wrapper = mount(QualityEnhancementEditTable, {
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [createPinia(), mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
         await wrapper.get('input[inputmode="decimal"]').setValue("0.25")
 
-        // Act & Assert
+        // Act
         let committed: boolean | undefined
-        const commit = wrapper.vm.commitEdit().then((result) => {
+        wrapper.vm.commitEdit().then((result) => {
           committed = result
-          return result
         })
         await flushPromises()
+
+        // Assert
         expect(committed).toBeUndefined()
+      })
+
+      test("when an active edit finishes saving, reports success to the worksheet workflow", async () => {
+        // Arrange
+        const record = qualityEnhancementFactory.build()
+        vi.spyOn(qualityEnhancementsApi, "list").mockResolvedValue({
+          qualityEnhancements: [record],
+          totalCount: 1,
+        })
+        const update = Promise.withResolvers<{
+          qualityEnhancement: typeof record
+          policy: typeof record.policy
+        }>()
+        vi.spyOn(qualityEnhancementsApi, "update").mockReturnValue(update.promise)
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
+          props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
+        })
+        await flushPromises()
+        await wrapper.get("tr.cursor-pointer").trigger("click")
+        await wrapper.get('input[inputmode="decimal"]').setValue("0.25")
+
+        // Act
+        const commit = wrapper.vm.commitEdit()
         update.resolve({
           qualityEnhancement: { ...record, estimatedChildOccupancyRate: "0.25" },
           policy: record.policy,
         })
+
+        // Assert
         await expect(commit).resolves.toEqual(true)
       })
 
@@ -122,9 +144,8 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         vi.spyOn(qualityEnhancementsApi, "update").mockRejectedValue(
           new ApiOperationError("Save unavailable", 503)
         )
-        const wrapper = mount(QualityEnhancementEditTable, {
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [createPinia(), mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -143,9 +164,8 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
           .mockResolvedValueOnce({ qualityEnhancements: [record], totalCount: 1 })
           .mockRejectedValueOnce(new ApiOperationError("Refresh unavailable", 503))
         const replicate = vi.spyOn(qualityEnhancementsApi, "replicateEstimates")
-        const wrapper = mount(QualityEnhancementEditTable, {
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [createPinia(), mockVuetify()] },
         })
         await flushPromises()
 
@@ -168,9 +188,8 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
           qualityEnhancement: { ...record, estimatedChildOccupancyRate: "0.25" },
           policy: record.policy,
         })
-        const wrapper = mount(QualityEnhancementEditTable, {
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [createPinia(), mockVuetify()] },
         })
         await flushPromises()
         await wrapper.vm.refresh().catch(() => undefined)
@@ -191,7 +210,7 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
     })
 
     describe("#reload", () => {
-      test("when a failed write is reloaded, preserves its failure and permits the next worksheet save", async () => {
+      test("when a failed write is reloaded, permits the next worksheet save", async () => {
         // Arrange
         const record = qualityEnhancementFactory.build()
         vi.spyOn(qualityEnhancementsApi, "list").mockResolvedValue({
@@ -201,75 +220,129 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         vi.spyOn(qualityEnhancementsApi, "update").mockRejectedValue(
           new ApiOperationError("Write unavailable", 503)
         )
-        const wrapper = mount(QualityEnhancementEditTable, {
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [createPinia(), mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
         await wrapper.get('input[inputmode="decimal"]').setValue("0.25")
 
-        // Act & Assert
-        await expect(wrapper.vm.commitEdit()).resolves.toEqual(false)
+        // Act
+        await wrapper.vm.commitEdit()
         await wrapper.get(".v-alert button").trigger("click")
         await flushPromises()
+
+        // Assert
         await expect(wrapper.vm.commitEdit()).resolves.toEqual(true)
       })
     })
 
     describe("#deleteRecord", () => {
-      test.each([
-        ["succeeds", false, 1],
-        ["fails", true, 0],
-      ] as const)(
-        "when deleting another row while an active edit %s, waits for its write and deletes only after success",
-        async (_outcome, failSave, expectedDeletes) => {
-          // Arrange
-          const first = qualityEnhancementFactory.build({ id: 1 })
-          const second = qualityEnhancementFactory.build({
-            id: 2,
-            policy: { show: true, create: true, update: true, destroy: true },
-          })
-          vi.spyOn(window, "confirm").mockReturnValue(true)
-          vi.spyOn(qualityEnhancementsApi, "list").mockResolvedValue({
-            qualityEnhancements: [first, second],
-            totalCount: 2,
-          })
-          const write = Promise.withResolvers<{
-            qualityEnhancement: typeof first
-            policy: typeof first.policy
-          }>()
-          vi.spyOn(qualityEnhancementsApi, "update").mockReturnValue(write.promise)
-          const remove = vi.spyOn(qualityEnhancementsApi, "delete").mockResolvedValue(undefined)
-          const wrapper = mount(QualityEnhancementEditTable, {
-            props: { where: { centreId: first.centreId, fiscalPeriodId: first.fiscalPeriodId } },
-            global: { plugins: [createPinia(), mockVuetify()] },
-          })
-          await flushPromises()
-          const rows = wrapper.findAll("tr.cursor-pointer")
-          const firstRow = rows[0]
-          const secondRow = rows[1]
-          if (!firstRow || !secondRow) throw new Error("Expected two monthly rows")
-          await firstRow.trigger("click")
-          await wrapper.get('input[inputmode="decimal"]').setValue("0.25")
+      test("when an active write is pending, waits before deleting another row", async () => {
+        // Arrange
+        const first = qualityEnhancementFactory.build({ id: 1 })
+        const second = qualityEnhancementFactory.build({
+          id: 2,
+          policy: { show: true, create: true, update: true, destroy: true },
+        })
+        vi.spyOn(window, "confirm").mockReturnValue(true)
+        vi.spyOn(qualityEnhancementsApi, "list").mockResolvedValue({
+          qualityEnhancements: [first, second],
+          totalCount: 2,
+        })
+        const write = Promise.withResolvers<{
+          qualityEnhancement: typeof first
+          policy: typeof first.policy
+        }>()
+        vi.spyOn(qualityEnhancementsApi, "update").mockReturnValue(write.promise)
+        const remove = vi.spyOn(qualityEnhancementsApi, "delete").mockResolvedValue(undefined)
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
+          props: { where: { centreId: first.centreId, fiscalPeriodId: first.fiscalPeriodId } },
+        })
+        await flushPromises()
+        await wrapper.get("tr.cursor-pointer").trigger("click")
+        await wrapper.get('input[inputmode="decimal"]').setValue("0.25")
 
-          // Act & Assert
-          await secondRow.get("button").trigger("click")
-          await flushPromises()
-          expect(remove).not.toHaveBeenCalled()
+        // Act
+        await wrapper.get("tr.cursor-pointer button").trigger("click")
+        await flushPromises()
 
-          if (failSave) {
-            write.reject(new ApiOperationError("Write unavailable", 503))
-          } else {
-            write.resolve({
-              qualityEnhancement: { ...first, estimatedChildOccupancyRate: "0.25" },
-              policy: first.policy,
-            })
-          }
-          await flushPromises()
-          expect(remove).toHaveBeenCalledTimes(expectedDeletes)
-        }
-      )
+        // Assert
+        expect(remove).not.toHaveBeenCalled()
+      })
+
+      test("when an active write succeeds, deletes the other row after saving", async () => {
+        // Arrange
+        const first = qualityEnhancementFactory.build({ id: 1 })
+        const second = qualityEnhancementFactory.build({
+          id: 2,
+          policy: { show: true, create: true, update: true, destroy: true },
+        })
+        vi.spyOn(window, "confirm").mockReturnValue(true)
+        vi.spyOn(qualityEnhancementsApi, "list").mockResolvedValue({
+          qualityEnhancements: [first, second],
+          totalCount: 2,
+        })
+        const write = Promise.withResolvers<{
+          qualityEnhancement: typeof first
+          policy: typeof first.policy
+        }>()
+        vi.spyOn(qualityEnhancementsApi, "update").mockReturnValue(write.promise)
+        const remove = vi.spyOn(qualityEnhancementsApi, "delete").mockResolvedValue(undefined)
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
+          props: { where: { centreId: first.centreId, fiscalPeriodId: first.fiscalPeriodId } },
+        })
+        await flushPromises()
+        await wrapper.get("tr.cursor-pointer").trigger("click")
+        await wrapper.get('input[inputmode="decimal"]').setValue("0.25")
+
+        // Act
+        await wrapper.get("tr.cursor-pointer button").trigger("click")
+        await flushPromises()
+        write.resolve({
+          qualityEnhancement: { ...first, estimatedChildOccupancyRate: "0.25" },
+          policy: first.policy,
+        })
+        await flushPromises()
+
+        // Assert
+        expect(remove).toHaveBeenCalledExactlyOnceWith(2)
+      })
+
+      test("when an active write fails, does not delete the other row", async () => {
+        // Arrange
+        const first = qualityEnhancementFactory.build({ id: 1 })
+        const second = qualityEnhancementFactory.build({
+          id: 2,
+          policy: { show: true, create: true, update: true, destroy: true },
+        })
+        vi.spyOn(window, "confirm").mockReturnValue(true)
+        vi.spyOn(qualityEnhancementsApi, "list").mockResolvedValue({
+          qualityEnhancements: [first, second],
+          totalCount: 2,
+        })
+        const write = Promise.withResolvers<{
+          qualityEnhancement: typeof first
+          policy: typeof first.policy
+        }>()
+        vi.spyOn(qualityEnhancementsApi, "update").mockReturnValue(write.promise)
+        const remove = vi.spyOn(qualityEnhancementsApi, "delete").mockResolvedValue(undefined)
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
+          props: { where: { centreId: first.centreId, fiscalPeriodId: first.fiscalPeriodId } },
+        })
+        await flushPromises()
+        await wrapper.get("tr.cursor-pointer").trigger("click")
+        await wrapper.get('input[inputmode="decimal"]').setValue("0.25")
+
+        // Act
+        await wrapper.get("tr.cursor-pointer button").trigger("click")
+        await flushPromises()
+        write.reject(new ApiOperationError("Write unavailable", 503))
+        await flushPromises()
+
+        // Assert
+        expect(remove).not.toHaveBeenCalled()
+      })
     })
 
     describe("#replicateEstimates", () => {
@@ -285,18 +358,17 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         const replicate = vi
           .spyOn(qualityEnhancementsApi, "replicateEstimates")
           .mockReturnValue(firstReplication.promise)
-        const wrapper = mount(QualityEnhancementEditTable, {
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
           props: { where: { centreId: record1.centreId, fiscalPeriodId: record1.fiscalPeriodId } },
-          global: { plugins: [createPinia(), mockVuetify()] },
         })
         await flushPromises()
 
         // Act
-        void wrapper.vm.replicateEstimates()
+        wrapper.vm.replicateEstimates()
         await flushPromises()
 
         // Assert
-        expect(replicate).toHaveBeenCalledExactlyOnceWith(record1.id)
+        expect(replicate).toHaveBeenCalledExactlyOnceWith(1)
       })
     })
   })

@@ -6,10 +6,6 @@ import { ENVIRONMENT, AUTH0_DOMAIN, AUTH0_AUDIENCE, AUTH0_CLIENT_ID } from "@/co
 // authentication information.  In components this information is available
 // via this.$auth0.
 
-// However the same auth information is not available to Pinia stores becuase
-// of the way that composables work.  So, the authStore loads in @/App.vue to
-// work around this issue.
-
 export default createAuth0({
   domain: AUTH0_DOMAIN,
   clientId: AUTH0_CLIENT_ID,

@@ -1,4 +1,3 @@
-import { createPinia } from "pinia"
 import { flushPromises, mount } from "@vue/test-utils"
 import { VTextField } from "vuetify/components"
 
@@ -10,6 +9,7 @@ import { mockRouter, mockVuetify } from "@/tests/support"
 import CurrencyInput from "@/components/CurrencyInput.vue"
 import ChildCareSpaceCategorySearchableAutocomplete from "@/components/child-care-space-categories/ChildCareSpaceCategorySearchableAutocomplete.vue"
 import FundingPeriodSearchableAutocomplete from "@/components/funding-periods/FundingPeriodSearchableAutocomplete.vue"
+
 import AdministrationCostCategoryNewPage from "@/pages/administration/administration-cost-categories/AdministrationCostCategoryNewPage.vue"
 
 describe("web/src/pages/administration/administration-cost-categories/AdministrationCostCategoryNewPage.vue", () => {
@@ -100,7 +100,7 @@ describe("web/src/pages/administration/administration-cost-categories/Administra
         const wrapper = mount(AdministrationCostCategoryNewPage, {
           attachTo: document.body,
           global: {
-            plugins: [router, createPinia(), mockVuetify()],
+            plugins: [router, mockVuetify()],
           },
         })
         await flushPromises()
@@ -171,7 +171,7 @@ describe("web/src/pages/administration/administration-cost-categories/Administra
         await router.isReady()
         const wrapper = mount(AdministrationCostCategoryNewPage, {
           attachTo: document.body,
-          global: { plugins: [router, createPinia(), mockVuetify()] },
+          global: { plugins: [router, mockVuetify()] },
         })
         await flushPromises()
         await wrapper.getComponent(FundingPeriodSearchableAutocomplete).setValue(1)

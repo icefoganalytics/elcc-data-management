@@ -1,11 +1,11 @@
-import { createPinia } from "pinia"
-import { flushPromises, mount } from "@vue/test-utils"
+import { flushPromises } from "@vue/test-utils"
 import { AxiosHeaders } from "axios"
 
 import httpClient from "@/api/http-client"
 import ApiOperationError from "@/api/errors/api-operation-error"
 import CloudflareChallengeError from "@/api/errors/cloudflare-challenge-error"
-import { mockRouter, mockVuetify } from "@/tests/support"
+
+import { mountWithDefaultPlugins } from "@/tests/support"
 import { childCareSpaceFactory, fundingSubmissionLineJsonFactory } from "@/tests/factories"
 
 import FundingSubmissionLineJsonEditSheet from "@/components/funding-submission-line-jsons/FundingSubmissionLineJsonEditSheet.vue"
@@ -30,12 +30,8 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           }
           return { data: { fundingSubmissionLineJson: worksheet } }
         })
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-        await router.push("/")
-        await router.isReady()
-        const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
+        const wrapper = mountWithDefaultPlugins(FundingSubmissionLineJsonEditSheet, {
           props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
-          global: { plugins: [router, createPinia(), mockVuetify()] },
         })
         await flushPromises()
         const [estimateInput, actualInput] = wrapper.findAll("tbody input")
@@ -67,12 +63,8 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           if (url === "/api/child-care-spaces/1") return save.promise
           return { data: { fundingSubmissionLineJson: worksheet } }
         })
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-        await router.push("/")
-        await router.isReady()
-        const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
+        const wrapper = mountWithDefaultPlugins(FundingSubmissionLineJsonEditSheet, {
           props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
-          global: { plugins: [router, createPinia(), mockVuetify()] },
         })
         await flushPromises()
         const estimateInput = wrapper.get("tbody input")
@@ -110,12 +102,8 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           }
           return { data: { fundingSubmissionLineJson: worksheet } }
         })
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-        await router.push("/")
-        await router.isReady()
-        const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
+        const wrapper = mountWithDefaultPlugins(FundingSubmissionLineJsonEditSheet, {
           props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
-          global: { plugins: [router, createPinia(), mockVuetify()] },
         })
         await flushPromises()
         const inputs = wrapper.findAll("tbody input")
@@ -172,15 +160,12 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           }
           return { data: { fundingSubmissionLineJson: worksheet } }
         })
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-        await router.push("/")
-        await router.isReady()
         const errorHandler = vi.fn()
-        const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
+        const wrapper = mountWithDefaultPlugins(FundingSubmissionLineJsonEditSheet, {
+          apiResponseErrorHandling: false,
           props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
           global: {
-            config: { errorHandler },
-            plugins: [router, createPinia(), mockVuetify()],
+            config: { errorHandler: (error) => errorHandler(error) },
           },
         })
         await flushPromises()
@@ -197,7 +182,16 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         await flushPromises()
 
         // Assert
-        expect(errorHandler.mock.calls[0]?.[0]).toBe(challenge)
+        expect(errorHandler.mock.calls).toEqual([
+          [
+            expect.objectContaining({
+              name: "CloudflareChallengeError",
+              message:
+                "Cloudflare browser verification is required. ELCC could not confirm the request completed.",
+              cloudflareHtml: "<html>Browser verification</html>",
+            }),
+          ],
+        ])
       })
 
       test("when a Spaces save fails, does not save dependent worksheet JSON", async () => {
@@ -219,12 +213,8 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
             throw new ApiOperationError("Spaces save failed", 422)
           return saveJson()
         })
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-        await router.push("/")
-        await router.isReady()
-        const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
+        const wrapper = mountWithDefaultPlugins(FundingSubmissionLineJsonEditSheet, {
           props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
-          global: { plugins: [router, createPinia(), mockVuetify()] },
         })
         await flushPromises()
         const estimateInput = wrapper.get("tbody input")
@@ -252,15 +242,11 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
             }
             return { data: { fundingSubmissionLineJson: worksheet } }
           })
-          const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-          await router.push("/")
-          await router.isReady()
           const errorHandler = vi.fn()
-          const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
+          const wrapper = mountWithDefaultPlugins(FundingSubmissionLineJsonEditSheet, {
             props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
             global: {
               config: { errorHandler },
-              plugins: [router, createPinia(), mockVuetify()],
             },
           })
 
@@ -287,15 +273,12 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
           if (isReloading) return pendingWorksheet.promise
           return { data: { fundingSubmissionLineJson: worksheet } }
         })
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-        await router.push("/")
-        await router.isReady()
         const errorHandler = vi.fn()
-        const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
+        const wrapper = mountWithDefaultPlugins(FundingSubmissionLineJsonEditSheet, {
+          apiResponseErrorHandling: false,
           props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
           global: {
-            config: { errorHandler },
-            plugins: [router, createPinia(), mockVuetify()],
+            config: { errorHandler: (error) => errorHandler(error) },
           },
         })
         await flushPromises()
@@ -312,7 +295,14 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         await flushPromises()
 
         // Assert
-        expect(errorHandler.mock.calls[0]?.[0]).toBe(challenge)
+        expect(errorHandler.mock.calls).toEqual([
+          [
+            expect.objectContaining({
+              name: "CloudflareChallengeError",
+              message: "",
+            }),
+          ],
+        ])
       })
 
       test.each(["/api/child-care-spaces", "/api/funding-submission-line-jsons/11"])(
@@ -329,15 +319,11 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
             }
             return { data: { fundingSubmissionLineJson: worksheet } }
           })
-          const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-          await router.push("/")
-          await router.isReady()
           const errorHandler = vi.fn()
-          const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
+          const wrapper = mountWithDefaultPlugins(FundingSubmissionLineJsonEditSheet, {
             props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
             global: {
               config: { errorHandler },
-              plugins: [router, createPinia(), mockVuetify()],
             },
           })
           await flushPromises()

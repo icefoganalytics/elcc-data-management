@@ -1,4 +1,5 @@
 export { CreateService } from "./create-service"
+export { IndexService, type CentreIndexSummaries } from "./index-service"
 export { UpdateService } from "./update-service"
 export { DestroyService } from "./destroy-service"
 

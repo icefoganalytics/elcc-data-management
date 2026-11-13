@@ -1,10 +1,13 @@
 import { isNil } from "lodash"
 
 import logger from "@/utils/logger"
+
 import { Centre } from "@/models"
 import { CentrePolicy } from "@/policies/centre-policy"
+import { Centres } from "@/services"
 import { CreateService, DestroyService, UpdateService } from "@/services/centres"
 import { IndexSerializer, ShowSerializer } from "@/serializers/centres"
+
 import BaseController from "@/controllers/base-controller"
 
 export class CentresController extends BaseController<Centre> {
@@ -13,19 +16,19 @@ export class CentresController extends BaseController<Centre> {
       const where = this.buildWhere()
       const scopes = this.buildFilterScopes()
       const order = this.buildOrder([["name", "ASC"]])
-      const scopedCentres = CentrePolicy.applyScope(scopes, this.currentUser)
-
-      const totalCount = await scopedCentres.count({ where })
-      const centres = await scopedCentres.findAll({
+      const { centres, totalCount, summaries } = await Centres.IndexService.perform(
         where,
+        scopes,
         order,
-        limit: this.pagination.limit,
-        offset: this.pagination.offset,
-      })
+        this.pagination.limit,
+        this.pagination.offset,
+        this.currentUser
+      )
       const serializedCentres = IndexSerializer.perform(centres)
       return this.response.json({
         centres: serializedCentres,
         totalCount,
+        summaries,
       })
     } catch (error) {
       logger.error(`Error fetching centres: ${error}`, { error })

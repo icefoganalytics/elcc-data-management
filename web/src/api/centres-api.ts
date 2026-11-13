@@ -73,12 +73,20 @@ export type CentreFiltersOptions = FiltersOptions<{
 
 export type CentreQueryOptions = QueryOptions<CentreWhereOptions, CentreFiltersOptions>
 
+export type CentreIndexSummaries = {
+  communityCount: number
+}
+
 export const centresApi = {
-  async list(params: CentreQueryOptions = {}): Promise<{
+  async list(
+    params: CentreQueryOptions = {},
+    { signal }: { signal?: AbortSignal } = {}
+  ): Promise<{
     centres: CentreAsIndex[]
     totalCount: number
+    summaries: CentreIndexSummaries
   }> {
-    const { data } = await http.get("/api/centres", { params })
+    const { data } = await http.get("/api/centres", { params, signal })
     return data
   },
   async get(centreId: number): Promise<{

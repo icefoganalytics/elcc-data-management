@@ -1,5 +1,4 @@
-import { createPinia } from "pinia"
-import { flushPromises, mount } from "@vue/test-utils"
+import { flushPromises } from "@vue/test-utils"
 
 import childrenWithDiverseNeedsFundingCategoriesApi from "@/api/children-with-diverse-needs-funding-categories-api"
 import childrenWithDiverseNeedsFundingRecordsApi from "@/api/children-with-diverse-needs-funding-records-api"
@@ -9,9 +8,10 @@ import {
   childrenWithDiverseNeedsFundingCategoryFactory,
   childrenWithDiverseNeedsFundingRecordFactory,
 } from "@/tests/factories"
-import { mockVuetify } from "@/tests/support"
+import { mountWithDefaultPlugins } from "@/tests/support"
 
 import ChildrenWithDiverseNeedsFundingCategorySearchableAutocomplete from "@/components/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategorySearchableAutocomplete.vue"
+
 import ChildrenWithDiverseNeedsFundingRecordsCreateFormCard from "@/components/children-with-diverse-needs-funding-records/ChildrenWithDiverseNeedsFundingRecordsCreateFormCard.vue"
 
 describe("web/src/components/children-with-diverse-needs-funding-records/ChildrenWithDiverseNeedsFundingRecordsCreateFormCard.vue", () => {
@@ -19,7 +19,11 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
     describe("#create", () => {
       test("when valid occupancies are submitted, preserves decimal strings in the creation payload", async () => {
         // Arrange
-        const record = childrenWithDiverseNeedsFundingRecordFactory.build()
+        const record = childrenWithDiverseNeedsFundingRecordFactory.build({
+          centreId: 11,
+          fiscalPeriodId: 12,
+          categoryId: 13,
+        })
         const category = childrenWithDiverseNeedsFundingCategoryFactory.build({
           id: record.categoryId,
           fundingPeriodId: 3,
@@ -39,14 +43,13 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
             childrenWithDiverseNeedsFundingRecord: record,
             policy: record.policy,
           })
-        const wrapper = mount(ChildrenWithDiverseNeedsFundingRecordsCreateFormCard, {
+        const wrapper = mountWithDefaultPlugins(ChildrenWithDiverseNeedsFundingRecordsCreateFormCard, {
           props: {
             centreId: record.centreId,
             fiscalPeriodId: record.fiscalPeriodId,
             fundingPeriodId: 3,
             existingCategoryIds: [],
           },
-          global: { plugins: [createPinia(), mockVuetify()] },
         })
         await flushPromises()
         wrapper
@@ -63,9 +66,9 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
 
         // Assert
         expect(create).toHaveBeenCalledWith({
-          centreId: record.centreId,
-          fiscalPeriodId: record.fiscalPeriodId,
-          categoryId: record.categoryId,
+          centreId: 11,
+          fiscalPeriodId: 12,
+          categoryId: 13,
           estimatedChildOccupancyRate: "0.2500",
           actualChildOccupancyRate: "0.1250",
           applyToCurrentAndFutureFiscalPeriods: false,
@@ -74,7 +77,11 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
 
       test("when creation requires authentication, forwards the original error to Vue", async () => {
         // Arrange
-        const record = childrenWithDiverseNeedsFundingRecordFactory.build()
+        const record = childrenWithDiverseNeedsFundingRecordFactory.build({
+          centreId: 11,
+          fiscalPeriodId: 12,
+          categoryId: 13,
+        })
         const category = childrenWithDiverseNeedsFundingCategoryFactory.build({
           id: record.categoryId,
           fundingPeriodId: 3,
@@ -93,7 +100,8 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
         vi.spyOn(childrenWithDiverseNeedsFundingRecordsApi, "create").mockRejectedValue(
           authenticationError
         )
-        const wrapper = mount(ChildrenWithDiverseNeedsFundingRecordsCreateFormCard, {
+        const wrapper = mountWithDefaultPlugins(ChildrenWithDiverseNeedsFundingRecordsCreateFormCard, {
+          apiResponseErrorHandling: false,
           props: {
             centreId: record.centreId,
             fiscalPeriodId: record.fiscalPeriodId,
@@ -101,8 +109,7 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
             existingCategoryIds: [],
           },
           global: {
-            plugins: [createPinia(), mockVuetify()],
-            config: { errorHandler },
+            config: { errorHandler: (error) => errorHandler(error) },
           },
         })
         await flushPromises()
@@ -116,11 +123,14 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
         await flushPromises()
 
         // Assert
-        expect(errorHandler).toHaveBeenCalledWith(
-          authenticationError,
-          expect.anything(),
-          expect.any(String)
-        )
+        expect(errorHandler.mock.calls).toEqual([
+          [
+            expect.objectContaining({
+              name: "AuthenticationRequiredError",
+              message: "You must be logged in to access this endpoint",
+            }),
+          ],
+        ])
       })
     })
   })

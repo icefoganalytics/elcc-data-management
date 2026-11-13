@@ -1,4 +1,3 @@
-import { createPinia } from "pinia"
 import { flushPromises, mount } from "@vue/test-utils"
 
 import childCareSpacesApi from "@/api/child-care-spaces-api"
@@ -7,6 +6,7 @@ import fundingSubmissionLineJsonsApi, {
   type FundingSubmissionLineJsonAsIndex,
 } from "@/api/funding-submission-line-jsons-api"
 import httpClient from "@/api/http-client"
+
 import { FiscalPeriodMonths } from "@/use/use-fiscal-periods"
 
 import {
@@ -138,7 +138,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             month: FiscalPeriodMonths.APRIL,
           },
           global: {
-            plugins: [router, createPinia(), mockVuetify()],
+            plugins: [router, mockVuetify()],
             stubs: {
               BuildingExpenseCreateFormCard: true,
               BuildingExpensesEditTable: true,
@@ -318,7 +318,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             month: FiscalPeriodMonths.APRIL,
           },
           global: {
-            plugins: [router, createPinia(), mockVuetify()],
+            plugins: [router, mockVuetify()],
             stubs: {
               BuildingExpenseCreateFormCard: true,
               BuildingExpensesEditTable: true,

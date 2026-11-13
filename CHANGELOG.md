@@ -34,6 +34,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
 
 ### Changed
 
+- Dashboard centre and community counts load on demand from SQL summaries of the authorized, filtered centres, without downloading every page. Loading and unavailable states replace misleading zero counts.
 - Worksheet errors and legacy save confirmations now use the shared application snackbar, including its standard appearance and Close action.
 - Audit timestamps now use UTC `DATETIME2(7)` consistently, preserving existing instants and fractional seconds while discarding original timezone-offset labels.
 - API model test factories now use Factory Shark for declarative related-record setup, with Sequelize core and the SQL Server dialect aligned to its supported release. Plain JSON and frontend fixtures remain on Fishery.
