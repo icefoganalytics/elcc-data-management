@@ -30,23 +30,25 @@
       ref="editTable"
       :busy="isBusy"
       :headers="headers"
-      :items="administrationCosts"
+      :items="displayedCosts"
       :loading="isLoading || isSaving || isDeleting"
       :editable-columns="editableColumns"
       fixed-footer
       disable-sort
       @update:cell="trackSave"
+      @focus-beyond-last-in-column="emitBoundary('last', $event)"
+      @focus-beyond-first-in-column="emitBoundary('first', $event)"
     >
       <template #item.categoryId="{ item }">{{ item.lineName }}</template>
       <template #item.monthlyAmount="{ item }">{{ formatMoney(item.monthlyAmount) }}</template>
       <template #item.estimatedChildOccupancyRate="{ item }">{{
-        item.estimatedChildOccupancyRate
+        formatDecimal(item.estimatedChildOccupancyRate)
       }}</template>
       <template #item.estimatedComputedTotal="{ item }">{{
         formatMoney(item.estimatedComputedTotal)
       }}</template>
       <template #item.actualChildOccupancyRate="{ item }">{{
-        item.actualChildOccupancyRate
+        formatDecimal(item.actualChildOccupancyRate)
       }}</template>
       <template #item.actualComputedTotal="{ item }">{{
         formatMoney(item.actualComputedTotal)
@@ -98,11 +100,13 @@
 
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from "vue"
+import Big from "big.js"
 import { keyBy, pick } from "lodash"
-import { formatMoney } from "@/utils/formatters"
+import { formatDecimal, formatMoney } from "@/utils/formatters"
 import sumByDecimal from "@/utils/sum-by-decimal"
 import blockedToTrueConfirm from "@/utils/blocked-to-true-confirm"
-import { MAX_PER_PAGE } from "@/api/base-api"
+import { MAX_PER_PAGE, type ModelOrder } from "@/api/base-api"
+import type { FundingLineValue } from "@/api/funding-submission-line-jsons-api"
 import administrationCostsApi, {
   type AdministrationCostAsIndex,
   type AdministrationCostOccupancyAttributes,
@@ -119,9 +123,27 @@ const props = withDefaults(
   }>(),
   { where: () => ({}), isReplicating: false }
 )
-const emit = defineEmits<{ updated: []; mutationSettled: [] }>()
-const query = computed(() => ({ where: props.where, perPage: MAX_PER_PAGE }))
+const emit = defineEmits<{
+  updated: []
+  mutationSettled: []
+  focusBeyondLastInColumn: [column: "estimates" | "actuals"]
+  focusBeyondFirstInColumn: [column: "estimates" | "actuals"]
+}>()
+const order: ModelOrder[] = [
+  ["childCareSpaceCategoryId", "ASC"],
+  ["id", "ASC"],
+]
+const query = computed(() => ({ where: props.where, order, perPage: MAX_PER_PAGE }))
 const { administrationCosts, isLoading, isErrored, fetch } = useAdministrationCosts(query)
+const occupancyPreviews = ref<Record<number, Partial<AdministrationCostAsIndex>>>({})
+const displayedCosts = computed(() =>
+  administrationCosts.value.map((record) => {
+    const displayed = { ...record, ...occupancyPreviews.value[record.id] }
+    displayed.estimatedChildOccupancyRate = formatDecimal(displayed.estimatedChildOccupancyRate)
+    displayed.actualChildOccupancyRate = formatDecimal(displayed.actualChildOccupancyRate)
+    return displayed
+  })
+)
 const headers = [
   { title: "Category", key: "categoryId" },
   { title: "Per Child", key: "monthlyAmount" },
@@ -136,20 +158,25 @@ const editableColumns: (keyof AdministrationCostOccupancyAttributes)[] = [
   "actualChildOccupancyRate",
 ]
 const totalEstimated = computed(() =>
-  sumByDecimal(administrationCosts.value, "estimatedComputedTotal").toFixed(4)
+  sumByDecimal(displayedCosts.value, "estimatedComputedTotal").toFixed(4)
 )
 const totalActual = computed(() =>
-  sumByDecimal(administrationCosts.value, "actualComputedTotal").toFixed(4)
+  sumByDecimal(displayedCosts.value, "actualComputedTotal").toFixed(4)
 )
 const totalEstimatedOccupancy = computed(() =>
-  sumByDecimal(administrationCosts.value, "estimatedChildOccupancyRate").toFixed(4)
+  formatDecimal(sumByDecimal(displayedCosts.value, "estimatedChildOccupancyRate").toFixed(4))
 )
 const totalActualOccupancy = computed(() =>
-  sumByDecimal(administrationCosts.value, "actualChildOccupancyRate").toFixed(4)
+  formatDecimal(sumByDecimal(displayedCosts.value, "actualChildOccupancyRate").toFixed(4))
 )
 const byId = computed(() => keyBy(administrationCosts.value, "id"))
 const categoryIds = computed(() => administrationCosts.value.map(({ categoryId }) => categoryId))
-const editTable = useTemplateRef<{ commitEdit: () => void }>("editTable")
+const editTable = useTemplateRef<{
+  commitEdit: () => void
+  focusOnFirstInColumn: (column: keyof AdministrationCostOccupancyAttributes) => boolean
+  focusOnLastInColumn: (column: keyof AdministrationCostOccupancyAttributes) => boolean
+  cancelPendingFocus: () => void
+}>("editTable")
 let currentSave: Promise<boolean> | null = null
 const isSaving = ref(false)
 const isDeleting = ref(false)
@@ -172,8 +199,11 @@ async function commitEdit(): Promise<boolean> {
   editTable.value?.commitEdit()
   const save = currentSave
   try {
-    return (save === null || (await save)) && !isErrored.value
+    const saved = (save === null || (await save)) && !isErrored.value
+    if (!saved) editTable.value?.cancelPendingFocus()
+    return saved
   } catch (error) {
+    editTable.value?.cancelPendingFocus()
     rethrowUnexpectedError(error)
 
     return false
@@ -193,7 +223,9 @@ async function saveIfDirty(record: AdministrationCostAsIndex) {
     isErrored.value
   )
     return false
-  const changed = editableColumns.filter((field) => current[field] !== record[field])
+  const changed = editableColumns.filter(
+    (field) => formatDecimal(current[field]) !== formatDecimal(record[field])
+  )
   if (!changed.length) return true
   isSaving.value = true
   saveError.value = ""
@@ -205,6 +237,7 @@ async function saveIfDirty(record: AdministrationCostAsIndex) {
     const index = administrationCosts.value.findIndex((item) => item.id === record.id)
     if (index >= 0)
       administrationCosts.value.splice(index, 1, { ...current, ...administrationCost })
+    delete occupancyPreviews.value[record.id]
     snack.success("Administration cost saved!")
     emit("updated")
     return true
@@ -219,7 +252,7 @@ async function saveIfDirty(record: AdministrationCostAsIndex) {
 
       /* Preserve the save failure if reload also fails. */
     }
-    snack.error(saveError.value)
+    editTable.value?.cancelPendingFocus()
     return false
   } finally {
     isSaving.value = false
@@ -260,7 +293,9 @@ async function deleteRecord(record: AdministrationCostAsIndex) {
 }
 
 async function refresh() {
-  return await fetch()
+  const records = await fetch()
+  occupancyPreviews.value = {}
+  return records
 }
 
 async function reload() {
@@ -305,10 +340,45 @@ async function replicateEstimates() {
   }
 }
 
+// Preview unsaved Spaces changes; the Spaces save owns their transactional propagation.
+function previewSpaceOccupancy(line: FundingLineValue) {
+  for (const record of administrationCosts.value) {
+    if (record.childCareSpaceCategoryId !== line.submissionLineId) continue
+
+    occupancyPreviews.value[record.id] = {
+      estimatedChildOccupancyRate: line.estimatedChildOccupancyRate,
+      actualChildOccupancyRate: line.actualChildOccupancyRate,
+      estimatedComputedTotal: Big(record.monthlyAmount)
+        .mul(line.estimatedChildOccupancyRate)
+        .toFixed(4),
+      actualComputedTotal: Big(record.monthlyAmount).mul(line.actualChildOccupancyRate).toFixed(4),
+    }
+  }
+}
+function emitBoundary(
+  direction: "last" | "first",
+  column: keyof AdministrationCostOccupancyAttributes
+) {
+  const name = column === "estimatedChildOccupancyRate" ? "estimates" : "actuals"
+  if (direction === "last") emit("focusBeyondLastInColumn", name)
+  else emit("focusBeyondFirstInColumn", name)
+}
+
+function focusOnFirstInColumn(column: keyof AdministrationCostOccupancyAttributes): boolean {
+  return editTable.value?.focusOnFirstInColumn(column) ?? false
+}
+
+function focusOnLastInColumn(column: keyof AdministrationCostOccupancyAttributes): boolean {
+  return editTable.value?.focusOnLastInColumn(column) ?? false
+}
+
 defineExpose({
   refresh,
   replicateEstimates,
   commitEdit,
+  previewSpaceOccupancy,
+  focusOnFirstInColumn,
+  focusOnLastInColumn,
   isSaving,
   isDeleting,
   isLoading,

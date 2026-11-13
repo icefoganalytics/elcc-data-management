@@ -330,7 +330,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         expect(replicate?.attributes("disabled")).toEqual("")
       })
 
-      test("when the worksheet loads, displays its sections in worksheet order", async () => {
+      test("when Spaces occupancy changes, retains the original worksheet section order", async () => {
         // Arrange
         const worksheet = fundingSubmissionLineJsonFactory.build({
           id: 44,
@@ -346,6 +346,29 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             categoryId: 90,
             lineName: "Ledger Diverse Needs",
           })
+        const space = childCareSpaceFactory.build({
+          id: 51,
+          centreId: 1,
+          fiscalPeriodId: 4,
+          categoryId: 8,
+          lineName: "Toddlers",
+        })
+        const administration = administrationCostFactory.build({
+          id: 61,
+          centreId: 1,
+          fiscalPeriodId: 4,
+          childCareSpaceCategoryId: 8,
+          lineName: "Renamed Administration",
+          monthlyAmount: "70.0000",
+        })
+        const quality = qualityEnhancementFactory.build({
+          id: 71,
+          centreId: 1,
+          fiscalPeriodId: 4,
+          childCareSpaceCategoryId: 8,
+          lineName: "Renamed Quality Enhancement",
+          monthlyAmount: "7.0000",
+        })
         const fiscalPeriod = fiscalPeriodFactory.build({
           id: 4,
           fundingPeriodId: 1,
@@ -360,10 +383,10 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
           },
           "/api/child-care-spaces": async () => {
-            return { data: { childCareSpaces: [], totalCount: 0 } }
+            return { data: { childCareSpaces: [space], totalCount: 1 } }
           },
           "/api/administration-costs": async () => {
-            return { data: { administrationCosts: [], totalCount: 0 } }
+            return { data: { administrationCosts: [administration], totalCount: 1 } }
           },
           "/api/children-with-diverse-needs-funding-records": async (config) => {
             if (config?.params?.where?.centreId === 1 && config.params.where.fiscalPeriodId === 4) {
@@ -378,7 +401,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             return { data: { fundingSubmissionLineJson: worksheet } }
           },
           "/api/quality-enhancements": async () => {
-            return { data: { qualityEnhancements: [], totalCount: 0 } }
+            return { data: { qualityEnhancements: [quality], totalCount: 1 } }
           },
           "/api/funding-submission-line-jsons/44": async () => {
             return { data: { fundingSubmissionLineJson: worksheet } }
@@ -393,14 +416,18 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
 
         // Act
         await flushPromises()
+        const estimatedSpaces = wrapper.get("input")
+        await estimatedSpaces.setValue("2.5000")
+        await estimatedSpaces.trigger("change")
+        await flushPromises()
 
         // Assert
         const sectionHeadings = wrapper.findAll("h3").map((heading) => heading.text())
         expect(sectionHeadings).toEqual([
           "Child Care Spaces",
-          "Children with Diverse Needs",
           "Administration (10% of Spaces)",
           "Quality Enhancement Program",
+          "Children with Diverse Needs",
           "Building Expenses",
         ])
       })
