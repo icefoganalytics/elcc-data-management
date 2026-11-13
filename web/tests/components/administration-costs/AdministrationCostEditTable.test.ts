@@ -1,15 +1,13 @@
-import { DOMWrapper, flushPromises, mount } from "@vue/test-utils"
+import { DOMWrapper, flushPromises } from "@vue/test-utils"
 import { AxiosError } from "axios"
 
 import administrationCostsApi from "@/api/administration-costs-api"
 import ApiOperationError from "@/api/errors/api-operation-error"
 
-import apiResponseErrorPlugin from "@/plugins/api-response-error-plugin"
-
 import useSnack from "@/use/use-snack"
 
 import { administrationCostFactory } from "@/tests/factories"
-import { mockRouter, mockVuetify } from "@/tests/support"
+import { mountWithDefaultPlugins } from "@/tests/support"
 
 import AppSnackbar from "@/components/layouts/AppSnackbar.vue"
 
@@ -31,13 +29,9 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
         vi.spyOn(administrationCostsApi, "update").mockRejectedValue(
           new AxiosError("Network unavailable", "ERR_NETWORK")
         )
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-        await router.push("/")
-        await router.isReady()
-        mount(AppSnackbar, { global: { plugins: [mockVuetify()] }, attachTo: document.body })
-        const wrapper = mount(AdministrationCostEditTable, {
+        mountWithDefaultPlugins(AppSnackbar, { attachTo: document.body })
+        const wrapper = mountWithDefaultPlugins(AdministrationCostEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [router, mockVuetify(), apiResponseErrorPlugin] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -64,9 +58,8 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
         vi.spyOn(administrationCostsApi, "update").mockRejectedValue(
           new ApiOperationError("Save unavailable", 503)
         )
-        const wrapper = mount(AdministrationCostEditTable, {
+        const wrapper = mountWithDefaultPlugins(AdministrationCostEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -93,9 +86,8 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
           policy: typeof record.policy
         }>()
         vi.spyOn(administrationCostsApi, "update").mockReturnValue(update.promise)
-        const wrapper = mount(AdministrationCostEditTable, {
+        const wrapper = mountWithDefaultPlugins(AdministrationCostEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -124,9 +116,8 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
           policy: typeof record.policy
         }>()
         vi.spyOn(administrationCostsApi, "update").mockReturnValue(update.promise)
-        const wrapper = mount(AdministrationCostEditTable, {
+        const wrapper = mountWithDefaultPlugins(AdministrationCostEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -153,9 +144,8 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
         vi.spyOn(administrationCostsApi, "update").mockRejectedValue(
           new ApiOperationError("Save unavailable", 503)
         )
-        const wrapper = mount(AdministrationCostEditTable, {
+        const wrapper = mountWithDefaultPlugins(AdministrationCostEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -177,9 +167,8 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
           administrationCost: { ...record1, estimatedChildOccupancyRate: "0.25" },
           policy: record1.policy,
         })
-        const wrapper = mount(AdministrationCostEditTable, {
+        const wrapper = mountWithDefaultPlugins(AdministrationCostEditTable, {
           props: { where: { centreId: record1.centreId, fiscalPeriodId: record1.fiscalPeriodId } },
-          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         const rows = wrapper.findAll("tr.cursor-pointer")
@@ -204,9 +193,8 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
         vi.spyOn(administrationCostsApi, "replicateEstimates").mockRejectedValue(
           new ApiOperationError("Replication unavailable", 503)
         )
-        const wrapper = mount(AdministrationCostEditTable, {
+        const wrapper = mountWithDefaultPlugins(AdministrationCostEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
 
@@ -226,9 +214,8 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
           .mockResolvedValueOnce({ administrationCosts: [record], totalCount: 1 })
           .mockRejectedValueOnce(new ApiOperationError("Refresh unavailable", 503))
         const replicate = vi.spyOn(administrationCostsApi, "replicateEstimates")
-        const wrapper = mount(AdministrationCostEditTable, {
+        const wrapper = mountWithDefaultPlugins(AdministrationCostEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
 
@@ -251,9 +238,8 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
           administrationCost: { ...record, estimatedChildOccupancyRate: "0.25" },
           policy: record.policy,
         })
-        const wrapper = mount(AdministrationCostEditTable, {
+        const wrapper = mountWithDefaultPlugins(AdministrationCostEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.vm.refresh().catch(() => undefined)
@@ -284,9 +270,8 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
         vi.spyOn(administrationCostsApi, "update").mockRejectedValue(
           new ApiOperationError("Write unavailable", 503)
         )
-        const wrapper = mount(AdministrationCostEditTable, {
+        const wrapper = mountWithDefaultPlugins(AdministrationCostEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -321,9 +306,8 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
         }>()
         vi.spyOn(administrationCostsApi, "update").mockReturnValue(write.promise)
         const remove = vi.spyOn(administrationCostsApi, "delete").mockResolvedValue(undefined)
-        const wrapper = mount(AdministrationCostEditTable, {
+        const wrapper = mountWithDefaultPlugins(AdministrationCostEditTable, {
           props: { where: { centreId: first.centreId, fiscalPeriodId: first.fiscalPeriodId } },
-          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -355,9 +339,8 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
         }>()
         vi.spyOn(administrationCostsApi, "update").mockReturnValue(write.promise)
         const remove = vi.spyOn(administrationCostsApi, "delete").mockResolvedValue(undefined)
-        const wrapper = mount(AdministrationCostEditTable, {
+        const wrapper = mountWithDefaultPlugins(AdministrationCostEditTable, {
           props: { where: { centreId: first.centreId, fiscalPeriodId: first.fiscalPeriodId } },
-          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -394,9 +377,8 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
         }>()
         vi.spyOn(administrationCostsApi, "update").mockReturnValue(write.promise)
         const remove = vi.spyOn(administrationCostsApi, "delete").mockResolvedValue(undefined)
-        const wrapper = mount(AdministrationCostEditTable, {
+        const wrapper = mountWithDefaultPlugins(AdministrationCostEditTable, {
           props: { where: { centreId: first.centreId, fiscalPeriodId: first.fiscalPeriodId } },
-          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -426,9 +408,8 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
         const replicate = vi
           .spyOn(administrationCostsApi, "replicateEstimates")
           .mockReturnValue(firstReplication.promise)
-        const wrapper = mount(AdministrationCostEditTable, {
+        const wrapper = mountWithDefaultPlugins(AdministrationCostEditTable, {
           props: { where: { centreId: record1.centreId, fiscalPeriodId: record1.fiscalPeriodId } },
-          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
 

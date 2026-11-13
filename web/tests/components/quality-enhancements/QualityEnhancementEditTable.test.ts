@@ -1,15 +1,13 @@
-import { DOMWrapper, flushPromises, mount } from "@vue/test-utils"
+import { DOMWrapper, flushPromises } from "@vue/test-utils"
 import { AxiosError } from "axios"
 
 import qualityEnhancementsApi from "@/api/quality-enhancements-api"
 import ApiOperationError from "@/api/errors/api-operation-error"
 
-import apiResponseErrorPlugin from "@/plugins/api-response-error-plugin"
-
 import useSnack from "@/use/use-snack"
 
 import { qualityEnhancementFactory } from "@/tests/factories"
-import { mockRouter, mockVuetify } from "@/tests/support"
+import { mountWithDefaultPlugins } from "@/tests/support"
 
 import AppSnackbar from "@/components/layouts/AppSnackbar.vue"
 
@@ -31,13 +29,9 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         vi.spyOn(qualityEnhancementsApi, "update").mockRejectedValue(
           new AxiosError("Network unavailable", "ERR_NETWORK")
         )
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-        await router.push("/")
-        await router.isReady()
-        mount(AppSnackbar, { global: { plugins: [mockVuetify()] }, attachTo: document.body })
-        const wrapper = mount(QualityEnhancementEditTable, {
+        mountWithDefaultPlugins(AppSnackbar, { attachTo: document.body })
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [router, mockVuetify(), apiResponseErrorPlugin] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -64,9 +58,8 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         vi.spyOn(qualityEnhancementsApi, "update").mockRejectedValue(
           new ApiOperationError("Save unavailable", 503)
         )
-        const wrapper = mount(QualityEnhancementEditTable, {
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -93,9 +86,8 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
           policy: typeof record.policy
         }>()
         vi.spyOn(qualityEnhancementsApi, "update").mockReturnValue(update.promise)
-        const wrapper = mount(QualityEnhancementEditTable, {
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -124,9 +116,8 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
           policy: typeof record.policy
         }>()
         vi.spyOn(qualityEnhancementsApi, "update").mockReturnValue(update.promise)
-        const wrapper = mount(QualityEnhancementEditTable, {
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -153,9 +144,8 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         vi.spyOn(qualityEnhancementsApi, "update").mockRejectedValue(
           new ApiOperationError("Save unavailable", 503)
         )
-        const wrapper = mount(QualityEnhancementEditTable, {
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -174,9 +164,8 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
           .mockResolvedValueOnce({ qualityEnhancements: [record], totalCount: 1 })
           .mockRejectedValueOnce(new ApiOperationError("Refresh unavailable", 503))
         const replicate = vi.spyOn(qualityEnhancementsApi, "replicateEstimates")
-        const wrapper = mount(QualityEnhancementEditTable, {
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
 
@@ -199,9 +188,8 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
           qualityEnhancement: { ...record, estimatedChildOccupancyRate: "0.25" },
           policy: record.policy,
         })
-        const wrapper = mount(QualityEnhancementEditTable, {
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.vm.refresh().catch(() => undefined)
@@ -232,9 +220,8 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         vi.spyOn(qualityEnhancementsApi, "update").mockRejectedValue(
           new ApiOperationError("Write unavailable", 503)
         )
-        const wrapper = mount(QualityEnhancementEditTable, {
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
           props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -269,9 +256,8 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         }>()
         vi.spyOn(qualityEnhancementsApi, "update").mockReturnValue(write.promise)
         const remove = vi.spyOn(qualityEnhancementsApi, "delete").mockResolvedValue(undefined)
-        const wrapper = mount(QualityEnhancementEditTable, {
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
           props: { where: { centreId: first.centreId, fiscalPeriodId: first.fiscalPeriodId } },
-          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -303,9 +289,8 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         }>()
         vi.spyOn(qualityEnhancementsApi, "update").mockReturnValue(write.promise)
         const remove = vi.spyOn(qualityEnhancementsApi, "delete").mockResolvedValue(undefined)
-        const wrapper = mount(QualityEnhancementEditTable, {
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
           props: { where: { centreId: first.centreId, fiscalPeriodId: first.fiscalPeriodId } },
-          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -342,9 +327,8 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         }>()
         vi.spyOn(qualityEnhancementsApi, "update").mockReturnValue(write.promise)
         const remove = vi.spyOn(qualityEnhancementsApi, "delete").mockResolvedValue(undefined)
-        const wrapper = mount(QualityEnhancementEditTable, {
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
           props: { where: { centreId: first.centreId, fiscalPeriodId: first.fiscalPeriodId } },
-          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
@@ -374,9 +358,8 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         const replicate = vi
           .spyOn(qualityEnhancementsApi, "replicateEstimates")
           .mockReturnValue(firstReplication.promise)
-        const wrapper = mount(QualityEnhancementEditTable, {
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
           props: { where: { centreId: record1.centreId, fiscalPeriodId: record1.fiscalPeriodId } },
-          global: { plugins: [mockVuetify()] },
         })
         await flushPromises()
 
