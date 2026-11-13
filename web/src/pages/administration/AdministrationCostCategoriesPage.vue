@@ -1,5 +1,13 @@
 <template>
-  <HeaderActionsCard title="Administration Cost Categories">
+  <HeaderActionsCard>
+    <template #header>
+      <FundingPeriodSearchableAutocomplete
+        v-model="fundingPeriodId"
+        density="compact"
+        hide-details
+        clearable
+      />
+    </template>
     <template #header-actions>
       <v-btn
         v-if="fundingPeriodsCount > 0"
@@ -9,13 +17,9 @@
         }"
       >
         <v-icon class="mr-2">mdi-plus</v-icon>
-        New Administration Cost Category
+        New Category
       </v-btn>
     </template>
-    <FundingPeriodSearchableAutocomplete
-      v-model="fundingPeriodId"
-      clearable
-    />
     <AdministrationCostCategoriesDataTableServer :where="administrationCostCategoriesWhere" />
   </HeaderActionsCard>
 </template>

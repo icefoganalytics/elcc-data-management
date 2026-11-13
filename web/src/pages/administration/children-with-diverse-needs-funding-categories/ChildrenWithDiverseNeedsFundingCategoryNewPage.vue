@@ -1,7 +1,6 @@
 <template>
   <HeaderActionsFormCard
     ref="form"
-    title="New Diverse Need Category"
     @submit.prevent="createChildrenWithDiverseNeedsFundingCategory"
   >
     <v-row>

@@ -3,10 +3,7 @@
     v-if="isNil(childrenWithDiverseNeedsFundingCategory)"
     type="card"
   />
-  <HeaderActionsCard
-    v-else
-    title="Diverse Need Category Details"
-  >
+  <HeaderActionsCard v-else>
     <template #header-actions>
       <v-btn
         v-if="policy?.update"
