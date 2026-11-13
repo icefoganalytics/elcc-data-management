@@ -41,6 +41,13 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
             path: "/",
             component: ChildrenWithDiverseNeedsFundingCategoryEditPage,
           },
+          {
+            path: "/categories/:childrenWithDiverseNeedsFundingCategoryId",
+            name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
+            component: {
+              template: "<div>Category details</div>",
+            },
+          },
         ])
         await router.push("/")
         await router.isReady()
@@ -109,6 +116,13 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
             path: "/",
             component: ChildrenWithDiverseNeedsFundingCategoryEditPage,
           },
+          {
+            path: "/categories/:childrenWithDiverseNeedsFundingCategoryId",
+            name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
+            component: {
+              template: "<div>Category details</div>",
+            },
+          },
         ])
         await router.push("/")
         await router.isReady()
@@ -172,6 +186,13 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
             path: "/",
             component: ChildrenWithDiverseNeedsFundingCategoryEditPage,
           },
+          {
+            path: "/categories/:childrenWithDiverseNeedsFundingCategoryId",
+            name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
+            component: {
+              template: "<div>Category details</div>",
+            },
+          },
         ])
         await router.push("/")
         await router.isReady()
@@ -222,6 +243,13 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
           {
             path: "/",
             component: ChildrenWithDiverseNeedsFundingCategoryEditPage,
+          },
+          {
+            path: "/categories/:childrenWithDiverseNeedsFundingCategoryId",
+            name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
+            component: {
+              template: "<div>Category details</div>",
+            },
           },
         ])
         await router.push("/")
@@ -275,6 +303,13 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
             path: "/",
             component: ChildrenWithDiverseNeedsFundingCategoryEditPage,
           },
+          {
+            path: "/categories/:childrenWithDiverseNeedsFundingCategoryId",
+            name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
+            component: {
+              template: "<div>Category details</div>",
+            },
+          },
         ])
         await router.push("/")
         await router.isReady()
@@ -317,6 +352,13 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
           {
             path: "/",
             component: ChildrenWithDiverseNeedsFundingCategoryEditPage,
+          },
+          {
+            path: "/categories/:childrenWithDiverseNeedsFundingCategoryId",
+            name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
+            component: {
+              template: "<div>Category details</div>",
+            },
           },
         ])
         await router.push("/")
