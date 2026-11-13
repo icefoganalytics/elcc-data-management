@@ -70,6 +70,34 @@ const props = withDefaults(
   }
 )
 
+const headers = ref([
+  {
+    title: "Category Name",
+    key: "categoryName",
+    minWidth: "200px",
+    cellProps: {
+      class: "text-wrap",
+    },
+  },
+  {
+    title: "From Age",
+    key: "fromAge",
+  },
+  {
+    title: "To Age",
+    key: "toAge",
+  },
+  {
+    title: "Monthly Amount",
+    key: "monthlyAmount",
+  },
+  {
+    title: "Actions",
+    key: "actions",
+    sortable: false,
+  },
+])
+
 const page = useRouteQuery<string | undefined, number | undefined>(
   `page${props.routeQuerySuffix}`,
   "1",
@@ -135,32 +163,4 @@ function goToChildrenWithDiverseNeedsFundingCategory(
 const monthlyAmountFormatOptions = {
   maximumFractionDigits: 4,
 }
-
-const headers = ref([
-  {
-    title: "Category Name",
-    key: "categoryName",
-    minWidth: "200px",
-    cellProps: {
-      class: "text-wrap",
-    },
-  },
-  {
-    title: "From Age",
-    key: "fromAge",
-  },
-  {
-    title: "To Age",
-    key: "toAge",
-  },
-  {
-    title: "Monthly Amount",
-    key: "monthlyAmount",
-  },
-  {
-    title: "Actions",
-    key: "actions",
-    sortable: false,
-  },
-])
 </script>
