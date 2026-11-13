@@ -178,7 +178,7 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
           props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
           global: {
-            config: { errorHandler },
+            config: { errorHandler: (error) => errorHandler(error) },
             plugins: [router, mockVuetify()],
           },
         })
@@ -196,13 +196,15 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         await flushPromises()
 
         // Assert
-        expect(errorHandler.mock.calls.map(([error]) => error)).toMatchObject([
-          {
-            name: "CloudflareChallengeError",
-            message:
-              "Cloudflare browser verification is required. ELCC could not confirm the request completed.",
-            cloudflareHtml: "<html>Browser verification</html>",
-          },
+        expect(errorHandler.mock.calls).toEqual([
+          [
+            expect.objectContaining({
+              name: "CloudflareChallengeError",
+              message:
+                "Cloudflare browser verification is required. ELCC could not confirm the request completed.",
+              cloudflareHtml: "<html>Browser verification</html>",
+            }),
+          ],
         ])
       })
 
@@ -300,7 +302,7 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         const wrapper = mount(FundingSubmissionLineJsonEditSheet, {
           props: { fundingSubmissionLineJsonId: 11, centreId: 1, fiscalPeriodId: 1 },
           global: {
-            config: { errorHandler },
+            config: { errorHandler: (error) => errorHandler(error) },
             plugins: [router, mockVuetify()],
           },
         })
@@ -318,8 +320,13 @@ describe("web/src/components/funding-submission-line-jsons/FundingSubmissionLine
         await flushPromises()
 
         // Assert
-        expect(errorHandler.mock.calls.map(([error]) => error)).toMatchObject([
-          { name: "CloudflareChallengeError", message: "" },
+        expect(errorHandler.mock.calls).toEqual([
+          [
+            expect.objectContaining({
+              name: "CloudflareChallengeError",
+              message: "",
+            }),
+          ],
         ])
       })
 
