@@ -1,6 +1,6 @@
 <template>
   <v-card>
-    <v-card-title class="d-flex flex-column flex-md-row justify-md-space-between align-md-end">
+    <v-card-title class="d-flex flex-column flex-md-row justify-md-space-between align-md-center">
       <slot name="header">
         <component
           :is="headerTag"
