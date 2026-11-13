@@ -67,7 +67,12 @@
         color="warning"
         variant="outlined"
         :disabled="isSaving"
-        @click="emit('cancel')"
+        :to="{
+          name: 'administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage',
+          params: {
+            childrenWithDiverseNeedsFundingCategoryId,
+          },
+        }"
         >Cancel</v-btn
       >
     </template>
@@ -94,7 +99,6 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  cancel: []
   saved: [childrenWithDiverseNeedsFundingCategoryId: number]
 }>()
 

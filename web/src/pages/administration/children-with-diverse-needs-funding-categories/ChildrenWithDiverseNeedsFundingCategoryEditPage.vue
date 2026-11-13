@@ -16,14 +16,12 @@
     </v-row>
     <ChildrenWithDiverseNeedsFundingCategoryEditForm
       :children-with-diverse-needs-funding-category-id="childrenWithDiverseNeedsFundingCategoryId"
-      @cancel="cancelEditing"
     />
   </template>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue"
-import { useRouter } from "vue-router"
 import { isNil } from "lodash"
 
 import useChildrenWithDiverseNeedsFundingCategory from "@/use/use-children-with-diverse-needs-funding-category"
@@ -48,17 +46,6 @@ const fundingPeriodId = computed(
 )
 const { fundingPeriod } = useFundingPeriod(fundingPeriodId)
 const fundingPeriodDescription = computed(() => fundingPeriod.value?.fiscalYear ?? "Unknown")
-
-const router = useRouter()
-
-async function cancelEditing() {
-  await router.push({
-    name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
-    params: {
-      childrenWithDiverseNeedsFundingCategoryId: childrenWithDiverseNeedsFundingCategoryId.value,
-    },
-  })
-}
 
 useBreadcrumbs("Edit Diverse Need Category", [
   {
