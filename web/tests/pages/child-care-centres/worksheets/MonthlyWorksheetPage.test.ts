@@ -71,7 +71,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         mount(MonthlyWorksheetPage, {
           props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
           global: {
-            config: { errorHandler },
+            config: { errorHandler: (error) => errorHandler(error) },
             plugins: [router, mockVuetify()],
           },
         })
@@ -82,12 +82,13 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         await flushPromises()
 
         // Assert
-        const receivedErrors = errorHandler.mock.calls.map(([error]) => error)
-        expect(receivedErrors).toMatchObject([
-          {
-            name: "AuthenticationRequiredError",
-            message: "You must be logged in to access this endpoint",
-          },
+        expect(errorHandler.mock.calls).toEqual([
+          [
+            expect.objectContaining({
+              name: "AuthenticationRequiredError",
+              message: "You must be logged in to access this endpoint",
+            }),
+          ],
         ])
       })
 
@@ -112,7 +113,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         mount(MonthlyWorksheetPage, {
           props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
           global: {
-            config: { errorHandler },
+            config: { errorHandler: (error) => errorHandler(error) },
             plugins: [router, mockVuetify()],
           },
         })
@@ -123,8 +124,14 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         await flushPromises()
 
         // Assert
-        const receivedErrors = errorHandler.mock.calls.map(([error]) => error)
-        expect(receivedErrors).toMatchObject([{ name: "CloudflareChallengeError", message: "" }])
+        expect(errorHandler.mock.calls).toEqual([
+          [
+            expect.objectContaining({
+              name: "CloudflareChallengeError",
+              message: "",
+            }),
+          ],
+        ])
       })
 
       test("when the fiscal period is pending after replication, withholds worksheet editing", async () => {
@@ -648,7 +655,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         const wrapper = mount(MonthlyWorksheetPage, {
           props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
           global: {
-            config: { errorHandler },
+            config: { errorHandler: (error) => errorHandler(error) },
             plugins: [router, mockVuetify()],
             stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
           },
@@ -667,12 +674,13 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         await flushPromises()
 
         // Assert
-        const receivedErrors = errorHandler.mock.calls.map(([error]) => error)
-        expect(receivedErrors).toMatchObject([
-          {
-            name: "AuthenticationRequiredError",
-            message: "You must be logged in to access this endpoint",
-          },
+        expect(errorHandler.mock.calls).toEqual([
+          [
+            expect.objectContaining({
+              name: "AuthenticationRequiredError",
+              message: "You must be logged in to access this endpoint",
+            }),
+          ],
         ])
       })
 
@@ -727,7 +735,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         const wrapper = mount(MonthlyWorksheetPage, {
           props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
           global: {
-            config: { errorHandler },
+            config: { errorHandler: (error) => errorHandler(error) },
             plugins: [router, mockVuetify()],
             stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
           },
@@ -746,8 +754,14 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         await flushPromises()
 
         // Assert
-        const receivedErrors = errorHandler.mock.calls.map(([error]) => error)
-        expect(receivedErrors).toMatchObject([{ name: "CloudflareChallengeError", message: "" }])
+        expect(errorHandler.mock.calls).toEqual([
+          [
+            expect.objectContaining({
+              name: "CloudflareChallengeError",
+              message: "",
+            }),
+          ],
+        ])
       })
 
       test("when a diverse need creation refresh has an unexpected failure, forwards it to the application boundary", async () => {
@@ -801,7 +815,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         const wrapper = mount(MonthlyWorksheetPage, {
           props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
           global: {
-            config: { errorHandler },
+            config: { errorHandler: (error) => errorHandler(error) },
             plugins: [router, mockVuetify()],
             stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
           },
@@ -820,9 +834,13 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         await flushPromises()
 
         // Assert
-        const receivedErrors = errorHandler.mock.calls.map(([error]) => error)
-        expect(receivedErrors).toMatchObject([
-          { name: "Error", message: "Unexpected refresh failure" },
+        expect(errorHandler.mock.calls).toEqual([
+          [
+            expect.objectContaining({
+              name: "Error",
+              message: "Unexpected refresh failure",
+            }),
+          ],
         ])
       })
     })
