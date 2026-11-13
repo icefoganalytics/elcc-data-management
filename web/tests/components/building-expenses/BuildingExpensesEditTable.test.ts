@@ -1,7 +1,9 @@
 import { flushPromises, mount } from "@vue/test-utils"
 
 import buildingExpensesApi, { type BuildingExpenseAsIndex } from "@/api/building-expenses-api"
+
 import { mockVuetify } from "@/tests/support"
+
 import BuildingExpensesEditTable from "@/components/building-expenses/BuildingExpensesEditTable.vue"
 
 describe("web/src/components/building-expenses/BuildingExpensesEditTable.vue", () => {

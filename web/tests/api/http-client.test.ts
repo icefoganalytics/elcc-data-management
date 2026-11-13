@@ -1,6 +1,6 @@
-import httpClient from "@/api/http-client"
-
 import mockAxios from "@/tests/support/mock-axios"
+
+import httpClient from "@/api/http-client"
 
 vi.hoisted(() => vi.resetModules())
 const getAccessTokenSilentlyMock = vi.hoisted(() => vi.fn())

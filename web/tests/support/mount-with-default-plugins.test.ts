@@ -2,7 +2,10 @@ import { useAuth0 } from "@auth0/auth0-vue"
 import { flushPromises } from "@vue/test-utils"
 
 import AuthenticationRequiredError from "@/api/errors/authentication-required-error"
-import { mockAuth0, mockRouter, mountWithDefaultPlugins } from "@/tests/support"
+
+import { mockAuth0, mockRouter } from "@/tests/support"
+
+import mountWithDefaultPlugins from "@/tests/support/mount-with-default-plugins"
 
 describe("web/tests/support/mount-with-default-plugins.ts", () => {
   describe("mountWithDefaultPlugins", () => {

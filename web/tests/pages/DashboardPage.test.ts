@@ -3,6 +3,7 @@ import { flushPromises, mount } from "@vue/test-utils"
 import ApiOperationError from "@/api/errors/api-operation-error"
 import AuthenticationRequiredError from "@/api/errors/authentication-required-error"
 import httpClient from "@/api/http-client"
+
 import useSnack from "@/use/use-snack"
 
 import { mockRouter, mockVuetify } from "@/tests/support"

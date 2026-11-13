@@ -4,11 +4,15 @@ import { AxiosHeaders } from "axios"
 import ApiOperationError from "@/api/errors/api-operation-error"
 import AuthenticationRequiredError from "@/api/errors/authentication-required-error"
 import CloudflareChallengeError from "@/api/errors/cloudflare-challenge-error"
+
 import apiResponseErrorPlugin from "@/plugins/api-response-error-plugin"
+
 import useCloudflareChallenge from "@/use/use-cloudflare-challenge"
+
 import { mockAuth0, mockRouter, mockVuetify, mountWithDefaultPlugins } from "@/tests/support"
 
 import CloudflareChallengeDialog from "@/components/CloudflareChallengeDialog.vue"
+
 import UniqueTextField from "@/components/common/UniqueTextField.vue"
 
 describe("web/src/components/common/UniqueTextField.vue", () => {

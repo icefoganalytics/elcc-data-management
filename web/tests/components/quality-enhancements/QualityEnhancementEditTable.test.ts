@@ -3,12 +3,17 @@ import { AxiosError } from "axios"
 
 import qualityEnhancementsApi from "@/api/quality-enhancements-api"
 import ApiOperationError from "@/api/errors/api-operation-error"
+
 import apiResponseErrorPlugin from "@/plugins/api-response-error-plugin"
+
 import useSnack from "@/use/use-snack"
+
 import { qualityEnhancementFactory } from "@/tests/factories"
 import { mockRouter, mockVuetify } from "@/tests/support"
-import QualityEnhancementEditTable from "@/components/quality-enhancements/QualityEnhancementEditTable.vue"
+
 import AppSnackbar from "@/components/layouts/AppSnackbar.vue"
+
+import QualityEnhancementEditTable from "@/components/quality-enhancements/QualityEnhancementEditTable.vue"
 
 describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vue", () => {
   describe("QualityEnhancementEditTable", () => {

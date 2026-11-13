@@ -2,9 +2,10 @@ import { Op } from "@sequelize/core"
 
 import { Centre } from "@/models"
 import CentrePolicy from "@/policies/centre-policy"
-import IndexService from "@/services/centres/index-service"
 
 import { centreFactory, userFactory } from "@/factories"
+
+import IndexService from "@/services/centres/index-service"
 
 describe("api/src/services/centres/index-service.ts", () => {
   describe("IndexService", () => {

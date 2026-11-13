@@ -3,12 +3,17 @@ import { AxiosError } from "axios"
 
 import administrationCostsApi from "@/api/administration-costs-api"
 import ApiOperationError from "@/api/errors/api-operation-error"
+
 import apiResponseErrorPlugin from "@/plugins/api-response-error-plugin"
+
 import useSnack from "@/use/use-snack"
+
 import { administrationCostFactory } from "@/tests/factories"
 import { mockRouter, mockVuetify } from "@/tests/support"
-import AdministrationCostEditTable from "@/components/administration-costs/AdministrationCostEditTable.vue"
+
 import AppSnackbar from "@/components/layouts/AppSnackbar.vue"
+
+import AdministrationCostEditTable from "@/components/administration-costs/AdministrationCostEditTable.vue"
 
 describe("web/src/components/administration-costs/AdministrationCostEditTable.vue", () => {
   describe("AdministrationCostEditTable", () => {

@@ -11,6 +11,7 @@ import {
 import { mockVuetify } from "@/tests/support"
 
 import ChildrenWithDiverseNeedsFundingCategorySearchableAutocomplete from "@/components/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategorySearchableAutocomplete.vue"
+
 import ChildrenWithDiverseNeedsFundingRecordsCreateFormCard from "@/components/children-with-diverse-needs-funding-records/ChildrenWithDiverseNeedsFundingRecordsCreateFormCard.vue"
 
 describe("web/src/components/children-with-diverse-needs-funding-records/ChildrenWithDiverseNeedsFundingRecordsCreateFormCard.vue", () => {

@@ -9,6 +9,7 @@ import { mockRouter, mockVuetify } from "@/tests/support"
 import CurrencyInput from "@/components/CurrencyInput.vue"
 import ChildCareSpaceCategorySearchableAutocomplete from "@/components/child-care-space-categories/ChildCareSpaceCategorySearchableAutocomplete.vue"
 import FundingPeriodSearchableAutocomplete from "@/components/funding-periods/FundingPeriodSearchableAutocomplete.vue"
+
 import AdministrationCostCategoryNewPage from "@/pages/administration/administration-cost-categories/AdministrationCostCategoryNewPage.vue"
 
 describe("web/src/pages/administration/administration-cost-categories/AdministrationCostCategoryNewPage.vue", () => {

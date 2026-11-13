@@ -5,9 +5,10 @@ import { flushPromises } from "@vue/test-utils"
 import { type CentreQueryOptions } from "@/api/centres-api"
 import ApiOperationError from "@/api/errors/api-operation-error"
 import httpClient from "@/api/http-client"
-import useCentreStatistics from "@/use/use-centre-statistics"
 
 import { mockHttpGetRoutes } from "@/tests/support"
+
+import useCentreStatistics from "@/use/use-centre-statistics"
 
 describe("web/src/use/use-centre-statistics.ts", () => {
   describe("useCentreStatistics", () => {
