@@ -1,5 +1,13 @@
 <template>
-  <HeaderActionsCard title="Diverse Need Categories">
+  <HeaderActionsCard>
+    <template #header>
+      <FundingPeriodSearchableAutocomplete
+        v-model="fundingPeriodId"
+        density="compact"
+        hide-details
+        clearable
+      />
+    </template>
     <template #header-actions>
       <v-btn
         v-if="fundingPeriodsCount > 0"
@@ -12,17 +20,9 @@
         }"
       >
         <v-icon class="mr-2">mdi-plus</v-icon>
-        New Diverse Need Category
+        New Category
       </v-btn>
     </template>
-    <v-row>
-      <v-col cols="12">
-        <FundingPeriodSearchableAutocomplete
-          v-model="fundingPeriodId"
-          clearable
-        />
-      </v-col>
-    </v-row>
     <ChildrenWithDiverseNeedsFundingCategoriesDataTableServer
       :where="childrenWithDiverseNeedsFundingCategoriesWhere"
     />

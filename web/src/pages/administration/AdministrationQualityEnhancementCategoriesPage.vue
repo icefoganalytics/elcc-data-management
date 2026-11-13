@@ -1,10 +1,15 @@
 <template>
   <HeaderActionsCard>
     <template #header>
-      <v-row align="center">
+      <v-row
+        align="center"
+        class="ma-0 mr-md-4"
+        no-gutters
+      >
         <v-col
           cols="12"
           md="6"
+          class="pb-4 pb-md-0 pr-md-4"
         >
           <v-text-field
             :model-value="search"
@@ -22,6 +27,8 @@
           <FundingPeriodSearchableAutocomplete
             v-model="selectedFundingPeriodId"
             label="Funding Period"
+            density="compact"
+            hide-details
             clearable
           />
         </v-col>
@@ -41,7 +48,7 @@
         }"
       >
         <v-icon class="mr-3">mdi-plus</v-icon>
-        New Quality Enhancement Category
+        New Category
       </v-btn>
     </template>
 

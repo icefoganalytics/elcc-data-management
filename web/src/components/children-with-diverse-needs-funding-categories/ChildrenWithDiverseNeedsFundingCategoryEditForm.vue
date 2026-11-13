@@ -6,7 +6,6 @@
   <HeaderActionsFormCard
     v-else
     ref="form"
-    title="Edit Diverse Need Category"
     @submit.prevent="submit"
   >
     <v-row>
