@@ -15,7 +15,9 @@
       </v-col>
     </v-row>
     <ChildrenWithDiverseNeedsFundingCategoryEditForm
-      :children-with-diverse-needs-funding-category-id="childrenWithDiverseNeedsFundingCategoryId"
+      :children-with-diverse-needs-funding-category-id="
+        childrenWithDiverseNeedsFundingCategoryIdAsNumber
+      "
     />
   </template>
 </template>
@@ -34,11 +36,11 @@ const props = defineProps<{
   childrenWithDiverseNeedsFundingCategoryId: string
 }>()
 
-const childrenWithDiverseNeedsFundingCategoryId = computed(() =>
+const childrenWithDiverseNeedsFundingCategoryIdAsNumber = computed(() =>
   Number(props.childrenWithDiverseNeedsFundingCategoryId)
 )
 const { childrenWithDiverseNeedsFundingCategory } = useChildrenWithDiverseNeedsFundingCategory(
-  childrenWithDiverseNeedsFundingCategoryId
+  childrenWithDiverseNeedsFundingCategoryIdAsNumber
 )
 
 const fundingPeriodId = computed(
@@ -65,7 +67,8 @@ useBreadcrumbs("Edit Diverse Need Category", [
     to: {
       name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryEditPage",
       params: {
-        childrenWithDiverseNeedsFundingCategoryId: childrenWithDiverseNeedsFundingCategoryId.value,
+        childrenWithDiverseNeedsFundingCategoryId:
+          childrenWithDiverseNeedsFundingCategoryIdAsNumber.value,
       },
     },
   },
