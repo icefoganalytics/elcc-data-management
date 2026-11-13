@@ -66,7 +66,7 @@
       <v-btn
         color="warning"
         variant="outlined"
-        :disabled="isSaving"
+        :loading="isSaving"
         :to="{
           name: 'administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage',
           params: {
@@ -113,7 +113,7 @@ const isSaving = ref(false)
 const snack = useSnack()
 
 async function submit() {
-  if (isSaving.value || form.value === null) return
+  if (form.value === null) return
 
   const { valid } = await form.value.validate()
   if (!valid) return
