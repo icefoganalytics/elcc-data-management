@@ -109,7 +109,7 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
             existingCategoryIds: [],
           },
           global: {
-            config: { errorHandler },
+            config: { errorHandler: (error) => errorHandler(error) },
           },
         })
         await flushPromises()
@@ -123,11 +123,13 @@ describe("web/src/components/children-with-diverse-needs-funding-records/Childre
         await flushPromises()
 
         // Assert
-        expect(errorHandler.mock.calls.map(([error]) => error)).toMatchObject([
-          {
-            name: "AuthenticationRequiredError",
-            message: "You must be logged in to access this endpoint",
-          },
+        expect(errorHandler.mock.calls).toEqual([
+          [
+            expect.objectContaining({
+              name: "AuthenticationRequiredError",
+              message: "You must be logged in to access this endpoint",
+            }),
+          ],
         ])
       })
     })
