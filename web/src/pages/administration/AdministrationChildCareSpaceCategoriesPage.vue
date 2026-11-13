@@ -8,7 +8,7 @@
       >
         <v-col
           cols="12"
-          md="6"
+          md="8"
           class="pb-4 pb-md-0 pr-md-4"
         >
           <v-text-field
@@ -22,7 +22,7 @@
         </v-col>
         <v-col
           cols="12"
-          md="6"
+          md="4"
         >
           <v-select
             v-model="selectedFundingPeriodId"

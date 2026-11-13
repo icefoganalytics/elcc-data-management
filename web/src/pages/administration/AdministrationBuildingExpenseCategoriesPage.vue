@@ -7,6 +7,7 @@
         append-inner-icon="mdi-magnify"
         density="compact"
         hide-details
+        class="mr-md-4"
         @update:model-value="debounceUpdateSearch"
       />
     </template>
