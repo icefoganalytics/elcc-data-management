@@ -78,13 +78,15 @@ onScopeDispose(() => {
   debounceUpdateSearch.cancel()
 })
 
-const administrationCostCategoriesFilters = computed<AdministrationCostCategoryFiltersOptions>(() => {
-  if (search.value === "") return {}
+const administrationCostCategoriesFilters = computed<AdministrationCostCategoryFiltersOptions>(
+  () => {
+    if (search.value === "") return {}
 
-  return {
-    search: search.value,
+    return {
+      search: search.value,
+    }
   }
-})
+)
 
 const fundingPeriodsQuery = ref({
   perPage: 1,
