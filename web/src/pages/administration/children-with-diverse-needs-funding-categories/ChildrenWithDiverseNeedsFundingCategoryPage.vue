@@ -22,7 +22,6 @@
         v-if="policy?.destroy"
         color="error"
         :loading="isDeleting"
-        :disabled="isDeleting"
         @click="retireChildrenWithDiverseNeedsFundingCategory"
       >
         Retire
@@ -132,11 +131,7 @@ const snack = useSnack()
 const router = useRouter()
 
 async function retireChildrenWithDiverseNeedsFundingCategory() {
-  if (
-    !policy.value?.destroy ||
-    isDeleting.value ||
-    !blockedToTrueConfirm("Are you sure you want to retire this diverse need category?")
-  ) {
+  if (!blockedToTrueConfirm("Are you sure you want to retire this diverse need category?")) {
     return
   }
 
