@@ -1,5 +1,5 @@
 <template>
-  <HeaderActionsCard title="Users">
+  <HeaderActionsCard>
     <template #header>
       <v-text-field
         v-model="search"
@@ -7,6 +7,7 @@
         append-inner-icon="mdi-magnify"
         density="compact"
         hide-details
+        class="mr-md-4"
       />
     </template>
     <template
@@ -20,7 +21,7 @@
         }"
       >
         <v-icon class="mr-3">mdi-plus</v-icon>
-        Add User
+        New User
       </v-btn>
     </template>
 

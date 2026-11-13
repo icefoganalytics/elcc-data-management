@@ -7,6 +7,7 @@
         append-inner-icon="mdi-magnify"
         density="compact"
         hide-details
+        class="mr-md-4"
         @update:model-value="debounceUpdateSearch"
       />
     </template>
@@ -18,7 +19,7 @@
         }"
       >
         <v-icon class="mr-3">mdi-plus</v-icon>
-        New Building Expense Category
+        New Category
       </v-btn>
     </template>
 

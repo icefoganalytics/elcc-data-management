@@ -1,10 +1,15 @@
 <template>
   <HeaderActionsCard>
     <template #header>
-      <v-row align="center">
+      <v-row
+        align="center"
+        class="ma-0 mr-md-4"
+        no-gutters
+      >
         <v-col
           cols="12"
-          md="6"
+          md="8"
+          class="pb-4 pb-md-0 pr-md-4"
         >
           <v-text-field
             :model-value="search"
@@ -17,12 +22,14 @@
         </v-col>
         <v-col
           cols="12"
-          md="6"
+          md="4"
         >
           <v-select
             v-model="selectedFundingPeriodId"
             :items="fundingPeriodItems"
             label="Funding Period"
+            density="compact"
+            hide-details
             :loading="isLoadingFundingPeriods"
             :error="isFundingPeriodsErrored"
             :error-messages="
@@ -44,7 +51,7 @@
         }"
       >
         <v-icon class="mr-3">mdi-plus</v-icon>
-        New Child Care Space Category
+        New Category
       </v-btn>
     </template>
 

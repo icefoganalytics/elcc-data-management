@@ -6,7 +6,10 @@
       @update:model-value="emit('update:modelValue', $event)"
       @submit="emit('submit', $event)"
     >
-      <v-card-title class="d-flex flex-column flex-md-row justify-md-space-between align-md-end">
+      <v-card-title
+        v-if="!isEmpty(title) || $slots.header || $slots['header-actions']"
+        class="d-flex flex-column flex-md-row justify-md-space-between align-md-end"
+      >
         <slot name="header">
           <component
             :is="headerTag"
@@ -19,7 +22,10 @@
         <v-spacer class="mt-4 mt-md-0" />
         <slot name="header-actions"></slot>
       </v-card-title>
-      <v-divider :class="dividerClass" />
+      <v-divider
+        v-if="!isEmpty(title) || $slots.header || $slots['header-actions']"
+        :class="dividerClass"
+      />
       <v-card-text>
         <slot></slot>
       </v-card-text>

@@ -170,6 +170,38 @@ const routes = [
         props: true,
       },
       {
+        path: "administration/children-with-diverse-needs-funding-categories",
+        name: "administration/ChildrenWithDiverseNeedsFundingCategoriesPage",
+        component: () =>
+          import("@/pages/administration/ChildrenWithDiverseNeedsFundingCategoriesPage.vue"),
+      },
+      {
+        path: "administration/children-with-diverse-needs-funding-categories/new",
+        name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryNewPage",
+        component: () =>
+          import(
+            "@/pages/administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryNewPage.vue"
+          ),
+      },
+      {
+        path: "administration/children-with-diverse-needs-funding-categories/:childrenWithDiverseNeedsFundingCategoryId/edit",
+        name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryEditPage",
+        component: () =>
+          import(
+            "@/pages/administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryEditPage.vue"
+          ),
+        props: true,
+      },
+      {
+        path: "administration/children-with-diverse-needs-funding-categories/:childrenWithDiverseNeedsFundingCategoryId",
+        name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
+        component: () =>
+          import(
+            "@/pages/administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage.vue"
+          ),
+        props: true,
+      },
+      {
         path: "administration/child-care-space-categories",
         name: "administration/ChildCareSpaceCategoriesPage",
         component: () =>
