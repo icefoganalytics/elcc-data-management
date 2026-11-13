@@ -27,6 +27,12 @@ Follow [Scenario-Oriented Verification in the shared Code Organization Reference
 - Keep suite-specific lifecycle state and hooks inside the suite's outer `describe`. Reserve shared setup for infrastructure needed across suites; do not introduce a global fixture for locally owned resources.
 - For slow-save scenarios, a local deferred promise can hold the API spy pending. Keep stale server responses separate from editable records so subsequent edits cannot mutate the response fixture.
 
+### Testing HTTP Client Interceptors
+
+Use `mockAxios(httpClient)` from `@/tests/support/mock-axios` inside each scenario when testing the real HTTP client. Unmock `@/api/http-client` in that suite; keep authentication dependencies mocked. The helper installs `axios-mock-adapter`, rejects unmatched requests, and restores the original adapter with `onTestFinished`, including when assertions fail.
+
+Declare responses with `mock.onGet(url).reply(status, data, headers)` and transport failures with `networkError()`. Use an `AbortController` for cancellation. Do not replace `httpClient.defaults.adapter` or construct Axios errors manually. This tests application interceptors, not real network transport. Component tests should continue using the client mocks below.
+
 ### Mocking GET Routes
 
 Use `mockHttpGetRoutes` from `@/tests/support` to register an explicit URL-to-callback map beside each scenario's fixtures:
