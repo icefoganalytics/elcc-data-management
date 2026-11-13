@@ -67,7 +67,7 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         await input.setValue("0.25")
 
         // Act
-        void wrapper.vm.commitEdit()
+        wrapper.vm.commitEdit()
         await flushPromises()
 
         // Assert
@@ -95,7 +95,7 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
 
         // Act
         let committed: boolean | undefined
-        void wrapper.vm.commitEdit().then((result) => {
+        wrapper.vm.commitEdit().then((result) => {
           committed = result
         })
         await flushPromises()
@@ -364,7 +364,7 @@ describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vu
         await flushPromises()
 
         // Act
-        void wrapper.vm.replicateEstimates()
+        wrapper.vm.replicateEstimates()
         await flushPromises()
 
         // Assert
