@@ -74,6 +74,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
 ### Fixed
 
 - Administration lists share aligned search and creation actions, with wider search fields and narrower funding-period filters that stack on small screens. Administration Cost and Children with Diverse Needs category lists now support name search alongside funding-period filtering. Category pages avoid repeated headings.
+- The administration Centres page now offers New Centre using the existing creation workflow and opens the new centre after saving.
 - Child Care Spaces, Administration Costs, Quality Enhancement, and Children with Diverse Needs categories cannot be retired while active records use them. Child Care Space categories also check linked annual categories and shared funding lines. Retiring a category does not delete its dependents.
 - Rejected Children with Diverse Needs category edits retain input for correction. Category lists and the category editor show load failures through snackbar messages; lists use integer route-query pagination. Authentication and unexpected failures during category mutations or loads reach application recovery.
 - JSON API requests now distinguish backend errors from intermediary HTML. Cloudflare challenges offer explicit reload/verification and an opt-in, isolated diagnostic preview; other HTML reaches the application-error page. Recovery never automatically replays a write.
