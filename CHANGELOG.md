@@ -73,6 +73,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
 
 ### Fixed
 
+- Development commands now honor an exported `COMPOSE_PROJECT_NAME`, allowing a short database-safe identity for long checkout names without changing existing checkout defaults or gateway routes.
 - JSON API requests now distinguish backend errors from intermediary HTML. Cloudflare challenges offer explicit reload/verification and an opt-in, isolated diagnostic preview; other HTML reaches the application-error page. Recovery never automatically replays a write.
 - Inactive ELCC accounts now receive a stable access-denied response instead of repeatedly restarting sign-in.
 - Funding-period selections retain their fiscal-year labels when earlier lookup requests finish late.

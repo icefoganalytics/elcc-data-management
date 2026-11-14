@@ -97,6 +97,25 @@ source/version separately with `docker inspect local-gateway-database-router-1`.
 Coordinate any required shared-router restart with other participating projects; do not
 restart it merely because this checkout's bundle changed.
 
+#### Choosing a Project Identity for Long Checkout Names
+
+The private `${COMPOSE_PROJECT_NAME}-db` alias must fit in one 63-character DNS label, leaving **60 characters** for the project name. Choose a unique short identity before creating a new stack from a longer checkout:
+
+```bash
+export COMPOSE_PROJECT_NAME=elcc-141-example
+./bin/dev up --build
+./bin/dev test_api
+./bin/dev down
+```
+
+Keep the same exported identity for every command, including migrations, logs, and teardown. The wrapper honors exported `COMPOSE_PROJECT_NAME`, falling back to the existing normalized checkout name only when it is unset. Compose's global `-p` / `--project-name` option takes precedence, for example `./bin/dev --project-name elcc-141-example config --format json`. Put global options before the Compose command; this forwards directly to Compose rather than invoking the wrapper's `up` gateway/editor integration. Prefer the exported variable for normal wrapper commands. Gateway hostnames still come from the checkout name, not the explicit project identity.
+
+For an existing stack, retain its original project identity: choosing another name selects different project-scoped volumes and can make existing data appear missing. Before deliberately changing identity, record the original project and volume names and select and verify a data-preserving migration or explicit mapping to the original volumes. Do not remove the original volumes or assume a rename moves their data.
+
+Use the configuration commands above to inspect matching API/test hosts and private database aliases in both base and gateway configurations; also inspect `name` and `volumes.db_data.name` before starting services. A 60-character project produces a 63-character alias; a 61-character project can still render a 64-character alias. Rendering is not DNS or connectivity proof: use the application/test identity queries above from disposable consumers to verify the intended server and database.
+
+The gateway's [0.2.4 DNS-budget guidance](https://github.com/icefoganalytics/local-development-gateway/blob/v0.2.4/README.md#private-database-alias-length) documents this operator responsibility; it does not validate or shorten consumer aliases. No gateway upgrade or shared-router restart is needed. The wrapper likewise does not hash, shorten, or validate project-name length.
+
 ### Editor Bridge
 
 Run `bundle install` to install `open-in-editor-bridge` 0.5.0. Before upgrading, stop any
