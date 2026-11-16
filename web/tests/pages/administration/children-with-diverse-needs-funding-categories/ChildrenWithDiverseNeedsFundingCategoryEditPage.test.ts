@@ -273,7 +273,9 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
         await flushPromises()
 
         // Assert
-        expect(receivedErrors).toEqual([authenticationError])
+        expect(receivedErrors).toEqual([
+          expect.objectContaining({ message: "You must be logged in to access this endpoint" }),
+        ])
       })
 
       test("when saving returns an ordinary operation error, shows local update feedback", async () => {

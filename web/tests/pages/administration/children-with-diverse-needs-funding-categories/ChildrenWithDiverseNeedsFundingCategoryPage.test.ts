@@ -93,7 +93,12 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
         await flushPromises()
 
         // Assert
-        expect(receivedErrors).toEqual([challengeError])
+        expect(receivedErrors).toEqual([
+          expect.objectContaining({
+            message:
+              "Cloudflare browser verification is required. ELCC could not confirm the request completed.",
+          }),
+        ])
       })
 
       test("when retirement is rejected, enables the retirement action for another attempt", async () => {

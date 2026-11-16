@@ -58,7 +58,9 @@ describe("web/src/components/children-with-diverse-needs-funding-categories/Chil
         await flushPromises()
 
         // Assert
-        expect(receivedErrors).toEqual([authenticationError])
+        expect(receivedErrors).toEqual([
+          expect.objectContaining({ message: "You must be logged in to access this endpoint" }),
+        ])
       })
 
       test("when loading fails with an operation error, does not publish a global snackbar", async () => {

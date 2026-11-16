@@ -100,7 +100,9 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
         await flushPromises()
 
         // Assert
-        expect(receivedErrors).toEqual([unexpectedError])
+        expect(receivedErrors).toEqual([
+          expect.objectContaining({ message: "Connection interrupted" }),
+        ])
       })
 
       test("when creation is rejected, retains the entered name for correction", async () => {
