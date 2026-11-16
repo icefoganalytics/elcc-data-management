@@ -24,7 +24,7 @@
         :loading="isDeleting"
         @click="retireChildrenWithDiverseNeedsFundingCategory"
       >
-        Retire
+        Delete
       </v-btn>
     </template>
     <v-row>
