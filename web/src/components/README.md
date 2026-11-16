@@ -62,6 +62,8 @@ components/{model-plural}/{ModelSingularOrPlural}[Modifier]{VuetifyComponent}.vu
 
 Use a model-specific `DataTableServer` for API-backed administration listings, following WRAP's `WorkflowCategoriesDataTableServer.vue` and the local [Administration categories table](administration-cost-categories/AdministrationCostCategoriesDataTableServer.vue). The page owns contextual filters; the table owns route-backed pagination/sorting, bounded server queries, record navigation, and display formatting. Reset pagination when the filter context changes.
 
+Use `FilterSearchDebouncedTextField` for administration list searches. It owns the URL search query, clearing, and 500 ms debounce; pages retain their search ref and translate its emitted value into API filters. An optional `routeQuerySuffix` separates multiple search fields on one route.
+
 - Dedicated inline-editing tables use `EditDataTableVirtual` as their template root, with names such as `ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.vue` and matching camelCase component refs. Place feedback in the forwarded table slots rather than adding an outer wrapper. Keep recovery controls usable after a load failure without exposing stale editable rows.
 - When hiding an optional actions column, remove it from the `headers` list instead of rendering an empty column and then hiding the button inside the cell template.
 - Keep row-level action gating separate from page-level action-column gating. For example, the page may hide the entire actions column while a row still checks `item.policy.destroy`.
