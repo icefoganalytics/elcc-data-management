@@ -10,6 +10,8 @@ Use Vue's default watcher scheduling to batch related state changes. Do not use 
 
 Watcher callbacks should await `fetch()` directly. Fetch actions may record load errors before rethrowing; do not add catch-and-ignore wrappers merely because the error state was updated.
 
+Model-access composables must not import or call `useSnack` or display notifications. Expose loading/error state and preserve error propagation; the consuming page or component owns user-facing feedback. `use-snack.ts` is the notification adapter itself, not a model-access composable.
+
 Always return both `fetch` and `refresh: fetch` from model composables. `refresh` is an alias of the same fetch function, not a separate implementation or wrapper.
 
 Destructure named fields from API responses at the `await` boundary, such as `const { childrenWithDiverseNeedsFundingRecord, policy } = await ...`. Assign and return those values directly instead of retaining an opaque `response` object.
