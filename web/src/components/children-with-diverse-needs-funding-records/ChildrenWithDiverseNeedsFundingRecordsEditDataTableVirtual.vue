@@ -152,7 +152,7 @@ const {
 
 const headers = [
   { title: "Category", key: "categoryId" },
-  { title: "Per Child", key: "monthlyAmount" },
+  { title: "Subsidized", key: "monthlyAmount" },
   { title: "Est", key: "estimatedChildOccupancyRate" },
   { title: "Est Total", key: "estimatedComputedTotal" },
   { title: "Act", key: "actualChildOccupancyRate" },

@@ -124,7 +124,7 @@ const query = computed(() => ({ where: props.where, perPage: MAX_PER_PAGE }))
 const { administrationCosts, isLoading, isErrored, fetch } = useAdministrationCosts(query)
 const headers = [
   { title: "Category", key: "categoryId" },
-  { title: "Per Child", key: "monthlyAmount" },
+  { title: "Subsidized", key: "monthlyAmount" },
   { title: "Est", key: "estimatedChildOccupancyRate" },
   { title: "Est Total", key: "estimatedComputedTotal" },
   { title: "Act", key: "actualChildOccupancyRate" },
