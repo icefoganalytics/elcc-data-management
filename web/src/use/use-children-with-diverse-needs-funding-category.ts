@@ -84,13 +84,7 @@ export function useChildrenWithDiverseNeedsFundingCategory(
       }
       throw error
     } finally {
-      if (
-        !controller.signal.aborted &&
-        unref(childrenWithDiverseNeedsFundingCategoryId) ===
-          staticChildrenWithDiverseNeedsFundingCategoryId
-      ) {
-        state.isLoading = false
-      }
+      state.isLoading = false
     }
   }
 
@@ -141,9 +135,7 @@ export function useChildrenWithDiverseNeedsFundingCategory(
       }
       throw error
     } finally {
-      if (!signal?.aborted) {
-        state.isLoading = false
-      }
+      state.isLoading = false
     }
   }
 

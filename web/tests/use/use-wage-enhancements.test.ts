@@ -19,7 +19,7 @@ describe("web/src/use/use-wage-enhancements.ts", () => {
 
   describe("useWageEnhancements", () => {
     describe("query lifecycle", () => {
-      test("when an earlier query responds while its replacement is pending, keeps the latest query loading", async () => {
+      test("when an earlier query responds while its replacement is pending, clears loading", async () => {
         // Arrange
         const wageEnhancement1 = wageEnhancementFactory.build({ id: 3, centreId: 1 })
         const firstLoad = Promise.withResolvers<{
@@ -43,7 +43,7 @@ describe("web/src/use/use-wage-enhancements.ts", () => {
         await flushPromises()
 
         // Assert
-        expect(mirror.isLoading.value).toBe(true)
+        expect(mirror.isLoading.value).toBe(false)
       })
 
       test("when an earlier query responds while its replacement is pending, does not expose stale results", async () => {

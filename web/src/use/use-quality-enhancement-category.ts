@@ -67,9 +67,7 @@ export function useQualityEnhancementCategory(
       }
       throw error
     } finally {
-      if (!controller.signal.aborted && latestRequest === request) {
-        state.isLoading = false
-      }
+      state.isLoading = false
     }
   }
 
@@ -116,9 +114,7 @@ export function useQualityEnhancementCategory(
       }
       throw error
     } finally {
-      if (latestRequest === request) {
-        state.isLoading = false
-      }
+      state.isLoading = false
     }
   }
 

@@ -57,7 +57,7 @@ export function useChildrenWithDiverseNeedsFundingCategories(
       console.error("Failed to fetch Children with Diverse Needs funding categories", { error })
       throw error
     } finally {
-      if (!controller.signal.aborted) state.isLoading = false
+      state.isLoading = false
     }
   }
 

@@ -68,7 +68,7 @@ describe("web/src/use/use-child-care-spaces.ts", () => {
         expect(spaces.totalCount.value).toEqual(12)
       })
 
-      test("when an older query completes while its replacement is pending, keeps loading", async ({
+      test("when an older query completes while its replacement is pending, clears loading", async ({
         onTestFinished,
       }) => {
         // Arrange
@@ -90,7 +90,7 @@ describe("web/src/use/use-child-care-spaces.ts", () => {
         await flushPromises()
 
         // Assert
-        expect(spaces.isLoading.value).toEqual(true)
+        expect(spaces.isLoading.value).toEqual(false)
       })
 
       test("when an older query fails after the selected query succeeds, keeps the selected query error-free", async ({

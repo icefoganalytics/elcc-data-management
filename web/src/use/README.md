@@ -4,7 +4,7 @@ This directory holds shared Vue composables. Follow the singular/plural split fo
 
 Keep singular and plural model-mirror composables while the underlying model exists, even when they have no current callers. Changing a screen's editor implementation does not make its model mirrors obsolete; remove them only when the underlying model is removed.
 
-Cancel superseded reads with `AbortController`, passing its `signal` through the API module to Axios. Abort pending reads when watching is skipped, the selected id is cleared, or the consuming scope is disposed. Cancellation is not a load failure, and an aborted request must not change the replacement request's loading or error state. Do not cancel committed writes when the selected context changes.
+Cancel superseded reads with `AbortController`, passing its `signal` through the API module to Axios. Abort pending reads when watching is skipped, the selected id is cleared, or the consuming scope is disposed. Cancellation is not a load failure, and an aborted request must not replace current data or change the replacement request's error state. Always reset `isLoading` to `false` in `finally`, including cancelled or superseded requests; it is not a count of outstanding requests. Do not cancel committed writes when the selected context changes.
 
 Use Vue's default watcher scheduling to batch related state changes. Do not use `flush: "sync"` as a general freshness or cancellation mechanism; an exception needs a demonstrated local ordering requirement.
 
@@ -30,7 +30,7 @@ Keep record deletion in the consuming page or component: call the model API's `d
 
 Consume those returned refs directly. A component should not mirror the composable's records in another map and reconcile each fetch into that map; preserve the editor's lifetime when its pending work must survive navigation.
 
-Clear the previous record when its id changes and ignore outdated responses. Group cancellation and record-state resets in a local `clearRecord()` helper, as in `useEmployeeBenefit`, and call it from the id watcher before fetching. Loading state belongs to the latest request; an earlier request must not end the current loader or restore an old record. In-flight saves must not update a different record's local state.
+Clear the previous record when its id changes and ignore outdated responses. Group cancellation and record-state resets in a local `clearRecord()` helper, as in `useEmployeeBenefit`, and call it from the id watcher before fetching. An earlier request must not restore an old record. In-flight saves must not update a different record's local state.
 
 ## Plural Composables
 

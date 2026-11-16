@@ -45,9 +45,7 @@ export function useAdministrationCosts(queryOptions: Ref<AdministrationCostQuery
       state.isErrored = true
       throw error
     } finally {
-      if (!controller.signal.aborted) {
-        state.isLoading = false
-      }
+      state.isLoading = false
     }
   }
 

@@ -184,7 +184,7 @@ describe("web/src/use/use-employee-benefit.ts", () => {
         expect(handleError.mock.calls.map(([error]) => error)).toEqual([loadError])
       })
 
-      test("when an earlier load finishes while the selected record is loading, keeps the editor loading", async () => {
+      test("when an earlier load finishes while the selected record is loading, clears loading", async () => {
         // Arrange
         const firstLoad = Promise.withResolvers<BenefitResponse>()
         const selectedLoad = Promise.withResolvers<BenefitResponse>()
@@ -205,7 +205,7 @@ describe("web/src/use/use-employee-benefit.ts", () => {
         await flushPromises()
 
         // Assert
-        expect(benefit.isLoading.value).toBe(true)
+        expect(benefit.isLoading.value).toBe(false)
       })
 
       test("when an earlier load finishes while the selected record is loading, does not expose stale data", async () => {

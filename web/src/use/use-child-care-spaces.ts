@@ -54,9 +54,7 @@ export function useChildCareSpaces(
       state.isErrored = true
       throw error
     } finally {
-      if (!controller.signal.aborted) {
-        state.isLoading = false
-      }
+      state.isLoading = false
     }
   }
 

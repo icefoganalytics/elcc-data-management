@@ -47,7 +47,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
 - Administration category creation is now offered only when a funding period exists, instead of warning after opening the creation form.
 - Administration category details show linked Child Care Space category names instead of internal IDs.
 - Administration category and worksheet reads now cancel when superseded or abandoned, without treating cancellation as a load failure or cancelling committed saves.
-- Enrollment charts keep the latest selected centre and fiscal year when requests finish out of order; superseded Child Care Spaces reads no longer replace current data, report stale failures, or end the current loading indicator.
+- Enrollment charts keep the latest selected centre and fiscal year when requests finish out of order; superseded Child Care Spaces reads no longer replace current data or report stale failures. Model composables consistently clear loading when any request finishes, including cancelled or superseded requests.
 - Preserved four-decimal currency entry and exact financial calculations when reconciling money amounts.
 - Unified authentication for legacy and modern API endpoints behind one shared boundary,
   preserving public status access and existing role restrictions.
