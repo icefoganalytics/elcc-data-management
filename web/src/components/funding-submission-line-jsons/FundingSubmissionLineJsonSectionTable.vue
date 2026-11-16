@@ -12,7 +12,7 @@
           class="pl-4"
           style="width: 120px"
         >
-          Per child
+          Subsidized
         </td>
         <td
           class="pl-4"
