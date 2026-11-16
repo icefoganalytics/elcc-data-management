@@ -86,7 +86,9 @@ describe("web/src/pages/child-care-centers/summary/SummaryReconciliationPage.vue
           }),
         })
         vi.mocked(httpClient.post).mockResolvedValue({
-          data: { fundingReconciliation },
+          data: {
+            fundingReconciliation,
+          },
         })
 
         // Act
