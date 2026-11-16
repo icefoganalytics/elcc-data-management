@@ -2,7 +2,7 @@
   <v-data-table-server
     v-model:items-per-page="perPage"
     v-model:sort-by="sortBy"
-    v-model:page="page"
+    :page="page"
     :headers="headers"
     :items="childrenWithDiverseNeedsFundingCategories"
     :items-length="totalCount"
@@ -13,6 +13,7 @@
       (_event: unknown, { item }: ChildrenWithDiverseNeedsFundingCategoryTableRow) =>
         goToChildrenWithDiverseNeedsFundingCategory(item.id)
     "
+    @update:page="updatePage"
   >
     <template #item.fromAge="{ item }">
       {{ item.fromAge ?? "—" }}
@@ -56,6 +57,7 @@ import { integerTransformer } from "@/utils/use-route-query-transformers"
 import useVuetifySortByToSafeRouteQuery from "@/use/vuetify/use-vuetify-sort-by-to-safe-route-query"
 import useVuetifySortByToSequelizeSafeOrder from "@/use/vuetify/use-vuetify-sort-by-to-sequelize-safe-order"
 import useChildrenWithDiverseNeedsFundingCategories from "@/use/use-children-with-diverse-needs-funding-categories"
+import useSnack from "@/use/use-snack"
 
 const props = withDefaults(
   defineProps<{
@@ -140,8 +142,21 @@ const childrenWithDiverseNeedsFundingCategoriesQuery = computed(() => ({
   page: page.value,
   perPage: perPage.value,
 }))
-const { childrenWithDiverseNeedsFundingCategories, totalCount, isLoading } =
+const { childrenWithDiverseNeedsFundingCategories, totalCount, isLoading, isErrored } =
   useChildrenWithDiverseNeedsFundingCategories(childrenWithDiverseNeedsFundingCategoriesQuery)
+
+const snack = useSnack()
+
+watch(isErrored, (isErrored) => {
+  if (isErrored) snack.error("Failed to load Children with Diverse Needs categories.")
+})
+
+// Ignore Vuetify's page clamp while the result count is being loaded.
+function updatePage(newPage: number) {
+  if (isLoading.value) return
+
+  page.value = newPage
+}
 
 const router = useRouter()
 

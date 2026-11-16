@@ -23,12 +23,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed, watch } from "vue"
 import { isNil } from "lodash"
 
 import useChildrenWithDiverseNeedsFundingCategory from "@/use/use-children-with-diverse-needs-funding-category"
 import useFundingPeriod from "@/use/use-funding-period"
 import useBreadcrumbs from "@/use/use-breadcrumbs"
+import useSnack from "@/use/use-snack"
 
 import ChildrenWithDiverseNeedsFundingCategoryEditForm from "@/components/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryEditForm.vue"
 
@@ -39,9 +40,14 @@ const props = defineProps<{
 const childrenWithDiverseNeedsFundingCategoryIdAsNumber = computed(() =>
   Number(props.childrenWithDiverseNeedsFundingCategoryId)
 )
-const { childrenWithDiverseNeedsFundingCategory } = useChildrenWithDiverseNeedsFundingCategory(
-  childrenWithDiverseNeedsFundingCategoryIdAsNumber
-)
+const { childrenWithDiverseNeedsFundingCategory, isErrored } =
+  useChildrenWithDiverseNeedsFundingCategory(childrenWithDiverseNeedsFundingCategoryIdAsNumber)
+
+const snack = useSnack()
+
+watch(isErrored, (isErrored) => {
+  if (isErrored) snack.error("Failed to load Children with Diverse Needs category.")
+})
 
 const fundingPeriodId = computed(
   () => childrenWithDiverseNeedsFundingCategory.value?.fundingPeriodId
