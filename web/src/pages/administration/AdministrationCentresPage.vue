@@ -63,9 +63,7 @@ const centreFilters = computed(() => {
 const centreCreateDialog = useTemplateRef("centreCreateDialog")
 
 function openCentreCreateDialog() {
-  if (isNil(centreCreateDialog.value)) {
-    throw new Error("Centre create dialog is not ready")
-  }
+  if (isNil(centreCreateDialog.value)) return
 
   centreCreateDialog.value.open()
 }
