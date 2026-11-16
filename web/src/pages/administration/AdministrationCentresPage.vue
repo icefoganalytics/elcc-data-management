@@ -22,12 +22,12 @@
     </template>
 
     <CentresDeleteDataTableServer :filters="centreFilters" />
-  </HeaderActionsCard>
 
-  <CentreCreateDialog
-    ref="centreCreateDialog"
-    @created="goToCentre"
-  />
+    <CentreCreateDialog
+      ref="centreCreateDialog"
+      @created="goToCentre"
+    />
+  </HeaderActionsCard>
 </template>
 
 <script setup lang="ts">
