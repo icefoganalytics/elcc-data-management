@@ -51,8 +51,11 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue"
+import { useRouteQuery } from "@vueuse/router"
 
 import type { ChildrenWithDiverseNeedsFundingCategoryFiltersOptions } from "@/api/children-with-diverse-needs-funding-categories-api"
+
+import { integerTransformer } from "@/utils/use-route-query-transformers"
 
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import useFundingPeriods from "@/use/use-funding-periods"
@@ -78,7 +81,9 @@ const fundingPeriodsQuery = ref({
 })
 const { totalCount: fundingPeriodsCount } = useFundingPeriods(fundingPeriodsQuery)
 
-const fundingPeriodId = ref<number | null>(null)
+const fundingPeriodId = useRouteQuery<string | null, number | null>("fundingPeriodId", null, {
+  transform: integerTransformer,
+})
 
 const childrenWithDiverseNeedsFundingCategoriesWhere = computed(() => ({
   fundingPeriodId: fundingPeriodId.value ?? undefined,
