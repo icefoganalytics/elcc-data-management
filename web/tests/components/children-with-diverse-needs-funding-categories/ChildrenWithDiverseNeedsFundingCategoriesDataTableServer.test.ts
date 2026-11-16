@@ -61,7 +61,7 @@ describe("web/src/components/children-with-diverse-needs-funding-categories/Chil
         expect(receivedErrors).toEqual([authenticationError])
       })
 
-      test("when loading fails with an operation error, shows snackbar feedback", async () => {
+      test("when loading fails with an operation error, does not publish a global snackbar", async () => {
         // Arrange
         const snack = useSnack()
         vi.spyOn(childrenWithDiverseNeedsFundingCategoriesApi, "list").mockRejectedValue(
@@ -90,7 +90,7 @@ describe("web/src/components/children-with-diverse-needs-funding-categories/Chil
         await flushPromises()
 
         // Assert
-        expect(snack.message.value).toContain("Categories are unavailable")
+        expect(snack.message.value).toBe("")
       })
 
       test("when loading fails, leaves the table's normal empty state visible", async () => {
