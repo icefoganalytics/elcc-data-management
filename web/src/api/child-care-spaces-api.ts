@@ -50,11 +50,14 @@ export type ChildCareSpaceUpdateAttributes = Partial<
 >
 
 export const childCareSpacesApi = {
-  async list(params: ChildCareSpaceQueryOptions = {}): Promise<{
+  async list(
+    params: ChildCareSpaceQueryOptions = {},
+    { signal }: { signal?: AbortSignal } = {}
+  ): Promise<{
     childCareSpaces: ChildCareSpaceAsIndex[]
     totalCount: number
   }> {
-    const { data } = await http.get("/api/child-care-spaces", { params })
+    const { data } = await http.get("/api/child-care-spaces", { params, signal })
     return data
   },
   async get(childCareSpaceId: number): Promise<{

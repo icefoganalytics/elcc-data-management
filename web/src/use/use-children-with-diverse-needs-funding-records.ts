@@ -56,9 +56,7 @@ export function useChildrenWithDiverseNeedsFundingRecords(
       console.error("Failed to fetch Children with Diverse Needs funding records", { error })
       throw error
     } finally {
-      if (!controller.signal.aborted) {
-        state.isLoading = false
-      }
+      state.isLoading = false
     }
   }
 

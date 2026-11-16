@@ -63,7 +63,7 @@ export function useChildrenWithDiverseNeedsFundingCategories(
 
       return state.childrenWithDiverseNeedsFundingCategories
     } finally {
-      if (!controller.signal.aborted) state.isLoading = false
+      state.isLoading = false
     }
   }
 

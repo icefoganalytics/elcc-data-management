@@ -55,9 +55,7 @@ export function useChildCareSpaceCategory(
       }
       throw error
     } finally {
-      if (latestRequest === request) {
-        state.isLoading = false
-      }
+      state.isLoading = false
     }
   }
 
@@ -105,9 +103,7 @@ export function useChildCareSpaceCategory(
       }
       throw error
     } finally {
-      if (latestRequest === request) {
-        state.isLoading = false
-      }
+      state.isLoading = false
     }
   }
 

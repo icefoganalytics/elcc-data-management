@@ -84,13 +84,7 @@ export function useChildrenWithDiverseNeedsFundingRecord(
       }
       throw error
     } finally {
-      if (
-        !controller.signal.aborted &&
-        unref(childrenWithDiverseNeedsFundingRecordId) ===
-          staticChildrenWithDiverseNeedsFundingRecordId
-      ) {
-        state.isLoading = false
-      }
+      state.isLoading = false
     }
   }
 
@@ -133,9 +127,7 @@ export function useChildrenWithDiverseNeedsFundingRecord(
       }
       throw error
     } finally {
-      if (!signal?.aborted) {
-        state.isLoading = false
-      }
+      state.isLoading = false
     }
   }
 

@@ -59,9 +59,7 @@ export function useEmployeeBenefit(id: Ref<number | null | undefined>) {
       state.isErrored = true
       throw error
     } finally {
-      if (!controller.signal.aborted) {
-        state.isLoading = false
-      }
+      state.isLoading = false
     }
   }
 
@@ -94,9 +92,7 @@ export function useEmployeeBenefit(id: Ref<number | null | undefined>) {
       }
       throw error
     } finally {
-      if (!signal?.aborted) {
-        state.isLoading = false
-      }
+      state.isLoading = false
     }
   }
 

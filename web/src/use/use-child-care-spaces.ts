@@ -1,4 +1,5 @@
-import { type Ref, reactive, ref, toRefs, unref, watch } from "vue"
+import { isCancel } from "axios"
+import { type Ref, onScopeDispose, reactive, ref, toRefs, unref, watch } from "vue"
 
 import childCareSpacesApi, {
   type ChildCareSpaceAsIndex,
@@ -30,16 +31,26 @@ export function useChildCareSpaces(
     isLoading: false,
     isErrored: false,
   })
+  let requestController: AbortController | undefined
 
   async function fetch(): Promise<ChildCareSpaceAsIndex[]> {
+    requestController?.abort()
+    const controller = new AbortController()
+    requestController = controller
     state.isLoading = true
     try {
-      const { childCareSpaces, totalCount } = await childCareSpacesApi.list(unref(queryOptions))
+      const { childCareSpaces, totalCount } = await childCareSpacesApi.list(unref(queryOptions), {
+        signal: controller.signal,
+      })
+      if (controller.signal.aborted) return state.childCareSpaces
+
       state.isErrored = false
       state.childCareSpaces = childCareSpaces
       state.totalCount = totalCount
       return childCareSpaces
     } catch (error) {
+      if (controller.signal.aborted || isCancel(error)) return state.childCareSpaces
+
       state.isErrored = true
       throw error
     } finally {
@@ -51,6 +62,8 @@ export function useChildCareSpaces(
     () => [skipWatchIf(), unref(queryOptions)],
     async ([skip]) => {
       if (skip) {
+        requestController?.abort()
+        state.isLoading = false
         return
       }
 
@@ -65,6 +78,10 @@ export function useChildCareSpaces(
     },
     { deep: true, immediate: true }
   )
+
+  onScopeDispose(() => {
+    requestController?.abort()
+  })
 
   return {
     ...toRefs(state),

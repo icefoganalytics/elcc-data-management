@@ -93,13 +93,7 @@ export function useChildrenWithDiverseNeedsFundingCategory(
 
       return state.childrenWithDiverseNeedsFundingCategory
     } finally {
-      if (
-        !controller.signal.aborted &&
-        unref(childrenWithDiverseNeedsFundingCategoryId) ===
-          staticChildrenWithDiverseNeedsFundingCategoryId
-      ) {
-        state.isLoading = false
-      }
+      state.isLoading = false
     }
   }
 

@@ -52,9 +52,7 @@ export function useChildCareSpaceCategories(
       }
       throw error
     } finally {
-      if (latestRequest === request) {
-        state.isLoading = false
-      }
+      state.isLoading = false
     }
   }
 
