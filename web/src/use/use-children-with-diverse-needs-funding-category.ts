@@ -56,7 +56,9 @@ export function useChildrenWithDiverseNeedsFundingCategory(
       const { childrenWithDiverseNeedsFundingCategory, policy } =
         await childrenWithDiverseNeedsFundingCategoriesApi.get(
           staticChildrenWithDiverseNeedsFundingCategoryId,
-          { signal: controller.signal }
+          {
+            signal: controller.signal,
+          }
         )
       if (
         controller.signal.aborted ||
@@ -69,20 +71,27 @@ export function useChildrenWithDiverseNeedsFundingCategory(
       state.childrenWithDiverseNeedsFundingCategory = childrenWithDiverseNeedsFundingCategory
       state.policy = policy
       state.isErrored = false
+
       return childrenWithDiverseNeedsFundingCategory
     } catch (error) {
       if (controller.signal.aborted || isCancel(error)) {
         return state.childrenWithDiverseNeedsFundingCategory
       }
 
-      console.error("Failed to fetch Children with Diverse Needs funding category", { error })
       if (
         unref(childrenWithDiverseNeedsFundingCategoryId) ===
         staticChildrenWithDiverseNeedsFundingCategoryId
       ) {
         state.isErrored = true
       }
-      throw error
+
+      rethrowUnexpectedError(error)
+
+      console.error("Failed to fetch Children with Diverse Needs funding category", {
+        error,
+      })
+
+      return state.childrenWithDiverseNeedsFundingCategory
     } finally {
       if (
         !controller.signal.aborted &&
@@ -112,52 +121,35 @@ export function useChildrenWithDiverseNeedsFundingCategory(
     }
 
     const signal = requestController?.signal
-    state.isLoading = true
-    state.isErrored = false
 
-    try {
-      const { categoryName, fromAge, toAge, monthlyAmount } =
-        state.childrenWithDiverseNeedsFundingCategory
-      const { childrenWithDiverseNeedsFundingCategory, policy } =
-        await childrenWithDiverseNeedsFundingCategoriesApi.update(
-          staticChildrenWithDiverseNeedsFundingCategoryId,
-          {
-            categoryName,
-            fromAge,
-            toAge,
-            monthlyAmount,
-            ...attributes,
-          }
-        )
-      if (!signal?.aborted) {
-        state.childrenWithDiverseNeedsFundingCategory = childrenWithDiverseNeedsFundingCategory
-        state.policy = policy
-      }
-      return childrenWithDiverseNeedsFundingCategory
-    } catch (error) {
-      console.error("Failed to save Children with Diverse Needs funding category", { error })
-      if (!signal?.aborted) {
-        state.isErrored = true
-      }
-      throw error
-    } finally {
-      if (!signal?.aborted) {
-        state.isLoading = false
-      }
+    const { categoryName, fromAge, toAge, monthlyAmount } =
+      state.childrenWithDiverseNeedsFundingCategory
+    const { childrenWithDiverseNeedsFundingCategory, policy } =
+      await childrenWithDiverseNeedsFundingCategoriesApi.update(
+        staticChildrenWithDiverseNeedsFundingCategoryId,
+        {
+          categoryName,
+          fromAge,
+          toAge,
+          monthlyAmount,
+          ...attributes,
+        }
+      )
+    if (!signal?.aborted) {
+      state.childrenWithDiverseNeedsFundingCategory = childrenWithDiverseNeedsFundingCategory
+      state.policy = policy
     }
+
+    return childrenWithDiverseNeedsFundingCategory
   }
 
   watch(
     () => unref(childrenWithDiverseNeedsFundingCategoryId),
-    async (id) => {
+    async (newChildrenWithDiverseNeedsFundingCategoryId) => {
       clearRecord()
-      if (isNil(id)) return
+      if (isNil(newChildrenWithDiverseNeedsFundingCategoryId)) return
 
-      try {
-        await fetch()
-      } catch (error) {
-        rethrowUnexpectedError(error)
-      }
+      await fetch()
     },
     {
       immediate: true,
@@ -170,6 +162,7 @@ export function useChildrenWithDiverseNeedsFundingCategory(
 
   return {
     ...toRefs(state),
+
     fetch,
     refresh: fetch,
     save,

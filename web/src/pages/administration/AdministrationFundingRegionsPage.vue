@@ -1,14 +1,9 @@
 <template>
   <HeaderActionsCard>
     <template #header>
-      <!-- TODO: pull in debounced search field from other projects -->
-      <v-text-field
-        :model-value="search"
-        label="Search"
-        append-inner-icon="mdi-magnify"
-        density="compact"
-        hide-details
-        @update:model-value="debounceUpdateSearch"
+      <FilterSearchDebouncedTextField
+        v-model="search"
+        class="mr-md-4"
       />
     </template>
     <template #header-actions>
@@ -29,21 +24,15 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue"
-import { debounce } from "lodash"
 
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import { type FundingRegionFiltersOptions } from "@/use/use-funding-regions"
 
 import HeaderActionsCard from "@/components/common/HeaderActionsCard.vue"
+import FilterSearchDebouncedTextField from "@/components/common/tables/FilterSearchDebouncedTextField.vue"
 import FundingRegionsDataTableServer from "@/components/funding-regions/FundingRegionsDataTableServer.vue"
 
 const search = ref("")
-
-function updateSearch(value: string) {
-  search.value = value
-}
-
-const debounceUpdateSearch = debounce(updateSearch, 500)
 
 const fundingRegionsFilters = computed(() => {
   const filters: FundingRegionFiltersOptions = {}

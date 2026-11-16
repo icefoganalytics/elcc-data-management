@@ -72,6 +72,20 @@
       </v-list-item>
       <v-list-item
         :to="{
+          name: 'administration/ChildrenWithDiverseNeedsFundingCategoriesPage',
+        }"
+        prepend-icon="mdi-account-child"
+        exact
+        :active="
+          isActiveByRoutePathStartsWith(
+            '/administration/children-with-diverse-needs-funding-categories'
+          )
+        "
+      >
+        Diverse Need Categories
+      </v-list-item>
+      <v-list-item
+        :to="{
           name: 'administration/CentresPage',
         }"
         prepend-icon="mdi-office-building-marker"
