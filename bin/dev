@@ -229,7 +229,7 @@ class DevHelper
     compose(*%w[exec db], *args, **kwargs)
   end
 
-  def ownit(*args, **kwargs)
+  def ownit(*args, **_kwargs)
     file_or_directory = args[0]
     if file_or_directory.nil?
       raise ScriptError, "Must provide a file or directory path."
@@ -250,7 +250,7 @@ class DevHelper
   #
   # Produces:
   #   git checkout -b elcc-61/add-wage-enhancement-replication-across-months
-  def branch_from(jira_issue_url, *args, **kwargs)
+  def branch_from(jira_issue_url, *_args, **_kwargs)
     branch_name = JiraApi.build_branch_name(jira_issue_url)
     system("git checkout -b #{branch_name}")
   end
@@ -262,7 +262,7 @@ class DevHelper
   #
   # Produces:
   #   ... a bunch of markdown text ...
-  def description_from(jira_issue_url, *args, **kwargs)
+  def description_from(jira_issue_url, *_args, **_kwargs)
     description = JiraApi.fetch_description_as_markdown(jira_issue_url)
     puts description
   end
@@ -290,7 +290,7 @@ class DevHelper
 
   ##
   # Generate help documentation.
-  def help(*args, **kwargs)
+  def help(*_args, **_kwargs)
     rdoc = RDoc::RDoc.new
     rdoc_arguements = %w[--dry-run --quiet] + [__FILE__]
     rdoc.document(rdoc_arguements)

@@ -31,6 +31,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
   Why? To make administration tasks easier, more consistent, and more usable on mobile devices.
 - Development startup now prints the checkout's browser URL from the shared local gateway.
 - Development linting now has API and Vue-aware web commands with explicit OMP Verifier bindings, so checks run through Docker without starting application dependencies.
+- Ruby development scripts now have a non-fixing correctness and security lint command with a Verifier binding, independent of Docker and application credentials.
 
 ### Changed
 
