@@ -11,8 +11,6 @@ import type {
 } from "@/api/children-with-diverse-needs-funding-categories-api"
 import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 
-import useSnack from "@/use/use-snack"
-
 export function useChildrenWithDiverseNeedsFundingCategory(
   childrenWithDiverseNeedsFundingCategoryId: Ref<number | null | undefined>
 ) {
@@ -27,8 +25,6 @@ export function useChildrenWithDiverseNeedsFundingCategory(
     isLoading: false,
     isErrored: false,
   })
-
-  const snack = useSnack()
 
   let requestController: AbortController | undefined
 
@@ -94,7 +90,6 @@ export function useChildrenWithDiverseNeedsFundingCategory(
 
       rethrowUnexpectedError(error)
 
-      snack.error(`Failed to load Children with Diverse Needs funding category: ${error}`)
       return state.childrenWithDiverseNeedsFundingCategory
     } finally {
       if (
