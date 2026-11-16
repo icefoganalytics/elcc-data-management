@@ -1,0 +1,16 @@
+# Syntax Tree owns formatting; RuboCop checks correctness and security.
+AllCops:
+  TargetRubyVersion: 3.2
+  DisabledByDefault: true
+  NewCops: enable
+  Include:
+    - Gemfile
+    - bin/dev
+    - bin/lint-ruby
+    - bin/**/*.rb
+
+Lint:
+  Enabled: true
+
+Security:
+  Enabled: true
