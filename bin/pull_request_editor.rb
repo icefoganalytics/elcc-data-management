@@ -40,7 +40,7 @@ class PullRequestEditor
   end
 
   # Extract "owner/repo" and PR number from a full URL.
-  def self.extract_repo_and_pull_request_number(pull_request_url)
+  private_class_method def self.extract_repo_and_pull_request_number(pull_request_url)
     match_data = pull_request_url.match(%r{\Ahttps?://github\.com/([^/]+)/([^/]+)/pull/(\d+)}i)
     unless match_data
       raise ArgumentError, "Unsupported PR URL format: #{pull_request_url}"
@@ -52,7 +52,7 @@ class PullRequestEditor
   end
 
   # Uses REST via `gh api` to fetch the PR body (avoids GraphQL projectCards pitfalls).
-  def self.fetch_pull_request_body_via_rest(repo, pull_request_number)
+  private_class_method def self.fetch_pull_request_body_via_rest(repo, pull_request_number)
     command = %(gh api "repos/#{repo}/pulls/#{pull_request_number}" --jq .body)
     puts "running: #{command}"
     stdout, stderr, status = Open3.capture3(command)
@@ -66,7 +66,7 @@ class PullRequestEditor
 
   # Uses REST via `gh api` to PATCH the PR body from a file.
   # `-F body=@file.md` tells gh to read the field value from the file and JSON-encode it.
-  def self.update_pull_request_body_via_rest(repo, pull_request_number, new_body_file_path)
+  private_class_method def self.update_pull_request_body_via_rest(repo, pull_request_number, new_body_file_path)
     command = %(gh api -X PATCH "repos/#{repo}/pulls/#{pull_request_number}" -F body=@#{new_body_file_path})
     puts "running: #{command}"
     _stdout, stderr, status = Open3.capture3(command)
@@ -78,7 +78,7 @@ class PullRequestEditor
     end
   end
 
-  def self.abort_with_cli_error(prefix, stderr)
+  private_class_method def self.abort_with_cli_error(prefix, stderr)
     warn "#{prefix}: #{stderr}"
     exit(1)
   end

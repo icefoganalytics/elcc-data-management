@@ -57,11 +57,11 @@ class JiraApi
     prose_mirror_to_markdown(issue_description)
   end
 
-  def self.extract_issue_key(url)
+  private_class_method def self.extract_issue_key(url)
     url.match(%r{/browse/([A-Z]+-\d+)})[1]
   end
 
-  def self.fetch_issue_data(issue_key)
+  private_class_method def self.fetch_issue_data(issue_key)
     uri = URI("#{JIRA_SITE}/rest/api/3/issue/#{issue_key}")
     request = Net::HTTP::Get.new(uri)
     request.basic_auth(JIRA_EMAIL, JIRA_API_TOKEN)
@@ -83,24 +83,24 @@ class JiraApi
     nil
   end
 
-  def self.extract_issue_title(issue_data)
+  private_class_method def self.extract_issue_title(issue_data)
     return nil if issue_data.nil?
 
     issue_data['fields']['summary']
   end
 
-  def self.extract_issue_description(issue_data)
+  private_class_method def self.extract_issue_description(issue_data)
     return nil if issue_data.nil?
 
     issue_data['fields']['description']
   end
 
-  def self.format_branch_name(issue_key, issue_title)
+  private_class_method def self.format_branch_name(issue_key, issue_title)
     formatted_title = issue_title.downcase.gsub(/\s+/, '-').gsub(/[^a-z0-9\-]/, '')
     "#{issue_key.downcase}/#{formatted_title}"
   end
 
-  def self.prose_mirror_to_markdown(description)
+  private_class_method def self.prose_mirror_to_markdown(description)
     ProseMirrorToMarkdown.call(description)
   end
 end
