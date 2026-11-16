@@ -48,6 +48,10 @@ Prepare the development images, local environment file, and bind-mounted depende
 
 API and web own separate `.omp-verifier.json` bindings to these entrypoints. OMP Verifier runs the same commands from the declaring package rather than guessing Docker arguments or linting on the host. Missing prerequisites remain `BLOCKED`; real lint violations are `FAIL`, not a wrapper-configuration blocker. A binding does not mean the source is lint-clean. Run the scopes separately when diagnosing the verifier's bounded execution time.
 
+For Ruby development tooling, run `bundle install` once, then `./bin/lint-ruby`. This host-side command checks `Gemfile`, `bin/dev`, `bin/lint-ruby`, and Ruby files under `bin/`; it needs neither Docker nor an API environment file. The root `.omp-verifier.json` binds Ruby checks to the same command.
+
+RuboCop's `Lint` and `Security` departments own correctness and security diagnostics, with warnings failing the command. The entrypoint does not enable autocorrection or forward options that could enable it. Syntax Tree remains the formatting owner; style and complexity policing are not part of this lint policy. Run `bundle exec stree check <changed-ruby-file>` separately when changing Ruby formatting. Fix reported diagnostics rather than generating a baseline exclusion file.
+
 ### Database Connection Isolation
 
 ELCC pins Local Development Gateway **0.2.2** and follows its
