@@ -57,8 +57,6 @@ class JiraApi
     prose_mirror_to_markdown(issue_description)
   end
 
-  private
-
   def self.extract_issue_key(url)
     url.match(%r{/browse/([A-Z]+-\d+)})[1]
   end

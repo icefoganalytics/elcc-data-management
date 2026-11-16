@@ -16,7 +16,7 @@ class PullRequestEditor
 
     app_root = File.expand_path(File.join(File.dirname(__FILE__), ".."))
     tmp_dir = File.join(app_root, "tmp")
-    Dir.mkdir(tmp_dir) unless Dir.exist?(tmp_dir)
+    FileUtils.mkdir_p(tmp_dir)
 
     file_path = File.join(tmp_dir, "pull_request_#{pull_request_number}.md")
     File.write(file_path, pull_request_body.to_s)
@@ -38,8 +38,6 @@ class PullRequestEditor
       FileUtils.rm(file_path)
     end
   end
-
-  private
 
   # Extract "owner/repo" and PR number from a full URL.
   def self.extract_repo_and_pull_request_number(pull_request_url)
@@ -71,7 +69,7 @@ class PullRequestEditor
   def self.update_pull_request_body_via_rest(repo, pull_request_number, new_body_file_path)
     command = %(gh api -X PATCH "repos/#{repo}/pulls/#{pull_request_number}" -F body=@#{new_body_file_path})
     puts "running: #{command}"
-    stdout, stderr, status = Open3.capture3(command)
+    _stdout, stderr, status = Open3.capture3(command)
 
     if status.success?
       puts "PR description updated successfully."
