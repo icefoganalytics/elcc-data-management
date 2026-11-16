@@ -14,6 +14,43 @@ import ChildrenWithDiverseNeedsFundingCategoryPage from "@/pages/administration/
 
 describe("web/src/pages/administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage.vue", () => {
   describe("ChildrenWithDiverseNeedsFundingCategoryPage", () => {
+    describe("load recovery", () => {
+      test("when the category cannot be loaded, displays load-failure feedback", async () => {
+        // Arrange
+        const snack = useSnack()
+        snack.reset()
+        onTestFinished(() => snack.reset())
+
+        mockHttpGetRoutes({
+          "/api/children-with-diverse-needs-funding-categories/8": () => {
+            throw new ApiOperationError("Unavailable", 503)
+          },
+        })
+        const router = mockRouter([
+          {
+            path: "/",
+            component: ChildrenWithDiverseNeedsFundingCategoryPage,
+          },
+        ])
+        await router.push("/")
+        await router.isReady()
+
+        // Act
+        mount(ChildrenWithDiverseNeedsFundingCategoryPage, {
+          props: {
+            childrenWithDiverseNeedsFundingCategoryId: "8",
+          },
+          global: {
+            plugins: [router, mockVuetify()],
+          },
+        })
+        await flushPromises()
+
+        // Assert
+        expect(snack.message.value).toBe("Failed to load Children with Diverse Needs category.")
+      })
+    })
+
     describe("retirement recovery", () => {
       test("when retirement is challenged, delivers the original challenge to the application boundary", async () => {
         // Arrange

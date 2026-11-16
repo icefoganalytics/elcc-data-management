@@ -334,7 +334,7 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
     })
 
     describe("load recovery", () => {
-      test("when the initial category load fails, does not publish a global snackbar", async () => {
+      test("when the initial category load fails, displays load-failure feedback", async () => {
         // Arrange
         const snack = useSnack()
         snack.reset()
@@ -379,7 +379,7 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
         await flushPromises()
 
         // Assert
-        expect(snack.message.value).toBe("")
+        expect(snack.message.value).toBe("Failed to load Children with Diverse Needs category.")
       })
     })
   })

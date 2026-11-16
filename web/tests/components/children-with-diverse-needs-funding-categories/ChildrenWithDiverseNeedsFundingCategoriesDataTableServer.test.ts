@@ -6,12 +6,74 @@ import AuthenticationRequiredError from "@/api/errors/authentication-required-er
 
 import useSnack from "@/use/use-snack"
 
+import { childrenWithDiverseNeedsFundingCategoryFactory } from "@/tests/factories"
 import { mockRouter, mockVuetify } from "@/tests/support"
 
 import ChildrenWithDiverseNeedsFundingCategoriesDataTableServer from "@/components/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoriesDataTableServer.vue"
 
 describe("web/src/components/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoriesDataTableServer.vue", () => {
   describe("ChildrenWithDiverseNeedsFundingCategoriesDataTableServer", () => {
+    describe("pagination", () => {
+      test("when the next page loads, displays its records without resetting to page one", async () => {
+        // Arrange
+        vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] })
+        onTestFinished(() => {
+          vi.useRealTimers()
+        })
+
+        const category1 = childrenWithDiverseNeedsFundingCategoryFactory.build({
+          id: 1,
+          categoryName: "First page category",
+        })
+        const category2 = childrenWithDiverseNeedsFundingCategoryFactory.build({
+          id: 11,
+          categoryName: "Second page category",
+        })
+        vi.spyOn(childrenWithDiverseNeedsFundingCategoriesApi, "list").mockImplementation(
+          async (query) => {
+            await new Promise<void>((resolve) => setTimeout(resolve, 100))
+            return {
+              childrenWithDiverseNeedsFundingCategories: [
+                query?.page === 2 ? category2 : category1,
+              ],
+              totalCount: 20,
+            }
+          }
+        )
+        const router = mockRouter([
+          {
+            path: "/",
+            component: ChildrenWithDiverseNeedsFundingCategoriesDataTableServer,
+          },
+          {
+            path: "/categories/:childrenWithDiverseNeedsFundingCategoryId",
+            name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
+            component: {
+              template: "<div>Category details</div>",
+            },
+          },
+        ])
+        await router.push("/")
+        await router.isReady()
+        const wrapper = mount(ChildrenWithDiverseNeedsFundingCategoriesDataTableServer, {
+          global: {
+            plugins: [router, mockVuetify()],
+          },
+        })
+        await vi.advanceTimersByTimeAsync(100)
+        await flushPromises()
+
+        // Act
+        await wrapper.get('button[aria-label="Next page"]').trigger("click")
+        await flushPromises()
+        await vi.advanceTimersByTimeAsync(100)
+        await flushPromises()
+
+        // Assert
+        expect(wrapper.get("tbody").text()).toContain("Second page category")
+      })
+    })
+
     describe("loading categories", () => {
       beforeEach(() => {
         const snack = useSnack()
@@ -63,7 +125,7 @@ describe("web/src/components/children-with-diverse-needs-funding-categories/Chil
         ])
       })
 
-      test("when loading fails with an operation error, does not publish a global snackbar", async () => {
+      test("when loading fails with an operation error, displays load-failure feedback", async () => {
         // Arrange
         const snack = useSnack()
         vi.spyOn(childrenWithDiverseNeedsFundingCategoriesApi, "list").mockRejectedValue(
@@ -92,7 +154,7 @@ describe("web/src/components/children-with-diverse-needs-funding-categories/Chil
         await flushPromises()
 
         // Assert
-        expect(snack.message.value).toBe("")
+        expect(snack.message.value).toBe("Failed to load Children with Diverse Needs categories.")
       })
 
       test("when loading fails, leaves the table's normal empty state visible", async () => {
