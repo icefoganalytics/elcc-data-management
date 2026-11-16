@@ -1,12 +1,9 @@
 <template>
   <HeaderActionsCard>
     <template #header>
-      <v-text-field
+      <FilterSearchDebouncedTextField
         v-model="search"
-        label="Search"
-        append-inner-icon="mdi-magnify"
-        density="compact"
-        hide-details
+        class="mr-md-4"
       />
     </template>
     <template #header-actions>
@@ -24,6 +21,7 @@
     <FundingPeriodsDataTableServer :filters="fundingPeriodsFilters" />
   </HeaderActionsCard>
 </template>
+
 <script setup lang="ts">
 import { ref, computed } from "vue"
 
@@ -31,6 +29,7 @@ import useBreadcrumbs from "@/use/use-breadcrumbs"
 import { type FundingPeriodFiltersOptions } from "@/use/use-funding-periods"
 
 import HeaderActionsCard from "@/components/common/HeaderActionsCard.vue"
+import FilterSearchDebouncedTextField from "@/components/common/tables/FilterSearchDebouncedTextField.vue"
 import FundingPeriodsDataTableServer from "@/components/funding-periods/FundingPeriodsDataTableServer.vue"
 
 const search = ref("")

@@ -1,13 +1,9 @@
 <template>
   <HeaderActionsCard>
     <template #header>
-      <v-text-field
-        :model-value="search"
-        label="Search"
-        append-inner-icon="mdi-magnify"
-        density="compact"
-        hide-details
-        @update:model-value="debounceUpdateSearch"
+      <FilterSearchDebouncedTextField
+        v-model="search"
+        class="mr-md-4"
       />
     </template>
     <template #header-actions>
@@ -18,7 +14,7 @@
         }"
       >
         <v-icon class="mr-3">mdi-plus</v-icon>
-        New Building Expense Category
+        New Category
       </v-btn>
     </template>
 
@@ -28,21 +24,15 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue"
-import { debounce } from "lodash"
 
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import { type BuildingExpenseCategoryFiltersOptions } from "@/use/use-building-expense-categories"
 
 import HeaderActionsCard from "@/components/common/HeaderActionsCard.vue"
+import FilterSearchDebouncedTextField from "@/components/common/tables/FilterSearchDebouncedTextField.vue"
 import BuildingExpenseCategoriesDataTableServer from "@/components/building-expense-categories/BuildingExpenseCategoriesDataTableServer.vue"
 
 const search = ref("")
-
-function updateSearch(value: string) {
-  search.value = value
-}
-
-const debounceUpdateSearch = debounce(updateSearch, 500)
 
 const buildingExpenseCategoriesFilters = computed(() => {
   const filters: BuildingExpenseCategoryFiltersOptions = {}

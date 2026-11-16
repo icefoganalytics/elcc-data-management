@@ -1,6 +1,6 @@
 <template>
   <v-card>
-    <v-card-title class="d-flex flex-column flex-md-row justify-md-space-between align-md-end">
+    <v-card-title class="d-flex flex-column flex-md-row justify-md-space-between align-md-center">
       <slot name="header">
         <component
           :is="headerTag"
@@ -10,7 +10,10 @@
           {{ title }}
         </component>
       </slot>
-      <v-spacer class="mt-4 mt-md-0" />
+      <v-spacer
+        class="mt-4 mt-md-0"
+        :class="{ 'flex-grow-0': $slots.header }"
+      />
       <slot name="header-actions"></slot>
     </v-card-title>
     <v-divider :class="dividerClass" />

@@ -1,37 +1,44 @@
 <template>
   <HeaderActionsCard>
     <template #header>
-      <v-text-field
-        :model-value="search"
-        label="Search"
-        append-inner-icon="mdi-magnify"
-        density="compact"
-        hide-details
-        @update:model-value="debounceUpdateSearch"
+      <FilterSearchDebouncedTextField
+        v-model="search"
+        class="mr-md-4"
       />
+    </template>
+    <template #header-actions>
+      <v-btn
+        color="primary"
+        @click="openCentreCreateDialog"
+      >
+        <v-icon class="mr-3">mdi-plus</v-icon>
+        New Centre
+      </v-btn>
     </template>
 
     <CentresDeleteDataTableServer :filters="centreFilters" />
+
+    <CentreCreateDialog
+      ref="centreCreateDialog"
+      @created="goToCentre"
+    />
   </HeaderActionsCard>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue"
-import { debounce } from "lodash"
+import { computed, ref, useTemplateRef } from "vue"
+import { isNil } from "lodash"
+import { useRouter } from "vue-router"
 
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import { type CentreFiltersOptions } from "@/use/use-centres"
 
 import HeaderActionsCard from "@/components/common/HeaderActionsCard.vue"
+import FilterSearchDebouncedTextField from "@/components/common/tables/FilterSearchDebouncedTextField.vue"
 import CentresDeleteDataTableServer from "@/components/centres/CentresDeleteDataTableServer.vue"
+import CentreCreateDialog from "@/modules/centre/components/CentreCreateDialog.vue"
 
 const search = ref("")
-
-function updateSearch(value: string) {
-  search.value = value
-}
-
-const debounceUpdateSearch = debounce(updateSearch, 500)
 
 const centreFilters = computed(() => {
   const filters: CentreFiltersOptions = {}
@@ -42,6 +49,25 @@ const centreFilters = computed(() => {
 
   return filters
 })
+
+const centreCreateDialog = useTemplateRef("centreCreateDialog")
+
+function openCentreCreateDialog() {
+  if (isNil(centreCreateDialog.value)) return
+
+  centreCreateDialog.value.open()
+}
+
+const router = useRouter()
+
+function goToCentre(centreId: number) {
+  return router.push({
+    name: "child-care-centers/ChildCareCenterRedirect",
+    params: {
+      centreId,
+    },
+  })
+}
 
 useBreadcrumbs("Centres", [
   {

@@ -2,6 +2,8 @@ import { User } from "@/models"
 
 import {
   childrenWithDiverseNeedsFundingCategoryFactory,
+  childrenWithDiverseNeedsFundingRecordFactory,
+  fiscalPeriodFactory,
   fundingPeriodFactory,
   userFactory,
 } from "@/factories"
@@ -12,14 +14,25 @@ describe("api/src/controllers/children-with-diverse-needs-funding-categories-con
     describe("#index -> GET /api/children-with-diverse-needs-funding-categories", () => {
       test("when a funding period is selected, returns only its active categories with read-only policies", async () => {
         // Arrange
-        const currentUser = await userFactory.create({ roles: [User.Roles.USER] })
+        const currentUser = await userFactory.create({
+          roles: [User.Roles.USER],
+        })
         mockCurrentUser(currentUser)
         const fundingPeriod = await fundingPeriodFactory.create()
         const category = await childrenWithDiverseNeedsFundingCategoryFactory
-          .associations({ fundingPeriod })
-          .create({ categoryName: "Additional Support", monthlyAmount: "54.9600" })
+          .associations({
+            fundingPeriod,
+          })
+          .create({
+            categoryName: "Additional Support",
+            fromAge: 2,
+            toAge: 3,
+            monthlyAmount: "54.9600",
+          })
         const retiredCategory = await childrenWithDiverseNeedsFundingCategoryFactory
-          .associations({ fundingPeriod })
+          .associations({
+            fundingPeriod,
+          })
           .create()
         await retiredCategory.destroy()
         await childrenWithDiverseNeedsFundingCategoryFactory.create()
@@ -27,7 +40,11 @@ describe("api/src/controllers/children-with-diverse-needs-funding-categories-con
         // Act
         const response = await request()
           .get("/api/children-with-diverse-needs-funding-categories")
-          .query({ where: { fundingPeriodId: fundingPeriod.id } })
+          .query({
+            where: {
+              fundingPeriodId: fundingPeriod.id,
+            },
+          })
 
         // Assert
         expect(response.status).toEqual(200)
@@ -42,7 +59,12 @@ describe("api/src/controllers/children-with-diverse-needs-funding-categories-con
               monthlyAmount: "54.96",
               createdAt: expect.any(String),
               updatedAt: expect.any(String),
-              policy: { show: true, create: false, update: false, destroy: false },
+              policy: {
+                show: true,
+                create: false,
+                update: false,
+                destroy: false,
+              },
             },
           ],
           totalCount: 1,
@@ -53,7 +75,9 @@ describe("api/src/controllers/children-with-diverse-needs-funding-categories-con
     describe("#create -> POST /api/children-with-diverse-needs-funding-categories", () => {
       test("when an ordinary user creates annual configuration, denies the request", async () => {
         // Arrange
-        const currentUser = await userFactory.create({ roles: [User.Roles.USER] })
+        const currentUser = await userFactory.create({
+          roles: [User.Roles.USER],
+        })
         mockCurrentUser(currentUser)
         const fundingPeriod = await fundingPeriodFactory.create()
 
@@ -78,7 +102,9 @@ describe("api/src/controllers/children-with-diverse-needs-funding-categories-con
 
       test("when an administrator omits optional ages, returns the category with null age bounds", async () => {
         // Arrange
-        const currentUser = await userFactory.create({ roles: [User.Roles.SYSTEM_ADMINISTRATOR] })
+        const currentUser = await userFactory.create({
+          roles: [User.Roles.SYSTEM_ADMINISTRATOR],
+        })
         mockCurrentUser(currentUser)
         const fundingPeriod = await fundingPeriodFactory.create()
 
@@ -104,7 +130,65 @@ describe("api/src/controllers/children-with-diverse-needs-funding-categories-con
             createdAt: expect.any(String),
             updatedAt: expect.any(String),
           },
-          policy: { show: true, create: true, update: true, destroy: true },
+          policy: {
+            show: true,
+            create: true,
+            update: true,
+            destroy: true,
+          },
+        })
+      })
+    })
+
+    describe("#destroy -> DELETE /api/children-with-diverse-needs-funding-categories/:id", () => {
+      test("when an ordinary user retires annual configuration, denies the request", async () => {
+        // Arrange
+        const currentUser = await userFactory.create({
+          roles: [User.Roles.USER],
+        })
+        mockCurrentUser(currentUser)
+        const category = await childrenWithDiverseNeedsFundingCategoryFactory.create()
+
+        // Act
+        const response = await request().delete(
+          `/api/children-with-diverse-needs-funding-categories/${category.id}`
+        )
+
+        // Assert
+        expect(response.status).toEqual(403)
+        expect(response.body).toEqual({
+          message:
+            "You are not authorized to delete this Children with Diverse Needs funding category",
+        })
+      })
+
+      test("when an administrator retires a category with active records, returns the usage error", async () => {
+        // Arrange
+        const currentUser = await userFactory.create({
+          roles: [User.Roles.SYSTEM_ADMINISTRATOR],
+        })
+        mockCurrentUser(currentUser)
+        const category = await childrenWithDiverseNeedsFundingCategoryFactory.create()
+        const fiscalPeriod = await fiscalPeriodFactory.create({
+          fundingPeriodId: category.fundingPeriodId,
+        })
+        await childrenWithDiverseNeedsFundingRecordFactory
+          .associations({
+            category,
+            fiscalPeriod,
+          })
+          .create()
+
+        // Act
+        const response = await request().delete(
+          `/api/children-with-diverse-needs-funding-categories/${category.id}`
+        )
+
+        // Assert
+        expect(response.status).toEqual(422)
+        expect(response.body).toEqual({
+          message:
+            "Error deleting Children with Diverse Needs funding category: Error: Cannot delete a category used by Children with Diverse Needs funding records",
         })
       })
     })

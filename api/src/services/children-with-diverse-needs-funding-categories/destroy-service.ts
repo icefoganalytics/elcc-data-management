@@ -13,7 +13,9 @@ export class DestroyService extends BaseService {
 
   async perform(): Promise<void> {
     const fundingRecordsUsingCategory = await ChildrenWithDiverseNeedsFundingRecord.count({
-      where: { categoryId: this.childrenWithDiverseNeedsFundingCategory.id },
+      where: {
+        categoryId: this.childrenWithDiverseNeedsFundingCategory.id,
+      },
     })
     if (fundingRecordsUsingCategory > 0) {
       throw new Error(
@@ -24,3 +26,5 @@ export class DestroyService extends BaseService {
     await this.childrenWithDiverseNeedsFundingCategory.destroy()
   }
 }
+
+export default DestroyService
