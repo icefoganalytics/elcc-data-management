@@ -12,6 +12,8 @@ Watcher callbacks should await `fetch()` directly. Fetch actions may record load
 
 Model-access composables must not import or call `useSnack` or display notifications. Expose loading/error state and preserve error propagation; the consuming page or component owns user-facing feedback. `use-snack.ts` is the notification adapter itself, not a model-access composable.
 
+For read failures, ignore canceled requests first, update error state only for the current request, then call `rethrowUnexpectedError` before local logging. Only expected operation errors reach that log; unexpected failures belong to application recovery. Save actions propagate failures to their consuming form without a log-and-rethrow catch. Preserve cleanup in `finally`.
+
 Always return both `fetch` and `refresh: fetch` from model composables. `refresh` is an alias of the same fetch function, not a separate implementation or wrapper.
 
 Destructure named fields from API responses at the `await` boundary, such as `const { childrenWithDiverseNeedsFundingRecord, policy } = await ...`. Assign and return those values directly instead of retaining an opaque `response` object.
