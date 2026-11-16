@@ -1,14 +1,9 @@
 <template>
   <HeaderActionsCard>
     <template #header>
-      <v-text-field
-        :model-value="search"
-        label="Search"
-        append-inner-icon="mdi-magnify"
-        density="compact"
-        hide-details
+      <FilterSearchDebouncedTextField
+        v-model="search"
         class="mr-md-4"
-        @update:model-value="debounceUpdateSearch"
       />
     </template>
     <template #header-actions>
@@ -32,23 +27,18 @@
 
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from "vue"
-import { debounce, isNil } from "lodash"
+import { isNil } from "lodash"
 import { useRouter } from "vue-router"
 
 import useBreadcrumbs from "@/use/use-breadcrumbs"
 import { type CentreFiltersOptions } from "@/use/use-centres"
 
 import HeaderActionsCard from "@/components/common/HeaderActionsCard.vue"
+import FilterSearchDebouncedTextField from "@/components/common/tables/FilterSearchDebouncedTextField.vue"
 import CentresDeleteDataTableServer from "@/components/centres/CentresDeleteDataTableServer.vue"
 import CentreCreateDialog from "@/modules/centre/components/CentreCreateDialog.vue"
 
 const search = ref("")
-
-function updateSearch(value: string) {
-  search.value = value
-}
-
-const debounceUpdateSearch = debounce(updateSearch, 500)
 
 const centreFilters = computed(() => {
   const filters: CentreFiltersOptions = {}

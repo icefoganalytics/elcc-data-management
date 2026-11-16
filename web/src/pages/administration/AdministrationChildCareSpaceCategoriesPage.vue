@@ -11,14 +11,7 @@
           md="8"
           class="pb-4 pb-md-0 pr-md-4"
         >
-          <v-text-field
-            :model-value="search"
-            label="Search"
-            append-inner-icon="mdi-magnify"
-            density="compact"
-            hide-details
-            @update:model-value="debounceUpdateSearch"
-          />
+          <FilterSearchDebouncedTextField v-model="search" />
         </v-col>
         <v-col
           cols="12"
@@ -86,7 +79,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue"
-import { debounce, isNil } from "lodash"
+import { isNil } from "lodash"
 
 import { MAX_PER_PAGE } from "@/api/base-api"
 
@@ -98,6 +91,7 @@ import {
 } from "@/use/use-child-care-space-categories"
 
 import HeaderActionsCard from "@/components/common/HeaderActionsCard.vue"
+import FilterSearchDebouncedTextField from "@/components/common/tables/FilterSearchDebouncedTextField.vue"
 import ChildCareSpaceCategoriesDataTableServer from "@/components/child-care-space-categories/ChildCareSpaceCategoriesDataTableServer.vue"
 
 const search = ref("")
@@ -137,12 +131,6 @@ const fundingPeriodItems = computed(() =>
     return { title, value }
   })
 )
-
-function updateSearch(value: string | null) {
-  search.value = value ?? ""
-}
-
-const debounceUpdateSearch = debounce(updateSearch, 500)
 
 const childCareSpaceCategoriesWhere = computed<ChildCareSpaceCategoryWhereOptions>(() => {
   if (isNil(selectedFundingPeriodId.value)) {

@@ -1,12 +1,8 @@
 <template>
   <HeaderActionsCard>
     <template #header>
-      <v-text-field
+      <FilterSearchDebouncedTextField
         v-model="search"
-        label="Search"
-        append-inner-icon="mdi-magnify"
-        density="compact"
-        hide-details
         class="mr-md-4"
       />
     </template>
@@ -37,6 +33,7 @@ import useCurrentUser from "@/use/use-current-user"
 import { type UserFiltersOptions } from "@/use/use-users"
 
 import HeaderActionsCard from "@/components/common/HeaderActionsCard.vue"
+import FilterSearchDebouncedTextField from "@/components/common/tables/FilterSearchDebouncedTextField.vue"
 import UsersDataTableServer from "@/components/users/UsersDataTableServer.vue"
 
 const { isSystemAdmin } = useCurrentUser()

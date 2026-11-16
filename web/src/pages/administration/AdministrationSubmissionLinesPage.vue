@@ -11,13 +11,7 @@
           md="8"
           class="pb-4 pb-md-0 pr-md-4"
         >
-          <v-text-field
-            v-model="search"
-            label="Search"
-            append-inner-icon="mdi-magnify"
-            density="compact"
-            hide-details
-          />
+          <FilterSearchDebouncedTextField v-model="search" />
         </v-col>
         <v-col
           cols="12"
@@ -73,6 +67,7 @@ import {
 } from "@/use/use-funding-submission-lines"
 
 import HeaderActionsCard from "@/components/common/HeaderActionsCard.vue"
+import FilterSearchDebouncedTextField from "@/components/common/tables/FilterSearchDebouncedTextField.vue"
 import FundingPeriodFiscalYearSelect from "@/components/funding-periods/FundingPeriodFiscalYearSelect.vue"
 import FundingSubmissionLinesDataTableServer from "@/components/funding-submission-lines/FundingSubmissionLinesDataTableServer.vue"
 

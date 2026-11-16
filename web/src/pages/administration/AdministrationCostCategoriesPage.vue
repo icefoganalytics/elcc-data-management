@@ -11,14 +11,7 @@
           md="8"
           class="pb-4 pb-md-0 pr-md-4"
         >
-          <v-text-field
-            :model-value="search"
-            label="Search"
-            append-inner-icon="mdi-magnify"
-            density="compact"
-            hide-details
-            @update:model-value="debounceUpdateSearch"
-          />
+          <FilterSearchDebouncedTextField v-model="search" />
         </v-col>
         <v-col
           cols="12"
@@ -54,8 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onScopeDispose, ref } from "vue"
-import { debounce } from "lodash"
+import { computed, ref } from "vue"
 
 import type { AdministrationCostCategoryFiltersOptions } from "@/api/administration-cost-categories-api"
 
@@ -64,19 +56,10 @@ import useFundingPeriods from "@/use/use-funding-periods"
 
 import AdministrationCostCategoriesDataTableServer from "@/components/administration-cost-categories/AdministrationCostCategoriesDataTableServer.vue"
 import HeaderActionsCard from "@/components/common/HeaderActionsCard.vue"
+import FilterSearchDebouncedTextField from "@/components/common/tables/FilterSearchDebouncedTextField.vue"
 import FundingPeriodSearchableAutocomplete from "@/components/funding-periods/FundingPeriodSearchableAutocomplete.vue"
 
 const search = ref("")
-
-function updateSearch(value: string) {
-  search.value = value
-}
-
-const debounceUpdateSearch = debounce(updateSearch, 500)
-
-onScopeDispose(() => {
-  debounceUpdateSearch.cancel()
-})
 
 const administrationCostCategoriesFilters = computed<AdministrationCostCategoryFiltersOptions>(
   () => {
