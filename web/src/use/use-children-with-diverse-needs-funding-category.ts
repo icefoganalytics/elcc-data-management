@@ -78,9 +78,6 @@ export function useChildrenWithDiverseNeedsFundingCategory(
         return state.childrenWithDiverseNeedsFundingCategory
       }
 
-      console.error("Failed to fetch Children with Diverse Needs funding category", {
-        error,
-      })
       if (
         unref(childrenWithDiverseNeedsFundingCategoryId) ===
         staticChildrenWithDiverseNeedsFundingCategoryId
@@ -89,6 +86,10 @@ export function useChildrenWithDiverseNeedsFundingCategory(
       }
 
       rethrowUnexpectedError(error)
+
+      console.error("Failed to fetch Children with Diverse Needs funding category", {
+        error,
+      })
 
       return state.childrenWithDiverseNeedsFundingCategory
     } finally {
@@ -121,32 +122,25 @@ export function useChildrenWithDiverseNeedsFundingCategory(
 
     const signal = requestController?.signal
 
-    try {
-      const { categoryName, fromAge, toAge, monthlyAmount } =
-        state.childrenWithDiverseNeedsFundingCategory
-      const { childrenWithDiverseNeedsFundingCategory, policy } =
-        await childrenWithDiverseNeedsFundingCategoriesApi.update(
-          staticChildrenWithDiverseNeedsFundingCategoryId,
-          {
-            categoryName,
-            fromAge,
-            toAge,
-            monthlyAmount,
-            ...attributes,
-          }
-        )
-      if (!signal?.aborted) {
-        state.childrenWithDiverseNeedsFundingCategory = childrenWithDiverseNeedsFundingCategory
-        state.policy = policy
-      }
-
-      return childrenWithDiverseNeedsFundingCategory
-    } catch (error) {
-      console.error("Failed to save Children with Diverse Needs funding category", {
-        error,
-      })
-      throw error
+    const { categoryName, fromAge, toAge, monthlyAmount } =
+      state.childrenWithDiverseNeedsFundingCategory
+    const { childrenWithDiverseNeedsFundingCategory, policy } =
+      await childrenWithDiverseNeedsFundingCategoriesApi.update(
+        staticChildrenWithDiverseNeedsFundingCategoryId,
+        {
+          categoryName,
+          fromAge,
+          toAge,
+          monthlyAmount,
+          ...attributes,
+        }
+      )
+    if (!signal?.aborted) {
+      state.childrenWithDiverseNeedsFundingCategory = childrenWithDiverseNeedsFundingCategory
+      state.policy = policy
     }
+
+    return childrenWithDiverseNeedsFundingCategory
   }
 
   watch(

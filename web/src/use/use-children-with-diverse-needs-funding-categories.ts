@@ -55,10 +55,11 @@ export function useChildrenWithDiverseNeedsFundingCategories(
       }
 
       state.isErrored = true
+      rethrowUnexpectedError(error)
+
       console.error("Failed to fetch Children with Diverse Needs funding categories", {
         error,
       })
-      rethrowUnexpectedError(error)
 
       return state.childrenWithDiverseNeedsFundingCategories
     } finally {

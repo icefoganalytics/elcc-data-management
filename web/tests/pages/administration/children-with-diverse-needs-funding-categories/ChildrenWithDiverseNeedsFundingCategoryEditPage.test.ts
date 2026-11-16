@@ -332,8 +332,12 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
     })
 
     describe("load recovery", () => {
-      test("when the initial category load fails, shows snackbar feedback", async () => {
+      test("when the initial category load fails, does not publish a global snackbar", async () => {
         // Arrange
+        const snack = useSnack()
+        snack.reset()
+        onTestFinished(() => snack.reset())
+
         mockHttpGetRoutes({
           "/api/children-with-diverse-needs-funding-categories/8": () => {
             throw new ApiOperationError("Unavailable", 503)
@@ -373,7 +377,7 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
         await flushPromises()
 
         // Assert
-        expect(useSnack().message.value).toContain("Unavailable")
+        expect(snack.message.value).toBe("")
       })
     })
   })
