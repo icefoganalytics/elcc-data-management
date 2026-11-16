@@ -81,7 +81,8 @@
           color="yg-blue-light"
           class="mt-4"
         >
-          <v-card-title>Latest Enrollment</v-card-title>
+          <v-card-title>Enrollment for {{ fiscalYearLegacy }}</v-card-title>
+          <v-card-subtitle class="pb-3">Latest month with recorded enrollment</v-card-subtitle>
           <v-divider></v-divider>
           <v-card-text class="pt-3">
             <FundingLineValuesEnrollmentChart
