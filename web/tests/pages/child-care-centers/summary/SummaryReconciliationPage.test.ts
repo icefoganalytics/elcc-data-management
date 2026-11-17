@@ -156,12 +156,15 @@ describe("web/src/pages/child-care-centers/summary/SummaryReconciliationPage.vue
               totalCount: 1,
             },
           }),
-          "/api/funding-reconciliation-adjustments": (config) => ({
-            data: {
-              fundingReconciliationAdjustments: adjustments.slice(0, config?.params?.perPage ?? 10),
-              totalCount: 12,
-            },
-          }),
+          "/api/funding-reconciliation-adjustments": (config) => {
+            const requestedAdjustments = adjustments.slice(0, config?.params?.perPage ?? 10)
+            return {
+              data: {
+                fundingReconciliationAdjustments: requestedAdjustments,
+                totalCount: 12,
+              },
+            }
+          },
           "/api/fiscal-periods": () => ({
             data: {
               fiscalPeriods,
