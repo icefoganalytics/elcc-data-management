@@ -19,6 +19,7 @@ Changes since v2026.11.17.1 that will be included in the next release.
 ### Fixed
 
 - Reconciliation summaries include all twelve fiscal months, including February and March payments and balances.
+- Centre detail editing now follows the existing System Administrator permission, including direct edit links. Other users retain read-only access.
 
 ## [v2026.11.17.1] - 2026-11-17
 

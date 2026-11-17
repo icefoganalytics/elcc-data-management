@@ -26,9 +26,12 @@
           >
         </v-toolbar>
         <v-skeleton-loader
-          v-if="isNil(centre) || isNil(centreId)"
+          v-if="isLoading || isNil(centre) || isNil(centreId)"
           type="card@3"
         />
+        <v-card-text v-else-if="!isEditable">
+          Centre editing is unavailable. Only System Administrators can edit centre details.
+        </v-card-text>
         <v-card-text v-else>
           <v-text-field
             v-model="centre.name"
@@ -168,6 +171,7 @@
           >
           <v-spacer></v-spacer>
           <v-btn
+            v-if="isEditable"
             :loading="isLoading"
             type="submit"
             color="primary"
@@ -181,7 +185,7 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, ref, useTemplateRef, watch } from "vue"
+import { computed, nextTick, ref, useTemplateRef, watch } from "vue"
 import { useRouteQuery } from "@vueuse/router"
 import { isNil } from "lodash"
 
@@ -203,14 +207,21 @@ const centreId = useRouteQuery<string | null, number | null>("showCentreEdit", n
   transform: integerTransformer,
 })
 
-const { centre, isLoading, save, refresh } = useCentre(centreId)
+const { centre, policy, isLoading, isErrored, save, refresh } = useCentre(centreId)
+const isEditable = computed(
+  () =>
+    !isLoading.value &&
+    !isErrored.value &&
+    policy.value?.update === true &&
+    centre.value?.id === centreId.value
+)
 
 const form = useTemplateRef("form")
 const isValid = ref(false)
 const snack = useSnack()
 
 async function updateAndClose() {
-  if (isNil(form.value)) return
+  if (!isEditable.value || isNil(form.value)) return
 
   const { valid } = await form.value.validate()
   if (!valid) {
