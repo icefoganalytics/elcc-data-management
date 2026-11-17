@@ -35,6 +35,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
 
 ### Changed
 
+- Communities building-expense categories now include missing Whitehorse categories and use a 0.43 subsidy rate for new expenses. Existing monthly expenses retain their saved rates and amounts.
 - Dashboard centre and community counts load on demand from SQL summaries of the authorized, filtered centres, without downloading every page. Loading and unavailable states replace misleading zero counts.
 - Worksheet errors and legacy save confirmations now use the shared application snackbar, including its standard appearance and Close action.
 - Audit timestamps now use UTC `DATETIME2(7)` consistently, preserving existing instants and fractional seconds while discarding original timezone-offset labels.
