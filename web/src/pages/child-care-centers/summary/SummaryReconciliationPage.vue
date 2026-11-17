@@ -69,39 +69,6 @@
           {{ formatMoney(fundingReconciliation.finalBalanceAmount) }}
         </td>
       </tr>
-      <tr>
-        <td colspan="5"></td>
-      </tr>
-      <tr class="font-weight-bold bg-green-lighten-4">
-        <td class="text-left">Agreement Value</td>
-        <td
-          class="text-right"
-          colspan="2"
-        >
-          TODO: T00023514
-        </td>
-        <td
-          class="text-right"
-          colspan="2"
-        >
-          Remaining
-        </td>
-      </tr>
-      <tr class="font-weight-bold bg-green-lighten-4">
-        <td class="text-left">TODO: $449,420.00</td>
-        <td
-          class="text-right"
-          colspan="2"
-        >
-          TODO: $184,243.00
-        </td>
-        <td
-          class="text-right"
-          colspan="2"
-        >
-          TODO: $265,177.00
-        </td>
-      </tr>
     </tbody>
   </v-table>
 </template>
