@@ -119,6 +119,7 @@ const fundingReconciliationAdjustmentsQuery = computed(() => ({
   where: {
     fundingReconciliationId: fundingReconciliationId.value,
   },
+  perPage: 12,
 }))
 const {
   fundingReconciliationAdjustments,

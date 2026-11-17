@@ -102,6 +102,7 @@ Changes since v2025.11.24.1 that will be included in the next release.
 - Later seeds preserve intentionally absent Child Care Space months, and historical cutover rejects malformed submission-line IDs before removing source JSON.
 - Prevented employee benefits from being double counted in employee adjustment amounts during funding reconciliation calculations.
 - Reconciliation summaries show recorded monthly figures and totals without unrelated sample agreement numbers or amounts.
+- Reconciliation summaries include all twelve fiscal months, including February and March payments and balances.
 - Resolved occasional authentication issues caused by plugin load order.
 - Editor links now reach the correct Docker worktree through library-managed checkout routing,
   without application-owned session configuration. The released adapter supplies Docker
