@@ -109,6 +109,100 @@ describe("web/src/pages/child-care-centers/summary/SummaryReconciliationPage.vue
           ["Totals", "$1,500.25", "$1,200.10", "$50.15", "$250.00"],
         ])
       })
+
+      test("when a March reconciliation payment settles the year, displays all months and the closing balance", async () => {
+        // Arrange
+        const fiscalPeriods = Object.values(FiscalPeriodMonths).map((month, index) =>
+          fiscalPeriodFactory.build({
+            id: index + 1,
+            fundingPeriodId: 4,
+            month,
+          })
+        )
+        const fundingReconciliation: FundingReconciliation = {
+          id: 9,
+          centreId: 3,
+          fundingPeriodId: 4,
+          status: "draft",
+          fundingReceivedTotalAmount: "100.0000",
+          eligibleExpensesTotalAmount: "100.0000",
+          payrollAdjustmentsTotalAmount: "0.0000",
+          finalBalanceAmount: "0.0000",
+          notes: null,
+          finalizedAt: null,
+          finalizedById: null,
+          createdAt: "2025-03-31T00:00:00.000Z",
+          updatedAt: "2025-03-31T00:00:00.000Z",
+        }
+        const adjustments: FundingReconciliationAdjustment[] = fiscalPeriods.map((period) => ({
+          id: period.id,
+          fundingReconciliationId: 9,
+          fiscalPeriodId: period.id,
+          fundingReceivedPeriodAmount: "0.0000",
+          eligibleExpensesPeriodAmount: "0.0000",
+          payrollAdjustmentsPeriodAmount: "0.0000",
+          cumulativeBalanceAmount: "-100.0000",
+          createdAt: "2025-03-31T00:00:00.000Z",
+          updatedAt: "2025-03-31T00:00:00.000Z",
+        }))
+        adjustments[0].eligibleExpensesPeriodAmount = "100.0000"
+        adjustments[11].fundingReceivedPeriodAmount = "100.0000"
+        adjustments[11].cumulativeBalanceAmount = "0.0000"
+
+        mockHttpGetRoutes({
+          "/api/funding-reconciliations": () => ({
+            data: {
+              fundingReconciliations: [fundingReconciliation],
+              totalCount: 1,
+            },
+          }),
+          "/api/funding-reconciliation-adjustments": (config) => ({
+            data: {
+              fundingReconciliationAdjustments: adjustments.slice(0, config?.params?.perPage ?? 10),
+              totalCount: 12,
+            },
+          }),
+          "/api/fiscal-periods": () => ({
+            data: {
+              fiscalPeriods,
+              totalCount: 12,
+            },
+          }),
+        })
+        vi.mocked(httpClient.post).mockResolvedValue({
+          data: {
+            fundingReconciliation,
+          },
+        })
+
+        // Act
+        const wrapper = mountWithDefaultPlugins(SummaryReconciliationPage, {
+          props: {
+            centreId: "3",
+            fiscalYearSlug: "2024-25",
+          },
+        })
+        await flushPromises()
+
+        // Assert
+        expect(
+          wrapper.findAll("tbody tr").map((row) => row.findAll("td").map((cell) => cell.text()))
+        ).toEqual([
+          ["April Expenses", "$0.00", "$100.00", "$0.00", "-$100.00"],
+          ["May Expenses", "$0.00", "$0.00", "$0.00", "-$100.00"],
+          ["June Expenses", "$0.00", "$0.00", "$0.00", "-$100.00"],
+          ["July Expenses", "$0.00", "$0.00", "$0.00", "-$100.00"],
+          ["August Expenses", "$0.00", "$0.00", "$0.00", "-$100.00"],
+          ["September Expenses", "$0.00", "$0.00", "$0.00", "-$100.00"],
+          ["October Expenses", "$0.00", "$0.00", "$0.00", "-$100.00"],
+          ["November Expenses", "$0.00", "$0.00", "$0.00", "-$100.00"],
+          ["December Expenses", "$0.00", "$0.00", "$0.00", "-$100.00"],
+          ["January Expenses", "$0.00", "$0.00", "$0.00", "-$100.00"],
+          ["February Expenses", "$0.00", "$0.00", "$0.00", "-$100.00"],
+          ["March Expenses", "$100.00", "$0.00", "$0.00", "$0.00"],
+          ["Totals", "$100.00", "$100.00", "$0.00", "$0.00"],
+        ])
+      })
     })
   })
 })
