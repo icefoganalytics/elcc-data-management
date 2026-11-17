@@ -6,13 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-Changes since v2025.11.24.1 that will be included in the next release.
+Changes since v2026.11.17.1 that will be included in the next release.
+
+### Added
+
+- Shared child-care category storage prepares one funding-period catalogue for Spaces, Administration, and Quality Enhancement without changing existing program rates or monthly records.
+
+### Changed
+
+- Communities building-expense categories now include missing Whitehorse categories and use a 0.43 subsidy rate for new expenses. Existing monthly expenses retain their saved rates and amounts.
+
+### Fixed
+
+- Reconciliation summaries include all twelve fiscal months, including February and March payments and balances.
+
+## [v2026.11.17.1] - 2026-11-17
 
 ### Added
 
 - Child Care Spaces now saves per centre and month, preserving historic rates while keeping worksheets, enrollment charts, and reconciliations in sync.
 - Child Care Space categories now have dedicated administration pages and funding-period configuration. Existing names, age ranges, and rates move out of shared submission lines without changing historical monthly records.
-- Shared child-care category storage prepares one funding-period catalogue for Spaces, Administration, and Quality Enhancement without changing existing program rates or monthly records.
 - Employee benefits and wage enhancement edits now save when committed, without routine Save buttons. Failed edits retain their input and show Retry controls; wage errors remain visible until the retry succeeds. Both editors preserve queued changes across month navigation and cancel superseded loads without showing a load error. Saving indicators no longer shift the tables or resize wage columns.
 - Replicated wage estimates appear when returning to a previously visited month, while pending and failed edits remain available for saving or Retry. Committed wage hours use the database's two-decimal precision so displayed totals match stored values. Deletion waits for existing saves and prevents new edits to the row being deleted.
 - Quality Enhancement Program now has funding-period category administration and independent monthly records for each centre. Existing worksheet rates, hot-meal increments, occupancy, and totals are preserved during the cutover; worksheets and reconciliation use the new ledger. Historical integral decimal and exponent identifiers remain supported without rounding fractional values. Missing historical Spaces links stay unlinked rather than inheriting current configuration. Hot-meal application and removal are atomic across affected monthly rows.
@@ -36,7 +49,6 @@ Changes since v2025.11.24.1 that will be included in the next release.
 
 ### Changed
 
-- Communities building-expense categories now include missing Whitehorse categories and use a 0.43 subsidy rate for new expenses. Existing monthly expenses retain their saved rates and amounts.
 - Dashboard centre and community counts load on demand from SQL summaries of the authorized, filtered centres, without downloading every page. Loading and unavailable states replace misleading zero counts.
 - Worksheet errors and legacy save confirmations now use the shared application snackbar, including its standard appearance and Close action.
 - Audit timestamps now use UTC `DATETIME2(7)` consistently, preserving existing instants and fractional seconds while discarding original timezone-offset labels.
@@ -103,7 +115,6 @@ Changes since v2025.11.24.1 that will be included in the next release.
 - Later seeds preserve intentionally absent Child Care Space months, and historical cutover rejects malformed submission-line IDs before removing source JSON.
 - Prevented employee benefits from being double counted in employee adjustment amounts during funding reconciliation calculations.
 - Reconciliation summaries show recorded monthly figures and totals without unrelated sample agreement numbers or amounts.
-- Reconciliation summaries include all twelve fiscal months, including February and March payments and balances.
 - Resolved occasional authentication issues caused by plugin load order.
 - Editor links now reach the correct Docker worktree through library-managed checkout routing,
   without application-owned session configuration. The released adapter supplies Docker
