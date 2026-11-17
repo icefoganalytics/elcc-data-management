@@ -30,7 +30,7 @@ export const FUNDING_REGION_DEFAULTS = Object.freeze([
   },
   {
     region: "Communities",
-    subsidyRate: "0.3700",
+    subsidyRate: "0.4300",
     hotMealIncrementAmount: "32.0600",
   },
 ])
