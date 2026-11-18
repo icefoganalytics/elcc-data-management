@@ -20,6 +20,8 @@ Changes since v2026.11.17.1 that will be included in the next release.
 
 - Shared child-care categories have a dedicated model and authorized API, with immutable funding-period ownership and safe retirement. Existing programme configuration remains unchanged during preparation.
 
+- Child Care Spaces propagates only changed occupancy fields, preserving independently edited opposite-column occupancy and historical rates in linked Administration and Quality Enhancement rows.
+- Child Care Spaces section totals come from server summaries across all matching records, independent of pagination, and refresh after occupancy saves.
 - Children with Diverse Needs funding now has explicitly named funding-category and funding-record resources, distinguishing centre/month calculations from individual child records. Existing categories and monthly records are preserved during the rename.
 - Shared child-care category storage prepares one funding-period catalogue for Spaces, Administration, and Quality Enhancement without changing existing program rates or monthly records.
 

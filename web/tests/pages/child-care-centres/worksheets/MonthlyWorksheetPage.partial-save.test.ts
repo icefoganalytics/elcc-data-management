@@ -10,6 +10,7 @@ import { FiscalPeriodMonths } from "@/use/use-fiscal-periods"
 import {
   administrationCostFactory,
   childCareSpaceFactory,
+  childCareSpaceSummariesFactory,
   fiscalPeriodFactory,
   fundingSubmissionLineJsonFactory,
   qualityEnhancementFactory,
@@ -63,7 +64,9 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
           },
           "/api/child-care-spaces": async () => {
-            return { data: { childCareSpaces, totalCount: 2 } }
+            return {
+              data: { childCareSpaces, totalCount: 2, summaries: childCareSpaceSummariesFactory.build() },
+            }
           },
           "/api/children-with-diverse-needs-funding-records": async () => {
             return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
@@ -159,7 +162,9 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
           },
           "/api/child-care-spaces": async () => {
-            return { data: { childCareSpaces, totalCount: 2 } }
+            return {
+              data: { childCareSpaces, totalCount: 2, summaries: childCareSpaceSummariesFactory.build() },
+            }
           },
           "/api/administration-costs": async () => {
             return { data: { administrationCosts: [], totalCount: 0 } }
@@ -240,7 +245,9 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
           },
           "/api/child-care-spaces": async () => {
-            return { data: { childCareSpaces, totalCount: 2 } }
+            return {
+              data: { childCareSpaces, totalCount: 2, summaries: childCareSpaceSummariesFactory.build() },
+            }
           },
           "/api/administration-costs": async () => {
             return { data: { administrationCosts: [], totalCount: 0 } }

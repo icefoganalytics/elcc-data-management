@@ -35,5 +35,7 @@ export type QueryOptions<WhereOptions, FiltersOptions> = Partial<{
   perPage: number
 }>
 
+export type Summaries<Field extends string = string, Value = number> = Record<Field, Value>
+
 // Keep in sync with api/src/controllers/base-controller.ts
 export const MAX_PER_PAGE = 1000

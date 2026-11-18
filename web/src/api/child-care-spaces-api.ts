@@ -3,6 +3,7 @@ import {
   type FiltersOptions,
   type Policy,
   type QueryOptions,
+  type Summaries,
   type WhereOptions,
 } from "@/api/base-api"
 
@@ -31,6 +32,11 @@ export type ChildCareSpaceAsIndex = ChildCareSpace & {
   policy: ChildCareSpacePolicy
 }
 
+export type ChildCareSpaceSummaries = Summaries<
+  "totalEstimated" | "totalActual" | "totalEstimatedOccupancy" | "totalActualOccupancy",
+  string
+>
+
 export type ChildCareSpaceWhereOptions = WhereOptions<
   ChildCareSpace,
   "id" | "centreId" | "fiscalPeriodId" | "categoryId"
@@ -56,6 +62,7 @@ export const childCareSpacesApi = {
   ): Promise<{
     childCareSpaces: ChildCareSpaceAsIndex[]
     totalCount: number
+    summaries: ChildCareSpaceSummaries
   }> {
     const { data } = await http.get("/api/child-care-spaces", { params, signal })
     return data

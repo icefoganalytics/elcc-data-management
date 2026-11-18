@@ -3,8 +3,8 @@ import { type GenericAbortSignal } from "axios"
 import { effectScope, nextTick, ref } from "vue"
 
 import httpClient from "@/api/http-client"
-import { type ChildCareSpace } from "@/api/child-care-spaces-api"
-import { childCareSpaceFactory } from "@/tests/factories"
+import { type ChildCareSpace, type ChildCareSpaceSummaries } from "@/api/child-care-spaces-api"
+import { childCareSpaceFactory, childCareSpaceSummariesFactory } from "@/tests/factories"
 
 import useChildCareSpaces from "@/use/use-child-care-spaces"
 
@@ -12,6 +12,7 @@ type ListResponse = {
   data: {
     childCareSpaces: ChildCareSpace[]
     totalCount: number
+    summaries: ChildCareSpaceSummaries
   }
 }
 
@@ -27,7 +28,13 @@ describe("web/src/use/use-child-care-spaces.ts", () => {
         const previous = childCareSpaceFactory.build({ centreId: 1 })
         vi.mocked(httpClient, true)
           .get.mockReturnValueOnce(older.promise)
-          .mockResolvedValueOnce({ data: { childCareSpaces: [selected], totalCount: 1 } })
+          .mockResolvedValueOnce({
+            data: {
+              childCareSpaces: [selected],
+              totalCount: 1,
+              summaries: childCareSpaceSummariesFactory.build(),
+            },
+          })
         const query = ref({ where: { centreId: 1 } })
         const scope = effectScope()
         onTestFinished(() => scope.stop())
@@ -37,7 +44,13 @@ describe("web/src/use/use-child-care-spaces.ts", () => {
         // Act
         query.value = { where: { centreId: 2 } }
         await flushPromises()
-        older.resolve({ data: { childCareSpaces: [previous], totalCount: 9 } })
+        older.resolve({
+          data: {
+            childCareSpaces: [previous],
+            totalCount: 9,
+            summaries: childCareSpaceSummariesFactory.build(),
+          },
+        })
         await flushPromises()
 
         // Assert
@@ -51,7 +64,13 @@ describe("web/src/use/use-child-care-spaces.ts", () => {
         const older = Promise.withResolvers<ListResponse>()
         vi.mocked(httpClient, true)
           .get.mockReturnValueOnce(older.promise)
-          .mockResolvedValueOnce({ data: { childCareSpaces: [], totalCount: 12 } })
+          .mockResolvedValueOnce({
+            data: {
+              childCareSpaces: [],
+              totalCount: 12,
+              summaries: childCareSpaceSummariesFactory.build(),
+            },
+          })
         const query = ref({ filters: { byFiscalYear: "2024-25" } })
         const scope = effectScope()
         onTestFinished(() => scope.stop())
@@ -61,11 +80,64 @@ describe("web/src/use/use-child-care-spaces.ts", () => {
         // Act
         query.value = { filters: { byFiscalYear: "2025-26" } }
         await flushPromises()
-        older.resolve({ data: { childCareSpaces: [], totalCount: 3 } })
+        older.resolve({
+          data: {
+            childCareSpaces: [],
+            totalCount: 3,
+            summaries: childCareSpaceSummariesFactory.build(),
+          },
+        })
         await flushPromises()
 
         // Assert
         expect(spaces.totalCount.value).toEqual(12)
+      })
+
+      test("when an older query resolves last, retains the selected query's summaries", async ({
+        onTestFinished,
+      }) => {
+        // Arrange
+        const older = Promise.withResolvers<ListResponse>()
+        const selectedSummaries = childCareSpaceSummariesFactory.build({
+          totalEstimated: "246.8100",
+          totalActual: "135.7900",
+          totalEstimatedOccupancy: "2.5000",
+          totalActualOccupancy: "1.2500",
+        })
+        vi.mocked(httpClient, true)
+          .get.mockReturnValueOnce(older.promise)
+          .mockResolvedValueOnce({
+            data: {
+              childCareSpaces: [],
+              totalCount: 0,
+              summaries: selectedSummaries,
+            },
+          })
+        const query = ref({ where: { centreId: 1 } })
+        const scope = effectScope()
+        onTestFinished(() => scope.stop())
+        const spaces = scope.run(() => useChildCareSpaces(query))
+        if (spaces === undefined) throw new Error("The test scope must be active")
+
+        // Act
+        query.value = { where: { centreId: 2 } }
+        await flushPromises()
+        older.resolve({
+          data: {
+            childCareSpaces: [],
+            totalCount: 0,
+            summaries: childCareSpaceSummariesFactory.build({
+              totalEstimated: "999.0000",
+              totalActual: "888.0000",
+              totalEstimatedOccupancy: "9.0000",
+              totalActualOccupancy: "8.0000",
+            }),
+          },
+        })
+        await flushPromises()
+
+        // Assert
+        expect(spaces.summaries.value).toEqual(selectedSummaries)
       })
 
       test("when an older query completes while its replacement is pending, clears loading", async ({
@@ -86,7 +158,13 @@ describe("web/src/use/use-child-care-spaces.ts", () => {
         // Act
         query.value = { where: { centreId: 2 } }
         await nextTick()
-        older.resolve({ data: { childCareSpaces: [], totalCount: 0 } })
+        older.resolve({
+          data: {
+            childCareSpaces: [],
+            totalCount: 0,
+            summaries: childCareSpaceSummariesFactory.build(),
+          },
+        })
         await flushPromises()
 
         // Assert
@@ -100,7 +178,13 @@ describe("web/src/use/use-child-care-spaces.ts", () => {
         const older = Promise.withResolvers<ListResponse>()
         vi.mocked(httpClient, true)
           .get.mockReturnValueOnce(older.promise)
-          .mockResolvedValueOnce({ data: { childCareSpaces: [], totalCount: 0 } })
+          .mockResolvedValueOnce({
+            data: {
+              childCareSpaces: [],
+              totalCount: 0,
+              summaries: childCareSpaceSummariesFactory.build(),
+            },
+          })
         const query = ref({ where: { centreId: 1 } })
         const scope = effectScope()
         onTestFinished(() => scope.stop())
@@ -134,7 +218,13 @@ describe("web/src/use/use-child-care-spaces.ts", () => {
 
         // Act
         await spaces.refresh().catch(() => undefined)
-        older.resolve({ data: { childCareSpaces: [], totalCount: 0 } })
+        older.resolve({
+          data: {
+            childCareSpaces: [],
+            totalCount: 0,
+            summaries: childCareSpaceSummariesFactory.build(),
+          },
+        })
         await previousFetch
 
         // Assert
@@ -157,7 +247,11 @@ describe("web/src/use/use-child-care-spaces.ts", () => {
       test("when the current request succeeds, completes loading", async ({ onTestFinished }) => {
         // Arrange
         vi.mocked(httpClient, true).get.mockResolvedValueOnce({
-          data: { childCareSpaces: [], totalCount: 0 },
+          data: {
+            childCareSpaces: [],
+            totalCount: 0,
+            summaries: childCareSpaceSummariesFactory.build(),
+          },
         })
         const scope = effectScope()
         onTestFinished(() => scope.stop())
@@ -185,7 +279,13 @@ describe("web/src/use/use-child-care-spaces.ts", () => {
             signal = options?.signal
             return pending.promise
           })
-          .mockResolvedValueOnce({ data: { childCareSpaces: [], totalCount: 0 } })
+          .mockResolvedValueOnce({
+            data: {
+              childCareSpaces: [],
+              totalCount: 0,
+              summaries: childCareSpaceSummariesFactory.build(),
+            },
+          })
         const query = ref({ filters: { byFiscalYear: "2024-25" } })
         const scope = effectScope()
         onTestFinished(() => scope.stop())
@@ -216,7 +316,13 @@ describe("web/src/use/use-child-care-spaces.ts", () => {
         // Act
         skip.value = true
         await nextTick()
-        pending.resolve({ data: { childCareSpaces: [previous], totalCount: 1 } })
+        pending.resolve({
+          data: {
+            childCareSpaces: [previous],
+            totalCount: 1,
+            summaries: childCareSpaceSummariesFactory.build(),
+          },
+        })
         await flushPromises()
 
         // Assert

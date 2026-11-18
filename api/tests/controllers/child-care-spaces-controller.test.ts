@@ -88,56 +88,58 @@ describe("api/src/controllers/child-care-spaces-controller.ts", () => {
         )
 
         // Assert
-        expect(response).toEqual(
-          expect.objectContaining({
-            status: 200,
-            body: {
-              childCareSpaces: [
-                {
-                  id: mayChildCareSpace.id,
-                  centreId: centre.id,
-                  fiscalPeriodId: mayFiscalPeriod.id,
-                  categoryId: category.id,
-                  lineName: "Infants",
-                  monthlyAmount: "100",
-                  estimatedChildOccupancyRate: "0.5",
-                  actualChildOccupancyRate: "0.25",
-                  estimatedComputedTotal: "50",
-                  actualComputedTotal: "25",
-                  createdAt: mayChildCareSpace.createdAt.toISOString(),
-                  updatedAt: mayChildCareSpace.updatedAt.toISOString(),
-                  policy: {
-                    show: true,
-                    create: false,
-                    update: true,
-                    destroy: false,
-                  },
-                },
-                {
-                  id: aprilChildCareSpace.id,
-                  centreId: centre.id,
-                  fiscalPeriodId: aprilFiscalPeriod.id,
-                  categoryId: category.id,
-                  lineName: "Infants",
-                  monthlyAmount: "100",
-                  estimatedChildOccupancyRate: "0.5",
-                  actualChildOccupancyRate: "0.5",
-                  estimatedComputedTotal: "50",
-                  actualComputedTotal: "50",
-                  createdAt: aprilChildCareSpace.createdAt.toISOString(),
-                  updatedAt: aprilChildCareSpace.updatedAt.toISOString(),
-                  policy: {
-                    show: true,
-                    create: false,
-                    update: true,
-                    destroy: false,
-                  },
-                },
-              ],
-              totalCount: 2,
+        expect(response.status).toEqual(200)
+        expect(response.body).toEqual({
+          childCareSpaces: [
+            {
+              id: mayChildCareSpace.id,
+              centreId: centre.id,
+              fiscalPeriodId: mayFiscalPeriod.id,
+              categoryId: category.id,
+              lineName: "Infants",
+              monthlyAmount: "100",
+              estimatedChildOccupancyRate: "0.5",
+              actualChildOccupancyRate: "0.25",
+              estimatedComputedTotal: "50",
+              actualComputedTotal: "25",
+              createdAt: mayChildCareSpace.createdAt.toISOString(),
+              updatedAt: mayChildCareSpace.updatedAt.toISOString(),
+              policy: {
+                show: true,
+                create: false,
+                update: true,
+                destroy: false,
+              },
             },
-          })
-        )
+            {
+              id: aprilChildCareSpace.id,
+              centreId: centre.id,
+              fiscalPeriodId: aprilFiscalPeriod.id,
+              categoryId: category.id,
+              lineName: "Infants",
+              monthlyAmount: "100",
+              estimatedChildOccupancyRate: "0.5",
+              actualChildOccupancyRate: "0.5",
+              estimatedComputedTotal: "50",
+              actualComputedTotal: "50",
+              createdAt: aprilChildCareSpace.createdAt.toISOString(),
+              updatedAt: aprilChildCareSpace.updatedAt.toISOString(),
+              policy: {
+                show: true,
+                create: false,
+                update: true,
+                destroy: false,
+              },
+            },
+          ],
+          totalCount: 2,
+          summaries: {
+            totalEstimated: "100.0000",
+            totalActual: "75.0000",
+            totalEstimatedOccupancy: "1.0000",
+            totalActualOccupancy: "0.7500",
+          },
+        })
       })
     })
 
