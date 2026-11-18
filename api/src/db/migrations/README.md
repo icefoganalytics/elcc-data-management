@@ -82,12 +82,11 @@ preserves shared identities; normalization removes that programme’s name and a
 legacy name index, requires its shared identity, and adds an active-only funding-period/shared-identity
 unique index.
 
-Spaces and Administration have completed their cutovers. Quality retains its legacy names,
-ages, configuration Spaces links, and nullable shared identities at this stage. Do not remove those fields until each programme's
-application layer and migration ship together. Later stages resolve explicit Spaces links using
-its funding-period and shared IDs, not the removed Spaces name and age columns. Monthly ledger
-tables, historical names, amounts, occupancy values, computed totals, and audit fields are not
-rewritten by these configuration cutovers.
+Spaces, Administration, and Quality each retain their legacy fields until their matching
+application layer and migration pair ship together. Administration and Quality resolve explicit
+Spaces links using funding-period and shared IDs, not the removed Spaces name and age columns.
+Monthly ledger tables, historical names, amounts, occupancy values, computed totals, and audit
+fields are not rewritten by these configuration cutovers.
 
 Reusable migration code belongs in `helpers`, not in top-level `.ts` files that Knex would execute.
 Knex's filesystem loader reads immediate directory entries and filters by extension; the helpers

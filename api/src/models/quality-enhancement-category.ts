@@ -1,5 +1,6 @@
 import {
   DataTypes,
+  Op,
   sql,
   type CreationOptional,
   type InferAttributes,
@@ -14,23 +15,25 @@ import {
   NotNull,
   PrimaryKey,
   ValidateAttribute,
+  ModelValidator,
 } from "@sequelize/core/decorators-legacy"
 import Big from "big.js"
+import arrayWrap from "@/utils/array-wrap"
 
-import QualityEnhancementCategoriesFundingPeriodIdCategoryNameUniqueIndex from "@/models/indexes/quality-enhancement-categories-funding-period-id-category-name-unique-index"
+import { QualityEnhancementCategoriesFundingPeriodIdChildCareCategoryIdUniqueIndex } from "@/models/indexes"
 
 import BaseModel from "@/models/base-model"
-import ChildCareSpaceCategory from "@/models/child-care-space-category"
+import ChildCareCategory from "@/models/child-care-category"
 import FundingPeriod from "@/models/funding-period"
 
 export const QUALITY_ENHANCEMENT_CATEGORY_DEFAULTS = Object.freeze([
-  { categoryName: "Infants", fromAge: 0, toAge: 1, monthlyAmount: "206.1" },
-  { categoryName: "Toddlers", fromAge: 2, toAge: 3, monthlyAmount: "154.58" },
-  { categoryName: "Preschool", fromAge: 4, toAge: 5, monthlyAmount: "114.5" },
-  { categoryName: "Kindergarten (PT)", fromAge: 5, toAge: 6, monthlyAmount: "114.5" },
-  { categoryName: "Kindergarten (FT)", fromAge: 5, toAge: 6, monthlyAmount: "114.5" },
-  { categoryName: "School Age (PT)", fromAge: 5, toAge: 6, monthlyAmount: "97.33" },
-  { categoryName: "School Age (FT)", fromAge: 5, toAge: 6, monthlyAmount: "97.33" },
+  { categoryName: "Infants", monthlyAmount: "206.1" },
+  { categoryName: "Toddlers", monthlyAmount: "154.58" },
+  { categoryName: "Preschool", monthlyAmount: "114.5" },
+  { categoryName: "Kindergarten (PT)", monthlyAmount: "114.5" },
+  { categoryName: "Kindergarten (FT)", monthlyAmount: "114.5" },
+  { categoryName: "School Age (PT)", monthlyAmount: "97.33" },
+  { categoryName: "School Age (FT)", monthlyAmount: "97.33" },
 ])
 
 export class QualityEnhancementCategory extends BaseModel<
@@ -46,22 +49,28 @@ export class QualityEnhancementCategory extends BaseModel<
 
   @Attribute(DataTypes.INTEGER)
   @NotNull
-  @QualityEnhancementCategoriesFundingPeriodIdCategoryNameUniqueIndex
+  @QualityEnhancementCategoriesFundingPeriodIdChildCareCategoryIdUniqueIndex
   declare fundingPeriodId: number
 
   @Attribute(DataTypes.INTEGER)
-  declare childCareCategoryId: number | null
-
-  @Attribute(DataTypes.STRING(200))
   @NotNull
-  @QualityEnhancementCategoriesFundingPeriodIdCategoryNameUniqueIndex
-  declare categoryName: string
+  @QualityEnhancementCategoriesFundingPeriodIdChildCareCategoryIdUniqueIndex
+  declare childCareCategoryId: number
 
-  @Attribute(DataTypes.INTEGER)
-  declare fromAge: number | null
+  get categoryName(): NonAttribute<string> {
+    if (!this.childCareCategory) throw new Error("Child Care category must be loaded")
+    return this.childCareCategory.categoryName
+  }
 
-  @Attribute(DataTypes.INTEGER)
-  declare toAge: number | null
+  get fromAge(): NonAttribute<number | null> {
+    if (!this.childCareCategory) throw new Error("Child Care category must be loaded")
+    return this.childCareCategory.fromAge
+  }
+
+  get toAge(): NonAttribute<number | null> {
+    if (!this.childCareCategory) throw new Error("Child Care category must be loaded")
+    return this.childCareCategory.toAge
+  }
 
   @Attribute(DataTypes.DECIMAL(15, 4))
   @NotNull
@@ -76,9 +85,6 @@ export class QualityEnhancementCategory extends BaseModel<
     },
   })
   declare monthlyAmount: string
-
-  @Attribute(DataTypes.INTEGER)
-  declare childCareSpaceCategoryId: number | null
 
   @Attribute(DataTypes.DATE)
   @NotNull
@@ -99,11 +105,43 @@ export class QualityEnhancementCategory extends BaseModel<
   })
   declare fundingPeriod?: NonAttribute<FundingPeriod>
 
-  @BelongsTo(() => ChildCareSpaceCategory, { foreignKey: "childCareSpaceCategoryId" })
-  declare childCareSpaceCategory?: NonAttribute<ChildCareSpaceCategory>
+  @ModelValidator
+  async validateSharedCategory(): Promise<void> {
+    if (
+      !this.isNewRecord &&
+      (this.changed("childCareCategoryId") || this.changed("fundingPeriodId"))
+    ) {
+      throw new Error("Child Care category and funding period cannot be changed")
+    }
+
+    const childCareCategory = await ChildCareCategory.findOne({
+      where: { id: this.childCareCategoryId, fundingPeriodId: this.fundingPeriodId },
+      attributes: ["id"],
+    })
+    if (!childCareCategory) {
+      throw new Error("Child Care category must be active in the same funding period")
+    }
+  }
+
+  @BelongsTo(() => ChildCareCategory, { foreignKey: "childCareCategoryId" })
+  declare childCareCategory?: NonAttribute<ChildCareCategory>
 
   static establishScopes() {
-    this.addSearchScope(["categoryName"])
+    this.addScope("defaultScope", { include: ["childCareCategory"] }, { override: true })
+    this.addScope("search", (terms: string | string[]) => ({
+      include: ["childCareCategory"],
+      where: {
+        [Op.and]: arrayWrap(terms)
+          .filter((term) => term.length > 0)
+          .map((term) =>
+            sql.where(
+              sql.fn("LOWER", sql.col("childCareCategory.category_name")),
+              Op.like,
+              `%${term.toLowerCase()}%`
+            )
+          ),
+      },
+    }))
   }
 }
 

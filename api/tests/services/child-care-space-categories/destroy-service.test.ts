@@ -38,23 +38,6 @@ describe("api/src/services/child-care-space-categories/destroy-service.ts", () =
         )
       })
 
-      test("when an annual Quality Enhancement category retains a space link, rejects retirement", async () => {
-        // Arrange
-        const category = await childCareSpaceCategoryFactory.create()
-        await qualityEnhancementCategoryFactory.create({
-          fundingPeriodId: category.fundingPeriodId,
-          childCareSpaceCategoryId: category.id,
-        })
-
-        // Act
-        const retirementPromise = DestroyService.perform(category)
-
-        // Assert
-        await expect(retirementPromise).rejects.toThrow(
-          "Cannot delete a category used by Quality Enhancement categories"
-        )
-      })
-
       test("when a monthly Administration Cost retains a category link, rejects retirement", async () => {
         // Arrange
         const category = await childCareSpaceCategoryFactory.create()
@@ -148,7 +131,7 @@ describe("api/src/services/child-care-space-categories/destroy-service.ts", () =
         })
         const qualityEnhancementCategory = await qualityEnhancementCategoryFactory.create({
           fundingPeriodId: category.fundingPeriodId,
-          childCareSpaceCategoryId: category.id,
+          childCareCategoryId: category.childCareCategoryId,
         })
         const administrationCost = await administrationCostFactory
           .associations({

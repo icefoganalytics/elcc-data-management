@@ -10,11 +10,12 @@ export type QualityEnhancementCategoryIndexView = Pick<
   QualityEnhancementCategory,
   | "id"
   | "fundingPeriodId"
+  | "childCareCategoryId"
   | "categoryName"
   | "fromAge"
   | "toAge"
   | "monthlyAmount"
-  | "childCareSpaceCategoryId"
+  | "childCareCategoryId"
   | "createdAt"
   | "updatedAt"
 > & { policy: PolicyAsReference }
@@ -32,11 +33,12 @@ export class IndexSerializer extends BaseSerializer<QualityEnhancementCategory> 
       ...pick(this.record, [
         "id",
         "fundingPeriodId",
+        "childCareCategoryId",
         "categoryName",
         "fromAge",
         "toAge",
         "monthlyAmount",
-        "childCareSpaceCategoryId",
+        "childCareCategoryId",
         "createdAt",
         "updatedAt",
       ]),

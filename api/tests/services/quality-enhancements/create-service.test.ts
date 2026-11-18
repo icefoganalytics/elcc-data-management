@@ -1,3 +1,4 @@
+import childCareCategoryFactory from "@/factories/child-care-category-factory"
 import {
   centreFactory,
   fiscalPeriodFactory,
@@ -22,9 +23,16 @@ describe("api/src/services/quality-enhancements/create-service.ts", () => {
         const futurePeriod = await fiscalPeriodFactory.associations({ fundingPeriod }).create({
           dateStart: new Date("2026-11-01T00:00:00.000Z"),
         })
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
         const category = await qualityEnhancementCategoryFactory
           .associations({ fundingPeriod })
-          .create({ categoryName: "Infants", monthlyAmount: "206.1000" })
+          .create({
+            monthlyAmount: "206.1000",
+            childCareCategoryId: categoryChildCareCategory.id,
+          })
         const existingFuture = await qualityEnhancementFactory
           .associations({ centre, fiscalPeriod: futurePeriod, category })
           .create({ estimatedChildOccupancyRate: "0.3000", actualChildOccupancyRate: "0.2000" })
@@ -190,7 +198,7 @@ describe("api/src/services/quality-enhancements/create-service.ts", () => {
           })
         ).toEqual(
           expect.objectContaining({
-            childCareSpaceCategoryId: category.childCareSpaceCategoryId,
+            childCareSpaceCategoryId: null,
             lineName: category.categoryName,
             baseMonthlyAmount: "206.1",
             hotMealIncrementAmount: "32.06",

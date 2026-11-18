@@ -31,10 +31,10 @@
           goToQualityEnhancementCategoryPage(item.id)
       "
     >
-      <template #item.fromAge="{ item }">
+      <template #item.childCareCategory.fromAge="{ item }">
         {{ item.fromAge ?? "—" }}
       </template>
-      <template #item.toAge="{ item }">
+      <template #item.childCareCategory.toAge="{ item }">
         {{ item.toAge ?? "—" }}
       </template>
       <template #item.monthlyAmount="{ item }">
@@ -96,9 +96,21 @@ const props = withDefaults(
 )
 
 const headers = computed(() => [
-  { title: "Category Name", key: "categoryName" },
-  { title: "From Age", key: "fromAge" },
-  { title: "To Age", key: "toAge" },
+  {
+    title: "Category Name",
+    key: "childCareCategory.categoryName",
+    value: "categoryName",
+  },
+  {
+    title: "From Age",
+    key: "childCareCategory.fromAge",
+    value: "fromAge",
+  },
+  {
+    title: "To Age",
+    key: "childCareCategory.toAge",
+    value: "toAge",
+  },
   { title: "Monthly Amount", key: "monthlyAmount" },
   { title: "Actions", key: "actions", sortable: false },
 ])
@@ -116,7 +128,12 @@ watch(
   },
   { deep: true }
 )
-const sortBy = useVuetifySortByToSafeRouteQuery("sortBy", [{ key: "categoryName", order: "asc" }])
+const sortBy = useVuetifySortByToSafeRouteQuery("sortBy", [
+  {
+    key: "childCareCategory.categoryName",
+    order: "asc",
+  },
+])
 const order = useVuetifySortByToSequelizeSafeOrder(sortBy)
 
 const qualityEnhancementCategoriesQuery = computed(() => ({

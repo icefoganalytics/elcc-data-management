@@ -42,44 +42,14 @@
         />
       </v-col>
     </v-row>
-    <v-row>
-      <v-col cols="12">
-        <QualityEnhancementCategoryNameUniqueTextField
-          ref="categoryNameField"
-          v-model="categoryAttributes.categoryName"
-          :funding-period-id="categoryAttributes.fundingPeriodId"
-          label="Category Name *"
-          :rules="[required]"
-          required
-        />
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col
-        cols="12"
-        md="6"
-      >
-        <NumberTextField
-          v-model="categoryAttributes.fromAge"
-          label="From Age"
-          step="1"
-          min="0"
-          :rules="[wholeNumberOrEmpty, greaterThanOrEqualTo(0)]"
-        />
-      </v-col>
-      <v-col
-        cols="12"
-        md="6"
-      >
-        <NumberTextField
-          v-model="categoryAttributes.toAge"
-          label="To Age"
-          step="1"
-          min="0"
-          :rules="toAgeRules"
-        />
-      </v-col>
-    </v-row>
+    <ChildCareCategorySearchableAutocomplete
+      v-model="categoryAttributes.childCareCategoryId"
+      :where="childCareCategoriesWhere"
+      :disabled="isNil(categoryAttributes.fundingPeriodId)"
+      label="Child Care Category *"
+      :rules="[required]"
+      required
+    />
     <v-row>
       <v-col cols="12">
         <CurrencyInput
@@ -89,17 +59,6 @@
           :rules="[required]"
           required
           @update:model-value="updateMonthlyAmount"
-        />
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col cols="12">
-        <ChildCareSpaceCategorySearchableAutocomplete
-          v-model="categoryAttributes.childCareSpaceCategoryId"
-          :where="childCareSpaceCategoriesWhere"
-          :disabled="isNil(categoryAttributes.fundingPeriodId)"
-          label="Linked Child Care Space Category"
-          clearable
         />
       </v-col>
     </v-row>
@@ -134,7 +93,7 @@ import { computed, ref, useTemplateRef, watch } from "vue"
 import { useRouter } from "vue-router"
 import { isNil } from "lodash"
 
-import { greaterThanOrEqualTo, required } from "@/utils/validators"
+import { required } from "@/utils/validators"
 
 import qualityEnhancementCategoriesApi, {
   type QualityEnhancementCategoryCreationAttributes,
@@ -146,73 +105,40 @@ import useCurrentUser from "@/use/use-current-user"
 import useFundingPeriods, { type FundingPeriodQueryOptions } from "@/use/use-funding-periods"
 import useSnack from "@/use/use-snack"
 
-import NumberTextField from "@/components/common/NumberTextField.vue"
 import CurrencyInput from "@/components/CurrencyInput.vue"
 import HeaderActionsFormCard from "@/components/common/HeaderActionsFormCard.vue"
 import FundingPeriodSearchableAutocomplete from "@/components/funding-periods/FundingPeriodSearchableAutocomplete.vue"
-import QualityEnhancementCategoryNameUniqueTextField from "@/components/quality-enhancement-categories/QualityEnhancementCategoryNameUniqueTextField.vue"
-import ChildCareSpaceCategorySearchableAutocomplete from "@/components/child-care-space-categories/ChildCareSpaceCategorySearchableAutocomplete.vue"
+import ChildCareCategorySearchableAutocomplete from "@/components/child-care-categories/ChildCareCategorySearchableAutocomplete.vue"
 
 const monthlyAmountOptions = { precision: 4 }
 
 const { isSystemAdmin } = useCurrentUser()
 
-const categoryAttributes = ref<Partial<QualityEnhancementCategoryCreationAttributes>>({
-  fundingPeriodId: undefined,
-  categoryName: "",
-  fromAge: null,
-  toAge: null,
-  monthlyAmount: "",
-  childCareSpaceCategoryId: null,
-})
-const categoryNameField = useTemplateRef("categoryNameField")
+type CategoryFormAttributes = {
+  [Attribute in keyof QualityEnhancementCategoryCreationAttributes]:
+    | QualityEnhancementCategoryCreationAttributes[Attribute]
+    | null
+}
 
-const childCareSpaceCategoriesWhere = computed(() => ({
-  fundingPeriodId: categoryAttributes.value.fundingPeriodId,
+const categoryAttributes = ref<CategoryFormAttributes>({
+  fundingPeriodId: null,
+  monthlyAmount: "",
+  childCareCategoryId: null,
+})
+
+const childCareCategoriesWhere = computed(() => ({
+  fundingPeriodId: categoryAttributes.value.fundingPeriodId ?? undefined,
 }))
 
 watch(
   () => categoryAttributes.value.fundingPeriodId,
-  async () => {
-    await categoryNameField.value?.validate()
-  }
-)
-
-watch(
-  () => categoryAttributes.value.fundingPeriodId,
-  (_fundingPeriodId, previousFundingPeriodId) => {
-    if (!isNil(previousFundingPeriodId)) {
-      categoryAttributes.value.childCareSpaceCategoryId = null
-    }
+  () => {
+    categoryAttributes.value.childCareCategoryId = null
   }
 )
 
 function updateMonthlyAmount(value: string | number | null) {
-  categoryAttributes.value.monthlyAmount = isNil(value) ? undefined : String(value)
-}
-
-const toAgeRules = computed(() => [
-  wholeNumberOrEmpty,
-  greaterThanOrEqualTo(0),
-  greaterThanOrEqualTo(categoryAttributes.value.fromAge ?? 0, {
-    referenceFieldLabel: `From Age of ${categoryAttributes.value.fromAge}`,
-  }),
-])
-
-function wholeNumberOrEmpty(value: unknown): boolean | string {
-  if (isNil(value) || value === "") {
-    return true
-  }
-
-  if (typeof value === "number" && Number.isInteger(value)) {
-    return true
-  }
-
-  if (typeof value === "string" && value.trim() !== "" && Number.isInteger(Number(value))) {
-    return true
-  }
-
-  return "Age must be a whole number"
+  categoryAttributes.value.monthlyAmount = isNil(value) ? null : String(value)
 }
 
 const fundingPeriodsQuery = ref<FundingPeriodQueryOptions>({ perPage: 1 })
@@ -240,18 +166,15 @@ async function createQualityEnhancementCategory() {
     return
   }
 
-  const { fundingPeriodId, categoryName, fromAge, toAge, monthlyAmount } = categoryAttributes.value
-  if (isNil(fundingPeriodId) || isNil(categoryName) || isNil(monthlyAmount)) {
+  const { fundingPeriodId, childCareCategoryId, monthlyAmount } = categoryAttributes.value
+  if (isNil(fundingPeriodId) || isNil(childCareCategoryId) || isNil(monthlyAmount)) {
     return
   }
 
   const attributes: QualityEnhancementCategoryCreationAttributes = {
     fundingPeriodId,
-    categoryName,
-    fromAge: fromAge ?? null,
-    toAge: toAge ?? null,
+    childCareCategoryId,
     monthlyAmount,
-    childCareSpaceCategoryId: categoryAttributes.value.childCareSpaceCategoryId ?? null,
   }
   isCreating.value = true
   try {

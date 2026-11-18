@@ -4,7 +4,6 @@ import {
   ChildCareSpaceCategory,
   FundingSubmissionLine,
   QualityEnhancement,
-  QualityEnhancementCategory,
 } from "@/models"
 import BaseService from "@/services/base-service"
 
@@ -21,15 +20,6 @@ export class DestroyService extends BaseService {
     })
     if (childCareSpacesUsingCategory > 0) {
       throw new Error("Cannot delete a category used by Child Care Space records")
-    }
-
-    const qualityEnhancementCategoriesUsingCategory = await QualityEnhancementCategory.count({
-      where: {
-        childCareSpaceCategoryId: this.childCareSpaceCategory.id,
-      },
-    })
-    if (qualityEnhancementCategoriesUsingCategory > 0) {
-      throw new Error("Cannot delete a category used by Quality Enhancement categories")
     }
 
     const administrationCostsUsingCategory = await AdministrationCost.count({
