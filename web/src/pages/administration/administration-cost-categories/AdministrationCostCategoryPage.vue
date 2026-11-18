@@ -105,15 +105,18 @@
         />
       </v-col>
     </v-row>
-    <v-row>
-      <v-col cols="12">
-        <ChildCareSpaceCategoryDescriptionElement
-          :child-care-space-category-id="administrationCostCategory.childCareSpaceCategoryId"
-          label="Linked Child Care Space Category"
-          vertical
-        />
-      </v-col>
-    </v-row>
+    <v-btn
+      v-if="policy?.update"
+      variant="text"
+      :to="{
+        name: 'administration/child-care-categories/ChildCareCategoryEditPage',
+        params: {
+          childCareCategoryId: administrationCostCategory.childCareCategoryId,
+        },
+      }"
+    >
+      Edit shared category name and ages
+    </v-btn>
   </HeaderActionsCard>
 </template>
 
@@ -135,7 +138,6 @@ import useFundingPeriods from "@/use/use-funding-periods"
 
 import DescriptionElement from "@/components/common/DescriptionElement.vue"
 import HeaderActionsCard from "@/components/common/HeaderActionsCard.vue"
-import ChildCareSpaceCategoryDescriptionElement from "@/components/child-care-space-categories/ChildCareSpaceCategoryDescriptionElement.vue"
 
 const props = defineProps<{
   administrationCostCategoryId: string

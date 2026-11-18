@@ -76,12 +76,15 @@ describe("api/src/services/funding-reconciliations/calculate-eligible-expenses-p
           dateStart: new Date("2025-04-01"),
           dateEnd: new Date("2025-04-30"),
         })
+        const administrationSharedCategory = await childCareCategoryFactory.associations({ fundingPeriod }).create({
+          categoryName: "Infants",
+        })
         const category = await administrationCostCategoryFactory
           .associations({
             fundingPeriod,
           })
           .create({
-            categoryName: "Infants",
+            childCareCategoryId: administrationSharedCategory.id,
             monthlyAmount: "80.0000",
           })
         await administrationCostFactory

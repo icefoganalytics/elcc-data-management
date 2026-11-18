@@ -75,7 +75,7 @@ export function useAdministrationCostCategory(
     requestController = controller
     state.isLoading = false
     const response = await administrationCostCategoriesApi.update(id, {
-      ...state.administrationCostCategory,
+      monthlyAmount: state.administrationCostCategory.monthlyAmount,
       ...attributesOverrides,
     })
     if (!controller.signal.aborted && unref(administrationCostCategoryId) === id) {
@@ -105,6 +105,7 @@ export function useAdministrationCostCategory(
   return {
     ...toRefs(state),
     fetch,
+    refresh: fetch,
     save,
   }
 }

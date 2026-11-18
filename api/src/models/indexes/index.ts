@@ -1,5 +1,5 @@
 export { ChildCareCategoriesFundingPeriodIdCategoryNameUniqueIndex } from "./child-care-categories-funding-period-id-category-name-unique-index"
-export { AdministrationCostCategoriesFundingPeriodIdCategoryNameUniqueIndex } from "./administration-cost-categories-funding-period-id-category-name-unique-index"
+export { AdministrationCostCategoriesFundingPeriodIdChildCareCategoryIdUniqueIndex } from "./administration-cost-categories-funding-period-id-child-care-category-id-unique-index"
 export { AdministrationCostsCentreIdFiscalPeriodIdCategoryIdUniqueIndex } from "./administration-costs-centre-id-fiscal-period-id-category-id-unique-index"
 export { BuildingExpenseCategoriesFundingRegionIdCategoryNameUniqueIndex } from "./building-expense-categories-funding-region-id-category-name-unique-index"
 export { BuildingExpensesCentreIdFiscalPeriodIdCategoryIdUniqueIndex } from "./building-expenses-centre-id-fiscal-period-id-category-id-unique-index"

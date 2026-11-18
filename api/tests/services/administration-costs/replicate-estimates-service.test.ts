@@ -1,3 +1,4 @@
+import childCareCategoryFactory from "@/factories/child-care-category-factory"
 import { AdministrationCost } from "@/models"
 
 import {
@@ -36,21 +37,25 @@ describe("api/src/services/administration-costs/replicate-estimates-service.ts",
             fiscalYear: "2024-25",
             dateStart: new Date("2024-05-01"),
           })
+        const infantsCategoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
         const infantsCategory = await administrationCostCategoryFactory
-          .associations({
-            fundingPeriod,
-          })
+          .associations({ fundingPeriod })
           .create({
-            categoryName: "Infants",
             monthlyAmount: "80.0000",
+            childCareCategoryId: infantsCategoryChildCareCategory.id,
           })
+        const toddlersCategoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Toddlers",
+        })
         const toddlersCategory = await administrationCostCategoryFactory
-          .associations({
-            fundingPeriod,
-          })
+          .associations({ fundingPeriod })
           .create({
-            categoryName: "Toddlers",
             monthlyAmount: "120.0000",
+            childCareCategoryId: toddlersCategoryChildCareCategory.id,
           })
         const sourceAdministrationCost = await administrationCostFactory
           .associations({
@@ -143,9 +148,16 @@ describe("api/src/services/administration-costs/replicate-estimates-service.ts",
         const juneFiscalPeriod = await fiscalPeriodFactory
           .associations({ fundingPeriod })
           .create({ dateStart: new Date("2024-06-01") })
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
         const category = await administrationCostCategoryFactory
           .associations({ fundingPeriod })
-          .create({ categoryName: "Infants", monthlyAmount: "80.0000" })
+          .create({
+            monthlyAmount: "80.0000",
+            childCareCategoryId: categoryChildCareCategory.id,
+          })
         const source = await administrationCostFactory
           .associations({ centre, fiscalPeriod: aprilFiscalPeriod, category })
           .create({
@@ -195,9 +207,16 @@ describe("api/src/services/administration-costs/replicate-estimates-service.ts",
         const mayFiscalPeriod = await fiscalPeriodFactory
           .associations({ fundingPeriod })
           .create({ dateStart: new Date("2024-05-01") })
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
         const category = await administrationCostCategoryFactory
           .associations({ fundingPeriod })
-          .create({ categoryName: "Infants", monthlyAmount: "80.0000" })
+          .create({
+            monthlyAmount: "80.0000",
+            childCareCategoryId: categoryChildCareCategory.id,
+          })
         const source = await administrationCostFactory
           .associations({ centre, fiscalPeriod: aprilFiscalPeriod, category })
           .create({ estimatedChildOccupancyRate: "0.8000" })

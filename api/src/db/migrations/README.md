@@ -76,14 +76,14 @@ retain obsolete transition-marker files, or add a second migration directory.
 
 ## Staged Shared Category Cutover
 
-Programme cutovers ship separately with their matching application layers. The Spaces stage
+Programme cutovers ship separately with their matching application layers. Each programme stage
 uses a data backfill followed by a separate schema normalization migration. The backfill
-preserves Spaces identities; normalization removes only Spaces name and age columns and the
+preserves shared identities; normalization removes that programme’s name and age columns and the
 legacy name index, requires its shared identity, and adds an active-only funding-period/shared-identity
 unique index.
 
-Administration and Quality retain their legacy names, ages, configuration Spaces links, and
-nullable shared identities at this stage. Do not remove those fields until each programme's
+Spaces and Administration have completed their cutovers. Quality retains its legacy names,
+ages, configuration Spaces links, and nullable shared identities at this stage. Do not remove those fields until each programme's
 application layer and migration ship together. Later stages resolve explicit Spaces links using
 its funding-period and shared IDs, not the removed Spaces name and age columns. Monthly ledger
 tables, historical names, amounts, occupancy values, computed totals, and audit fields are not

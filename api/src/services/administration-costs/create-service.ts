@@ -2,6 +2,7 @@ import { Op, type CreationAttributes } from "@sequelize/core"
 import { isNil } from "lodash"
 
 import db, { AdministrationCost, AdministrationCostCategory, Centre, FiscalPeriod } from "@/models"
+import ChildCareSpaceCategory from "@/models/child-care-space-category"
 import BaseService from "@/services/base-service"
 
 export type AdministrationCostCreationAttributes = Partial<
@@ -55,11 +56,20 @@ export class CreateService extends BaseService {
         throw new Error("Administration cost category must be active in the same funding period")
       }
 
+      const spaceCategory = await ChildCareSpaceCategory.findOne({
+        attributes: ["id"],
+        where: {
+          fundingPeriodId: category.fundingPeriodId,
+          childCareCategoryId: category.childCareCategoryId,
+        },
+      })
+      const childCareSpaceCategoryId = spaceCategory?.id ?? null
+
       const administrationCost = await AdministrationCost.create({
         centreId,
         fiscalPeriodId,
         categoryId,
-        childCareSpaceCategoryId: category.childCareSpaceCategoryId,
+        childCareSpaceCategoryId,
         lineName: category.categoryName,
         monthlyAmount: category.monthlyAmount,
         estimatedChildOccupancyRate,
@@ -89,7 +99,7 @@ export class CreateService extends BaseService {
             centreId,
             fiscalPeriodId: futureFiscalPeriod.id,
             categoryId,
-            childCareSpaceCategoryId: category.childCareSpaceCategoryId,
+            childCareSpaceCategoryId,
             lineName: category.categoryName,
             monthlyAmount: category.monthlyAmount,
             estimatedChildOccupancyRate,

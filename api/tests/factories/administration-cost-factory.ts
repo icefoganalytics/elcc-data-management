@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker"
 import FactoryShark from "factory-shark"
 import { isNil, isUndefined } from "lodash"
 
-import { AdministrationCost } from "@/models"
+import { AdministrationCost, ChildCareSpaceCategory } from "@/models"
 
 import administrationCostCategoryFactory from "@/factories/administration-cost-category-factory"
 import centreFactory from "@/factories/centre-factory"
@@ -27,7 +27,7 @@ export const administrationCostFactory = FactoryShark.define<AdministrationCost>
 
     const categoryDefaults = params.category ?? category
 
-    beforeCreate((administrationCost) => {
+    beforeCreate(async (administrationCost) => {
       const resolvedCategory = administrationCost.category
       if (isUndefined(resolvedCategory)) return
 
@@ -43,12 +43,19 @@ export const administrationCostFactory = FactoryShark.define<AdministrationCost>
         isUndefined(params.childCareSpaceCategoryId) &&
         isUndefined(params.childCareSpaceCategory)
       ) {
-        administrationCost.childCareSpaceCategoryId = resolvedCategory.childCareSpaceCategoryId
+        const spaceCategory = await ChildCareSpaceCategory.findOne({
+          attributes: ["id"],
+          where: {
+            fundingPeriodId: resolvedCategory.fundingPeriodId,
+            childCareCategoryId: resolvedCategory.childCareCategoryId,
+          },
+        })
+        administrationCost.childCareSpaceCategoryId = spaceCategory?.id ?? null
       }
     })
 
     return {
-      childCareSpaceCategoryId: categoryDefaults.childCareSpaceCategoryId ?? null,
+      childCareSpaceCategoryId: null,
       lineName: categoryDefaults.categoryName,
       monthlyAmount: categoryDefaults.monthlyAmount,
       estimatedChildOccupancyRate: faker.finance.amount({

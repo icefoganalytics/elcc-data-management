@@ -9,7 +9,7 @@ export type AdministrationCostCategoryAsIndex = Pick<
   AdministrationCostCategory,
   | "id"
   | "fundingPeriodId"
-  | "childCareSpaceCategoryId"
+  | "childCareCategoryId"
   | "categoryName"
   | "fromAge"
   | "toAge"
@@ -35,7 +35,7 @@ export class IndexSerializer extends BaseSerializer<AdministrationCostCategory> 
       ...pick(this.record, [
         "id",
         "fundingPeriodId",
-        "childCareSpaceCategoryId",
+        "childCareCategoryId",
         "categoryName",
         "fromAge",
         "toAge",

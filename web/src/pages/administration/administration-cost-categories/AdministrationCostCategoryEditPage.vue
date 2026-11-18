@@ -30,45 +30,14 @@
       label="Funding Period"
       readonly
     />
-    <v-text-field
-      v-model="administrationCostCategory.categoryName"
-      label="Category Name *"
-      :rules="[required]"
+    <ChildCareCategoryDescriptionFields
+      :child-care-category-id="administrationCostCategory.childCareCategoryId"
+      :category="administrationCostCategory"
     />
-    <v-row>
-      <v-col
-        cols="12"
-        md="6"
-      >
-        <NumberTextField
-          v-model="administrationCostCategory.fromAge"
-          label="From Age"
-          min="0"
-          step="1"
-        />
-      </v-col>
-      <v-col
-        cols="12"
-        md="6"
-      >
-        <NumberTextField
-          v-model="administrationCostCategory.toAge"
-          label="To Age"
-          min="0"
-          step="1"
-        />
-      </v-col>
-    </v-row>
     <CurrencyInput
       v-model="administrationCostCategory.monthlyAmount"
       label="Monthly Amount *"
       :rules="[required]"
-    />
-    <ChildCareSpaceCategorySearchableAutocomplete
-      v-model="administrationCostCategory.childCareSpaceCategoryId"
-      :where="childCareSpaceCategoriesWhere"
-      label="Linked Child Care Space Category"
-      clearable
     />
     <template #actions>
       <v-btn
@@ -109,8 +78,7 @@ import useSnack from "@/use/use-snack"
 
 import CurrencyInput from "@/components/CurrencyInput.vue"
 import HeaderActionsFormCard from "@/components/common/HeaderActionsFormCard.vue"
-import NumberTextField from "@/components/common/NumberTextField.vue"
-import ChildCareSpaceCategorySearchableAutocomplete from "@/components/child-care-space-categories/ChildCareSpaceCategorySearchableAutocomplete.vue"
+import ChildCareCategoryDescriptionFields from "@/components/child-care-categories/ChildCareCategoryDescriptionFields.vue"
 
 const props = defineProps<{
   administrationCostCategoryId: string
@@ -135,10 +103,6 @@ const fundingPeriodDescription = computed(() => {
   const fundingPeriod = fundingPeriods.value.find(({ id }) => id === fundingPeriodId.value)
   return fundingPeriod?.fiscalYear ?? "Unknown"
 })
-
-const childCareSpaceCategoriesWhere = computed(() => ({
-  fundingPeriodId: fundingPeriodId.value,
-}))
 
 const form = useTemplateRef("form")
 const isSaving = ref(false)

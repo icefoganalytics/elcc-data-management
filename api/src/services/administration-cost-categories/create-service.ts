@@ -5,7 +5,10 @@ import { AdministrationCostCategory } from "@/models"
 import BaseService from "@/services/base-service"
 
 export type AdministrationCostCategoryCreationAttributes = Partial<
-  CreationAttributes<AdministrationCostCategory>
+  Pick<
+    CreationAttributes<AdministrationCostCategory>,
+    "fundingPeriodId" | "childCareCategoryId" | "monthlyAmount"
+  >
 >
 
 export class CreateService extends BaseService {
@@ -14,35 +17,17 @@ export class CreateService extends BaseService {
   }
 
   async perform(): Promise<AdministrationCostCategory> {
-    const {
+    const { fundingPeriodId, childCareCategoryId, monthlyAmount } = this.attributes
+    if (isNil(fundingPeriodId)) throw new Error("Funding period ID is required")
+    if (isNil(childCareCategoryId)) throw new Error("Child Care category ID is required")
+    if (isNil(monthlyAmount)) throw new Error("Monthly amount is required")
+
+    const category = await AdministrationCostCategory.create({
       fundingPeriodId,
-      childCareSpaceCategoryId,
-      categoryName,
-      fromAge,
-      toAge,
-      monthlyAmount,
-    } = this.attributes
-
-    if (isNil(fundingPeriodId)) {
-      throw new Error("Funding period ID is required")
-    }
-
-    if (isNil(categoryName)) {
-      throw new Error("Category name is required")
-    }
-
-    if (isNil(monthlyAmount)) {
-      throw new Error("Monthly amount is required")
-    }
-
-    return AdministrationCostCategory.create({
-      fundingPeriodId,
-      childCareSpaceCategoryId,
-      categoryName,
-      fromAge,
-      toAge,
+      childCareCategoryId,
       monthlyAmount,
     })
+    return category.reload({ include: ["childCareCategory"] })
   }
 }
 

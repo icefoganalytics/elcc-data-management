@@ -42,28 +42,25 @@ describe("api/src/services/centres/funding-periods/administration-costs/bulk-ens
           categoryName: "Infants",
         })
         const childCareSpaceCategory = await childCareSpaceCategoryFactory
-          .associations({
-            fundingPeriod,
-            childCareCategory: childCareSpaceCategoryChildCareCategory,
+          .associations({ fundingPeriod })
+          .create({
+            childCareCategoryId: childCareSpaceCategoryChildCareCategory.id,
           })
-          .create()
         const linkedCategory = await administrationCostCategoryFactory
-          .associations({
-            fundingPeriod,
-            childCareSpaceCategory,
-          })
+          .associations({ fundingPeriod })
           .create({
-            categoryName: "Infants",
-            childCareSpaceCategoryId: childCareSpaceCategory.id,
             monthlyAmount: "80.0000",
+            childCareCategoryId: childCareSpaceCategory.childCareCategoryId,
           })
+        const unlinkedCategoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Other care",
+        })
         const unlinkedCategory = await administrationCostCategoryFactory
-          .associations({
-            fundingPeriod,
-          })
+          .associations({ fundingPeriod })
           .create({
-            categoryName: "Other care",
             monthlyAmount: "50.0000",
+            childCareCategoryId: unlinkedCategoryChildCareCategory.id,
           })
 
         // Act
@@ -145,12 +142,14 @@ describe("api/src/services/centres/funding-periods/administration-costs/bulk-ens
             fiscalYear: "2024-25",
             dateStart: new Date("2024-05-01"),
           })
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
         const category = await administrationCostCategoryFactory
-          .associations({
-            fundingPeriod,
-          })
+          .associations({ fundingPeriod })
           .create({
-            categoryName: "Infants",
+            childCareCategoryId: categoryChildCareCategory.id,
           })
         const existingAdministrationCost = await administrationCostFactory
           .associations({
