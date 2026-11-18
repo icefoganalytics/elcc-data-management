@@ -31,16 +31,15 @@ export function useVuetifySortByToSafeRouteQuery(
     })
   }
 
-  function stringify(sortByValue: SortItem[] | undefined): string[] | undefined {
-    if (isNil(sortByValue) || isEmpty(sortByValue)) {
-      return
-    }
+  function stringify(sortByValue: SortItem[] | undefined): string[] | string | undefined {
+    if (isNil(sortByValue)) return undefined
+    if (isEmpty(sortByValue)) return ""
 
     return sortByValue.map(({ key, order }) => `${key}${SEPARATOR}${order}`)
   }
 
   const defaultValueString = stringify(defaultValue)
-  return useRouteQueryEnhanced<string[] | undefined, SortItem[] | undefined>(
+  return useRouteQueryEnhanced<string[] | string | undefined, SortItem[] | undefined>(
     name,
     defaultValueString,
     {

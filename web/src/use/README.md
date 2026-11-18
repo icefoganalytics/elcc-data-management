@@ -48,6 +48,8 @@ Use `use-models.ts` for list and query operations.
 
 Keep query watchers focused on awaiting `fetch()`. Let `fetch()` publish the collection and count together when the response arrives; consumers use loading and error state to decide when records are ready for interaction. Ignore outdated responses. Mutation workflows belong in the consuming component, not in the collection composable.
 
+For URL-backed server tables, use `useRouteQueriableTableOptions` from `utils/use-route-queriable-table-options` to compose pagination, Vuetify sorting, and API order. Pass `routeQuerySuffix` when multiple tables share a route; keep record fetching and loading state in the model composable. Preserve the current count during a pending fetch so table pagination does not reset before the replacement result arrives.
+
 ## Naming
 
 - Use singular names for single-record composables: `useUser`
