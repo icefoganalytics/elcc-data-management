@@ -1,3 +1,4 @@
+export { ChildCareCategoryPolicy } from "./child-care-category-policy"
 export { AdministrationCostCategoryPolicy } from "./administration-cost-category-policy"
 export { AdministrationCostPolicy } from "./administration-cost-policy"
 export { BuildingExpenseCategoryPolicy } from "./building-expense-category-policy"
