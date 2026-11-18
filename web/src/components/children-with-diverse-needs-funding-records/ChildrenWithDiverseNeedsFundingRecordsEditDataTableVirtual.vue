@@ -32,7 +32,7 @@
         density="compact"
         role="alert"
       >
-        Diverse needs could not be loaded.
+        Children with Diverse Needs could not be loaded.
         <v-btn
           variant="text"
           :disabled="isBusy"
@@ -245,14 +245,14 @@ async function saveIfDirty(record: ChildrenWithDiverseNeedsFundingRecordAsIndex)
       })
     }
 
-    snack.success("Diverse need saved!")
+    snack.success("Children with Diverse Needs funding record saved!")
     emit("updated")
     return true
   } catch (error) {
     console.error("Failed to save diverse need", { error })
     rethrowUnexpectedError(error)
 
-    saveError.value = `Failed to save diverse need: ${String(error)}. Retry your edit after reloading.`
+    saveError.value = `Failed to save Children with Diverse Needs: ${String(error)}. Retry your edit after reloading.`
     try {
       await refresh()
     } catch (error) {
@@ -273,7 +273,9 @@ async function deleteRecord(record: ChildrenWithDiverseNeedsFundingRecordAsIndex
   if (
     !record.policy.destroy ||
     isBlocked.value ||
-    !blockedToTrueConfirm("Are you sure you want to remove this diverse need?")
+    !blockedToTrueConfirm(
+      "Are you sure you want to remove this Children with Diverse Needs funding record?"
+    )
   ) {
     return
   }
@@ -285,13 +287,13 @@ async function deleteRecord(record: ChildrenWithDiverseNeedsFundingRecordAsIndex
   try {
     await childrenWithDiverseNeedsFundingRecordsApi.delete(record.id)
     await refresh()
-    snack.success("Diverse need deleted!")
+    snack.success("Children with Diverse Needs funding record deleted!")
     emit("updated")
   } catch (error) {
     console.error("Failed to delete diverse need", { error })
     rethrowUnexpectedError(error)
 
-    snack.error(`Failed to delete diverse need: ${error}`)
+    snack.error(`Failed to delete Children with Diverse Needs: ${error}`)
   } finally {
     deletingId.value = null
     isDeleting.value = false
@@ -308,7 +310,7 @@ async function reload() {
     console.error("Failed to load diverse needs", { error })
     rethrowUnexpectedError(error)
 
-    snack.error(`Failed to load diverse needs: ${error}`)
+    snack.error(`Failed to load Children with Diverse Needs: ${error}`)
   }
 }
 
@@ -331,7 +333,7 @@ async function replicateEstimates() {
       failures.push(error)
     }
     if (failures.length) {
-      const message = `Failed to replicate diverse need estimates: ${failures.map(String).join("; ")}`
+      const message = `Failed to replicate Children with Diverse Needs estimates: ${failures.map(String).join("; ")}`
       const aggregateError = new AggregateError(failures, message)
       console.error("Failed to replicate diverse need estimates", { error: aggregateError })
       rethrowUnexpectedError(aggregateError)

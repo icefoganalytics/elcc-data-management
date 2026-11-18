@@ -6,7 +6,7 @@ export { BuildingExpensesCentreIdFiscalPeriodIdCategoryIdUniqueIndex } from "./b
 export { ChildCareSpaceCategoriesFundingPeriodIdChildCareCategoryIdUniqueIndex } from "./child-care-space-categories-funding-period-id-child-care-category-id-unique-index"
 export { ChildCareSpacesCentreIdFiscalPeriodIdCategoryIdUniqueIndex } from "./child-care-spaces-centre-id-fiscal-period-id-category-id-unique-index"
 export { ChildrenWithDiverseNeedsFundingCategoriesFundingPeriodIdCategoryNameUniqueIndex } from "./children-with-diverse-needs-funding-categories-funding-period-id-category-name-unique-index"
-export { ChildrenWithDiverseNeedsFundingRecordsCentreIdFiscalPeriodIdCategoryIdUniqueIndex } from "./children-with-diverse-needs-funding-records-centre-id-fiscal-period-id-category-id-unique-index"
+export { ChildrenWithDiverseNeedsFundingRecordCentreIdFiscalPeriodIdCategoryIdUniqueIndex } from "./children-with-diverse-needs-funding-records-centre-id-fiscal-period-id-category-id-unique-index"
 export { EmployeeBenefitsCenterIdFiscalPeriodIdUniqueIndex } from "./employee-benefits-center-id-fiscal-period-id-unique-index"
 export { EmployeeWageTiersFiscalPeriodIdTierLevelUniqueIndex } from "./employee-wage-tiers-fiscal-period-id-tier-level-unique-index"
 export { FiscalPeriodsFundingPeriodIdFiscalYearMonthUniqueIndex } from "./fiscal-periods-fiscal-year-month-unique-index"

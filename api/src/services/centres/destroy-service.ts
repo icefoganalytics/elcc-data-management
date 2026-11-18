@@ -38,7 +38,7 @@ export class DestroyService extends BaseService {
   private async destroyDependentEntities(centreId: number, currentUser: User) {
     await this.destroyDependentBuildingExpenses(centreId)
     await this.destroyDependentChildCareSpaces(centreId)
-    await this.destroyDependentChildrenWithDiverseNeedsFundingRecords(centreId)
+    await this.destroyDependentChildrenWithDiverseNeedsFundingRecord(centreId)
     await this.destroyDependentQualityEnhancements(centreId)
     await this.destroyDependentAdministrationCosts(centreId)
     await this.destroyDependentEmployeeBenefits(centreId)
@@ -64,7 +64,7 @@ export class DestroyService extends BaseService {
     })
   }
 
-  private async destroyDependentChildrenWithDiverseNeedsFundingRecords(centreId: number) {
+  private async destroyDependentChildrenWithDiverseNeedsFundingRecord(centreId: number) {
     await ChildrenWithDiverseNeedsFundingRecord.destroy({ where: { centreId } })
   }
 
