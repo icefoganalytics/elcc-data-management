@@ -207,13 +207,9 @@ const centreId = useRouteQuery<string | null, number | null>("showCentreEdit", n
   transform: integerTransformer,
 })
 
-const { centre, policy, isLoading, isErrored, save, refresh } = useCentre(centreId)
+const { centre, policy, isLoading, save, refresh } = useCentre(centreId)
 const isEditable = computed(
-  () =>
-    !isLoading.value &&
-    !isErrored.value &&
-    policy.value?.update === true &&
-    centre.value?.id === centreId.value
+  () => !isLoading.value && policy.value?.update === true && centre.value?.id === centreId.value
 )
 
 const form = useTemplateRef("form")

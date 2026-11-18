@@ -11,7 +11,7 @@
   >
     <v-card-title style="background-color: #f2a90068">
       <v-btn
-        v-if="policy?.update && !isLoading && !isErrored"
+        v-if="policy?.update && !isLoading"
         icon="mdi-pencil"
         title="Edit"
         size="x-small"
@@ -67,7 +67,7 @@ const emit = defineEmits<{
 }>()
 
 const { centreId } = toRefs(props)
-const { centre, policy, isLoading, isErrored, refresh } = useCentre(centreId)
+const { centre, policy, isLoading, refresh } = useCentre(centreId)
 
 const centreDetails = computed<
   {
