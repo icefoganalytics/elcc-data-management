@@ -10,6 +10,8 @@ Changes since v2026.11.17.1 that will be included in the next release.
 
 ### Added
 
+- Quality Enhancement rates complete the shared category cutover; monthly hot-meal amounts, occupancy, and historical links are preserved.
+
 - Administration rates select shared categories and resolve new monthly Spaces links by shared identity, without rewriting historical records.
 
 - Spaces rates use shared category identities while retaining historical monthly names and amounts.

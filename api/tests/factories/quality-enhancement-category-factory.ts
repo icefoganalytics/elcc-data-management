@@ -1,24 +1,18 @@
-import { faker } from "@faker-js/faker"
 import FactoryShark from "factory-shark"
 
 import { QualityEnhancementCategory } from "@/models"
-
+import childCareCategoryFactory from "@/factories/child-care-category-factory"
 import fundingPeriodFactory from "@/factories/funding-period-factory"
 
 export const qualityEnhancementCategoryFactory = FactoryShark.define<QualityEnhancementCategory>(
   QualityEnhancementCategory,
-  ({ associate, sequence }) => {
-    associate("fundingPeriod", fundingPeriodFactory)
+  ({ associate }) => {
+    const fundingPeriod = associate("fundingPeriod", fundingPeriodFactory)
+    associate("childCareCategory", childCareCategoryFactory, (resolvedParams) => ({
+      fundingPeriodId: resolvedParams.fundingPeriodId ?? fundingPeriod.id,
+    }))
 
-    const categoryName = `${faker.commerce.productAdjective()} quality-${sequence}`
-
-    return {
-      categoryName,
-      fromAge: 0,
-      toAge: 5,
-      monthlyAmount: "100.0000",
-      childCareSpaceCategoryId: null,
-    }
+    return { monthlyAmount: "100.0000" }
   }
 )
 

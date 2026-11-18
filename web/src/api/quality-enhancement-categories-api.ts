@@ -9,11 +9,11 @@ import {
 export type QualityEnhancementCategory = {
   id: number
   fundingPeriodId: number
+  childCareCategoryId: number
   categoryName: string
   fromAge: number | null
   toAge: number | null
   monthlyAmount: string
-  childCareSpaceCategoryId: number | null
   createdAt: string
   updatedAt: string
 }
@@ -25,24 +25,16 @@ export type QualityEnhancementCategoryAsShow = QualityEnhancementCategory
 
 export type QualityEnhancementCategoryCreationAttributes = Pick<
   QualityEnhancementCategory,
-  | "fundingPeriodId"
-  | "categoryName"
-  | "fromAge"
-  | "toAge"
-  | "monthlyAmount"
-  | "childCareSpaceCategoryId"
+  "fundingPeriodId" | "childCareCategoryId" | "monthlyAmount"
 >
 
 export type QualityEnhancementCategoryUpdateAttributes = Partial<
-  Pick<
-    QualityEnhancementCategory,
-    "categoryName" | "fromAge" | "toAge" | "monthlyAmount" | "childCareSpaceCategoryId"
-  >
+  Pick<QualityEnhancementCategory, "monthlyAmount">
 >
 
 export type QualityEnhancementCategoryWhereOptions = WhereOptions<
   QualityEnhancementCategory,
-  "id" | "fundingPeriodId" | "categoryName" | "fromAge" | "toAge"
+  "id" | "fundingPeriodId" | "childCareCategoryId"
 >
 
 export type QualityEnhancementCategoryFiltersOptions = FiltersOptions<{

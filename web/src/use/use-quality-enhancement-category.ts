@@ -85,14 +85,9 @@ export function useQualityEnhancementCategory(
     latestRequest = request
     state.isLoading = true
     try {
-      const { categoryName, fromAge, toAge, monthlyAmount, childCareSpaceCategoryId } =
-        state.qualityEnhancementCategory
+      const { monthlyAmount } = state.qualityEnhancementCategory
       const attributes = {
-        categoryName,
-        fromAge,
-        toAge,
         monthlyAmount: String(monthlyAmount),
-        childCareSpaceCategoryId,
       }
       const { qualityEnhancementCategory, policy } = await qualityEnhancementCategoriesApi.update(
         staticQualityEnhancementCategoryId,

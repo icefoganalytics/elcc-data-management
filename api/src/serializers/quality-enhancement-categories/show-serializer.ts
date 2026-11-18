@@ -7,11 +7,12 @@ export type QualityEnhancementCategoryShowView = Pick<
   QualityEnhancementCategory,
   | "id"
   | "fundingPeriodId"
+  | "childCareCategoryId"
   | "categoryName"
   | "fromAge"
   | "toAge"
   | "monthlyAmount"
-  | "childCareSpaceCategoryId"
+  | "childCareCategoryId"
   | "createdAt"
   | "updatedAt"
 >
@@ -25,11 +26,12 @@ export class ShowSerializer extends BaseSerializer<QualityEnhancementCategory> {
     return pick(this.record, [
       "id",
       "fundingPeriodId",
+      "childCareCategoryId",
       "categoryName",
       "fromAge",
       "toAge",
       "monthlyAmount",
-      "childCareSpaceCategoryId",
+      "childCareCategoryId",
       "createdAt",
       "updatedAt",
     ])

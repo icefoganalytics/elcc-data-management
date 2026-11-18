@@ -1,3 +1,4 @@
+import childCareCategoryFactory from "@/factories/child-care-category-factory"
 import { User } from "@/models"
 
 import {
@@ -20,9 +21,16 @@ describe("api/src/controllers/quality-enhancements-controller.ts", () => {
         const centre = await centreFactory.create({ hotMeal: false })
         const fundingPeriod = await fundingPeriodFactory.create()
         const fiscalPeriod = await fiscalPeriodFactory.associations({ fundingPeriod }).create()
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
         const category = await qualityEnhancementCategoryFactory
           .associations({ fundingPeriod })
-          .create({ categoryName: "Infants", monthlyAmount: "206.1000" })
+          .create({
+            monthlyAmount: "206.1000",
+            childCareCategoryId: categoryChildCareCategory.id,
+          })
 
         // Act
         const response = await request().post("/api/quality-enhancements").send({

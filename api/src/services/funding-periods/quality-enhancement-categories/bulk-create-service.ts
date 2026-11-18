@@ -1,10 +1,9 @@
-import { Op, sql } from "@sequelize/core"
-import { isNil } from "lodash"
+import { Op, sql, type CreationAttributes } from "@sequelize/core"
 
-import ChildCareSpaceCategory from "@/models/child-care-space-category"
-import FundingPeriod from "@/models/funding-period"
-import QualityEnhancementCategory from "@/models/quality-enhancement-category"
+import { QualityEnhancementCategory, FundingPeriod } from "@/models"
 import BaseService from "@/services/base-service"
+import BulkEnsureSharedCategoriesService from "@/services/funding-periods/child-care-categories/bulk-ensure-service"
+import EnsureClonedCategoryService from "@/services/funding-periods/child-care-categories/ensure-cloned-category-service"
 
 export class BulkCreateService extends BaseService {
   constructor(private fundingPeriod: FundingPeriod) {
@@ -12,9 +11,11 @@ export class BulkCreateService extends BaseService {
   }
 
   async perform(): Promise<QualityEnhancementCategory[]> {
+    const sharedCategories = await BulkEnsureSharedCategoriesService.perform(this.fundingPeriod)
     const previousFundingPeriod = await FundingPeriod.findOne({
       attributes: ["id"],
       where: {
+        fiscalYear: { [Op.lt]: this.fundingPeriod.fiscalYear },
         id: {
           [Op.in]: sql`
             (
@@ -25,7 +26,6 @@ export class BulkCreateService extends BaseService {
             )
           `,
         },
-        fiscalYear: { [Op.lt]: this.fundingPeriod.fiscalYear },
       },
       order: [
         ["fiscalYear", "DESC"],
@@ -33,47 +33,53 @@ export class BulkCreateService extends BaseService {
         ["id", "DESC"],
       ],
     })
-    const previousCategories = isNil(previousFundingPeriod)
-      ? []
-      : await QualityEnhancementCategory.findAll({
-          where: { fundingPeriodId: previousFundingPeriod.id },
-          include: [
-            {
-              association: "childCareSpaceCategory",
-              include: ["childCareCategory"],
-              paranoid: false,
-            },
-          ],
-          order: [["id", "ASC"]],
+    const attributes: CreationAttributes<QualityEnhancementCategory>[] = []
+    if (!previousFundingPeriod) {
+      const sharedCategoriesByName = new Map(
+        sharedCategories.map((category) => [category.categoryName, category])
+      )
+      for (const { categoryName, monthlyAmount } of QualityEnhancementCategory.DEFAULTS) {
+        const sharedCategory = sharedCategoriesByName.get(categoryName)
+        if (!sharedCategory) continue
+
+        attributes.push({
+          fundingPeriodId: this.fundingPeriod.id,
+          childCareCategoryId: sharedCategory.id,
+          monthlyAmount,
         })
-    const spaceCategories = await ChildCareSpaceCategory.findAll({
-      where: { fundingPeriodId: this.fundingPeriod.id },
-      attributes: ["id", "childCareCategoryId"],
-      include: ["childCareCategory"],
+      }
+    } else {
+      const previousCategories = await QualityEnhancementCategory.findAll({
+        where: { fundingPeriodId: previousFundingPeriod.id },
+        include: [{ association: "childCareCategory", paranoid: false }],
+        order: [["id", "ASC"]],
+      })
+      for (const category of previousCategories) {
+        const sourceCategory = category.childCareCategory
+        if (!sourceCategory)
+          throw new Error(`Child Care category missing for program category ${category.id}`)
+
+        const targetCategory = await EnsureClonedCategoryService.perform(
+          sourceCategory,
+          this.fundingPeriod
+        )
+        if (!targetCategory) continue
+
+        attributes.push({
+          fundingPeriodId: this.fundingPeriod.id,
+          childCareCategoryId: targetCategory.id,
+          monthlyAmount: category.monthlyAmount,
+        })
+      }
+    }
+
+    const categories = await QualityEnhancementCategory.bulkCreate(attributes, { validate: true })
+    if (categories.length === 0) return []
+
+    return QualityEnhancementCategory.findAll({
+      where: { id: categories.map(({ id }) => id) },
+      order: [["id", "ASC"]],
     })
-    const spaceCategoryIdsByName = new Map(
-      spaceCategories.map(({ id, categoryName }) => [categoryName, id])
-    )
-    const attributes = isNil(previousFundingPeriod)
-      ? QualityEnhancementCategory.DEFAULTS.map((category) => ({
-          fundingPeriodId: this.fundingPeriod.id,
-          categoryName: category.categoryName,
-          fromAge: category.fromAge,
-          toAge: category.toAge,
-          monthlyAmount: category.monthlyAmount,
-          childCareSpaceCategoryId: spaceCategoryIdsByName.get(category.categoryName) ?? null,
-        }))
-      : previousCategories.map((category) => ({
-          fundingPeriodId: this.fundingPeriod.id,
-          categoryName: category.categoryName,
-          fromAge: category.fromAge,
-          toAge: category.toAge,
-          monthlyAmount: category.monthlyAmount,
-          childCareSpaceCategoryId: category.childCareSpaceCategory
-            ? (spaceCategoryIdsByName.get(category.childCareSpaceCategory.categoryName) ?? null)
-            : null,
-        }))
-    return QualityEnhancementCategory.bulkCreate(attributes)
   }
 }
 
