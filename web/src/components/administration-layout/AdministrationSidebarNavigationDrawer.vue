@@ -92,7 +92,7 @@
           )
         "
       >
-        Diverse Need Categories
+        Children with Diverse Needs Categories
       </v-list-item>
       <v-list-item
         :to="{

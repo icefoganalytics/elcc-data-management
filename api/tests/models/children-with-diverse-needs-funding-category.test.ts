@@ -17,5 +17,17 @@ describe("api/src/models/children-with-diverse-needs-funding-category.ts", () =>
         await expect(validation).rejects.toThrow("at most four decimal places")
       })
     })
+    describe("#create", () => {
+      test("when no age range is configured, preserves both nullable bounds", async () => {
+        // Arrange
+        const attributes = { fromAge: null, toAge: null }
+
+        // Act
+        const category = await childrenWithDiverseNeedsFundingCategoryFactory.create(attributes)
+
+        // Assert
+        expect(category).toMatchObject({ fromAge: null, toAge: null })
+      })
+    })
   })
 })

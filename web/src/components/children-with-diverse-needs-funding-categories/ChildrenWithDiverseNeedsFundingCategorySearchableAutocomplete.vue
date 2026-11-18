@@ -6,7 +6,7 @@
       density="compact"
       role="alert"
     >
-      Diverse need categories could not be loaded.
+      Children with Diverse Needs categories could not be loaded.
       <v-btn
         variant="text"
         @click="reload"
@@ -20,9 +20,9 @@
       :loading="isLoading || isLoadingSelectedCategory"
       :items="allCategories"
       :disabled="disabled"
-      label="Diverse Need Category"
-      hint="Search for a diverse need category."
-      no-data-text="No diverse need categories available"
+      label="Children with Diverse Needs Category"
+      hint="Search for a Children with Diverse Needs category."
+      no-data-text="No Children with Diverse Needs categories available"
       item-title="categoryName"
       item-value="id"
       auto-select-first
@@ -193,8 +193,11 @@ async function reload() {
     .filter((result) => result.status === "rejected")
     .map((result) => result.reason)
   if (failures.length) {
-    const error = new AggregateError(failures, "Failed to reload diverse need categories")
-    console.error("Failed to reload diverse need categories", { error })
+    const error = new AggregateError(
+      failures,
+      "Failed to reload Children with Diverse Needs categories"
+    )
+    console.error("Failed to reload Children with Diverse Needs categories", { error })
     rethrowUnexpectedError(error)
   }
 }
