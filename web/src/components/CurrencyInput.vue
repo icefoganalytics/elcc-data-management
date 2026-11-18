@@ -23,7 +23,7 @@ const DEFAULT_OPTIONS = {
   currency: "CAD",
   locale: "en-CA",
   currencyDisplay: CurrencyDisplay.symbol,
-  precision: 4,
+  precision: { min: 0, max: 4 },
   hideCurrencySymbolOnFocus: true,
 }
 

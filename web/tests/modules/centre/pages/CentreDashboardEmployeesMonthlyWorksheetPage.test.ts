@@ -1,4 +1,5 @@
 import { flushPromises, mount } from "@vue/test-utils"
+import Big from "big.js"
 
 import employeeBenefitsApi from "@/api/employee-benefits-api"
 import ApiOperationError from "@/api/errors/api-operation-error"
@@ -295,9 +296,10 @@ describe("web/src/modules/centre/pages/CentreDashboardEmployeesMonthlyWorksheetP
         await flushPromises()
 
         // Assert
-        expect(
-          wrapper.get<HTMLInputElement>('input[aria-label="Employer Cost Estimated"]').element.value
-        ).toBe("$150.0000")
+        const retainedAmount = wrapper.get<HTMLInputElement>(
+          'input[aria-label="Employer Cost Estimated"]'
+        ).element.value
+        expect(Big(retainedAmount.replace(/[$,]/g, "")).eq("150.0000")).toBe(true)
       })
 
       test("when a wage save and employee creation finish in an inactive month, retains the edited rows on return", async () => {

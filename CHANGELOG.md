@@ -27,6 +27,7 @@ Changes since v2026.11.17.1 that will be included in the next release.
 
 ### Changed
 
+- Worksheet amounts and occupancy hide unused decimal zeros without dropping meaningful financial digits; four-decimal entry and numeric dirty comparisons remain intact.
 - Children with Diverse Needs category browsing now keeps page, sorting, and funding-period filters in shareable route-query state without resetting bookmarked pages during loading.
 - Communities building-expense categories now include missing Whitehorse categories and use a 0.43 subsidy rate for new expenses. Existing monthly expenses retain their saved rates and amounts.
 
