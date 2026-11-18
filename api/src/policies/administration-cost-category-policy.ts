@@ -22,15 +22,15 @@ export class AdministrationCostCategoryPolicy extends PolicyFactory(Administrati
   }
 
   permittedAttributes(): Path[] {
-    return ["childCareSpaceCategoryId", "categoryName", "fromAge", "toAge", "monthlyAmount"]
+    return ["monthlyAmount"]
   }
 
   permittedAttributesForCreate(): Path[] {
-    return ["fundingPeriodId", ...this.permittedAttributes()]
+    return ["fundingPeriodId", "childCareCategoryId", ...this.permittedAttributes()]
   }
 
   static policyScope(_user: User): FindOptions<Attributes<AdministrationCostCategory>> {
-    return ALL_RECORDS_SCOPE
+    return { ...ALL_RECORDS_SCOPE, include: ["childCareCategory"] }
   }
 }
 

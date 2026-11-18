@@ -89,26 +89,32 @@ describe("api/src/controllers/administration-costs-controller.ts", () => {
             dateStart: new Date("2024-04-01"),
             dateEnd: new Date("2024-04-30"),
           })
+        const toddlersCategoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "A renamed toddlers category",
+        })
         const toddlersCategory = await administrationCostCategoryFactory
-          .associations({
-            fundingPeriod,
-          })
+          .associations({ fundingPeriod })
           .create({
-            categoryName: "A renamed toddlers category",
+            childCareCategoryId: toddlersCategoryChildCareCategory.id,
           })
+        const infantsCategoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Z renamed infants category",
+        })
         const infantsCategory = await administrationCostCategoryFactory
-          .associations({
-            fundingPeriod,
-          })
+          .associations({ fundingPeriod })
           .create({
-            categoryName: "Z renamed infants category",
+            childCareCategoryId: infantsCategoryChildCareCategory.id,
           })
+        const preschoolCategoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "M renamed preschool category",
+        })
         const preschoolCategory = await administrationCostCategoryFactory
-          .associations({
-            fundingPeriod,
-          })
+          .associations({ fundingPeriod })
           .create({
-            categoryName: "M renamed preschool category",
+            childCareCategoryId: preschoolCategoryChildCareCategory.id,
           })
         const firstInfantsCost = await administrationCostFactory
           .associations({
@@ -190,9 +196,16 @@ describe("api/src/controllers/administration-costs-controller.ts", () => {
         const centre = await centreFactory.create()
         const fundingPeriod = await fundingPeriodFactory.create()
         const fiscalPeriod = await fiscalPeriodFactory.associations({ fundingPeriod }).create()
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Administration snapshot",
+        })
         const category = await administrationCostCategoryFactory
           .associations({ fundingPeriod })
-          .create({ categoryName: "Administration snapshot", monthlyAmount: "80.0000" })
+          .create({
+            monthlyAmount: "80.0000",
+            childCareCategoryId: categoryChildCareCategory.id,
+          })
 
         // Act
         const response = await request().post("/api/administration-costs").send({
@@ -311,20 +324,15 @@ describe("api/src/controllers/administration-costs-controller.ts", () => {
           categoryName: "Infants",
         })
         const childCareSpaceCategory = await childCareSpaceCategoryFactory
-          .associations({
-            fundingPeriod,
-            childCareCategory: childCareSpaceCategoryChildCareCategory,
-          })
-          .create()
-        const category = await administrationCostCategoryFactory
-          .associations({
-            fundingPeriod,
-            childCareSpaceCategory,
-          })
+          .associations({ fundingPeriod })
           .create({
-            categoryName: "Infants",
-            childCareSpaceCategoryId: childCareSpaceCategory.id,
+            childCareCategoryId: childCareSpaceCategoryChildCareCategory.id,
+          })
+        const category = await administrationCostCategoryFactory
+          .associations({ fundingPeriod })
+          .create({
             monthlyAmount: "80.0000",
+            childCareCategoryId: childCareSpaceCategory.childCareCategoryId,
           })
         const administrationCost = await administrationCostFactory
           .associations({
@@ -406,12 +414,14 @@ describe("api/src/controllers/administration-costs-controller.ts", () => {
             fiscalYear: "2024-25",
             dateStart: new Date("2024-05-01"),
           })
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
         const category = await administrationCostCategoryFactory
-          .associations({
-            fundingPeriod,
-          })
+          .associations({ fundingPeriod })
           .create({
-            categoryName: "Infants",
+            childCareCategoryId: categoryChildCareCategory.id,
           })
         const sourceAdministrationCost = await administrationCostFactory
           .associations({

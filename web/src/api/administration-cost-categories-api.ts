@@ -4,7 +4,7 @@ import type { FiltersOptions, Policy, QueryOptions, WhereOptions } from "@/api/b
 export type AdministrationCostCategory = {
   id: number
   fundingPeriodId: number
-  childCareSpaceCategoryId: number | null
+  childCareCategoryId: number
   categoryName: string
   fromAge: number | null
   toAge: number | null
@@ -19,24 +19,16 @@ export type AdministrationCostCategoryAsShow = AdministrationCostCategory
 
 export type AdministrationCostCategoryCreationAttributes = Pick<
   AdministrationCostCategory,
-  | "fundingPeriodId"
-  | "childCareSpaceCategoryId"
-  | "categoryName"
-  | "fromAge"
-  | "toAge"
-  | "monthlyAmount"
+  "fundingPeriodId" | "childCareCategoryId" | "monthlyAmount"
 >
 
 export type AdministrationCostCategoryUpdateAttributes = Partial<
-  Pick<
-    AdministrationCostCategory,
-    "childCareSpaceCategoryId" | "categoryName" | "fromAge" | "toAge" | "monthlyAmount"
-  >
+  Pick<AdministrationCostCategory, "monthlyAmount">
 >
 
 export type AdministrationCostCategoryWhereOptions = WhereOptions<
   AdministrationCostCategory,
-  "id" | "fundingPeriodId" | "childCareSpaceCategoryId" | "categoryName" | "fromAge" | "toAge"
+  "id" | "fundingPeriodId" | "childCareCategoryId"
 >
 
 export type AdministrationCostCategoryFiltersOptions = FiltersOptions<{ search: string | string[] }>
@@ -74,7 +66,7 @@ export const administrationCostCategoriesApi = {
     )
     return data
   },
-  async create(attributes: Partial<AdministrationCostCategoryCreationAttributes>): Promise<{
+  async create(attributes: AdministrationCostCategoryCreationAttributes): Promise<{
     administrationCostCategory: AdministrationCostCategoryAsShow
     policy: AdministrationCostCategoryPolicy
   }> {

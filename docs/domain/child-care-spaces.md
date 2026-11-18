@@ -10,13 +10,13 @@ The line name and monthly amount are snapshots, not live category lookups. Ordin
 
 ## Category configuration
 
-Spaces rates select an existing shared child-care category in their funding period. **Administration → Child Care Categories** owns its name and optional age range; the Spaces category page owns its monthly amount. Its shared identity and funding period cannot be changed afterward. Only system administrators can mutate configuration; authenticated worksheet users retain category reads and occupancy editing. Administration and Quality Enhancement retain their legacy configuration until their programme cutovers.
+Spaces and Administration rates select an existing shared child-care category in their funding period. **Administration → Child Care Categories** owns its name and optional age range; each programme category page owns its monthly amount. Its shared identity and funding period cannot be changed afterward. Only system administrators can mutate configuration; authenticated worksheet users retain category reads and occupancy editing. Quality Enhancement retains its legacy configuration until its programme cutover.
 
 Category editors clear the previous record when navigating to another category. Late load or save responses cannot replace the currently requested record, and saving requires that record's identity to match the route.
 
 New funding periods create shared identities before copying Spaces rates from the latest configured earlier period. Retired category history preserves deliberately empty configurations. Without explicit forward application, revised names and rates apply only to newly provisioned ledger rows. Shared category retirement requires its active programme configurations to be retired first.
 
-Existing monthly rows keep their names, rates, counts, and historical Spaces links when the shared catalogue changes. Administration and Quality Enhancement still use their explicit legacy Spaces links at this stage; their monthly snapshots are not rewritten.
+Existing monthly rows keep their names, rates, counts, and historical Spaces links when the shared catalogue changes. New Administration rows resolve Spaces links by shared identity and funding period. Quality Enhancement still uses its explicit legacy Spaces links at this stage; existing monthly snapshots are not rewritten.
 
 ## Forward application
 

@@ -1,3 +1,4 @@
+import childCareCategoryFactory from "@/factories/child-care-category-factory"
 import { AdministrationCost } from "@/models"
 
 import {
@@ -33,9 +34,16 @@ describe("api/src/services/administration-costs/create-service.ts", () => {
           fiscalYear: "2027-28",
           dateStart: new Date("2027-04-01"),
         })
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Historical administration",
+        })
         const category = await administrationCostCategoryFactory
           .associations({ fundingPeriod })
-          .create({ categoryName: "Historical administration", monthlyAmount: "80.0000" })
+          .create({
+            monthlyAmount: "80.0000",
+            childCareCategoryId: categoryChildCareCategory.id,
+          })
         const existingJuneCost = await administrationCostFactory
           .associations({ centre, fiscalPeriod: june, category })
           .create({

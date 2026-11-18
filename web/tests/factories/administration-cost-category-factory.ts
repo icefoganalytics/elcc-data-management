@@ -9,7 +9,7 @@ export const administrationCostCategoryFactory = Factory.define<AdministrationCo
     return {
       id: sequence,
       fundingPeriodId: sequence,
-      childCareSpaceCategoryId: null,
+      childCareCategoryId: sequence,
       categoryName: "Administration Cost Category",
       fromAge: null,
       toAge: null,

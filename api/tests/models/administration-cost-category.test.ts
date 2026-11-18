@@ -1,70 +1,79 @@
-import { ValidationError } from "@sequelize/core"
+import { UniqueConstraintError } from "@sequelize/core"
 
+import { AdministrationCostCategory } from "@/models"
 import {
+  childCareCategoryFactory,
   administrationCostCategoryFactory,
-  childCareSpaceCategoryFactory,
   fundingPeriodFactory,
 } from "@/factories"
 
-import AdministrationCostCategory from "@/models/administration-cost-category"
-
 describe("api/src/models/administration-cost-category.ts", () => {
   describe("AdministrationCostCategory", () => {
-    describe("#validateChildCareSpaceCategory", () => {
-      test("when a linked Spaces category belongs to another funding period, rejects creation", async () => {
+    describe("#validateSharedCategory", () => {
+      test("when the shared category belongs to another funding period, rejects the configuration", async () => {
         // Arrange
-        const fundingPeriod1 = await fundingPeriodFactory.create({
-          fiscalYear: "2024-2025",
-        })
-        const fundingPeriod2 = await fundingPeriodFactory.create({
-          fiscalYear: "2025-2026",
-        })
-        const childCareSpaceCategory = await childCareSpaceCategoryFactory
-          .associations({
-            fundingPeriod: fundingPeriod1,
-          })
-          .create()
+        const fundingPeriod = await fundingPeriodFactory.create()
+        const childCareCategory = await childCareCategoryFactory.create()
 
         // Act
         const creation = AdministrationCostCategory.create({
-          fundingPeriodId: fundingPeriod2.id,
-          childCareSpaceCategoryId: childCareSpaceCategory.id,
-          categoryName: "Infants",
-          fromAge: null,
-          toAge: null,
+          fundingPeriodId: fundingPeriod.id,
+          childCareCategoryId: childCareCategory.id,
           monthlyAmount: "70.0000",
         })
 
         // Assert
-        await expect(creation).rejects.toThrow(ValidationError)
+        await expect(creation).rejects.toThrow(
+          "Child Care category must be active in the same funding period"
+        )
       })
 
-      test("when a linked Spaces category has been retired, rejects relinking an Administration category", async () => {
+      test("when an existing configuration is relinked, rejects changing its shared category", async () => {
         // Arrange
-        const fundingPeriod = await fundingPeriodFactory.create({
-          fiscalYear: "2024-2025",
+        const category = await administrationCostCategoryFactory.create()
+        const childCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: category.fundingPeriodId,
         })
-        const childCareSpaceCategory = await childCareSpaceCategoryFactory
-          .associations({
-            fundingPeriod,
-          })
-          .create()
-        const administrationCostCategory = await administrationCostCategoryFactory
-          .associations({
-            fundingPeriod,
-          })
-          .create({
-            childCareSpaceCategoryId: null,
-          })
-        await childCareSpaceCategory.destroy()
 
         // Act
-        const update = administrationCostCategory.update({
-          childCareSpaceCategoryId: childCareSpaceCategory.id,
+        const update = category.update({ childCareCategoryId: childCareCategory.id })
+
+        // Assert
+        await expect(update).rejects.toThrow(
+          "Child Care category and funding period cannot be changed"
+        )
+      })
+
+      test("when a shared category is already configured, rejects a duplicate program rate", async () => {
+        // Arrange
+        const category = await administrationCostCategoryFactory.create()
+
+        // Act & Assert
+        await expect(
+          AdministrationCostCategory.create({
+            fundingPeriodId: category.fundingPeriodId,
+            childCareCategoryId: category.childCareCategoryId,
+            monthlyAmount: "80.0000",
+          })
+        ).rejects.toThrow(UniqueConstraintError)
+      })
+
+      test("when the shared category is retired, rejects the configuration", async () => {
+        // Arrange
+        const childCareCategory = await childCareCategoryFactory.create()
+        await childCareCategory.destroy()
+
+        // Act
+        const creation = AdministrationCostCategory.create({
+          fundingPeriodId: childCareCategory.fundingPeriodId,
+          childCareCategoryId: childCareCategory.id,
+          monthlyAmount: "70.0000",
         })
 
         // Assert
-        await expect(update).rejects.toThrow(ValidationError)
+        await expect(creation).rejects.toThrow(
+          "Child Care category must be active in the same funding period"
+        )
       })
     })
   })

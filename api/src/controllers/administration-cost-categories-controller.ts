@@ -16,7 +16,7 @@ export class AdministrationCostCategoriesController extends BaseController<Admin
     try {
       const where = this.buildWhere()
       const scopes = this.buildFilterScopes()
-      const order = this.buildOrder([["categoryName", "ASC"]])
+      const order = this.buildOrder([["childCareCategory", "categoryName", "ASC"]])
       const scopedCategories = AdministrationCostCategoryPolicy.applyScope(scopes, this.currentUser)
 
       const totalCount = await scopedCategories.count({

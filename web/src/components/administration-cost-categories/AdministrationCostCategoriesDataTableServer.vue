@@ -30,10 +30,10 @@
         v-bind="slotProps"
       ></slot>
     </template>
-    <template #item.fromAge="{ item }">
+    <template #item.childCareCategory.fromAge="{ item }">
       {{ item.fromAge ?? "—" }}
     </template>
-    <template #item.toAge="{ item }">
+    <template #item.childCareCategory.toAge="{ item }">
       {{ item.toAge ?? "—" }}
     </template>
     <template #item.monthlyAmount="{ item }">
@@ -85,7 +85,8 @@ const monthlyAmountFormatOptions = {
 const headers = ref([
   {
     title: "Category Name",
-    key: "categoryName",
+    key: "childCareCategory.categoryName",
+    value: "categoryName",
     minWidth: "200px",
     cellProps: {
       class: "text-wrap",
@@ -93,11 +94,13 @@ const headers = ref([
   },
   {
     title: "From Age",
-    key: "fromAge",
+    key: "childCareCategory.fromAge",
+    value: "fromAge",
   },
   {
     title: "To Age",
-    key: "toAge",
+    key: "childCareCategory.toAge",
+    value: "toAge",
   },
   {
     title: "Monthly Amount",
@@ -114,7 +117,7 @@ const page = useRouteQuery(`page${props.routeQuerySuffix}`, "1", { transform: Nu
 const perPage = useRouteQuery(`perPage${props.routeQuerySuffix}`, "10", { transform: Number })
 const sortBy = useVuetifySortByToSafeRouteQuery(`sortBy${props.routeQuerySuffix}`, [
   {
-    key: "categoryName",
+    key: "childCareCategory.categoryName",
     order: "asc",
   },
 ])

@@ -7,7 +7,7 @@ export type AdministrationCostCategoryAsShow = Pick<
   AdministrationCostCategory,
   | "id"
   | "fundingPeriodId"
-  | "childCareSpaceCategoryId"
+  | "childCareCategoryId"
   | "categoryName"
   | "fromAge"
   | "toAge"
@@ -21,7 +21,7 @@ export class ShowSerializer extends BaseSerializer<AdministrationCostCategory> {
     return pick(this.record, [
       "id",
       "fundingPeriodId",
-      "childCareSpaceCategoryId",
+      "childCareCategoryId",
       "categoryName",
       "fromAge",
       "toAge",
