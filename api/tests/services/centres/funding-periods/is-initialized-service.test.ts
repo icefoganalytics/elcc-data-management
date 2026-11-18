@@ -82,12 +82,15 @@ describe("api/src/services/centres/funding-periods/is-initialized-service.ts", (
           fiscalYear: "2024/25",
         })
         await fundingReconciliationFactory.associations({ centre, fundingPeriod }).create()
+        const administrationSharedCategory = await childCareCategoryFactory.associations({ fundingPeriod }).create({
+          categoryName: "Infants",
+        })
         const administrationCostCategory = await administrationCostCategoryFactory
           .associations({
             fundingPeriod,
           })
           .create({
-            categoryName: "Infants",
+            childCareCategoryId: administrationSharedCategory.id,
           })
         await administrationCostFactory
           .associations({

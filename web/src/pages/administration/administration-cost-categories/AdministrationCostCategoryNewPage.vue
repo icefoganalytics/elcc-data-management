@@ -10,46 +10,18 @@
       :select-first-on-load="false"
       :rules="[required]"
     />
-    <v-text-field
-      v-model="administrationCostCategoryAttributes.categoryName"
-      label="Category Name *"
+    <ChildCareCategorySearchableAutocomplete
+      v-model="administrationCostCategoryAttributes.childCareCategoryId"
+      :where="childCareCategoriesWhere"
+      :disabled="isNil(administrationCostCategoryAttributes.fundingPeriodId)"
+      label="Child Care Category *"
       :rules="[required]"
+      required
     />
-    <v-row>
-      <v-col
-        cols="12"
-        md="6"
-      >
-        <NumberTextField
-          v-model="administrationCostCategoryAttributes.fromAge"
-          label="From Age"
-          min="0"
-          step="1"
-        />
-      </v-col>
-      <v-col
-        cols="12"
-        md="6"
-      >
-        <NumberTextField
-          v-model="administrationCostCategoryAttributes.toAge"
-          label="To Age"
-          min="0"
-          step="1"
-        />
-      </v-col>
-    </v-row>
     <CurrencyInput
       v-model="administrationCostCategoryAttributes.monthlyAmount"
       label="Monthly Amount *"
       :rules="[required]"
-    />
-    <ChildCareSpaceCategorySearchableAutocomplete
-      v-model="administrationCostCategoryAttributes.childCareSpaceCategoryId"
-      :where="childCareSpaceCategoriesWhere"
-      label="Linked Child Care Space Category"
-      :disabled="isNil(administrationCostCategoryAttributes.fundingPeriodId)"
-      clearable
     />
     <template #actions>
       <v-btn
@@ -81,7 +53,7 @@ import { isNil } from "lodash"
 import { required } from "@/utils/validators"
 
 import administrationCostCategoriesApi, {
-  type AdministrationCostCategory,
+  type AdministrationCostCategoryCreationAttributes,
 } from "@/api/administration-cost-categories-api"
 
 import ApiOperationError from "@/api/errors/api-operation-error"
@@ -91,27 +63,29 @@ import useSnack from "@/use/use-snack"
 
 import CurrencyInput from "@/components/CurrencyInput.vue"
 import HeaderActionsFormCard from "@/components/common/HeaderActionsFormCard.vue"
-import NumberTextField from "@/components/common/NumberTextField.vue"
-import ChildCareSpaceCategorySearchableAutocomplete from "@/components/child-care-space-categories/ChildCareSpaceCategorySearchableAutocomplete.vue"
+import ChildCareCategorySearchableAutocomplete from "@/components/child-care-categories/ChildCareCategorySearchableAutocomplete.vue"
 import FundingPeriodSearchableAutocomplete from "@/components/funding-periods/FundingPeriodSearchableAutocomplete.vue"
 
-const administrationCostCategoryAttributes = ref<Partial<AdministrationCostCategory>>({
-  fundingPeriodId: undefined,
-  childCareSpaceCategoryId: null,
-  categoryName: "",
-  fromAge: null,
-  toAge: null,
-  monthlyAmount: undefined,
+type CategoryFormAttributes = {
+  [Attribute in keyof AdministrationCostCategoryCreationAttributes]:
+    | AdministrationCostCategoryCreationAttributes[Attribute]
+    | null
+}
+
+const administrationCostCategoryAttributes = ref<CategoryFormAttributes>({
+  fundingPeriodId: null,
+  childCareCategoryId: null,
+  monthlyAmount: null,
 })
 
-const childCareSpaceCategoriesWhere = computed(() => ({
-  fundingPeriodId: administrationCostCategoryAttributes.value.fundingPeriodId,
+const childCareCategoriesWhere = computed(() => ({
+  fundingPeriodId: administrationCostCategoryAttributes.value.fundingPeriodId ?? undefined,
 }))
 
 watch(
   () => administrationCostCategoryAttributes.value.fundingPeriodId,
   () => {
-    administrationCostCategoryAttributes.value.childCareSpaceCategoryId = null
+    administrationCostCategoryAttributes.value.childCareCategoryId = null
   }
 )
 
@@ -126,11 +100,17 @@ async function createCategory() {
   const { valid } = await headerActionsFormCard.value.validate()
   if (!valid) return
 
+  const { fundingPeriodId, childCareCategoryId, monthlyAmount } =
+    administrationCostCategoryAttributes.value
+  if (isNil(fundingPeriodId) || isNil(childCareCategoryId) || isNil(monthlyAmount)) return
+
   isSaving.value = true
   try {
-    const { administrationCostCategory } = await administrationCostCategoriesApi.create(
-      administrationCostCategoryAttributes.value
-    )
+    const { administrationCostCategory } = await administrationCostCategoriesApi.create({
+      fundingPeriodId,
+      childCareCategoryId,
+      monthlyAmount,
+    })
     snack.success("Administration cost category created successfully!")
     await router.push({
       name: "administration/administration-cost-categories/AdministrationCostCategoryPage",

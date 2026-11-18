@@ -9,6 +9,71 @@ import AdministrationCostCategoriesDataTableServer from "@/components/administra
 
 describe("web/src/components/administration-cost-categories/AdministrationCostCategoriesDataTableServer.vue", () => {
   describe("AdministrationCostCategoriesDataTableServer", () => {
+    describe("shared category sorting", () => {
+      test("when From Age is clicked, stores its association sort key in the URL", async () => {
+        // Arrange
+        vi.mocked(httpClient, true).get.mockResolvedValue({
+          data: { administrationCostCategories: [], totalCount: 0 },
+        })
+        const router = mockRouter([
+          { path: "/", component: AdministrationCostCategoriesDataTableServer },
+        ])
+        await router.push("/")
+        await router.isReady()
+        const wrapper = mount(AdministrationCostCategoriesDataTableServer, {
+          global: { plugins: [router, mockVuetify()] },
+        })
+        await flushPromises()
+
+        // Act
+        await wrapper.get("thead th:nth-child(2)").trigger("click")
+        await flushPromises()
+
+        // Assert
+        await vi.waitFor(() => {
+          expect(router.currentRoute.value.query.sortBy).toEqual(["childCareCategory.fromAge_asc"])
+        })
+      })
+    })
+
+    describe("shared metadata display", () => {
+      test("when shared metadata is serialized flat, renders its name, zero age and missing upper age", async () => {
+        // Arrange
+        const category = administrationCostCategoryFactory.build({
+          categoryName: "Infants",
+          fromAge: 0,
+          toAge: null,
+        })
+        vi.mocked(httpClient, true).get.mockResolvedValue({
+          data: { administrationCostCategories: [category], totalCount: 1 },
+        })
+        const router = mockRouter([
+          { path: "/", component: AdministrationCostCategoriesDataTableServer },
+          {
+            path: "/categories/:administrationCostCategoryId",
+            name: "administration/administration-cost-categories/AdministrationCostCategoryPage",
+            component: { template: "<div />" },
+          },
+        ])
+        await router.push("/")
+        await router.isReady()
+
+        // Act
+        const wrapper = mount(AdministrationCostCategoriesDataTableServer, {
+          global: { plugins: [router, mockVuetify()] },
+        })
+        await flushPromises()
+
+        // Assert
+        expect(
+          wrapper
+            .findAll("tbody tr:first-child td")
+            .slice(0, 3)
+            .map((cell) => cell.text())
+        ).toEqual(["Infants", "0", "—"])
+      })
+    })
+
     describe("funding-period changes", () => {
       test("when the funding period changes on a later page, displays the new period's first page", async () => {
         // Arrange

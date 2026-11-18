@@ -1,5 +1,7 @@
 import {
   DataTypes,
+  Op,
+  sql,
   type CreationOptional,
   type InferAttributes,
   type InferCreationAttributes,
@@ -10,63 +12,49 @@ import {
   AutoIncrement,
   BelongsTo,
   HasMany,
-  ModelValidator,
   NotNull,
   PrimaryKey,
   Table,
   ValidateAttribute,
+  ModelValidator,
 } from "@sequelize/core/decorators-legacy"
 import Big from "big.js"
-import { isNil } from "lodash"
-
-import { AdministrationCostCategoriesFundingPeriodIdCategoryNameUniqueIndex } from "@/models/indexes"
+import arrayWrap from "@/utils/array-wrap"
 
 import AdministrationCost from "@/models/administration-cost"
+import { AdministrationCostCategoriesFundingPeriodIdChildCareCategoryIdUniqueIndex } from "@/models/indexes"
+
 import BaseModel from "@/models/base-model"
-import ChildCareSpaceCategory from "@/models/child-care-space-category"
+import ChildCareCategory from "@/models/child-care-category"
 import FundingPeriod from "@/models/funding-period"
 
 export const ADMINISTRATION_COST_CATEGORY_DEFAULTS = Object.freeze([
   {
     categoryName: "Infants",
-    fromAge: 0,
-    toAge: 1,
     monthlyAmount: "70.0",
   },
   {
     categoryName: "Toddlers",
-    fromAge: 2,
-    toAge: 3,
     monthlyAmount: "70.0",
   },
   {
     categoryName: "Preschool",
-    fromAge: 4,
-    toAge: 5,
     monthlyAmount: "70.0",
   },
   {
     categoryName: "Kindergarten (PT)",
-    fromAge: 5,
-    toAge: 6,
     monthlyAmount: "35.0",
   },
   {
     categoryName: "Kindergarten (FT)",
-    fromAge: 5,
-    toAge: 6,
     monthlyAmount: "70.0",
   },
   {
     categoryName: "School Age (PT)",
-    fromAge: 5,
-    toAge: 6,
     monthlyAmount: "30.0",
   },
   {
     categoryName: "School Age (FT)",
-    fromAge: 5,
-    toAge: 6,
     monthlyAmount: "50.0",
   },
 ])
@@ -87,25 +75,28 @@ export class AdministrationCostCategory extends BaseModel<
 
   @Attribute(DataTypes.INTEGER)
   @NotNull
-  @AdministrationCostCategoriesFundingPeriodIdCategoryNameUniqueIndex
+  @AdministrationCostCategoriesFundingPeriodIdChildCareCategoryIdUniqueIndex
   declare fundingPeriodId: number
 
   @Attribute(DataTypes.INTEGER)
-  declare childCareCategoryId: number | null
-
-  @Attribute(DataTypes.INTEGER)
-  declare childCareSpaceCategoryId: number | null
-
-  @Attribute(DataTypes.STRING(200))
   @NotNull
-  @AdministrationCostCategoriesFundingPeriodIdCategoryNameUniqueIndex
-  declare categoryName: string
+  @AdministrationCostCategoriesFundingPeriodIdChildCareCategoryIdUniqueIndex
+  declare childCareCategoryId: number
 
-  @Attribute(DataTypes.INTEGER)
-  declare fromAge: number | null
+  get categoryName(): NonAttribute<string> {
+    if (!this.childCareCategory) throw new Error("Child Care category must be loaded")
+    return this.childCareCategory.categoryName
+  }
 
-  @Attribute(DataTypes.INTEGER)
-  declare toAge: number | null
+  get fromAge(): NonAttribute<number | null> {
+    if (!this.childCareCategory) throw new Error("Child Care category must be loaded")
+    return this.childCareCategory.fromAge
+  }
+
+  get toAge(): NonAttribute<number | null> {
+    if (!this.childCareCategory) throw new Error("Child Care category must be loaded")
+    return this.childCareCategory.toAge
+  }
 
   /** Monthly category rate in Canadian dollars (CAD). */
   @Attribute(DataTypes.DECIMAL(15, 4))
@@ -133,23 +124,6 @@ export class AdministrationCostCategory extends BaseModel<
   @Attribute(DataTypes.DATE)
   declare deletedAt: Date | null
 
-  // Validators
-  @ModelValidator
-  async validateChildCareSpaceCategory(): Promise<void> {
-    if (isNil(this.childCareSpaceCategoryId)) return
-
-    const childCareSpaceCategory = await ChildCareSpaceCategory.findOne({
-      where: {
-        id: this.childCareSpaceCategoryId,
-        fundingPeriodId: this.fundingPeriodId,
-      },
-      attributes: ["id"],
-    })
-    if (isNil(childCareSpaceCategory)) {
-      throw new Error("Linked Child Care Space category must be active in the same funding period")
-    }
-  }
-
   // Associations
   @BelongsTo(() => FundingPeriod, {
     foreignKey: "fundingPeriodId",
@@ -160,11 +134,6 @@ export class AdministrationCostCategory extends BaseModel<
   })
   declare fundingPeriod?: NonAttribute<FundingPeriod>
 
-  @BelongsTo(() => ChildCareSpaceCategory, {
-    foreignKey: "childCareSpaceCategoryId",
-  })
-  declare childCareSpaceCategory?: NonAttribute<ChildCareSpaceCategory>
-
   @HasMany(() => AdministrationCost, {
     foreignKey: "categoryId",
     inverse: {
@@ -173,9 +142,44 @@ export class AdministrationCostCategory extends BaseModel<
   })
   declare administrationCosts?: NonAttribute<AdministrationCost[]>
 
-  // Scopes
+  // Validators
+  @ModelValidator
+  async validateSharedCategory(): Promise<void> {
+    if (
+      !this.isNewRecord &&
+      (this.changed("childCareCategoryId") || this.changed("fundingPeriodId"))
+    ) {
+      throw new Error("Child Care category and funding period cannot be changed")
+    }
+
+    const childCareCategory = await ChildCareCategory.findOne({
+      where: { id: this.childCareCategoryId, fundingPeriodId: this.fundingPeriodId },
+      attributes: ["id"],
+    })
+    if (!childCareCategory) {
+      throw new Error("Child Care category must be active in the same funding period")
+    }
+  }
+
+  @BelongsTo(() => ChildCareCategory, { foreignKey: "childCareCategoryId" })
+  declare childCareCategory?: NonAttribute<ChildCareCategory>
+
   static establishScopes() {
-    this.addSearchScope(["categoryName"])
+    this.addScope("defaultScope", { include: ["childCareCategory"] }, { override: true })
+    this.addScope("search", (terms: string | string[]) => ({
+      include: ["childCareCategory"],
+      where: {
+        [Op.and]: arrayWrap(terms)
+          .filter((term) => term.length > 0)
+          .map((term) =>
+            sql.where(
+              sql.fn("LOWER", sql.col("childCareCategory.category_name")),
+              Op.like,
+              `%${term.toLowerCase()}%`
+            )
+          ),
+      },
+    }))
   }
 }
 

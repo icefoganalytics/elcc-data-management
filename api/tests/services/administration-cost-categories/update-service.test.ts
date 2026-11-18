@@ -36,20 +36,15 @@ describe("api/src/services/administration-cost-categories/update-service.ts", ()
           categoryName: "Infants",
         })
         const childCareSpaceCategory = await childCareSpaceCategoryFactory
-          .associations({
-            fundingPeriod,
-            childCareCategory: childCareSpaceCategoryChildCareCategory,
-          })
-          .create()
-        const administrationCostCategory = await administrationCostCategoryFactory
-          .associations({
-            fundingPeriod,
-            childCareSpaceCategory,
-          })
+          .associations({ fundingPeriod })
           .create({
-            categoryName: "Infants",
-            childCareSpaceCategoryId: childCareSpaceCategory.id,
+            childCareCategoryId: childCareSpaceCategoryChildCareCategory.id,
+          })
+        const administrationCostCategory = await administrationCostCategoryFactory
+          .associations({ fundingPeriod })
+          .create({
             monthlyAmount: "70.0000",
+            childCareCategoryId: childCareSpaceCategory.childCareCategoryId,
           })
         const administrationCost = await administrationCostFactory
           .associations({
@@ -68,9 +63,7 @@ describe("api/src/services/administration-cost-categories/update-service.ts", ()
 
         // Act
         await UpdateService.perform(administrationCostCategory, {
-          categoryName: "Young children",
           monthlyAmount: "99.0000",
-          childCareSpaceCategoryId: null,
         })
 
         // Assert

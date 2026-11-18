@@ -1,20 +1,19 @@
 import { flushPromises, mount } from "@vue/test-utils"
-import { VTextField } from "vuetify/components"
 
 import httpClient from "@/api/http-client"
-import type { ChildCareSpaceCategoryAsIndex } from "@/api/child-care-space-categories-api"
+import type { ChildCareCategoryAsIndex } from "@/api/child-care-categories-api"
 
 import { mockRouter, mockVuetify } from "@/tests/support"
 
 import CurrencyInput from "@/components/CurrencyInput.vue"
-import ChildCareSpaceCategorySearchableAutocomplete from "@/components/child-care-space-categories/ChildCareSpaceCategorySearchableAutocomplete.vue"
+import ChildCareCategorySearchableAutocomplete from "@/components/child-care-categories/ChildCareCategorySearchableAutocomplete.vue"
 import FundingPeriodSearchableAutocomplete from "@/components/funding-periods/FundingPeriodSearchableAutocomplete.vue"
 
 import AdministrationCostCategoryNewPage from "@/pages/administration/administration-cost-categories/AdministrationCostCategoryNewPage.vue"
 
 describe("web/src/pages/administration/administration-cost-categories/AdministrationCostCategoryNewPage.vue", () => {
   describe("AdministrationCostCategoryNewPage", () => {
-    describe("linked category selection", () => {
+    describe("shared category selection", () => {
       test("when another funding period is loading, does not offer the previous period's categories", async ({
         onTestFinished,
       }) => {
@@ -24,16 +23,14 @@ describe("web/src/pages/administration/administration-cost-categories/Administra
           vi.unstubAllGlobals()
         })
         const pendingCategories = Promise.withResolvers<{
-          data: { childCareSpaceCategories: ChildCareSpaceCategoryAsIndex[]; totalCount: number }
+          data: { childCareCategories: ChildCareCategoryAsIndex[]; totalCount: number }
         }>()
-        const previousCategory: ChildCareSpaceCategoryAsIndex = {
+        const previousCategory: ChildCareCategoryAsIndex = {
           id: 10,
           fundingPeriodId: 1,
-          childCareCategoryId: 10,
           categoryName: "Previous-year Infants",
           fromAge: 0,
           toAge: 1,
-          monthlyAmount: "700.0000",
           createdAt: "2024-04-01T00:00:00Z",
           updatedAt: "2024-04-01T00:00:00Z",
           deletedAt: null,
@@ -65,23 +62,23 @@ describe("web/src/pages/administration/administration-cost-categories/Administra
               },
             }
           }
-          if (url === "/api/child-care-space-categories/10") {
+          if (url === "/api/child-care-categories/10") {
             return {
-              data: { childCareSpaceCategory: previousCategory, policy: {} },
+              data: { childCareCategory: previousCategory, policy: {} },
             }
           }
           if (
-            url === "/api/child-care-space-categories" &&
+            url === "/api/child-care-categories" &&
             config?.params?.where?.fundingPeriodId === 1
           ) {
             return {
               data: {
-                childCareSpaceCategories: [previousCategory],
+                childCareCategories: [previousCategory],
                 totalCount: 1,
               },
             }
           }
-          if (url === "/api/child-care-space-categories") {
+          if (url === "/api/child-care-categories") {
             return pendingCategories.promise
           }
 
@@ -106,9 +103,7 @@ describe("web/src/pages/administration/administration-cost-categories/Administra
         })
         await flushPromises()
         const fundingPeriodSelect = wrapper.getComponent(FundingPeriodSearchableAutocomplete)
-        const linkedCategorySelect = wrapper.getComponent(
-          ChildCareSpaceCategorySearchableAutocomplete
-        )
+        const linkedCategorySelect = wrapper.getComponent(ChildCareCategorySearchableAutocomplete)
         await fundingPeriodSelect.setValue(1)
         await flushPromises()
         await linkedCategorySelect.setValue(10)
@@ -128,7 +123,7 @@ describe("web/src/pages/administration/administration-cost-categories/Administra
     })
 
     describe("creation", () => {
-      test("when an optional age is cleared, sends null while preserving numeric ages and exact money", async ({
+      test("when a shared category is selected, sends its identity and exact program rate", async ({
         onTestFinished,
       }) => {
         // Arrange
@@ -147,8 +142,22 @@ describe("web/src/pages/administration/administration-cost-categories/Administra
               data: { fundingPeriod: { id: 1, fiscalYear: "2024-2025" }, policy: {} },
             }
           }
-          if (url === "/api/child-care-space-categories") {
-            return { data: { childCareSpaceCategories: [], totalCount: 0 } }
+          if (url === "/api/child-care-categories") {
+            return { data: { childCareCategories: [], totalCount: 0 } }
+          }
+          if (url === "/api/child-care-categories/10") {
+            return {
+              data: {
+                childCareCategory: {
+                  id: 10,
+                  fundingPeriodId: 1,
+                  categoryName: "Infants",
+                  fromAge: 0,
+                  toAge: 1,
+                },
+                policy: {},
+              },
+            }
           }
 
           throw new Error(`Unexpected GET ${url}`)
@@ -176,14 +185,8 @@ describe("web/src/pages/administration/administration-cost-categories/Administra
         })
         await flushPromises()
         await wrapper.getComponent(FundingPeriodSearchableAutocomplete).setValue(1)
-        const fields = wrapper.findAllComponents(VTextField)
-        await fields
-          .filter((field) => field.props("label") === "Category Name *")[0]
-          .setValue("QA Administration")
-        const fromAgeField = fields.filter((field) => field.props("label") === "From Age")[0]
-        await fromAgeField.setValue("2")
-        await fromAgeField.setValue("")
-        await fields.filter((field) => field.props("label") === "To Age")[0].setValue("5")
+        await flushPromises()
+        await wrapper.getComponent(ChildCareCategorySearchableAutocomplete).setValue(10)
         await wrapper.getComponent(CurrencyInput).setValue("42.1234")
         await flushPromises()
 
@@ -196,10 +199,7 @@ describe("web/src/pages/administration/administration-cost-categories/Administra
           "/api/administration-cost-categories",
           {
             fundingPeriodId: 1,
-            childCareSpaceCategoryId: null,
-            categoryName: "QA Administration",
-            fromAge: null,
-            toAge: 5,
+            childCareCategoryId: 10,
             monthlyAmount: "42.1234",
           }
         )

@@ -10,6 +10,8 @@ Changes since v2026.11.17.1 that will be included in the next release.
 
 ### Added
 
+- Administration rates select shared categories and resolve new monthly Spaces links by shared identity, without rewriting historical records.
+
 - Spaces rates use shared category identities while retaining historical monthly names and amounts.
 
 - Administrators can manage the shared category catalogue independently of programme rates.

@@ -1,8 +1,9 @@
 import { Op, sql, type CreationAttributes } from "@sequelize/core"
-import { isEmpty, isNil } from "lodash"
 
-import { AdministrationCostCategory, ChildCareSpaceCategory, FundingPeriod } from "@/models"
+import { AdministrationCostCategory, FundingPeriod } from "@/models"
 import BaseService from "@/services/base-service"
+import BulkEnsureSharedCategoriesService from "@/services/funding-periods/child-care-categories/bulk-ensure-service"
+import EnsureClonedCategoryService from "@/services/funding-periods/child-care-categories/ensure-cloned-category-service"
 
 export class BulkCreateService extends BaseService {
   constructor(private fundingPeriod: FundingPeriod) {
@@ -10,115 +11,74 @@ export class BulkCreateService extends BaseService {
   }
 
   async perform(): Promise<AdministrationCostCategory[]> {
-    const categories = await this.buildCategories(this.fundingPeriod.id)
-    return AdministrationCostCategory.bulkCreate(
-      categories.map((category) => ({
-        ...category,
-        fundingPeriodId: this.fundingPeriod.id,
-      }))
-    )
-  }
-
-  private async buildCategories(
-    fundingPeriodId: number
-  ): Promise<Omit<CreationAttributes<AdministrationCostCategory>, "fundingPeriodId">[]> {
-    const targetChildCareSpaceCategories = await ChildCareSpaceCategory.findAll({
-      attributes: ["id", "childCareCategoryId"],
-      include: ["childCareCategory"],
+    const sharedCategories = await BulkEnsureSharedCategoriesService.perform(this.fundingPeriod)
+    const previousFundingPeriod = await FundingPeriod.findOne({
+      attributes: ["id"],
       where: {
-        fundingPeriodId,
-      },
-    })
-    const targetChildCareSpaceCategoryIdsByName = new Map(
-      targetChildCareSpaceCategories.map(({ id, categoryName }) => [categoryName, id])
-    )
-
-    const newestFundingPeriodId = sql`
-      (
-        SELECT
-          TOP 1 administration_cost_categories.funding_period_id
-        FROM
-          administration_cost_categories
-          INNER JOIN funding_periods ON funding_periods.id = administration_cost_categories.funding_period_id
-        WHERE
-          administration_cost_categories.deleted_at IS NULL
-          AND funding_periods.deleted_at IS NULL
-        ORDER BY
-          funding_periods.fiscal_year DESC,
-          funding_periods.from_date DESC,
-          funding_periods.id DESC
-      )
-    `
-    const newestCategories = await AdministrationCostCategory.findAll({
-      attributes: ["categoryName", "fromAge", "toAge", "monthlyAmount", "childCareSpaceCategoryId"],
-      where: {
-        fundingPeriodId: {
-          [Op.in]: newestFundingPeriodId,
+        fiscalYear: { [Op.lt]: this.fundingPeriod.fiscalYear },
+        id: {
+          [Op.in]: sql`
+            (
+              SELECT
+                funding_period_id
+              FROM
+                administration_cost_categories
+            )
+          `,
         },
       },
-      order: [["id", "ASC"]],
+      order: [
+        ["fiscalYear", "DESC"],
+        ["fromDate", "DESC"],
+        ["id", "DESC"],
+      ],
     })
-
-    if (isEmpty(newestCategories)) {
-      return AdministrationCostCategory.DEFAULTS.map(
-        ({ categoryName, fromAge, toAge, monthlyAmount }) => {
-          const childCareSpaceCategoryId =
-            targetChildCareSpaceCategoryIdsByName.get(categoryName) ?? null
-
-          return {
-            childCareSpaceCategoryId,
-            categoryName,
-            fromAge,
-            toAge,
-            monthlyAmount,
-          }
-        }
+    const attributes: CreationAttributes<AdministrationCostCategory>[] = []
+    if (!previousFundingPeriod) {
+      const sharedCategoriesByName = new Map(
+        sharedCategories.map((category) => [category.categoryName, category])
       )
-    }
+      for (const { categoryName, monthlyAmount } of AdministrationCostCategory.DEFAULTS) {
+        const sharedCategory = sharedCategoriesByName.get(categoryName)
+        if (!sharedCategory) continue
 
-    const sourceChildCareSpaceCategoryIds: number[] = []
-    for (const { childCareSpaceCategoryId } of newestCategories) {
-      if (isNil(childCareSpaceCategoryId)) continue
-
-      sourceChildCareSpaceCategoryIds.push(childCareSpaceCategoryId)
-    }
-
-    const sourceChildCareSpaceCategoryNamesById = new Map<number, string>()
-    if (!isEmpty(sourceChildCareSpaceCategoryIds)) {
-      const sourceChildCareSpaceCategories = await ChildCareSpaceCategory.findAll({
-        attributes: ["id", "childCareCategoryId"],
-      include: ["childCareCategory"],
-        where: {
-          id: {
-            [Op.in]: sourceChildCareSpaceCategoryIds,
-          },
-        },
+        attributes.push({
+          fundingPeriodId: this.fundingPeriod.id,
+          childCareCategoryId: sharedCategory.id,
+          monthlyAmount,
+        })
+      }
+    } else {
+      const previousCategories = await AdministrationCostCategory.findAll({
+        where: { fundingPeriodId: previousFundingPeriod.id },
+        include: [{ association: "childCareCategory", paranoid: false }],
+        order: [["id", "ASC"]],
       })
-      for (const { id, categoryName } of sourceChildCareSpaceCategories) {
-        sourceChildCareSpaceCategoryNamesById.set(id, categoryName)
+      for (const category of previousCategories) {
+        const sourceCategory = category.childCareCategory
+        if (!sourceCategory)
+          throw new Error(`Child Care category missing for program category ${category.id}`)
+
+        const targetCategory = await EnsureClonedCategoryService.perform(
+          sourceCategory,
+          this.fundingPeriod
+        )
+        if (!targetCategory) continue
+
+        attributes.push({
+          fundingPeriodId: this.fundingPeriod.id,
+          childCareCategoryId: targetCategory.id,
+          monthlyAmount: category.monthlyAmount,
+        })
       }
     }
 
-    return newestCategories.map((category) => {
-      const attributes: Omit<CreationAttributes<AdministrationCostCategory>, "fundingPeriodId"> = {
-        childCareSpaceCategoryId: null,
-        categoryName: category.categoryName,
-        fromAge: category.fromAge,
-        toAge: category.toAge,
-        monthlyAmount: category.monthlyAmount,
-      }
-      const sourceChildCareSpaceCategoryId = category.childCareSpaceCategoryId
-      if (isNil(sourceChildCareSpaceCategoryId)) return attributes
+    const categories = await AdministrationCostCategory.bulkCreate(attributes, { validate: true })
+    if (categories.length === 0) return []
 
-      const sourceChildCareSpaceCategoryName = sourceChildCareSpaceCategoryNamesById.get(
-        sourceChildCareSpaceCategoryId
-      )
-      if (isNil(sourceChildCareSpaceCategoryName)) return attributes
-
-      attributes.childCareSpaceCategoryId =
-        targetChildCareSpaceCategoryIdsByName.get(sourceChildCareSpaceCategoryName) ?? null
-
-      return attributes
+    return AdministrationCostCategory.findAll({
+      where: { id: categories.map(({ id }) => id) },
+      order: [["id", "ASC"]],
     })
   }
 }

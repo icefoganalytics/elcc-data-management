@@ -1,11 +1,11 @@
 import { flushPromises, mount } from "@vue/test-utils"
-import { VTextField } from "vuetify/components"
 
 import httpClient from "@/api/http-client"
 
 import { administrationCostCategoryFactory } from "@/tests/factories"
 import { mockRouter, mockVuetify } from "@/tests/support"
 
+import ChildCareCategoryDescriptionFields from "@/components/child-care-categories/ChildCareCategoryDescriptionFields.vue"
 import AdministrationCostCategoryEditPage from "@/pages/administration/administration-cost-categories/AdministrationCostCategoryEditPage.vue"
 
 describe("web/src/pages/administration/administration-cost-categories/AdministrationCostCategoryEditPage.vue", () => {
@@ -23,9 +23,6 @@ describe("web/src/pages/administration/administration-cost-categories/Administra
             if (shouldFail) throw new Error("Category unavailable")
 
             return { data: { administrationCostCategory: category, policy: {} } }
-          }
-          if (url === "/api/child-care-space-categories") {
-            return { data: { childCareSpaceCategories: [], totalCount: 0 } }
           }
 
           return { data: { fundingPeriods: [], totalCount: 0 } }
@@ -61,10 +58,9 @@ describe("web/src/pages/administration/administration-cost-categories/Administra
         await flushPromises()
 
         // Assert
-        const categoryNameField = wrapper.findAllComponents(VTextField).find((field) => {
-          return field.props("label") === "Category Name *"
-        })
-        expect(categoryNameField?.props("modelValue")).toEqual("Recovered Administration Category")
+        expect(
+          wrapper.getComponent(ChildCareCategoryDescriptionFields).props("category").categoryName
+        ).toEqual("Recovered Administration Category")
       })
     })
   })

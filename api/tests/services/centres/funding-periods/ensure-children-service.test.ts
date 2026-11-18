@@ -568,11 +568,9 @@ describe("api/src/services/centres/funding-periods/ensure-children-service.ts", 
         const administrationCostCategory = await administrationCostCategoryFactory
           .associations({
             fundingPeriod,
-            childCareSpaceCategory,
+            childCareCategory: childCareSpaceCategoryChildCareCategory,
           })
           .create({
-            categoryName: "Infants",
-            childCareSpaceCategoryId: childCareSpaceCategory.id,
             monthlyAmount: "80.0000",
           })
         await childCareSpaceFactory

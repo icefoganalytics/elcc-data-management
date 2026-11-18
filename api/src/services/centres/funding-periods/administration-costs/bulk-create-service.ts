@@ -8,6 +8,7 @@ import {
   FiscalPeriod,
   FundingPeriod,
 } from "@/models"
+import ChildCareSpaceCategory from "@/models/child-care-space-category"
 import BaseService from "@/services/base-service"
 
 export class BulkCreateService extends BaseService {
@@ -31,7 +32,7 @@ export class BulkCreateService extends BaseService {
     }
 
     const categories = await AdministrationCostCategory.findAll({
-      attributes: ["id", "childCareSpaceCategoryId", "categoryName", "monthlyAmount"],
+      attributes: ["id", "childCareCategoryId", "monthlyAmount"],
       where: {
         fundingPeriodId: this.fundingPeriod.id,
       },
@@ -41,6 +42,14 @@ export class BulkCreateService extends BaseService {
       return []
     }
 
+    const spaceCategories = await ChildCareSpaceCategory.findAll({
+      attributes: ["id", "childCareCategoryId"],
+      where: { fundingPeriodId: this.fundingPeriod.id },
+    })
+    const spaceCategoryIdsBySharedCategoryId = new Map(
+      spaceCategories.map(({ id, childCareCategoryId }) => [childCareCategoryId, id])
+    )
+
     const administrationCostsAttributes: CreationAttributes<AdministrationCost>[] = []
     for (const fiscalPeriod of fiscalPeriods) {
       for (const category of categories) {
@@ -48,7 +57,8 @@ export class BulkCreateService extends BaseService {
           centreId: this.centre.id,
           fiscalPeriodId: fiscalPeriod.id,
           categoryId: category.id,
-          childCareSpaceCategoryId: category.childCareSpaceCategoryId,
+          childCareSpaceCategoryId:
+            spaceCategoryIdsBySharedCategoryId.get(category.childCareCategoryId) ?? null,
           lineName: category.categoryName,
           monthlyAmount: category.monthlyAmount,
           estimatedChildOccupancyRate: "0.0000",

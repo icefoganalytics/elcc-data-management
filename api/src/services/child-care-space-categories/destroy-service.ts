@@ -1,6 +1,5 @@
 import {
   AdministrationCost,
-  AdministrationCostCategory,
   ChildCareSpace,
   ChildCareSpaceCategory,
   FundingSubmissionLine,
@@ -22,15 +21,6 @@ export class DestroyService extends BaseService {
     })
     if (childCareSpacesUsingCategory > 0) {
       throw new Error("Cannot delete a category used by Child Care Space records")
-    }
-
-    const administrationCostCategoriesUsingCategory = await AdministrationCostCategory.count({
-      where: {
-        childCareSpaceCategoryId: this.childCareSpaceCategory.id,
-      },
-    })
-    if (administrationCostCategoriesUsingCategory > 0) {
-      throw new Error("Cannot delete a category used by Administration Cost categories")
     }
 
     const qualityEnhancementCategoriesUsingCategory = await QualityEnhancementCategory.count({
