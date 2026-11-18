@@ -2,7 +2,11 @@ import { flushPromises, mount } from "@vue/test-utils"
 
 import { FiscalPeriodMonths } from "@/use/use-fiscal-periods"
 
-import { fiscalPeriodFactory, fundingSubmissionLineJsonFactory } from "@/tests/factories"
+import {
+  childCareSpaceSummariesFactory,
+  fiscalPeriodFactory,
+  fundingSubmissionLineJsonFactory,
+} from "@/tests/factories"
 import { mockHttpGetRoutes, mockRouter, mockVuetify } from "@/tests/support"
 
 import MonthlyWorksheetPage from "@/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue"
@@ -13,7 +17,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
       test.each([
         ["AdministrationCostCreateFormCard", "Add Administration Cost"],
         ["QualityEnhancementCreateFormCard", "Add Quality Enhancement"],
-        ["ChildrenWithDiverseNeedsFundingRecordsCreateFormCard", "Add Diverse Need"],
+        ["ChildrenWithDiverseNeedsFundingRecordsCreateFormCard", "Add Children with Diverse Needs"],
       ])(
         "when a %s unmounts during month navigation, releases its creation lock",
         async (formName, addLabel) => {
@@ -23,14 +27,36 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             centreId: 1,
             fiscalYear: "2024/25",
             dateName: "April",
-            lines: [],
+            lines: [
+              {
+                submissionLineId: 1,
+                sectionName: "Other Funding",
+                lineName: "Supplement",
+                monthlyAmount: "10.0000",
+                estimatedChildOccupancyRate: "0",
+                actualChildOccupancyRate: "0",
+                estimatedComputedTotal: "0.0000",
+                actualComputedTotal: "0.0000",
+              },
+            ],
           })
           const mayWorksheet = fundingSubmissionLineJsonFactory.build({
             id: 45,
             centreId: 1,
             fiscalYear: "2024/25",
             dateName: "May",
-            lines: [],
+            lines: [
+              {
+                submissionLineId: 1,
+                sectionName: "Other Funding",
+                lineName: "Supplement",
+                monthlyAmount: "10.0000",
+                estimatedChildOccupancyRate: "0",
+                actualChildOccupancyRate: "0",
+                estimatedComputedTotal: "0.0000",
+                actualComputedTotal: "0.0000",
+              },
+            ],
           })
           const april = fiscalPeriodFactory.build({
             id: 4,
@@ -64,7 +90,13 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
               return { data: { qualityEnhancements: [], totalCount: 0 } }
             },
             "/api/child-care-spaces": async () => {
-              return { data: { childCareSpaces: [], totalCount: 0 } }
+              return {
+                data: {
+                  childCareSpaces: [],
+                  totalCount: 0,
+                  summaries: childCareSpaceSummariesFactory.build(),
+                },
+              }
             },
             "/api/administration-cost-categories": async () => {
               return { data: { administrationCostCategories: [], totalCount: 0 } }
@@ -114,7 +146,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
       test.each([
         ["AdministrationCostCreateFormCard", "Add Administration Cost"],
         ["QualityEnhancementCreateFormCard", "Add Quality Enhancement"],
-        ["ChildrenWithDiverseNeedsFundingRecordsCreateFormCard", "Add Diverse Need"],
+        ["ChildrenWithDiverseNeedsFundingRecordsCreateFormCard", "Add Children with Diverse Needs"],
       ])(
         "when an old %s reports completion after month navigation, keeps the newer creation locked",
         async (formName, addLabel) => {
@@ -124,14 +156,36 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             centreId: 1,
             fiscalYear: "2024/25",
             dateName: "April",
-            lines: [],
+            lines: [
+              {
+                submissionLineId: 1,
+                sectionName: "Other Funding",
+                lineName: "Supplement",
+                monthlyAmount: "10.0000",
+                estimatedChildOccupancyRate: "0",
+                actualChildOccupancyRate: "0",
+                estimatedComputedTotal: "0.0000",
+                actualComputedTotal: "0.0000",
+              },
+            ],
           })
           const mayWorksheet = fundingSubmissionLineJsonFactory.build({
             id: 45,
             centreId: 1,
             fiscalYear: "2024/25",
             dateName: "May",
-            lines: [],
+            lines: [
+              {
+                submissionLineId: 1,
+                sectionName: "Other Funding",
+                lineName: "Supplement",
+                monthlyAmount: "10.0000",
+                estimatedChildOccupancyRate: "0",
+                actualChildOccupancyRate: "0",
+                estimatedComputedTotal: "0.0000",
+                actualComputedTotal: "0.0000",
+              },
+            ],
           })
           const april = fiscalPeriodFactory.build({
             id: 4,
@@ -165,7 +219,13 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
               return { data: { qualityEnhancements: [], totalCount: 0 } }
             },
             "/api/child-care-spaces": async () => {
-              return { data: { childCareSpaces: [], totalCount: 0 } }
+              return {
+                data: {
+                  childCareSpaces: [],
+                  totalCount: 0,
+                  summaries: childCareSpaceSummariesFactory.build(),
+                },
+              }
             },
             "/api/administration-cost-categories": async () => {
               return { data: { administrationCostCategories: [], totalCount: 0 } }
@@ -222,7 +282,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
       test.each([
         ["AdministrationCostCreateFormCard", "Add Administration Cost"],
         ["QualityEnhancementCreateFormCard", "Add Quality Enhancement"],
-        ["ChildrenWithDiverseNeedsFundingRecordsCreateFormCard", "Add Diverse Need"],
+        ["ChildrenWithDiverseNeedsFundingRecordsCreateFormCard", "Add Children with Diverse Needs"],
       ])(
         "when the current %s finishes after month navigation, releases its creation lock",
         async (formName, addLabel) => {
@@ -232,14 +292,36 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             centreId: 1,
             fiscalYear: "2024/25",
             dateName: "April",
-            lines: [],
+            lines: [
+              {
+                submissionLineId: 1,
+                sectionName: "Other Funding",
+                lineName: "Supplement",
+                monthlyAmount: "10.0000",
+                estimatedChildOccupancyRate: "0",
+                actualChildOccupancyRate: "0",
+                estimatedComputedTotal: "0.0000",
+                actualComputedTotal: "0.0000",
+              },
+            ],
           })
           const mayWorksheet = fundingSubmissionLineJsonFactory.build({
             id: 45,
             centreId: 1,
             fiscalYear: "2024/25",
             dateName: "May",
-            lines: [],
+            lines: [
+              {
+                submissionLineId: 1,
+                sectionName: "Other Funding",
+                lineName: "Supplement",
+                monthlyAmount: "10.0000",
+                estimatedChildOccupancyRate: "0",
+                actualChildOccupancyRate: "0",
+                estimatedComputedTotal: "0.0000",
+                actualComputedTotal: "0.0000",
+              },
+            ],
           })
           const april = fiscalPeriodFactory.build({
             id: 4,
@@ -273,7 +355,13 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
               return { data: { qualityEnhancements: [], totalCount: 0 } }
             },
             "/api/child-care-spaces": async () => {
-              return { data: { childCareSpaces: [], totalCount: 0 } }
+              return {
+                data: {
+                  childCareSpaces: [],
+                  totalCount: 0,
+                  summaries: childCareSpaceSummariesFactory.build(),
+                },
+              }
             },
             "/api/administration-cost-categories": async () => {
               return { data: { administrationCostCategories: [], totalCount: 0 } }

@@ -1,4 +1,4 @@
-import { flushPromises, mount } from "@vue/test-utils"
+import { flushPromises } from "@vue/test-utils"
 
 import childCareSpacesApi from "@/api/child-care-spaces-api"
 import { type FiscalPeriod } from "@/api/fiscal-periods-api"
@@ -12,11 +12,12 @@ import { FiscalPeriodMonths } from "@/use/use-fiscal-periods"
 import {
   administrationCostFactory,
   childCareSpaceFactory,
+  childCareSpaceSummariesFactory,
   fiscalPeriodFactory,
   fundingSubmissionLineJsonFactory,
   qualityEnhancementFactory,
 } from "@/tests/factories"
-import { mockHttpGetRoutes, mockRouter, mockVuetify } from "@/tests/support"
+import { mockHttpGetRoutes, mountWithDefaultPlugins } from "@/tests/support"
 
 import MonthlyWorksheetPage from "@/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue"
 
@@ -94,7 +95,13 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           },
           "/api/child-care-spaces": async (config) => {
             if (config?.params?.where?.fiscalPeriodId === 5) {
-              return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
+              return {
+                data: {
+                  childCareSpaces: [childCareSpace],
+                  totalCount: 1,
+                  summaries: childCareSpaceSummariesFactory.build(),
+                },
+              }
             }
 
             throw new Error("Unexpected GET /api/child-care-spaces")
@@ -128,17 +135,13 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
 
           return { data: { fundingSubmissionLineJson } }
         })
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-        await router.push("/")
-        await router.isReady()
-        const wrapper = mount(MonthlyWorksheetPage, {
+        const wrapper = mountWithDefaultPlugins(MonthlyWorksheetPage, {
           props: {
             centreId: 1,
             fiscalYearSlug: "2024-25",
             month: FiscalPeriodMonths.APRIL,
           },
           global: {
-            plugins: [router, mockVuetify()],
             stubs: {
               BuildingExpenseCreateFormCard: true,
               BuildingExpensesEditTable: true,
@@ -190,16 +193,17 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           },
         })
         await flushPromises()
-        const estimateInput = wrapper.get("tbody input")
+        const spaces = wrapper.getComponent({ name: "ChildCareSpacesEditDataTableVirtual" })
+        await spaces.get("tr.cursor-pointer").trigger("click")
+        await flushPromises()
+        const estimateInput = spaces.get("tbody input")
         await estimateInput.setValue("0.5")
-        await estimateInput.trigger("change")
-        await wrapper.get("button").trigger("click")
+        await estimateInput.trigger("keydown", { key: "Enter" })
         await flushPromises()
 
         // Assert
         expect(updateChildCareSpace).toHaveBeenCalledExactlyOnceWith(50, {
           estimatedChildOccupancyRate: "0.5",
-          actualChildOccupancyRate: "0.0000",
         })
       })
 
@@ -230,6 +234,18 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           dateName: "May",
           dateStart: "2024-05-01",
           dateEnd: "2024-05-31",
+          lines: [
+            {
+              submissionLineId: 1,
+              sectionName: "Other Funding",
+              lineName: "Supplement",
+              monthlyAmount: "10.0000",
+              estimatedChildOccupancyRate: "0",
+              actualChildOccupancyRate: "0",
+              estimatedComputedTotal: "0.0000",
+              actualComputedTotal: "0.0000",
+            },
+          ],
         })
         const childCareSpace = childCareSpaceFactory.build({
           id: 50,
@@ -274,7 +290,13 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           },
           "/api/child-care-spaces": async (config) => {
             if (config?.params?.where?.fiscalPeriodId === 5) {
-              return { data: { childCareSpaces: [childCareSpace], totalCount: 1 } }
+              return {
+                data: {
+                  childCareSpaces: [childCareSpace],
+                  totalCount: 1,
+                  summaries: childCareSpaceSummariesFactory.build(),
+                },
+              }
             }
 
             throw new Error("Unexpected GET /api/child-care-spaces")
@@ -308,17 +330,13 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
 
           return { data: { fundingSubmissionLineJson } }
         })
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-        await router.push("/")
-        await router.isReady()
-        const wrapper = mount(MonthlyWorksheetPage, {
+        const wrapper = mountWithDefaultPlugins(MonthlyWorksheetPage, {
           props: {
             centreId: 1,
             fiscalYearSlug: "2024-25",
             month: FiscalPeriodMonths.APRIL,
           },
           global: {
-            plugins: [router, mockVuetify()],
             stubs: {
               BuildingExpenseCreateFormCard: true,
               BuildingExpensesEditTable: true,
@@ -370,14 +388,14 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           },
         })
         await flushPromises()
-        const estimateInput = wrapper.get("tbody input")
-        await estimateInput.setValue("0.5")
-        await estimateInput.trigger("change")
-        await wrapper.get("button").trigger("click")
+        const sheet = wrapper.getComponent({ name: "FundingSubmissionLineJsonEditSheet" })
+        await sheet.get("button").trigger("click")
         await flushPromises()
 
         // Assert
-        expect(updateWorksheet).toHaveBeenCalledExactlyOnceWith(55, { lines: [] })
+        expect(updateWorksheet).toHaveBeenCalledExactlyOnceWith(55, {
+          lines: fundingSubmissionLineJson.lines,
+        })
       })
     })
   })

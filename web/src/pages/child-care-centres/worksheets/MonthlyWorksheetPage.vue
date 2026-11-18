@@ -50,93 +50,50 @@
         >
       </template>
     </v-empty-state>
-    <div v-else-if="!isNil(fundingSubmissionLineJson) && !isNil(fiscalPeriod)">
-      <FundingSubmissionLineJsonEditSheet
-        ref="jsonSheet"
-        :key="`${centreId}-${fiscalYearSlug}-${month}-${fundingSubmissionLineJson.id}-${fiscalPeriod.id}`"
-        :funding-submission-line-json-id="fundingSubmissionLineJson.id"
-        :centre-id="centreId"
-        :fiscal-period-id="fiscalPeriod.id"
-        class="ma-4"
-        :is-workflow-busy="
-          isWorksheetSaving || isReplicating || isLedgerMutating || isRefreshingLinked
-        "
-        @update:funding-submission-line-json="onJsonUpdated"
-      >
-        <template #actions>
-          <div class="d-flex flex-wrap justify-end ga-2">
-            <v-btn
-              v-if="month === FiscalPeriodMonths.APRIL"
-              color="yg-sun"
-              :loading="isReplicating"
-              :disabled="isWorkflowBusy || isReplicationUnavailable"
-              @click="replicateEstimatesForward"
-            >
-              <v-icon>mdi-content-copy</v-icon>
-              Replicate Estimates
-            </v-btn>
-          </div>
-        </template>
-        <template #section-actions>
-          <v-btn
-            color="primary"
-            :loading="isWorksheetSaving"
-            :disabled="isWorkflowBusy || isReplicationUnavailable"
-            @click="saveWorksheet"
+    <div
+      v-else-if="!isNil(fundingSubmissionLineJson) && !isNil(fiscalPeriod)"
+      :key="fundingSubmissionLineJson.id"
+    >
+      <div class="d-flex flex-wrap align-center ga-2 ma-4">
+        <h2>{{ monthAsDateName }} {{ calendarYear }}</h2>
+        <v-btn
+          v-if="month === FiscalPeriodMonths.APRIL"
+          class="ml-auto"
+          color="yg-sun"
+          :loading="isReplicating"
+          :disabled="isWorkflowBusy || isReplicationUnavailable"
+          @click="replicateEstimatesForward"
+        >
+          <v-icon>mdi-content-copy</v-icon>
+          Replicate Estimates
+        </v-btn>
+      </div>
+      <section class="ma-4">
+        <h3
+          class="d-flex justify-space-between align-center mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2"
+        >
+          Child Care Spaces
+          <v-icon
+            title="Show keyboard shortcuts"
+            @click="showKeyboardShortcutsModal"
           >
-            Save
-          </v-btn>
-        </template>
-      </FundingSubmissionLineJsonEditSheet>
-      <section class="ma-4 mt-8">
-        <h3 class="mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2">
-          Children with Diverse Needs
+            mdi-keyboard
+          </v-icon>
         </h3>
-        <ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual
-          ref="childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual"
+        <ChildCareSpacesEditDataTableVirtual
+          ref="childCareSpacesEditDataTableVirtual"
           :where="worksheetWhere"
           :is-replicating="
             isReplicating ||
             isWorksheetSaving ||
             isRefreshingLinked ||
-            isCreatingChildrenWithDiverseNeedsFundingRecord
+            administrationCostTable?.isSaving ||
+            qualityEnhancementTable?.isSaving
           "
+          @updated="onSpacesUpdated"
+          @focus-beyond-last-in-column="navigateBetweenSections(0, 1, $event)"
+          @focus-beyond-first-in-column="navigateBetweenSections(0, -1, $event)"
         />
-        <v-row
-          v-if="!isNil(childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual)"
-          class="mt-0"
-        >
-          <v-col
-            v-if="!showChildrenWithDiverseNeedsFundingRecordCreateForm"
-            cols="12"
-            class="d-flex justify-end"
-          >
-            <v-btn
-              color="primary"
-              :disabled="isChildrenWithDiverseNeedsFundingRecordCreationUnavailable"
-              @click="openChildrenWithDiverseNeedsFundingRecordCreateForm"
-            >
-              Add Diverse Need
-            </v-btn>
-          </v-col>
-          <v-col
-            v-else
-            cols="12"
-          >
-            <ChildrenWithDiverseNeedsFundingRecordsCreateFormCard
-              :centre-id="centreId"
-              :fiscal-period-id="fiscalPeriod.id"
-              :funding-period-id="fiscalPeriod.fundingPeriodId"
-              :existing-category-ids="
-                childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.categoryIds
-              "
-              :is-workflow-busy="isReplicating || isWorksheetSaving || isRefreshingLinked"
-              @saving="trackChildrenWithDiverseNeedsFundingRecordCreation"
-              @created="closeChildrenWithDiverseNeedsFundingRecordCreateFormAndRefresh"
-              @cancel="closeChildrenWithDiverseNeedsFundingRecordCreateForm"
-            />
-          </v-col>
-        </v-row>
       </section>
       <section class="ma-4 mt-8">
         <h3 class="mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2">
@@ -146,8 +103,14 @@
           ref="administrationCostTable"
           :where="worksheetWhere"
           :is-replicating="
-            isReplicating || isWorksheetSaving || isRefreshingLinked || isCreatingAdministrationCost
+            isReplicating ||
+            isWorksheetSaving ||
+            isRefreshingLinked ||
+            childCareSpacesEditDataTableVirtual?.isSaving ||
+            isCreatingAdministrationCost
           "
+          @focus-beyond-last-in-column="navigateBetweenSections(1, 1, $event)"
+          @focus-beyond-first-in-column="navigateBetweenSections(1, -1, $event)"
         />
         <v-row
           v-if="!isNil(administrationCostTable)"
@@ -191,8 +154,14 @@
           ref="qualityEnhancementTable"
           :where="worksheetWhere"
           :is-replicating="
-            isReplicating || isWorksheetSaving || isRefreshingLinked || isCreatingQualityEnhancement
+            isReplicating ||
+            isWorksheetSaving ||
+            isRefreshingLinked ||
+            childCareSpacesEditDataTableVirtual?.isSaving ||
+            isCreatingQualityEnhancement
           "
+          @focus-beyond-last-in-column="navigateBetweenSections(2, 1, $event)"
+          @focus-beyond-first-in-column="navigateBetweenSections(2, -1, $event)"
         />
         <v-row
           v-if="!isNil(qualityEnhancementTable)"
@@ -228,6 +197,58 @@
           </v-col>
         </v-row>
       </section>
+      <section class="ma-4 mt-8">
+        <h3 class="mt-4 mb-2 ml-n2 pa-2 rounded bg-primary-lighten-2">
+          Children with Diverse Needs
+        </h3>
+        <ChildrenWithDiverseNeedsFundingRecordsEditDataTableVirtual
+          ref="childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual"
+          :where="worksheetWhere"
+          :is-replicating="
+            isReplicating ||
+            isWorksheetSaving ||
+            isRefreshingLinked ||
+            isCreatingChildrenWithDiverseNeedsFundingRecord
+          "
+          @focus-beyond-last-in-column="navigateBetweenSections(3, 1, $event)"
+          @focus-beyond-first-in-column="navigateBetweenSections(3, -1, $event)"
+        />
+        <v-row
+          v-if="!isNil(childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual)"
+          class="mt-0"
+        >
+          <v-col
+            v-if="!showChildrenWithDiverseNeedsFundingRecordCreateForm"
+            cols="12"
+            class="d-flex justify-end"
+          >
+            <v-btn
+              color="primary"
+              :disabled="isChildrenWithDiverseNeedsFundingRecordCreationUnavailable"
+              @click="openChildrenWithDiverseNeedsFundingRecordCreateForm"
+            >
+              Add Children with Diverse Needs
+            </v-btn>
+          </v-col>
+          <v-col
+            v-else
+            cols="12"
+          >
+            <ChildrenWithDiverseNeedsFundingRecordsCreateFormCard
+              :centre-id="centreId"
+              :fiscal-period-id="fiscalPeriod.id"
+              :funding-period-id="fiscalPeriod.fundingPeriodId"
+              :existing-category-ids="
+                childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.categoryIds
+              "
+              :is-workflow-busy="isReplicating || isWorksheetSaving || isRefreshingLinked"
+              @saving="trackChildrenWithDiverseNeedsFundingRecordCreation"
+              @created="closeChildrenWithDiverseNeedsFundingRecordCreateFormAndRefresh"
+              @cancel="closeChildrenWithDiverseNeedsFundingRecordCreateForm"
+            />
+          </v-col>
+        </v-row>
+      </section>
 
       <section class="ma-4 mt-8">
         <h3
@@ -247,6 +268,8 @@
         <BuildingExpensesEditTable
           ref="buildingExpensesEditTable"
           :where="worksheetWhere"
+          @focus-beyond-last-in-column="navigateBetweenSections(4, 1, $event)"
+          @focus-beyond-first-in-column="navigateBetweenSections(4, -1, $event)"
         />
 
         <v-row class="mt-0">
@@ -276,6 +299,16 @@
           </v-col>
         </v-row>
       </section>
+      <FundingSubmissionLineJsonEditSheet
+        ref="jsonSheet"
+        :key="`${centreId}-${fiscalYearSlug}-${month}-${fundingSubmissionLineJson.id}-${fiscalPeriod.id}`"
+        :funding-submission-line-json-id="fundingSubmissionLineJson.id"
+        class="ma-4"
+        :is-workflow-busy="isWorkflowBusy"
+        @focus-beyond-last-in-column="navigateBetweenSections(5, 1, $event)"
+        @focus-beyond-first-in-column="navigateBetweenSections(5, -1, $event)"
+        @update:funding-submission-line-json="onJsonUpdated"
+      />
       <KeyboardShortcutsModal ref="keyboardShortcutsModal" />
     </div>
   </div>
@@ -283,6 +316,7 @@
 
 <script setup lang="ts">
 import { computed, ref, useTemplateRef, watch, watchEffect } from "vue"
+import { DateTime } from "luxon"
 import { isNil, upperFirst } from "lodash"
 import { useHotkey } from "vuetify"
 
@@ -297,6 +331,7 @@ import { FiscalPeriodMonths } from "@/use/use-fiscal-periods"
 import PageLoader from "@/components/common/PageLoader.vue"
 import KeyboardShortcutsModal from "@/components/common/KeyboardShortcutsModal.vue"
 import FundingSubmissionLineJsonEditSheet from "@/components/funding-submission-line-jsons/FundingSubmissionLineJsonEditSheet.vue"
+import ChildCareSpacesEditDataTableVirtual from "@/components/child-care-spaces/ChildCareSpacesEditDataTableVirtual.vue"
 import BuildingExpenseCreateFormCard from "@/components/building-expenses/BuildingExpenseCreateFormCard.vue"
 import BuildingExpensesEditTable from "@/components/building-expenses/BuildingExpensesEditTable.vue"
 import AdministrationCostEditTable from "@/components/administration-costs/AdministrationCostEditTable.vue"
@@ -321,6 +356,9 @@ const fiscalYear = computed(() => props.fiscalYearSlug.replace("-", "/"))
 const monthAsDateName = computed(() => upperFirst(props.month))
 const fundingSubmissionLineJson = ref<FundingSubmissionLineJsonAsIndex | null>(null)
 const fiscalPeriod = ref<FiscalPeriod | null>(null)
+const calendarYear = computed(() =>
+  isNil(fiscalPeriod.value) ? "" : DateTime.fromISO(fiscalPeriod.value.dateStart).toFormat("yyyy")
+)
 const isLoading = ref(true)
 const loadError = ref(false)
 let activeRequest = 0
@@ -419,9 +457,73 @@ const administrationCostTable =
   useTemplateRef<InstanceType<typeof AdministrationCostEditTable>>("administrationCostTable")
 const qualityEnhancementTable =
   useTemplateRef<InstanceType<typeof QualityEnhancementEditTable>>("qualityEnhancementTable")
+const childCareSpacesEditDataTableVirtual = useTemplateRef<
+  InstanceType<typeof ChildCareSpacesEditDataTableVirtual>
+>("childCareSpacesEditDataTableVirtual")
 const jsonSheet = useTemplateRef("jsonSheet")
 const buildingExpensesEditTable = useTemplateRef("buildingExpensesEditTable")
 const keyboardShortcutsModal = useTemplateRef("keyboardShortcutsModal")
+
+async function navigateBetweenSections(
+  currentIndex: number,
+  direction: 1 | -1,
+  columnName: "estimates" | "actuals"
+) {
+  const targets = [
+    { kind: "occupancy", table: childCareSpacesEditDataTableVirtual.value },
+    { kind: "occupancy", table: administrationCostTable.value },
+    { kind: "occupancy", table: qualityEnhancementTable.value },
+    {
+      kind: "occupancy",
+      table: childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value,
+    },
+    { kind: "building", table: buildingExpensesEditTable.value },
+    { kind: "json", table: jsonSheet.value },
+  ] as const
+  const current = targets[currentIndex]?.table
+
+  if (!isNil(current) && "commitEdit" in current && !(await current.commitEdit())) return
+  await linkedOccupancyRefresh
+
+  for (
+    let index = currentIndex + direction;
+    index >= 0 && index < targets.length;
+    index += direction
+  ) {
+    const target = targets[index]
+    if (
+      isNil(target?.table) ||
+      target.table.isLoading ||
+      ("isErrored" in target.table && target.table.isErrored)
+    ) {
+      continue
+    }
+
+    let didFocus: boolean
+    if (target.kind === "json") {
+      didFocus =
+        direction === 1
+          ? target.table.focusOnFirstInColumn(columnName)
+          : target.table.focusOnLastInColumn(columnName)
+    } else if (target.kind === "building") {
+      const column = columnName === "estimates" ? "estimatedCost" : "actualCost"
+      didFocus =
+        direction === 1
+          ? target.table.focusOnFirstInColumn(column)
+          : target.table.focusOnLastInColumn(column)
+    } else {
+      const column =
+        columnName === "estimates" ? "estimatedChildOccupancyRate" : "actualChildOccupancyRate"
+      didFocus =
+        direction === 1
+          ? target.table.focusOnFirstInColumn(column)
+          : target.table.focusOnLastInColumn(column)
+    }
+
+    if (didFocus) return
+  }
+}
+
 const showBuildingExpenseCreateForm = ref(false)
 const isReplicating = ref(false)
 const isWorksheetSaving = ref(false)
@@ -430,6 +532,7 @@ const snack = useSnack()
 const isLedgerMutating = computed(() =>
   Boolean(
     childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value?.isSaving ||
+      childCareSpacesEditDataTableVirtual.value?.isSaving ||
       childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value?.isDeleting ||
       administrationCostTable.value?.isSaving ||
       administrationCostTable.value?.isDeleting ||
@@ -463,11 +566,7 @@ const isChildrenWithDiverseNeedsFundingRecordCreationUnavailable = computed(() =
 const isAdministrationCostCreationUnavailable = computed(() => {
   const administration = administrationCostTable.value
 
-  return (
-    isWorkflowBusy.value ||
-    isNil(administration) ||
-    administration.isLoading
-  )
+  return isWorkflowBusy.value || isNil(administration) || administration.isLoading
 })
 
 const isQualityEnhancementCreationUnavailable = computed(() => {
@@ -483,11 +582,14 @@ const isQualityEnhancementCreationUnavailable = computed(() => {
 
 const isReplicationUnavailable = computed(() => {
   const sheet = jsonSheet.value
+  const childCareSpacesTable = childCareSpacesEditDataTableVirtual.value
   const administration = administrationCostTable.value
   const childrenWithDiverseNeedsFundingRecord =
     childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value
   const quality = qualityEnhancementTable.value
   return (
+    !childCareSpacesTable ||
+    childCareSpacesTable.isLoading ||
     !sheet ||
     sheet.isLoading ||
     sheet.isErrored ||
@@ -524,17 +626,38 @@ async function closeCreateFormAndRefresh() {
   await buildingExpensesEditTable.value?.refresh()
 }
 
-async function refreshLinkedResources() {
-  const results = await Promise.allSettled([
-    administrationCostTable.value?.refresh(),
-    childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value?.refresh(),
-    qualityEnhancementTable.value?.refresh(),
-  ])
-  const failures = results.flatMap((result) =>
-    result.status === "rejected" ? [result.reason] : []
-  )
-  if (failures.length > 0) {
-    throw new AggregateError(failures, failures.map(String).join("; "))
+let linkedOccupancyRefresh: Promise<void> = Promise.resolve()
+const onSpacesUpdated = computed(() => {
+  const worksheetId = fundingSubmissionLineJson.value?.id
+  return () => {
+    if (worksheetId !== fundingSubmissionLineJson.value?.id) return
+
+    linkedOccupancyRefresh = refreshLinkedOccupancy().catch((error) => {
+      rethrowUnexpectedError(error)
+
+      snack.error(`Failed to refresh linked worksheet sections: ${error}`)
+    })
+    return linkedOccupancyRefresh
+  }
+})
+
+async function refreshLinkedOccupancy() {
+  const worksheetId = fundingSubmissionLineJson.value?.id
+  isRefreshingLinked.value = true
+  try {
+    const results = await Promise.allSettled([
+      administrationCostTable.value?.refresh(),
+      qualityEnhancementTable.value?.refresh(),
+    ])
+    const failures = results.flatMap((result) =>
+      result.status === "rejected" ? [result.reason] : []
+    )
+    if (failures.length > 0) {
+      throw new AggregateError(failures, failures.map(String).join("; "))
+    }
+    if (!isNil(worksheetId)) onJsonUpdated(worksheetId)
+  } finally {
+    isRefreshingLinked.value = false
   }
 }
 
@@ -552,41 +675,42 @@ async function saveWorksheet(): Promise<boolean> {
   }
 
   const sheet = jsonSheet.value
+  const childCareSpacesTable = childCareSpacesEditDataTableVirtual.value
   const administration = administrationCostTable.value
   const childrenWithDiverseNeedsFundingRecord =
     childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value
   const quality = qualityEnhancementTable.value
-  if (!sheet || !administration || !childrenWithDiverseNeedsFundingRecord || !quality) {
+  if (
+    !sheet ||
+    !childCareSpacesTable ||
+    !administration ||
+    !childrenWithDiverseNeedsFundingRecord ||
+    !quality
+  ) {
     return false
   }
 
   try {
-    isWorksheetSaving.value = true
-    const [
-      administrationCommitted,
-      childrenWithDiverseNeedsFundingRecordCommitted,
-      qualityCommitted,
-    ] = await Promise.all([
+    const committedEdits = Promise.allSettled([
+      childCareSpacesTable.commitEdit(),
       administration.commitEdit(),
       childrenWithDiverseNeedsFundingRecord.commitEdit(),
       quality.commitEdit(),
     ])
-    if (
-      !administrationCommitted ||
-      !childrenWithDiverseNeedsFundingRecordCommitted ||
-      !qualityCommitted
-    ) {
+    isWorksheetSaving.value = true
+    const commitResults = await committedEdits
+    await linkedOccupancyRefresh
+    const commitFailures = commitResults.flatMap((result) =>
+      result.status === "rejected" ? [result.reason] : []
+    )
+    if (commitFailures.length > 0) {
+      throw new AggregateError(commitFailures, commitFailures.map(String).join("; "))
+    }
+    if (commitResults.some((result) => result.status === "fulfilled" && !result.value)) {
       return false
     }
 
-    const wasSaved = await sheet.saveFundingSubmissionLineJson()
-    isRefreshingLinked.value = true
-    try {
-      await refreshLinkedResources()
-    } finally {
-      isRefreshingLinked.value = false
-    }
-    return wasSaved
+    return await sheet.saveFundingSubmissionLineJson()
   } catch (error) {
     rethrowUnexpectedError(error)
 
@@ -685,11 +809,18 @@ async function replicateEstimatesForward() {
   }
 
   const sheet = jsonSheet.value
+  const childCareSpacesTable = childCareSpacesEditDataTableVirtual.value
   const administration = administrationCostTable.value
   const childrenWithDiverseNeedsFundingRecord =
     childrenWithDiverseNeedsFundingRecordsEditDataTableVirtual.value
   const quality = qualityEnhancementTable.value
-  if (!sheet || !administration || !childrenWithDiverseNeedsFundingRecord || !quality) {
+  if (
+    !sheet ||
+    !childCareSpacesTable ||
+    !administration ||
+    !childrenWithDiverseNeedsFundingRecord ||
+    !quality
+  ) {
     return
   }
 
@@ -708,6 +839,7 @@ async function replicateEstimatesForward() {
 
     const results = await Promise.allSettled([
       sheet.replicateOwnEstimates(),
+      childCareSpacesTable.replicateEstimates(),
       administration.replicateEstimates(),
       childrenWithDiverseNeedsFundingRecord.replicateEstimates(),
       quality.replicateEstimates(),

@@ -11,6 +11,7 @@ import { FiscalPeriodMonths } from "@/use/use-fiscal-periods"
 import {
   administrationCostFactory,
   childCareSpaceFactory,
+  childCareSpaceSummariesFactory,
   childrenWithDiverseNeedsFundingRecordFactory,
   fiscalPeriodFactory,
   fundingSubmissionLineJsonFactory,
@@ -23,6 +24,61 @@ import MonthlyWorksheetPage from "@/pages/child-care-centres/worksheets/MonthlyW
 describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue", () => {
   describe("MonthlyWorksheetPage", () => {
     describe("worksheet navigation", () => {
+      test("when an April worksheet loads, shows its calendar month and year", async () => {
+        // Arrange
+        const worksheet = fundingSubmissionLineJsonFactory.build({
+          id: 44,
+          centreId: 1,
+          dateName: "April",
+          lines: [],
+        })
+        const fiscalPeriod = fiscalPeriodFactory.build({
+          id: 4,
+          fiscalYear: "2024-25",
+          month: FiscalPeriodMonths.APRIL,
+          dateStart: "2024-04-01",
+        })
+        mockHttpGetRoutes({
+          "/api/funding-submission-line-jsons": async () => ({
+            data: { fundingSubmissionLineJsons: [worksheet], totalCount: 1 },
+          }),
+          "/api/fiscal-periods": async () => ({
+            data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 },
+          }),
+          "/api/funding-submission-line-jsons/44": async () => ({
+            data: { fundingSubmissionLineJson: worksheet },
+          }),
+          "/api/child-care-spaces": async () => ({
+            data: {
+              childCareSpaces: [],
+              totalCount: 0,
+              summaries: childCareSpaceSummariesFactory.build(),
+            },
+          }),
+          "/api/administration-costs": async () => ({
+            data: { administrationCosts: [], totalCount: 0 },
+          }),
+          "/api/quality-enhancements": async () => ({
+            data: { qualityEnhancements: [], totalCount: 0 },
+          }),
+          "/api/children-with-diverse-needs-funding-records": async () => ({
+            data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 },
+          }),
+        })
+        const wrapper = mountWithDefaultPlugins(MonthlyWorksheetPage, {
+          props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
+          global: {
+            stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
+          },
+        })
+
+        // Act
+        await flushPromises()
+
+        // Assert
+        expect(wrapper.get("h2").text()).toEqual("April 2024")
+      })
+
       test("when one worksheet read fails while another is pending, keeps loading", async () => {
         // Arrange
         const fiscalPeriods = Promise.withResolvers<{
@@ -190,6 +246,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           "/api/child-care-spaces": async () => {
             return {
               data: {
+                summaries: childCareSpaceSummariesFactory.build(),
                 childCareSpaces: [childCareSpace],
                 totalCount: 1,
               },
@@ -248,7 +305,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         expect(wrapper.findAll("tbody input")).toHaveLength(0)
       })
 
-      test("when Administration costs fail to load, disables cross-section estimate replication", async () => {
+      test("when Quality Enhancements fail to load, disables cross-section estimate replication", async () => {
         // Arrange
         const worksheet = fundingSubmissionLineJsonFactory.build({
           id: 44,
@@ -288,19 +345,20 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           "/api/child-care-spaces": async () => {
             return {
               data: {
+                summaries: childCareSpaceSummariesFactory.build(),
                 childCareSpaces: [],
                 totalCount: 0,
               },
             }
           },
           "/api/administration-costs": async () => {
-            throw new ApiOperationError("Administration costs unavailable", 503)
+            return { data: { administrationCosts: [], totalCount: 0 } }
           },
           "/api/children-with-diverse-needs-funding-records": async () => {
             return { data: { childrenWithDiverseNeedsFundingRecords: [], totalCount: 0 } }
           },
           "/api/quality-enhancements": async () => {
-            return { data: { qualityEnhancements: [], totalCount: 0 } }
+            throw new ApiOperationError("Quality Enhancements unavailable", 503)
           },
         })
         const wrapper = mountWithDefaultPlugins(MonthlyWorksheetPage, {
@@ -330,7 +388,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         expect(replicate?.attributes("disabled")).toEqual("")
       })
 
-      test("when the worksheet loads, displays its sections in worksheet order", async () => {
+      test("when the worksheet loads, retains the original worksheet section order", async () => {
         // Arrange
         const worksheet = fundingSubmissionLineJsonFactory.build({
           id: 44,
@@ -346,6 +404,29 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             categoryId: 90,
             lineName: "Ledger Diverse Needs",
           })
+        const space = childCareSpaceFactory.build({
+          id: 51,
+          centreId: 1,
+          fiscalPeriodId: 4,
+          categoryId: 8,
+          lineName: "Toddlers",
+        })
+        const administration = administrationCostFactory.build({
+          id: 61,
+          centreId: 1,
+          fiscalPeriodId: 4,
+          childCareSpaceCategoryId: 8,
+          lineName: "Renamed Administration",
+          monthlyAmount: "70.0000",
+        })
+        const quality = qualityEnhancementFactory.build({
+          id: 71,
+          centreId: 1,
+          fiscalPeriodId: 4,
+          childCareSpaceCategoryId: 8,
+          lineName: "Renamed Quality Enhancement",
+          monthlyAmount: "7.0000",
+        })
         const fiscalPeriod = fiscalPeriodFactory.build({
           id: 4,
           fundingPeriodId: 1,
@@ -360,10 +441,16 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
           },
           "/api/child-care-spaces": async () => {
-            return { data: { childCareSpaces: [], totalCount: 0 } }
+            return {
+              data: {
+                childCareSpaces: [space],
+                totalCount: 1,
+                summaries: childCareSpaceSummariesFactory.build(),
+              },
+            }
           },
           "/api/administration-costs": async () => {
-            return { data: { administrationCosts: [], totalCount: 0 } }
+            return { data: { administrationCosts: [administration], totalCount: 1 } }
           },
           "/api/children-with-diverse-needs-funding-records": async (config) => {
             if (config?.params?.where?.centreId === 1 && config.params.where.fiscalPeriodId === 4) {
@@ -378,7 +465,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             return { data: { fundingSubmissionLineJson: worksheet } }
           },
           "/api/quality-enhancements": async () => {
-            return { data: { qualityEnhancements: [], totalCount: 0 } }
+            return { data: { qualityEnhancements: [quality], totalCount: 1 } }
           },
           "/api/funding-submission-line-jsons/44": async () => {
             return { data: { fundingSubmissionLineJson: worksheet } }
@@ -398,9 +485,9 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         const sectionHeadings = wrapper.findAll("h3").map((heading) => heading.text())
         expect(sectionHeadings).toEqual([
           "Child Care Spaces",
-          "Children with Diverse Needs",
           "Administration (10% of Spaces)",
           "Quality Enhancement Program",
+          "Children with Diverse Needs",
           "Building Expenses",
         ])
       })
@@ -435,7 +522,13 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
           },
           "/api/child-care-spaces": async () => {
-            return { data: { childCareSpaces: [], totalCount: 0 } }
+            return {
+              data: {
+                childCareSpaces: [],
+                totalCount: 0,
+                summaries: childCareSpaceSummariesFactory.build(),
+              },
+            }
           },
           "/api/administration-costs": async () => {
             return { data: { administrationCosts: [], totalCount: 0 } }
@@ -513,7 +606,13 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
               return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
             },
             "/api/child-care-spaces": async () => {
-              return { data: { childCareSpaces: [space], totalCount: 1 } }
+              return {
+                data: {
+                  childCareSpaces: [space],
+                  totalCount: 1,
+                  summaries: childCareSpaceSummariesFactory.build(),
+                },
+              }
             },
             "/api/administration-costs": async () => {
               return { data: { administrationCosts: [administration], totalCount: 1 } }
@@ -557,7 +656,14 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           await flushPromises()
 
           // Assert
-          expect(wrapper.get<HTMLInputElement>("tbody input").element.readOnly).toEqual(true)
+          const spaces = wrapper.getComponent({ name: "ChildCareSpacesEditDataTableVirtual" })
+          await spaces.get("tr.cursor-pointer").trigger("click")
+          try {
+            expect(spaces.get("tbody input").attributes("disabled")).toEqual("")
+          } finally {
+            pendingReplication.resolve({ data: undefined })
+            await flushPromises()
+          }
         }
       )
 
@@ -585,7 +691,13 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
           },
           "/api/child-care-spaces": async () => {
-            return { data: { childCareSpaces: [], totalCount: 0 } }
+            return {
+              data: {
+                childCareSpaces: [],
+                totalCount: 0,
+                summaries: childCareSpaceSummariesFactory.build(),
+              },
+            }
           },
           "/api/administration-costs": async () => {
             return { data: { administrationCosts: [], totalCount: 0 } }
@@ -617,8 +729,8 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         await flushPromises()
         const addDiverseNeed = wrapper
           .findAll("button")
-          .find((button) => button.text() === "Add Diverse Need")
-        if (!addDiverseNeed) throw new Error("Expected Add Diverse Need")
+          .find((button) => button.text() === "Add Children with Diverse Needs")
+        if (!addDiverseNeed) throw new Error("Expected Add Children with Diverse Needs")
         await addDiverseNeed.trigger("click")
 
         // Act
@@ -662,7 +774,13 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
           },
           "/api/child-care-spaces": async () => {
-            return { data: { childCareSpaces: [], totalCount: 0 } }
+            return {
+              data: {
+                childCareSpaces: [],
+                totalCount: 0,
+                summaries: childCareSpaceSummariesFactory.build(),
+              },
+            }
           },
           "/api/administration-costs": async () => {
             return { data: { administrationCosts: [], totalCount: 0 } }
@@ -694,8 +812,8 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         await flushPromises()
         const addDiverseNeed = wrapper
           .findAll("button")
-          .find((button) => button.text() === "Add Diverse Need")
-        if (!addDiverseNeed) throw new Error("Expected Add Diverse Need")
+          .find((button) => button.text() === "Add Children with Diverse Needs")
+        if (!addDiverseNeed) throw new Error("Expected Add Children with Diverse Needs")
         await addDiverseNeed.trigger("click")
 
         // Act
@@ -739,7 +857,13 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
           },
           "/api/child-care-spaces": async () => {
-            return { data: { childCareSpaces: [], totalCount: 0 } }
+            return {
+              data: {
+                childCareSpaces: [],
+                totalCount: 0,
+                summaries: childCareSpaceSummariesFactory.build(),
+              },
+            }
           },
           "/api/administration-costs": async () => {
             return { data: { administrationCosts: [], totalCount: 0 } }
@@ -771,8 +895,8 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         await flushPromises()
         const addDiverseNeed = wrapper
           .findAll("button")
-          .find((button) => button.text() === "Add Diverse Need")
-        if (!addDiverseNeed) throw new Error("Expected Add Diverse Need")
+          .find((button) => button.text() === "Add Children with Diverse Needs")
+        if (!addDiverseNeed) throw new Error("Expected Add Children with Diverse Needs")
         await addDiverseNeed.trigger("click")
 
         // Act

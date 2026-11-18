@@ -44,15 +44,15 @@ Initial provisioning creates the configured monthly records. Afterward, workshee
 
 ## Worksheet and reporting rules
 
-- Occupancy edits propagate to **Administration (10% of Spaces)** and **Quality Enhancement Program** through stable category IDs, not editable labels or section position. Both estimated and actual occupancy are copied to existing linked rows for the same centre and month in the Spaces save transaction. Each dependent total uses its own snapshotted rate; missing rows, historical rates, and other months are unchanged.
+- Occupancy edits propagate to **Administration (10% of Spaces)** and **Quality Enhancement Program** through stable category IDs, not editable labels or section position. Only numerically changed occupancy fields are copied to existing linked rows for the same centre and month in the Spaces save transaction. An unchanged opposite-column downstream override is preserved. Each dependent total uses its own snapshotted rate; missing rows, historical rates, and other months are unchanged. Downstream sections remain independently editable without propagating to each other or back to Spaces.
 - **Replicate Estimates** copies estimates to matching lines in later months of the same funding period and centre. It clears those months' actual occupancy and actual totals; earlier months and other centres are unaffected.
 - **Enrollment** identifies the selected fiscal year and uses its latest month with positive actual occupancy for the selected centre, including every category from that month. Empty future months must not hide earlier enrollment. Without positive actual occupancy, there is no enrollment chart.
 - Eligible expenses combine remaining worksheet JSON actual totals, Child Care Spaces, Administration, and Quality Enhancement ledger actual totals, and Building Expenses for the requested centre and fiscal period. Ledger-owned sections must not also be stored in worksheet JSON.
 - Removing a funding period removes its Child Care Spaces records without removing another period's records.
 - The worksheet mounts only after its centre, fiscal year, month, worksheet, and fiscal period agree. Delayed responses from earlier navigation cannot restore another month's editor.
-- Child Care Spaces and the remaining JSON sections, including **Children with Diverse Needs**, stay grouped before **Administration (10% of Spaces) → Quality Enhancement Program → Building Expenses**. Administration and Quality Enhancement commit occupancy edits immediately through independent tables.
-- **Save** and **Replicate Estimates** commit any active Administration or Quality Enhancement edit before persisting Child Care Spaces and JSON-owned lines. Inputs remain read only until every dispatched write and linked-row refresh settles, including after partial failure. A failed Spaces batch does not trigger the dependent worksheet JSON save.
-- A failed JSON or Spaces load blocks its editor until **Reload Worksheet** succeeds. Each independent table offers its own load retry and keeps stale rows non-editable until recovery succeeds; a table load failure disables cross-section estimate replication.
+- Child Care Spaces uses the shared row-editing table and commits occupancy immediately. The page refreshes linked Administration and Quality Enhancement rows after the backend transaction; there is no unsaved preview layer.
+- **Replicate Estimates** commits active ledger edits before saving remaining JSON-owned lines and dispatching each store's replication. Inputs remain read only until every dispatched write and linked-row refresh settles, including after partial failure.
+- A failed JSON load blocks its editor until **Reload Worksheet** succeeds. Spaces offers its own load retry. A failed linked-row refresh is reported separately from a rejected Spaces save.
 
 ## Sources
 

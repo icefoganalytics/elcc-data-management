@@ -169,6 +169,8 @@ function changeLineAndPropagate(line: FundingLineValue, lineIndex: number) {
 }
 
 function changeFocusInColumn(event: KeyboardEvent, columnName: ColumnNames, lineIndex: number) {
+  if (props.readonly) return
+
   const input = event.target as HTMLInputElement | null
   const isTextFullySelected =
     input?.selectionStart === 0 && input.selectionEnd === input.value.length
@@ -238,20 +240,26 @@ function focusOnPreviousColumn(columnName: ColumnNames, lineIndex: number) {
   focusOnNextInColumn("estimates", lineIndex - 1)
 }
 
-function focusOnFirstInColumn(columnName: ColumnNames) {
-  const fields = fieldsMap[columnName]
-  const field = fields[0]
-  if (isNil(field)) return
+function focusOnFirstInColumn(columnName: ColumnNames): boolean {
+  const field = fieldsMap[columnName].find(
+    (candidate) => !candidate.disabled && !candidate.readOnly
+  )
+  if (isNil(field)) return false
 
   focusOnField(field)
+  return true
 }
 
-function focusOnLastInColumn(columnName: ColumnNames) {
+function focusOnLastInColumn(columnName: ColumnNames): boolean {
   const fields = fieldsMap[columnName]
-  const field = fields[fields.length - 1]
-  if (isNil(field)) return
+  for (let index = fields.length - 1; index >= 0; index--) {
+    const field = fields[index]
+    if (isNil(field) || field.disabled || field.readOnly) continue
+    focusOnField(field)
+    return true
+  }
 
-  focusOnField(field)
+  return false
 }
 
 function focusOnField(field: HTMLInputElement) {
