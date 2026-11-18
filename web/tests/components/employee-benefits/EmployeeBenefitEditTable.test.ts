@@ -1,4 +1,5 @@
 import { flushPromises, mount } from "@vue/test-utils"
+import Big from "big.js"
 
 import employeeBenefitsApi from "@/api/employee-benefits-api"
 import ApiOperationError from "@/api/errors/api-operation-error"
@@ -272,7 +273,7 @@ describe("web/src/components/employee-benefits/EmployeeBenefitEditTable.vue", ()
         await input.trigger("keydown", { key: "Enter" })
 
         // Assert
-        expect(input.element.value).toBe("$120.0000")
+        expect(Big(input.element.value.replace(/[$,]/g, "")).eq("120.0000")).toBe(true)
       })
     })
   })

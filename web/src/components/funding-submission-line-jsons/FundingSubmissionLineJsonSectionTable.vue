@@ -111,7 +111,7 @@ import { computed, reactive, Ref, ref } from "vue"
 import { isNil } from "lodash"
 import Big from "big.js"
 
-import { formatMoney } from "@/utils/formatters"
+import { formatDecimal, formatMoney } from "@/utils/formatters"
 import { sumByDecimal } from "@/utils/sum-by-decimal"
 import { FundingLineValue } from "@/api/funding-submission-line-jsons-api"
 
@@ -129,7 +129,7 @@ const emit = defineEmits<{
 }>()
 
 const totalEstimatedChildOccupancyRate = computed(() =>
-  sumByDecimal(props.lines, "estimatedChildOccupancyRate").toFixed(1)
+  formatDecimal(sumByDecimal(props.lines, "estimatedChildOccupancyRate").toFixed(4))
 )
 
 const totalEstimatedComputedTotal = computed(() =>
@@ -137,7 +137,7 @@ const totalEstimatedComputedTotal = computed(() =>
 )
 
 const totalActualChildOccupancyRate = computed(() =>
-  sumByDecimal(props.lines, "actualChildOccupancyRate").toFixed(1)
+  formatDecimal(sumByDecimal(props.lines, "actualChildOccupancyRate").toFixed(4))
 )
 
 const totalActualComputedTotal = computed(() =>
@@ -161,8 +161,8 @@ function refreshLineTotals(line: FundingLineValue) {
 }
 
 function changeLineAndPropagate(line: FundingLineValue, lineIndex: number) {
-  line.estimatedChildOccupancyRate = line.estimatedChildOccupancyRate || "0"
-  line.actualChildOccupancyRate = line.actualChildOccupancyRate || "0"
+  line.estimatedChildOccupancyRate = formatDecimal(line.estimatedChildOccupancyRate || "0")
+  line.actualChildOccupancyRate = formatDecimal(line.actualChildOccupancyRate || "0")
   refreshLineTotals(line)
 
   emit("lineChanged", { line, lineIndex })
