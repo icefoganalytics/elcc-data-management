@@ -43,7 +43,7 @@ export class DestroyService extends BaseService {
     await this.destroyDependentBuildingExpenses(fundingPeriodId)
     await this.destroyDependentChildCareSpaces(fundingPeriodId)
     await this.destroyDependentAdministrationCosts(fundingPeriodId)
-    await this.destroyDependentChildrenWithDiverseNeedsFundingRecords(fundingPeriodId)
+    await this.destroyDependentChildrenWithDiverseNeedsFundingRecord(fundingPeriodId)
     await this.destroyDependentChildrenWithDiverseNeedsFundingCategories(fundingPeriodId)
     await this.destroyDependentChildCareSpaceCategories(fundingPeriodId)
     await this.destroyDependentQualityEnhancements(fundingPeriodId)
@@ -95,7 +95,7 @@ export class DestroyService extends BaseService {
     })
   }
 
-  private async destroyDependentChildrenWithDiverseNeedsFundingRecords(fundingPeriodId: number) {
+  private async destroyDependentChildrenWithDiverseNeedsFundingRecord(fundingPeriodId: number) {
     await ChildrenWithDiverseNeedsFundingRecord.withScope({
       method: ["byFundingPeriod", fundingPeriodId],
     }).destroy({ where: {} })
