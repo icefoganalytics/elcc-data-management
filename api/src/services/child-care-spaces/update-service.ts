@@ -22,19 +22,11 @@ export class UpdateService extends BaseService {
       { isolationLevel: IsolationLevel.REPEATABLE_READ },
       async (transaction) => {
         await this.childCareSpace.reload({ transaction })
-        const occupancyChanged =
-          (this.attributes.estimatedChildOccupancyRate !== undefined &&
-            !new Big(this.childCareSpace.estimatedChildOccupancyRate).eq(
-              this.attributes.estimatedChildOccupancyRate
-            )) ||
-          (this.attributes.actualChildOccupancyRate !== undefined &&
-            !new Big(this.childCareSpace.actualChildOccupancyRate).eq(
-              this.attributes.actualChildOccupancyRate
-            ))
+        const changedOccupancy = this.buildChangedOccupancy(this.childCareSpace, this.attributes)
 
         await this.childCareSpace.update(this.attributes, { transaction })
-        if (occupancyChanged) {
-          await this.updateLinkedOccupancy(transaction)
+        if (Object.keys(changedOccupancy).length > 0) {
+          await this.updateLinkedOccupancy(this.childCareSpace, changedOccupancy, transaction)
         }
 
         return this.childCareSpace.reload({ transaction })
@@ -42,13 +34,34 @@ export class UpdateService extends BaseService {
     )
   }
 
-  private async updateLinkedOccupancy(transaction: Transaction): Promise<void> {
-    const { centreId, fiscalPeriodId, categoryId } = this.childCareSpace
-    const where = { centreId, fiscalPeriodId, childCareSpaceCategoryId: categoryId }
-    const occupancy = {
-      estimatedChildOccupancyRate: this.childCareSpace.estimatedChildOccupancyRate,
-      actualChildOccupancyRate: this.childCareSpace.actualChildOccupancyRate,
+  private buildChangedOccupancy(
+    childCareSpace: ChildCareSpace,
+    attributes: Partial<ChildCareSpaceUpdateAttributes>
+  ): Partial<ChildCareSpaceUpdateAttributes> {
+    const changedOccupancy: Partial<ChildCareSpaceUpdateAttributes> = {}
+    if (
+      attributes.estimatedChildOccupancyRate !== undefined &&
+      !new Big(childCareSpace.estimatedChildOccupancyRate).eq(attributes.estimatedChildOccupancyRate)
+    ) {
+      changedOccupancy.estimatedChildOccupancyRate = attributes.estimatedChildOccupancyRate
     }
+    if (
+      attributes.actualChildOccupancyRate !== undefined &&
+      !new Big(childCareSpace.actualChildOccupancyRate).eq(attributes.actualChildOccupancyRate)
+    ) {
+      changedOccupancy.actualChildOccupancyRate = attributes.actualChildOccupancyRate
+    }
+
+    return changedOccupancy
+  }
+
+  private async updateLinkedOccupancy(
+    childCareSpace: ChildCareSpace,
+    occupancy: Partial<ChildCareSpaceUpdateAttributes>,
+    transaction: Transaction
+  ): Promise<void> {
+    const { centreId, fiscalPeriodId, categoryId } = childCareSpace
+    const where = { centreId, fiscalPeriodId, childCareSpaceCategoryId: categoryId }
 
     await AdministrationCost.findEach({ where, transaction }, async (administrationCost) => {
       await administrationCost.update(occupancy, { transaction })

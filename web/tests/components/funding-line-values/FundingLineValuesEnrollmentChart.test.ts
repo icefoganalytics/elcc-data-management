@@ -2,6 +2,7 @@ import { flushPromises, mount } from "@vue/test-utils"
 
 import httpClient from "@/api/http-client"
 import FundingLineValuesEnrollmentChart from "@/components/funding-line-values/FundingLineValuesEnrollmentChart.vue"
+import { childCareSpaceSummariesFactory } from "@/tests/factories"
 import { mockVuetify } from "@/tests/support"
 
 describe("web/src/components/funding-line-values/FundingLineValuesEnrollmentChart.vue", () => {
@@ -12,6 +13,12 @@ describe("web/src/components/funding-line-values/FundingLineValuesEnrollmentChar
         const httpClientMock = vi.mocked(httpClient, true)
         httpClientMock.get.mockResolvedValue({
           data: {
+            summaries: childCareSpaceSummariesFactory.build({
+              totalEstimated: "200.0000",
+              totalActual: "200.0000",
+              totalEstimatedOccupancy: "1.5000",
+              totalActualOccupancy: "1.5000",
+            }),
             childCareSpaces: [
               {
                 id: 1,
@@ -108,6 +115,9 @@ describe("web/src/components/funding-line-values/FundingLineValuesEnrollmentChar
         // Arrange
         vi.mocked(httpClient, true).get.mockResolvedValue({
           data: {
+            summaries: childCareSpaceSummariesFactory.build({
+              totalActualOccupancy: "1.0000",
+            }),
             childCareSpaces: [
               { fiscalPeriodId: 12, lineName: "Infants", actualChildOccupancyRate: "0" },
               { fiscalPeriodId: 12, lineName: "Toddlers", actualChildOccupancyRate: "0" },

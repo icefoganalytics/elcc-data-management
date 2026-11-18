@@ -5,6 +5,7 @@ import childCareSpacesApi, {
   type ChildCareSpaceAsIndex,
   type ChildCareSpaceFiltersOptions,
   type ChildCareSpaceQueryOptions,
+  type ChildCareSpaceSummaries,
   type ChildCareSpaceWhereOptions,
 } from "@/api/child-care-spaces-api"
 import { ApiOperationError } from "@/api/errors/api-operation-error"
@@ -23,11 +24,18 @@ export function useChildCareSpaces(
   const state = reactive<{
     childCareSpaces: ChildCareSpaceAsIndex[]
     totalCount: number
+    summaries: ChildCareSpaceSummaries
     isLoading: boolean
     isErrored: boolean
   }>({
     childCareSpaces: [],
     totalCount: 0,
+    summaries: {
+      totalEstimated: "0.0000",
+      totalActual: "0.0000",
+      totalEstimatedOccupancy: "0.0000",
+      totalActualOccupancy: "0.0000",
+    },
     isLoading: false,
     isErrored: false,
   })
@@ -39,14 +47,16 @@ export function useChildCareSpaces(
     requestController = controller
     state.isLoading = true
     try {
-      const { childCareSpaces, totalCount } = await childCareSpacesApi.list(unref(queryOptions), {
-        signal: controller.signal,
-      })
+      const { childCareSpaces, totalCount, summaries } = await childCareSpacesApi.list(
+        unref(queryOptions),
+        { signal: controller.signal }
+      )
       if (controller.signal.aborted) return state.childCareSpaces
 
       state.isErrored = false
       state.childCareSpaces = childCareSpaces
       state.totalCount = totalCount
+      state.summaries = summaries
       return childCareSpaces
     } catch (error) {
       if (controller.signal.aborted || isCancel(error)) return state.childCareSpaces

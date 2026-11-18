@@ -1,3 +1,4 @@
+export { IndexService } from "./index-service"
 export { UpdateService, type ChildCareSpaceUpdateAttributes } from "./update-service"
 
 // Special actions

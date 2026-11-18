@@ -3,7 +3,7 @@ import { isNil } from "lodash"
 import logger from "@/utils/logger"
 import { ChildCareSpace } from "@/models"
 import { ChildCareSpacePolicy } from "@/policies"
-import { UpdateService } from "@/services/child-care-spaces"
+import { IndexService, UpdateService } from "@/services/child-care-spaces"
 import { IndexSerializer, ShowSerializer } from "@/serializers/child-care-spaces"
 import BaseController from "@/controllers/base-controller"
 
@@ -13,19 +13,19 @@ export class ChildCareSpacesController extends BaseController<ChildCareSpace> {
       const where = this.buildWhere()
       const scopes = this.buildFilterScopes()
       const order = this.buildOrder([["categoryId", "ASC"]])
-      const scopedChildCareSpaces = ChildCareSpacePolicy.applyScope(scopes, this.currentUser)
-
-      const totalCount = await scopedChildCareSpaces.count({ where })
-      const childCareSpaces = await scopedChildCareSpaces.findAll({
+      const { childCareSpaces, totalCount, summaries } = await IndexService.perform(
         where,
+        scopes,
         order,
-        limit: this.pagination.limit,
-        offset: this.pagination.offset,
-      })
+        this.pagination.limit,
+        this.pagination.offset,
+        this.currentUser
+      )
       const serializedChildCareSpaces = IndexSerializer.perform(childCareSpaces, this.currentUser)
       return this.response.json({
         childCareSpaces: serializedChildCareSpaces,
         totalCount,
+        summaries,
       })
     } catch (error) {
       logger.error(`Error fetching Child Care Spaces: ${error}`, { error })
