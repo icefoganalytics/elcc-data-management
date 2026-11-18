@@ -7,6 +7,7 @@ import AdministrationCostCategory from "@/models/administration-cost-category"
 import BuildingExpense from "@/models/building-expense"
 import BuildingExpenseCategory from "@/models/building-expense-category"
 import Centre from "@/models/centre"
+import ChildCareCategory from "@/models/child-care-category"
 import ChildCareSpace from "@/models/child-care-space"
 import ChildCareSpaceCategory from "@/models/child-care-space-category"
 import ChildrenWithDiverseNeedsFundingCategory from "@/models/children-with-diverse-needs-funding-category"
@@ -33,6 +34,7 @@ db.addModels([
   BuildingExpense,
   BuildingExpenseCategory,
   Centre,
+  ChildCareCategory,
   ChildCareSpace,
   ChildCareSpaceCategory,
   ChildrenWithDiverseNeedsFundingCategory,
@@ -59,6 +61,7 @@ AdministrationCostCategory.establishScopes()
 BuildingExpense.establishScopes()
 BuildingExpenseCategory.establishScopes()
 Centre.establishScopes()
+ChildCareCategory.establishScopes()
 ChildCareSpace.establishScopes()
 ChildCareSpaceCategory.establishScopes()
 ChildrenWithDiverseNeedsFundingCategory.establishScopes()
@@ -85,6 +88,7 @@ export {
   BuildingExpense,
   BuildingExpenseCategory,
   Centre,
+  ChildCareCategory,
   ChildCareSpace,
   ChildCareSpaceCategory,
   ChildrenWithDiverseNeedsFundingCategory,

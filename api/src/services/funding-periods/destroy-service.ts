@@ -2,6 +2,7 @@ import db, {
   AdministrationCost,
   AdministrationCostCategory,
   BuildingExpense,
+  ChildCareCategory,
   ChildCareSpace,
   ChildCareSpaceCategory,
   ChildrenWithDiverseNeedsFundingCategory,
@@ -48,6 +49,7 @@ export class DestroyService extends BaseService {
     await this.destroyDependentQualityEnhancements(fundingPeriodId)
     await this.destroyDependentQualityEnhancementCategories(fundingPeriodId)
     await this.destroyDependentAdministrationCostCategories(fundingPeriodId)
+    await ChildCareCategory.destroy({ where: { fundingPeriodId } })
     await this.destroyDependentPayments(fundingPeriodId)
     await this.destroyDependentFundingReconciliations(fundingPeriodId)
     await this.destroyDependentFundingSubmissionLines(fundingPeriodId)

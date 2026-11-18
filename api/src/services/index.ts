@@ -1,3 +1,4 @@
+export * as ChildCareCategories from "./child-care-categories"
 export * from "@/services/funding-submission-line-services"
 export * from "@/services/log-services"
 

@@ -49,6 +49,9 @@ export class QualityEnhancementCategory extends BaseModel<
   @QualityEnhancementCategoriesFundingPeriodIdCategoryNameUniqueIndex
   declare fundingPeriodId: number
 
+  @Attribute(DataTypes.INTEGER)
+  declare childCareCategoryId: number | null
+
   @Attribute(DataTypes.STRING(200))
   @NotNull
   @QualityEnhancementCategoriesFundingPeriodIdCategoryNameUniqueIndex

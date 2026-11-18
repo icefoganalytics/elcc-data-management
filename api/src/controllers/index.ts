@@ -1,3 +1,4 @@
+export { ChildCareCategoriesController } from "./child-care-categories-controller"
 export { AdministrationCostCategoriesController } from "./administration-cost-categories-controller"
 export { AdministrationCostsController } from "./administration-costs-controller"
 export { BuildingExpenseCategoriesController } from "./building-expense-categories-controller"

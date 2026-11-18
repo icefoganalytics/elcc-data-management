@@ -49,6 +49,9 @@ export class ChildCareSpaceCategory extends BaseModel<
   @ChildCareSpaceCategoriesFundingPeriodIdCategoryNameUniqueIndex
   declare fundingPeriodId: number
 
+  @Attribute(DataTypes.INTEGER)
+  declare childCareCategoryId: number | null
+
   @Attribute(DataTypes.STRING(200))
   @NotNull
   @ChildCareSpaceCategoriesFundingPeriodIdCategoryNameUniqueIndex
