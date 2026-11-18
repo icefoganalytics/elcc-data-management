@@ -466,8 +466,7 @@ const isAdministrationCostCreationUnavailable = computed(() => {
   return (
     isWorkflowBusy.value ||
     isNil(administration) ||
-    administration.isLoading ||
-    administration.isErrored
+    administration.isLoading
   )
 })
 
@@ -497,7 +496,6 @@ const isReplicationUnavailable = computed(() => {
     childrenWithDiverseNeedsFundingRecord.isErrored ||
     !administration ||
     administration.isLoading ||
-    administration.isErrored ||
     !quality ||
     quality.isLoading ||
     quality.isErrored

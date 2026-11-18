@@ -9,23 +9,11 @@
       {{ saveError }}
       <v-btn
         variant="text"
-        :disabled="isSaving || isDeleting"
+        :loading="isSaving || isDeleting"
         @click="reload"
         >Reload</v-btn
       >
     </v-alert>
-    <v-alert
-      v-if="isErrored"
-      type="error"
-      density="compact"
-      role="alert"
-      >Administration costs could not be loaded.
-      <v-btn
-        variant="text"
-        @click="reload"
-        >Retry</v-btn
-      ></v-alert
-    >
     <EditDataTableVirtual
       ref="editTable"
       :busy="isBusy"
@@ -36,17 +24,19 @@
       fixed-footer
       disable-sort
       @update:cell="trackSave"
+      @focus-beyond-last-in-column="emitBoundary('last', $event)"
+      @focus-beyond-first-in-column="emitBoundary('first', $event)"
     >
       <template #item.categoryId="{ item }">{{ item.lineName }}</template>
       <template #item.monthlyAmount="{ item }">{{ formatMoney(item.monthlyAmount) }}</template>
       <template #item.estimatedChildOccupancyRate="{ item }">{{
-        item.estimatedChildOccupancyRate
+        formatDecimal(item.estimatedChildOccupancyRate)
       }}</template>
       <template #item.estimatedComputedTotal="{ item }">{{
         formatMoney(item.estimatedComputedTotal)
       }}</template>
       <template #item.actualChildOccupancyRate="{ item }">{{
-        item.actualChildOccupancyRate
+        formatDecimal(item.actualChildOccupancyRate)
       }}</template>
       <template #item.actualComputedTotal="{ item }">{{
         formatMoney(item.actualComputedTotal)
@@ -56,16 +46,18 @@
           v-model="item.estimatedChildOccupancyRate"
           type="text"
           inputmode="decimal"
-          :disabled="isReplicating || isSaving || isDeleting || isLoading || isErrored"
+          :disabled="isReplicating || isSaving || isDeleting || isLoading"
           hide-details
+          @focus="item.estimatedChildOccupancyRate = formatDecimal(item.estimatedChildOccupancyRate)"
       /></template>
       <template #item.actualChildOccupancyRate.edit="{ item }"
         ><v-text-field
           v-model="item.actualChildOccupancyRate"
           type="text"
           inputmode="decimal"
-          :disabled="isReplicating || isSaving || isDeleting || isLoading || isErrored"
+          :disabled="isReplicating || isSaving || isDeleting || isLoading"
           hide-details
+          @focus="item.actualChildOccupancyRate = formatDecimal(item.actualChildOccupancyRate)"
       /></template>
       <template #item.actions="{ item }">
         <v-btn
@@ -73,8 +65,7 @@
           color="error"
           variant="outlined"
           size="small"
-          :loading="deletingId === item.id"
-          :disabled="isReplicating || isSaving || isDeleting || isLoading || isErrored"
+          :loading="isBusy"
           @click.stop="deleteRecord(item)"
           >Delete</v-btn
         >
@@ -98,14 +89,15 @@
 
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from "vue"
-import { keyBy, pick } from "lodash"
-import { formatMoney } from "@/utils/formatters"
+import { cloneDeep, keyBy, merge, pick } from "lodash"
+import { formatDecimal, formatMoney } from "@/utils/formatters"
 import sumByDecimal from "@/utils/sum-by-decimal"
 import blockedToTrueConfirm from "@/utils/blocked-to-true-confirm"
 import { MAX_PER_PAGE } from "@/api/base-api"
 import administrationCostsApi, {
   type AdministrationCostAsIndex,
   type AdministrationCostOccupancyAttributes,
+  type AdministrationCostQueryOptions,
 } from "@/api/administration-costs-api"
 import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 import useAdministrationCosts from "@/use/use-administration-costs"
@@ -119,9 +111,27 @@ const props = withDefaults(
   }>(),
   { where: () => ({}), isReplicating: false }
 )
-const emit = defineEmits<{ updated: []; mutationSettled: [] }>()
-const query = computed(() => ({ where: props.where, perPage: MAX_PER_PAGE }))
-const { administrationCosts, isLoading, isErrored, fetch } = useAdministrationCosts(query)
+
+const emit = defineEmits<{
+  updated: []
+  mutationSettled: []
+  focusBeyondLastInColumn: [column: "estimates" | "actuals"]
+  focusBeyondFirstInColumn: [column: "estimates" | "actuals"]
+}>()
+
+const administrationCostsQuery = computed<AdministrationCostQueryOptions>(() => ({
+  where: props.where,
+  order: [
+    ["childCareSpaceCategoryId", "ASC"],
+    ["id", "ASC"],
+  ],
+  perPage: MAX_PER_PAGE,
+}))
+const {
+  administrationCosts,
+  isLoading,
+  fetch: refresh,
+} = useAdministrationCosts(administrationCostsQuery)
 const headers = [
   { title: "Category", key: "categoryId" },
   { title: "Subsidized", key: "monthlyAmount" },
@@ -142,69 +152,77 @@ const totalActual = computed(() =>
   sumByDecimal(administrationCosts.value, "actualComputedTotal").toFixed(4)
 )
 const totalEstimatedOccupancy = computed(() =>
-  sumByDecimal(administrationCosts.value, "estimatedChildOccupancyRate").toFixed(4)
+  formatDecimal(sumByDecimal(administrationCosts.value, "estimatedChildOccupancyRate").toFixed(4))
 )
 const totalActualOccupancy = computed(() =>
-  sumByDecimal(administrationCosts.value, "actualChildOccupancyRate").toFixed(4)
+  formatDecimal(sumByDecimal(administrationCosts.value, "actualChildOccupancyRate").toFixed(4))
 )
-const byId = computed(() => keyBy(administrationCosts.value, "id"))
+const administrationCostsById = computed(() => keyBy(administrationCosts.value, "id"))
 const categoryIds = computed(() => administrationCosts.value.map(({ categoryId }) => categoryId))
-const editTable = useTemplateRef<{ commitEdit: () => void }>("editTable")
-let currentSave: Promise<boolean> | null = null
+const editTable = useTemplateRef<{
+  commitEdit: () => void
+  focusOnFirstInColumn: (column: keyof AdministrationCostOccupancyAttributes) => boolean
+  focusOnLastInColumn: (column: keyof AdministrationCostOccupancyAttributes) => boolean
+  cancelPendingFocus: () => void
+}>("editTable")
+let savePromise: Promise<boolean> = Promise.resolve(true)
 const isSaving = ref(false)
 const isDeleting = ref(false)
-const deletingId = ref<number | null>(null)
 const saveError = ref("")
 const isBusy = computed(
-  () =>
-    props.isReplicating || isSaving.value || isDeleting.value || isLoading.value || isErrored.value
+  () => props.isReplicating || isSaving.value || isDeleting.value || isLoading.value
 )
 const snack = useSnack()
 
-function trackSave(record: AdministrationCostAsIndex) {
-  if (isSaving.value) return
+function trackSave(administrationCostRecord: AdministrationCostAsIndex) {
+  if (isBusy.value) return
 
-  currentSave = saveIfDirty(record)
-  return currentSave
+  savePromise = saveIfDirty(administrationCostRecord)
+  return savePromise
 }
 
 async function commitEdit(): Promise<boolean> {
   editTable.value?.commitEdit()
-  const save = currentSave
   try {
-    return (save === null || (await save)) && !isErrored.value
+    const isSaved = await savePromise
+    if (!isSaved) editTable.value?.cancelPendingFocus()
+
+    return isSaved
   } catch (error) {
+    editTable.value?.cancelPendingFocus()
     rethrowUnexpectedError(error)
 
     return false
-  } finally {
-    if (currentSave === save) currentSave = null
   }
 }
 
-async function saveIfDirty(record: AdministrationCostAsIndex) {
-  const current = byId.value[record.id]
-  if (
-    !current ||
-    props.isReplicating ||
-    isSaving.value ||
-    isDeleting.value ||
-    isLoading.value ||
-    isErrored.value
+async function saveIfDirty(administrationCostRecord: AdministrationCostAsIndex) {
+  const persistedAdministrationCost = administrationCostsById.value[administrationCostRecord.id]
+  if (!persistedAdministrationCost || isBusy.value) return false
+
+  const changedOccupancyFields = editableColumns.filter(
+    (field) =>
+      formatDecimal(persistedAdministrationCost[field]) !==
+      formatDecimal(administrationCostRecord[field])
   )
-    return false
-  const changed = editableColumns.filter((field) => current[field] !== record[field])
-  if (!changed.length) return true
+  if (!changedOccupancyFields.length) return true
+
   isSaving.value = true
   saveError.value = ""
   try {
     const { administrationCost } = await administrationCostsApi.update(
-      record.id,
-      pick(record, changed)
+      administrationCostRecord.id,
+      pick(administrationCostRecord, changedOccupancyFields)
     )
-    const index = administrationCosts.value.findIndex((item) => item.id === record.id)
-    if (index >= 0)
-      administrationCosts.value.splice(index, 1, { ...current, ...administrationCost })
+    const administrationCostIndex = administrationCosts.value.findIndex(
+      (existingAdministrationCost) => existingAdministrationCost.id === administrationCostRecord.id
+    )
+    if (administrationCostIndex >= 0)
+      administrationCosts.value.splice(
+        administrationCostIndex,
+        1,
+        merge(cloneDeep(persistedAdministrationCost), administrationCost)
+      )
     snack.success("Administration cost saved!")
     emit("updated")
     return true
@@ -219,7 +237,7 @@ async function saveIfDirty(record: AdministrationCostAsIndex) {
 
       /* Preserve the save failure if reload also fails. */
     }
-    snack.error(saveError.value)
+    editTable.value?.cancelPendingFocus()
     return false
   } finally {
     isSaving.value = false
@@ -227,24 +245,15 @@ async function saveIfDirty(record: AdministrationCostAsIndex) {
   }
 }
 
-async function deleteRecord(record: AdministrationCostAsIndex) {
-  if (
-    !record.policy.destroy ||
-    props.isReplicating ||
-    isSaving.value ||
-    isDeleting.value ||
-    isErrored.value ||
-    isLoading.value ||
-    !blockedToTrueConfirm("Are you sure you want to remove this administration cost?")
-  )
-    return
+async function deleteRecord(administrationCostRecord: AdministrationCostAsIndex) {
+  if (!administrationCostRecord.policy.destroy || isBusy.value) return
+  if (!blockedToTrueConfirm("Are you sure you want to remove this administration cost?")) return
 
   if (!(await commitEdit())) return
 
   isDeleting.value = true
-  deletingId.value = record.id
   try {
-    await administrationCostsApi.delete(record.id)
+    await administrationCostsApi.delete(administrationCostRecord.id)
     await refresh()
     snack.success("Administration cost deleted!")
     emit("updated")
@@ -253,21 +262,16 @@ async function deleteRecord(record: AdministrationCostAsIndex) {
 
     snack.error(`Failed to delete administration cost: ${error}`)
   } finally {
-    deletingId.value = null
     isDeleting.value = false
     emit("mutationSettled")
   }
-}
-
-async function refresh() {
-  return await fetch()
 }
 
 async function reload() {
   try {
     await refresh()
     saveError.value = ""
-    currentSave = null
+    savePromise = Promise.resolve(true)
   } catch (error) {
     rethrowUnexpectedError(error)
 
@@ -276,13 +280,13 @@ async function reload() {
 }
 
 async function replicateEstimates() {
-  if (isSaving.value || isDeleting.value || isLoading.value || isErrored.value) return
+  if (isSaving.value || isDeleting.value || isLoading.value) return
   isSaving.value = true
   const failures: unknown[] = []
   try {
-    for (const record of administrationCosts.value) {
+    for (const administrationCostRecord of administrationCosts.value) {
       try {
-        await administrationCostsApi.replicateEstimates(record.id)
+        await administrationCostsApi.replicateEstimates(administrationCostRecord.id)
       } catch (error) {
         failures.push(error)
       }
@@ -305,14 +309,32 @@ async function replicateEstimates() {
   }
 }
 
+function emitBoundary(
+  direction: "last" | "first",
+  column: keyof AdministrationCostOccupancyAttributes
+) {
+  const occupancyColumnName = column === "estimatedChildOccupancyRate" ? "estimates" : "actuals"
+  if (direction === "last") emit("focusBeyondLastInColumn", occupancyColumnName)
+  else emit("focusBeyondFirstInColumn", occupancyColumnName)
+}
+
+function focusOnFirstInColumn(column: keyof AdministrationCostOccupancyAttributes): boolean {
+  return editTable.value?.focusOnFirstInColumn(column) ?? false
+}
+
+function focusOnLastInColumn(column: keyof AdministrationCostOccupancyAttributes): boolean {
+  return editTable.value?.focusOnLastInColumn(column) ?? false
+}
+
 defineExpose({
   refresh,
   replicateEstimates,
   commitEdit,
+  focusOnFirstInColumn,
+  focusOnLastInColumn,
   isSaving,
   isDeleting,
   isLoading,
-  isErrored,
   categoryIds,
 })
 </script>

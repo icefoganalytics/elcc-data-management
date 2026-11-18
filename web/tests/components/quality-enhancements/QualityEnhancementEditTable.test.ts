@@ -16,6 +16,146 @@ import QualityEnhancementEditTable from "@/components/quality-enhancements/Quali
 describe("web/src/components/quality-enhancements/QualityEnhancementEditTable.vue", () => {
   describe("QualityEnhancementEditTable", () => {
     describe("#commitEdit", () => {
+      test("when Enter leaves unchanged occupancy, does not write", async () => {
+        // Arrange
+        const record = qualityEnhancementFactory.build({
+          childCareSpaceCategoryId: 1,
+          estimatedChildOccupancyRate: "1.0000",
+          actualChildOccupancyRate: "2.0000",
+        })
+        vi.spyOn(qualityEnhancementsApi, "list").mockResolvedValue({
+          qualityEnhancements: [record],
+          totalCount: 1,
+        })
+        const update = vi.spyOn(qualityEnhancementsApi, "update")
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
+          props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
+        })
+        await flushPromises()
+        await wrapper.get("tr.cursor-pointer").trigger("click")
+
+        // Act
+        await wrapper.get('input[inputmode="decimal"]').trigger("keydown", { key: "Enter" })
+        await flushPromises()
+
+        // Assert
+        expect(update).not.toHaveBeenCalled()
+      })
+
+      test("when manually editing an estimate, saves only the changed occupancy field", async () => {
+        // Arrange
+        const record = qualityEnhancementFactory.build({
+          id: 1,
+          childCareSpaceCategoryId: 1,
+          monthlyAmount: "10.0000",
+          estimatedChildOccupancyRate: "1.0000",
+          actualChildOccupancyRate: "2.0000",
+          estimatedComputedTotal: "10.0000",
+          actualComputedTotal: "20.0000",
+        })
+        vi.spyOn(qualityEnhancementsApi, "list").mockResolvedValue({
+          qualityEnhancements: [record],
+          totalCount: 1,
+        })
+        const update = vi.spyOn(qualityEnhancementsApi, "update").mockResolvedValue({
+          qualityEnhancement: {
+            ...record,
+            estimatedChildOccupancyRate: "3.25",
+            estimatedComputedTotal: "32.5000",
+          },
+          policy: record.policy,
+        })
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
+          props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
+        })
+        await flushPromises()
+        await wrapper.get("tr.cursor-pointer").trigger("click")
+        await wrapper.findAll('input[inputmode="decimal"]')[0].setValue("3.25")
+
+        // Act
+        await wrapper.vm.commitEdit()
+        await flushPromises()
+
+        // Assert
+        expect(update).toHaveBeenCalledExactlyOnceWith(1, {
+          estimatedChildOccupancyRate: "3.25",
+        })
+      })
+
+      test("when manually editing an actual, preserves the persisted estimated occupancy", async () => {
+        // Arrange
+        const record = qualityEnhancementFactory.build({
+          childCareSpaceCategoryId: 1,
+          monthlyAmount: "10.0000",
+          estimatedChildOccupancyRate: "1.0000",
+          actualChildOccupancyRate: "2.0000",
+          estimatedComputedTotal: "10.0000",
+          actualComputedTotal: "20.0000",
+        })
+        vi.spyOn(qualityEnhancementsApi, "list").mockResolvedValue({
+          qualityEnhancements: [record],
+          totalCount: 1,
+        })
+        vi.spyOn(qualityEnhancementsApi, "update").mockResolvedValue({
+          qualityEnhancement: {
+            ...record,
+            actualChildOccupancyRate: "3.25",
+            actualComputedTotal: "32.5000",
+          },
+          policy: record.policy,
+        })
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
+          props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
+        })
+        await flushPromises()
+        await wrapper.get("tr.cursor-pointer").trigger("click")
+        await wrapper.findAll('input[inputmode="decimal"]')[1].setValue("3.25")
+
+        // Act
+        await wrapper.vm.commitEdit()
+        await flushPromises()
+
+        // Assert
+        expect(wrapper.get("tr.cursor-pointer td:nth-child(3)").text()).toEqual("1")
+      })
+
+      test("when manually editing an estimate, preserves the persisted actual occupancy", async () => {
+        // Arrange
+        const qualityEnhancement = qualityEnhancementFactory.build({
+          estimatedChildOccupancyRate: "1.0000",
+          actualChildOccupancyRate: "2.0000",
+        })
+        vi.spyOn(qualityEnhancementsApi, "list").mockResolvedValue({
+          qualityEnhancements: [qualityEnhancement],
+          totalCount: 1,
+        })
+        vi.spyOn(qualityEnhancementsApi, "update").mockResolvedValue({
+          qualityEnhancement: {
+            ...qualityEnhancement,
+            estimatedChildOccupancyRate: "3.25",
+          },
+          policy: qualityEnhancement.policy,
+        })
+        const wrapper = mountWithDefaultPlugins(QualityEnhancementEditTable, {
+          props: {
+            where: {
+              centreId: qualityEnhancement.centreId,
+              fiscalPeriodId: qualityEnhancement.fiscalPeriodId,
+            },
+          },
+        })
+        await flushPromises()
+        await wrapper.get("tr.cursor-pointer").trigger("click")
+        await wrapper.findAll('input[inputmode="decimal"]')[0].setValue("3.25")
+
+        // Act
+        await wrapper.vm.commitEdit()
+        await flushPromises()
+
+        // Assert
+        expect(wrapper.get("tr.cursor-pointer td:nth-child(5)").text()).toEqual("2")
+      })
+
       test("when an autosave loses its network connection, shows unconfirmed-save feedback", async () => {
         // Arrange
         vi.stubGlobal("visualViewport", undefined)
