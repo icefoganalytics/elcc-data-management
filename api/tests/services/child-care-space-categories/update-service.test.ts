@@ -1,3 +1,4 @@
+import childCareCategoryFactory from "@/factories/child-care-category-factory"
 import { ChildCareSpace, ChildCareSpaceCategory, Centre, FiscalPeriod } from "@/models"
 
 import {
@@ -26,9 +27,16 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
           month: FiscalPeriod.Months.JUNE,
           dateStart: new Date("2024-06-01"),
         })
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
         const category = await childCareSpaceCategoryFactory
           .associations({ fundingPeriod })
-          .create({ categoryName: "Infants", monthlyAmount: "100.0000" })
+          .create({
+            monthlyAmount: "100.0000",
+            childCareCategoryId: categoryChildCareCategory.id,
+          })
         const centre = await centreFactory.create({ status: Centre.Statuses.ACTIVE })
         const maySpace = await childCareSpaceFactory
           .associations({ centre, fiscalPeriod: mayFiscalPeriod, category })
@@ -45,7 +53,6 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
 
         // Act
         await UpdateService.perform(category, {
-          categoryName: "Updated infants",
           monthlyAmount: "125.5000",
           applyToFutureMonths: true,
           propagationStartFiscalPeriodId: mayFiscalPeriod.id,
@@ -57,7 +64,7 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
           expect.objectContaining({
             id: maySpace.id,
             fiscalPeriodId: mayFiscalPeriod.id,
-            lineName: "Updated infants",
+            lineName: "Infants",
             monthlyAmount: "125.5",
             estimatedChildOccupancyRate: "0.6",
             actualChildOccupancyRate: "0",
@@ -67,7 +74,7 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
           expect.objectContaining({
             id: juneSpace.id,
             fiscalPeriodId: juneFiscalPeriod.id,
-            lineName: "Updated infants",
+            lineName: "Infants",
             monthlyAmount: "125.5",
             estimatedChildOccupancyRate: "0.1234",
             actualChildOccupancyRate: "0",
@@ -85,9 +92,16 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
           month: FiscalPeriod.Months.MAY,
           dateStart: new Date("2024-05-01"),
         })
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
         const category = await childCareSpaceCategoryFactory
           .associations({ fundingPeriod })
-          .create({ categoryName: "Infants", monthlyAmount: "100.0000" })
+          .create({
+            monthlyAmount: "100.0000",
+            childCareCategoryId: categoryChildCareCategory.id,
+          })
         const actualCentre = await centreFactory.create({ status: Centre.Statuses.ACTIVE })
         const manualNameCentre = await centreFactory.create({ status: Centre.Statuses.ACTIVE })
         const manualAmountCentre = await centreFactory.create({ status: Centre.Statuses.ACTIVE })
@@ -114,7 +128,6 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
 
         // Act
         await UpdateService.perform(category, {
-          categoryName: "Updated infants",
           monthlyAmount: "125.5000",
           applyToFutureMonths: true,
           propagationStartFiscalPeriodId: mayFiscalPeriod.id,
@@ -166,9 +179,16 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
           month: FiscalPeriod.Months.MAY,
           dateStart: new Date("2024-05-01"),
         })
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
         const category = await childCareSpaceCategoryFactory
           .associations({ fundingPeriod })
-          .create({ categoryName: "Infants", monthlyAmount: "100.0000" })
+          .create({
+            monthlyAmount: "100.0000",
+            childCareCategoryId: categoryChildCareCategory.id,
+          })
         const centre = await centreFactory.create({ status: Centre.Statuses.ACTIVE })
         const aprilSpace = await childCareSpaceFactory
           .associations({ centre, fiscalPeriod: aprilFiscalPeriod, category })
@@ -185,7 +205,6 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
 
         // Act
         await UpdateService.perform(category, {
-          categoryName: "Updated infants",
           monthlyAmount: "125.5000",
           applyToFutureMonths: true,
           propagationStartFiscalPeriodId: mayFiscalPeriod.id,
@@ -204,7 +223,7 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
           expect.objectContaining({
             id: maySpace.id,
             fiscalPeriodId: mayFiscalPeriod.id,
-            lineName: "Updated infants",
+            lineName: "Infants",
             monthlyAmount: "125.5",
             estimatedComputedTotal: "62.75",
           }),
@@ -224,9 +243,16 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
           month: FiscalPeriod.Months.JUNE,
           dateStart: new Date("2024-06-01"),
         })
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
         const category = await childCareSpaceCategoryFactory
           .associations({ fundingPeriod })
-          .create({ categoryName: "Infants", monthlyAmount: "100.0000" })
+          .create({
+            monthlyAmount: "100.0000",
+            childCareCategoryId: categoryChildCareCategory.id,
+          })
         const firstCentre = await centreFactory.create({ status: Centre.Statuses.ACTIVE })
         const secondCentre = await centreFactory.create({ status: Centre.Statuses.ACTIVE })
         const firstCentreMaySpace = await childCareSpaceFactory
@@ -244,7 +270,6 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
 
         // Act
         await UpdateService.perform(category, {
-          categoryName: "Updated infants",
           monthlyAmount: "125.5000",
           applyToFutureMonths: true,
           propagationStartFiscalPeriodId: mayFiscalPeriod.id,
@@ -257,7 +282,7 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
             id: firstCentreMaySpace.id,
             centreId: firstCentre.id,
             fiscalPeriodId: mayFiscalPeriod.id,
-            lineName: "Updated infants",
+            lineName: "Infants",
             monthlyAmount: "125.5",
             estimatedComputedTotal: "50.2",
           }),
@@ -265,7 +290,7 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
             id: secondCentreJuneSpace.id,
             centreId: secondCentre.id,
             fiscalPeriodId: juneFiscalPeriod.id,
-            lineName: "Updated infants",
+            lineName: "Infants",
             monthlyAmount: "125.5",
             estimatedComputedTotal: "62.75",
           }),
@@ -273,7 +298,7 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
             centreId: firstCentre.id,
             fiscalPeriodId: juneFiscalPeriod.id,
             categoryId: category.id,
-            lineName: "Updated infants",
+            lineName: "Infants",
             monthlyAmount: "125.5",
             estimatedChildOccupancyRate: "0",
             actualChildOccupancyRate: "0",
@@ -284,7 +309,7 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
             centreId: secondCentre.id,
             fiscalPeriodId: mayFiscalPeriod.id,
             categoryId: category.id,
-            lineName: "Updated infants",
+            lineName: "Infants",
             monthlyAmount: "125.5",
             estimatedChildOccupancyRate: "0",
             actualChildOccupancyRate: "0",
@@ -307,9 +332,16 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
           month: FiscalPeriod.Months.JUNE,
           dateStart: new Date("2024-06-01"),
         })
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
         const category = await childCareSpaceCategoryFactory
           .associations({ fundingPeriod })
-          .create({ categoryName: "Infants", monthlyAmount: "100.0000" })
+          .create({
+            monthlyAmount: "100.0000",
+            childCareCategoryId: categoryChildCareCategory.id,
+          })
         const centre = await centreFactory.create({ status: Centre.Statuses.ACTIVE })
         const maySpace = await childCareSpaceFactory
           .associations({ centre, fiscalPeriod: mayFiscalPeriod, category })
@@ -320,7 +352,6 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
 
         // Act
         await UpdateService.perform(category, {
-          categoryName: "Updated infants",
           monthlyAmount: "125.5000",
           applyToFutureMonths: false,
           propagationStartFiscalPeriodId: juneFiscalPeriod.id,
@@ -343,9 +374,16 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
       test("when the starting month belongs to another funding period, rejects the update", async () => {
         // Arrange
         const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2024-2025" })
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
         const category = await childCareSpaceCategoryFactory
           .associations({ fundingPeriod })
-          .create({ categoryName: "Infants", monthlyAmount: "100.0000" })
+          .create({
+            monthlyAmount: "100.0000",
+            childCareCategoryId: categoryChildCareCategory.id,
+          })
         const otherFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2025-2026" })
         const otherFundingPeriodFiscalPeriod = await fiscalPeriodFactory
           .associations({ fundingPeriod: otherFundingPeriod })
@@ -357,7 +395,6 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
 
         // Act
         const updatePromise = UpdateService.perform(category, {
-          categoryName: "Updated infants",
           monthlyAmount: "125.5000",
           applyToFutureMonths: true,
           propagationStartFiscalPeriodId: otherFundingPeriodFiscalPeriod.id,
@@ -372,9 +409,16 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
       test("when the starting month belongs to another funding period, rolls back the category update", async () => {
         // Arrange
         const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2024-2025" })
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
         const category = await childCareSpaceCategoryFactory
           .associations({ fundingPeriod })
-          .create({ categoryName: "Infants", monthlyAmount: "100.0000" })
+          .create({
+            monthlyAmount: "100.0000",
+            childCareCategoryId: categoryChildCareCategory.id,
+          })
         const otherFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2025-2026" })
         const otherFundingPeriodFiscalPeriod = await fiscalPeriodFactory
           .associations({ fundingPeriod: otherFundingPeriod })
@@ -386,7 +430,6 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
 
         // Act
         await UpdateService.perform(category, {
-          categoryName: "Updated infants",
           monthlyAmount: "125.5000",
           applyToFutureMonths: true,
           propagationStartFiscalPeriodId: otherFundingPeriodFiscalPeriod.id,
@@ -410,9 +453,16 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
           month: FiscalPeriod.Months.MAY,
           dateStart: new Date("2024-05-01"),
         })
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
         const category = await childCareSpaceCategoryFactory
           .associations({ fundingPeriod })
-          .create({ categoryName: "Infants", monthlyAmount: "100.0000" })
+          .create({
+            monthlyAmount: "100.0000",
+            childCareCategoryId: categoryChildCareCategory.id,
+          })
         const deletedCentre = await centreFactory.create({ status: Centre.Statuses.ACTIVE })
         const childCareSpace = await childCareSpaceFactory
           .associations({ centre: deletedCentre, fiscalPeriod: mayFiscalPeriod, category })
@@ -424,7 +474,6 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
 
         // Act
         await UpdateService.perform(category, {
-          categoryName: "Updated infants",
           monthlyAmount: "125.5000",
           applyToFutureMonths: true,
           propagationStartFiscalPeriodId: mayFiscalPeriod.id,
@@ -454,9 +503,16 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
           month: FiscalPeriod.Months.MAY,
           dateStart: new Date("2024-05-01"),
         })
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
         const category = await childCareSpaceCategoryFactory
           .associations({ fundingPeriod })
-          .create({ categoryName: "Infants", monthlyAmount: "100.0000" })
+          .create({
+            monthlyAmount: "100.0000",
+            childCareCategoryId: categoryChildCareCategory.id,
+          })
         const centre = await centreFactory.create({ status: Centre.Statuses.ACTIVE })
         const softDeletedSpace = await childCareSpaceFactory
           .associations({ centre, fiscalPeriod: mayFiscalPeriod, category })
@@ -468,7 +524,6 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
 
         // Act
         await UpdateService.perform(category, {
-          categoryName: "Updated infants",
           monthlyAmount: "125.5000",
           applyToFutureMonths: true,
           propagationStartFiscalPeriodId: mayFiscalPeriod.id,
@@ -495,9 +550,16 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
           month: FiscalPeriod.Months.MAY,
           dateStart: new Date("2024-05-01"),
         })
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
         const category = await childCareSpaceCategoryFactory
           .associations({ fundingPeriod })
-          .create({ categoryName: "Infants", monthlyAmount: "100.0000" })
+          .create({
+            monthlyAmount: "100.0000",
+            childCareCategoryId: categoryChildCareCategory.id,
+          })
         const staleCategory = await ChildCareSpaceCategory.findByPk(category.id, {
           rejectOnEmpty: true,
         })
@@ -509,7 +571,6 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
             actualChildOccupancyRate: "0.0000",
           })
         await UpdateService.perform(category, {
-          categoryName: "First rename",
           monthlyAmount: "125.0000",
           applyToFutureMonths: true,
           propagationStartFiscalPeriodId: fiscalPeriod.id,
@@ -517,7 +578,6 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
 
         // Act
         await UpdateService.perform(staleCategory, {
-          categoryName: "Second rename",
           monthlyAmount: "150.0000",
           applyToFutureMonths: true,
           propagationStartFiscalPeriodId: fiscalPeriod.id,
@@ -528,7 +588,7 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
         expect(persistedSpaces).toEqual([
           expect.objectContaining({
             id: childCareSpace.id,
-            lineName: "Second rename",
+            lineName: "Infants",
             monthlyAmount: "150",
             estimatedChildOccupancyRate: "0.5",
             estimatedComputedTotal: "75",
@@ -544,9 +604,16 @@ describe("api/src/services/child-care-space-categories/update-service.ts", () =>
           month: FiscalPeriod.Months.MAY,
           dateStart: new Date("2024-05-01"),
         })
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
         const category = await childCareSpaceCategoryFactory
           .associations({ fundingPeriod })
-          .create({ categoryName: "Infants", monthlyAmount: "100.0000" })
+          .create({
+            monthlyAmount: "100.0000",
+            childCareCategoryId: categoryChildCareCategory.id,
+          })
         const centre = await centreFactory.create()
         const childCareSpace = await childCareSpaceFactory
           .associations({ centre, fiscalPeriod, category })

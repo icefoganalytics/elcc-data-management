@@ -1,3 +1,4 @@
+import childCareCategoryFactory from "@/factories/child-care-category-factory"
 import { FiscalPeriod, FundingSubmissionLineJson } from "@/models"
 
 import {
@@ -494,22 +495,36 @@ describe("api/src/services/funding-reconciliations/calculate-eligible-expenses-p
         })
 
         for (let index = 0; index < numberOfLargeLedgerRows; index++) {
-          const category = await childCareSpaceCategoryFactory.create({
+          const categoryChildCareCategory = await childCareCategoryFactory.create({
             fundingPeriodId: fundingPeriod.id,
             categoryName: `Large category ${index}`,
-            monthlyAmount: "99999999999.9999",
           })
+          const category = await childCareSpaceCategoryFactory
+            .associations({
+              childCareCategory: categoryChildCareCategory,
+            })
+            .create({
+              fundingPeriodId: fundingPeriod.id,
+              monthlyAmount: "99999999999.9999",
+            })
           await childCareSpaceFactory.associations({ centre, fiscalPeriod, category }).create({
             monthlyAmount: "99999999999.9999",
             actualChildOccupancyRate: "1.0000",
           })
         }
 
-        const category = await childCareSpaceCategoryFactory.create({
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
           fundingPeriodId: fundingPeriod.id,
           categoryName: "Fractional category",
-          monthlyAmount: "0.0001",
         })
+        const category = await childCareSpaceCategoryFactory
+          .associations({
+            childCareCategory: categoryChildCareCategory,
+          })
+          .create({
+            fundingPeriodId: fundingPeriod.id,
+            monthlyAmount: "0.0001",
+          })
         await childCareSpaceFactory.associations({ centre, fiscalPeriod, category }).create({
           monthlyAmount: "0.0001",
           actualChildOccupancyRate: "1.0000",

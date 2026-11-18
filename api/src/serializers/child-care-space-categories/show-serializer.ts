@@ -7,6 +7,7 @@ export type ChildCareSpaceCategoryShowView = Pick<
   ChildCareSpaceCategory,
   | "id"
   | "fundingPeriodId"
+  | "childCareCategoryId"
   | "categoryName"
   | "fromAge"
   | "toAge"
@@ -21,6 +22,7 @@ export class ShowSerializer extends BaseSerializer<ChildCareSpaceCategory> {
     return pick(this.record, [
       "id",
       "fundingPeriodId",
+      "childCareCategoryId",
       "categoryName",
       "fromAge",
       "toAge",

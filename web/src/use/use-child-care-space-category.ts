@@ -75,11 +75,8 @@ export function useChildCareSpaceCategory(
     latestRequest = request
     state.isLoading = true
     try {
-      const { categoryName, fromAge, toAge, monthlyAmount } = state.childCareSpaceCategory
+      const { monthlyAmount } = state.childCareSpaceCategory
       const attributes = {
-        categoryName,
-        fromAge,
-        toAge,
         monthlyAmount: String(monthlyAmount),
         ...propagationOptions,
       }

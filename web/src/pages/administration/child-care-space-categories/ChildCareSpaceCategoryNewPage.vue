@@ -29,47 +29,14 @@
         />
       </v-col>
     </v-row>
-    <v-row>
-      <v-col cols="12">
-        <ChildCareSpaceCategoryNameUniqueTextField
-          v-model="categoryAttributes.categoryName"
-          :funding-period-id="categoryAttributes.fundingPeriodId"
-          label="Category Name *"
-          :rules="[required]"
-          required
-        />
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col
-        cols="12"
-        md="6"
-      >
-        <v-text-field
-          :model-value="categoryAttributes.fromAge"
-          label="From Age"
-          type="number"
-          step="1"
-          min="0"
-          :rules="[wholeNumberOrEmpty, greaterThanOrEqualTo(0)]"
-          @update:model-value="updateAge('fromAge', $event)"
-        />
-      </v-col>
-      <v-col
-        cols="12"
-        md="6"
-      >
-        <v-text-field
-          :model-value="categoryAttributes.toAge"
-          label="To Age"
-          type="number"
-          step="1"
-          min="0"
-          :rules="toAgeRules"
-          @update:model-value="updateAge('toAge', $event)"
-        />
-      </v-col>
-    </v-row>
+    <ChildCareCategorySearchableAutocomplete
+      v-model="categoryAttributes.childCareCategoryId"
+      :where="childCareCategoriesWhere"
+      :disabled="isNil(categoryAttributes.fundingPeriodId)"
+      label="Child Care Category *"
+      :rules="[required]"
+      required
+    />
     <v-row>
       <v-col cols="12">
         <CurrencyInput
@@ -117,12 +84,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue"
+import { computed, ref, watch } from "vue"
 import { useRouter } from "vue-router"
 import { isNil } from "lodash"
 
 import { MAX_PER_PAGE } from "@/api/base-api"
-import { greaterThan, greaterThanOrEqualTo, required } from "@/utils/validators"
+import { required } from "@/utils/validators"
 
 import childCareSpaceCategoriesApi, {
   type ChildCareSpaceCategoryCreationAttributes,
@@ -136,59 +103,38 @@ import useSnack from "@/use/use-snack"
 
 import CurrencyInput from "@/components/CurrencyInput.vue"
 import HeaderActionsFormCard from "@/components/common/HeaderActionsFormCard.vue"
-import ChildCareSpaceCategoryNameUniqueTextField from "@/components/child-care-space-categories/ChildCareSpaceCategoryNameUniqueTextField.vue"
+import ChildCareCategorySearchableAutocomplete from "@/components/child-care-categories/ChildCareCategorySearchableAutocomplete.vue"
 import ChildCareSpaceCategoryPropagationControls from "@/components/child-care-space-categories/ChildCareSpaceCategoryPropagationControls.vue"
 
 const monthlyAmountOptions = { precision: 4 }
 
 type CategoryFormAttributes = {
   fundingPeriodId: number | null
-  categoryName: string
-  fromAge: number | null
-  toAge: number | null
+  childCareCategoryId: number | null
   monthlyAmount: string | null
 }
 
 const categoryAttributes = ref<CategoryFormAttributes>({
   fundingPeriodId: null,
-  categoryName: "",
-  fromAge: null,
-  toAge: null,
+  childCareCategoryId: null,
   monthlyAmount: "",
 })
 const applyToFutureMonths = ref(false)
 const propagationStartFiscalPeriodId = ref<number | null>(null)
 
-function updateAge(field: "fromAge" | "toAge", value: string | number | null) {
-  categoryAttributes.value[field] = isNil(value) || value === "" ? null : Number(value)
-}
+const childCareCategoriesWhere = computed(() => ({
+  fundingPeriodId: categoryAttributes.value.fundingPeriodId ?? undefined,
+}))
+
+watch(
+  () => categoryAttributes.value.fundingPeriodId,
+  () => {
+    categoryAttributes.value.childCareCategoryId = null
+  }
+)
 
 function updateMonthlyAmount(value: string | number | null) {
   categoryAttributes.value.monthlyAmount = isNil(value) ? null : String(value)
-}
-
-const toAgeRules = computed(() => [
-  wholeNumberOrEmpty,
-  greaterThanOrEqualTo(0),
-  greaterThan(categoryAttributes.value.fromAge, {
-    referenceFieldLabel: `From Age of ${categoryAttributes.value.fromAge}`,
-  }),
-])
-
-function wholeNumberOrEmpty(value: unknown): boolean | string {
-  if (isNil(value) || value === "") {
-    return true
-  }
-
-  if (typeof value === "number" && Number.isInteger(value)) {
-    return true
-  }
-
-  if (typeof value === "string" && value.trim() !== "" && Number.isInteger(Number(value))) {
-    return true
-  }
-
-  return "Age must be a whole number"
 }
 
 const fundingPeriodsQuery = computed<FundingPeriodQueryOptions>(() => ({
@@ -240,8 +186,8 @@ async function createChildCareSpaceCategory() {
     return
   }
 
-  const { fundingPeriodId, categoryName, fromAge, toAge, monthlyAmount } = categoryAttributes.value
-  if (isNil(fundingPeriodId) || isNil(monthlyAmount)) {
+  const { fundingPeriodId, childCareCategoryId, monthlyAmount } = categoryAttributes.value
+  if (isNil(fundingPeriodId) || isNil(childCareCategoryId) || isNil(monthlyAmount)) {
     return
   }
 
@@ -252,9 +198,7 @@ async function createChildCareSpaceCategory() {
 
   const attributes: ChildCareSpaceCategoryCreationAttributes = {
     fundingPeriodId,
-    categoryName,
-    fromAge,
-    toAge,
+    childCareCategoryId,
     monthlyAmount,
     ...(propagationOptions ?? {}),
   }

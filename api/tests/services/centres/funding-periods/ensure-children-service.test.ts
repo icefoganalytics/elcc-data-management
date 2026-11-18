@@ -1,3 +1,4 @@
+import childCareCategoryFactory from "@/factories/child-care-category-factory"
 import {
   AdministrationCost,
   BuildingExpense,
@@ -334,10 +335,17 @@ describe("api/src/services/centres/funding-periods/ensure-children-service.ts", 
           fiscalYear: "2024-25",
           dateStart: new Date("2024-05-01"),
         })
-        const category = await childCareSpaceCategoryFactory.create({
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
           fundingPeriodId: fundingPeriod.id,
           categoryName: "Infants",
         })
+        const category = await childCareSpaceCategoryFactory
+          .associations({
+            childCareCategory: categoryChildCareCategory,
+          })
+          .create({
+            fundingPeriodId: fundingPeriod.id,
+          })
         await fundingSubmissionLineFactory.create({
           fiscalYear: "2024/25",
         })
@@ -377,10 +385,17 @@ describe("api/src/services/centres/funding-periods/ensure-children-service.ts", 
           fundingPeriodId: fundingPeriod.id,
           fiscalYear: "2024-25",
         })
-        const originalCategory = await childCareSpaceCategoryFactory.create({
+        const originalCategoryChildCareCategory = await childCareCategoryFactory.create({
           fundingPeriodId: fundingPeriod.id,
           categoryName: "Infants",
         })
+        const originalCategory = await childCareSpaceCategoryFactory
+          .associations({
+            childCareCategory: originalCategoryChildCareCategory,
+          })
+          .create({
+            fundingPeriodId: fundingPeriod.id,
+          })
         await fundingSubmissionLineFactory.create({
           fiscalYear: "2024/25",
         })
@@ -388,10 +403,17 @@ describe("api/src/services/centres/funding-periods/ensure-children-service.ts", 
           fundingRegionId: fundingRegion.id,
         })
         await EnsureChildrenService.perform(centre, fundingPeriod)
-        await childCareSpaceCategoryFactory.create({
+        const configuredCategoryChildCareCategory = await childCareCategoryFactory.create({
           fundingPeriodId: fundingPeriod.id,
           categoryName: "Toddlers",
         })
+        await childCareSpaceCategoryFactory
+          .associations({
+            childCareCategory: configuredCategoryChildCareCategory,
+          })
+          .create({
+            fundingPeriodId: fundingPeriod.id,
+          })
 
         // Act
         await EnsureChildrenService.perform(centre, fundingPeriod)
@@ -434,10 +456,17 @@ describe("api/src/services/centres/funding-periods/ensure-children-service.ts", 
           fundingRegionId: fundingRegion.id,
         })
         await EnsureChildrenService.perform(centre, fundingPeriod)
-        const mayScopedCategory = await childCareSpaceCategoryFactory.create({
+        const mayScopedCategoryChildCareCategory = await childCareCategoryFactory.create({
           fundingPeriodId: fundingPeriod.id,
           categoryName: "Toddlers",
         })
+        const mayScopedCategory = await childCareSpaceCategoryFactory
+          .associations({
+            childCareCategory: mayScopedCategoryChildCareCategory,
+          })
+          .create({
+            fundingPeriodId: fundingPeriod.id,
+          })
         const mayChildCareSpace = await childCareSpaceFactory
           .associations({ centre, fiscalPeriod: mayFiscalPeriod, category: mayScopedCategory })
           .create()
@@ -470,9 +499,16 @@ describe("api/src/services/centres/funding-periods/ensure-children-service.ts", 
           fiscalYear: "2024-25",
           dateStart: new Date("2024-05-01"),
         })
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
         const category = await childCareSpaceCategoryFactory
-          .associations({ fundingPeriod })
-          .create({ categoryName: "Infants" })
+          .associations({
+            fundingPeriod,
+            childCareCategory: categoryChildCareCategory,
+          })
+          .create()
         const mayChildCareSpace = await childCareSpaceFactory
           .associations({ centre, fiscalPeriod: mayFiscalPeriod, category })
           .create()
@@ -519,13 +555,16 @@ describe("api/src/services/centres/funding-periods/ensure-children-service.ts", 
             fiscalYear: "2024-25",
             dateStart: new Date("2024-05-01"),
           })
+        const childCareSpaceCategoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
         const childCareSpaceCategory = await childCareSpaceCategoryFactory
           .associations({
             fundingPeriod,
+            childCareCategory: childCareSpaceCategoryChildCareCategory,
           })
-          .create({
-            categoryName: "Infants",
-          })
+          .create()
         const administrationCostCategory = await administrationCostCategoryFactory
           .associations({
             fundingPeriod,

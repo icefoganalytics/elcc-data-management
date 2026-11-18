@@ -9,7 +9,10 @@ import PropagateToFutureMonthsService, {
 } from "@/services/child-care-space-categories/propagate-to-future-months-service"
 
 export type ChildCareSpaceCategoryCreationAttributes = Partial<
-  CreationAttributes<ChildCareSpaceCategory>
+  Pick<
+    CreationAttributes<ChildCareSpaceCategory>,
+    "fundingPeriodId" | "childCareCategoryId" | "monthlyAmount"
+  >
 > &
   ChildCareSpaceCategoryPropagationOptions
 
@@ -19,13 +22,13 @@ export class CreateService extends BaseService {
   }
 
   async perform(): Promise<ChildCareSpaceCategory> {
-    const { fundingPeriodId, categoryName, fromAge, toAge, monthlyAmount } = this.attributes
+    const { fundingPeriodId, childCareCategoryId, monthlyAmount } = this.attributes
     if (isNil(fundingPeriodId)) {
       throw new Error("Funding period ID is required")
     }
 
-    if (isNil(categoryName)) {
-      throw new Error("Category name is required")
+    if (isNil(childCareCategoryId)) {
+      throw new Error("Child Care category ID is required")
     }
 
     if (isNil(monthlyAmount)) {
@@ -41,13 +44,13 @@ export class CreateService extends BaseService {
       const category = await ChildCareSpaceCategory.create(
         {
           fundingPeriodId,
-          categoryName,
-          fromAge: fromAge ?? null,
-          toAge: toAge ?? null,
+          childCareCategoryId,
           monthlyAmount,
         },
         { transaction }
       )
+
+      await category.reload({ include: ["childCareCategory"], transaction })
 
       if (applyToFutureMonths === true) {
         await PropagateToFutureMonthsService.perform(

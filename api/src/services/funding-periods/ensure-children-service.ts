@@ -10,6 +10,7 @@ export class EnsureChildrenService extends BaseService {
   async perform(): Promise<void> {
     await FundingPeriods.FiscalPeriods.BulkCreateService.perform(this.fundingPeriod)
     await FundingPeriods.EmployeeWageTiers.BulkCreateService.perform(this.fundingPeriod)
+    await FundingPeriods.ChildCareCategories.BulkEnsureService.perform(this.fundingPeriod)
     await FundingPeriods.ChildCareSpaceCategories.BulkEnsureService.perform(this.fundingPeriod)
     await FundingPeriods.QualityEnhancementCategories.BulkEnsureService.perform(this.fundingPeriod)
     await FundingPeriods.ChildrenWithDiverseNeedsFundingCategories.BulkEnsureService.perform(

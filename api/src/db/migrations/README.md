@@ -73,3 +73,27 @@ removed state or preventing the remaining migrations from rolling back.
 
 Knex uses its native filename-based history and migration lock. Do not rename ledger entries,
 retain obsolete transition-marker files, or add a second migration directory.
+
+## Staged Shared Category Cutover
+
+Programme cutovers ship separately with their matching application layers. The Spaces stage
+uses a data backfill followed by a separate schema normalization migration. The backfill
+preserves Spaces identities; normalization removes only Spaces name and age columns and the
+legacy name index, requires its shared identity, and adds an active-only funding-period/shared-identity
+unique index.
+
+Administration and Quality retain their legacy names, ages, configuration Spaces links, and
+nullable shared identities at this stage. Do not remove those fields until each programme's
+application layer and migration ship together. Later stages resolve explicit Spaces links using
+its funding-period and shared IDs, not the removed Spaces name and age columns. Monthly ledger
+tables, historical names, amounts, occupancy values, computed totals, and audit fields are not
+rewritten by these configuration cutovers.
+
+Reusable migration code belongs in `helpers`, not in top-level `.ts` files that Knex would execute.
+Knex's filesystem loader reads immediate directory entries and filters by extension; the helpers
+subdirectory is not a migration source. Each programme cutover runs in Knex's migration transaction.
+Its `down` method cannot reconstruct independent legacy metadata: recover a pre-cutover backup.
+
+Do not run replacement filenames against a retained preview database that recorded unpublished
+combined migration filenames. Leave that preview untouched and use a separate database for the
+restructured stack.

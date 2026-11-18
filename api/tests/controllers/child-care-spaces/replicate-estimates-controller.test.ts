@@ -1,3 +1,4 @@
+import childCareCategoryFactory from "@/factories/child-care-category-factory"
 import { User } from "@/models"
 
 import {
@@ -34,10 +35,14 @@ describe("api/src/controllers/child-care-spaces/replicate-estimates-controller.t
           fiscalYear: "2024-25",
           dateStart: new Date("2024-05-01"),
         })
-        const category = await childCareSpaceCategoryFactory.create({
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
           fundingPeriodId: fundingPeriod.id,
           categoryName: "Infants",
+        })
+        const category = await childCareSpaceCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
           monthlyAmount: "100.0000",
+          childCareCategoryId: categoryChildCareCategory.id,
         })
         const sourceChildCareSpace = await childCareSpaceFactory
           .associations({
@@ -99,10 +104,14 @@ describe("api/src/controllers/child-care-spaces/replicate-estimates-controller.t
           fiscalYear: "2024-25",
           dateStart: new Date("2024-05-01"),
         })
-        const category = await childCareSpaceCategoryFactory.create({
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
           fundingPeriodId: fundingPeriod.id,
           categoryName: "Infants",
+        })
+        const category = await childCareSpaceCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
           monthlyAmount: "100.0000",
+          childCareCategoryId: categoryChildCareCategory.id,
         })
         const sourceChildCareSpace = await childCareSpaceFactory
           .associations({
