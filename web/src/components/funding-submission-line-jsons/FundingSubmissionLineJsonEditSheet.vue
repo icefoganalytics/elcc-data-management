@@ -1,17 +1,5 @@
 <template>
   <v-sheet @keydown="activateKeyboardShortcutsModalIfCorrectEvent($event)">
-    <div class="d-flex flex-wrap align-center ga-2 mb-3">
-      <h2>{{ dateName }} {{ calendarYear }}</h2>
-
-      <div class="ml-auto">
-        <slot
-          name="actions"
-          :is-saving="isSaving"
-          :is-workflow-busy="isWorkflowBusy"
-        />
-      </div>
-    </div>
-
     <v-skeleton-loader
       v-if="isLoading"
       type="table"
@@ -75,16 +63,12 @@
 </template>
 
 <script setup lang="ts">
-import { DateTime } from "luxon"
-import { computed, reactive, ref, toRefs, useTemplateRef } from "vue"
+import { computed, ref, toRefs, useTemplateRef } from "vue"
 import { groupBy, isNil } from "lodash"
-
-import childCareSpacesApi, { CHILD_CARE_SPACES_SECTION_NAME } from "@/api/child-care-spaces-api"
 import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 import fundingSubmissionLineJsonsApi, {
   type FundingLineValue,
 } from "@/api/funding-submission-line-jsons-api"
-import useChildCareSpaces from "@/use/use-child-care-spaces"
 import useFundingSubmissionLineJson from "@/use/use-funding-submission-line-json"
 import useSnack from "@/use/use-snack"
 
@@ -96,8 +80,6 @@ import FundingSubmissionLineJsonSectionTable, {
 const props = withDefaults(
   defineProps<{
     fundingSubmissionLineJsonId: number
-    centreId: number
-    fiscalPeriodId: number
     isWorkflowBusy?: boolean
   }>(),
   {
@@ -108,6 +90,8 @@ const props = withDefaults(
 const emit = defineEmits<{
   "update:fundingSubmissionLineJson": [fundingSubmissionLineJsonId: number]
   saving: [value: boolean]
+  focusBeyondLastInColumn: [column: ColumnNames]
+  focusBeyondFirstInColumn: [column: ColumnNames]
 }>()
 
 const { fundingSubmissionLineJsonId } = toRefs(props)
@@ -117,67 +101,16 @@ const {
   isErrored: isErroredFundingSubmissionLineJson,
   refresh: refreshFundingSubmissionLineJson,
 } = useFundingSubmissionLineJson(fundingSubmissionLineJsonId)
-const childCareSpacesQuery = computed(() => ({
-  where: {
-    centreId: props.centreId,
-    fiscalPeriodId: props.fiscalPeriodId,
-  },
-  perPage: -1,
-}))
-const {
-  childCareSpaces,
-  isLoading: isLoadingChildCareSpaces,
-  isErrored: isErroredChildCareSpaces,
-  refresh: refreshChildCareSpaces,
-} = useChildCareSpaces(childCareSpacesQuery)
-const isLoading = computed(
-  () => isLoadingFundingSubmissionLineJson.value || isLoadingChildCareSpaces.value
-)
+const isLoading = isLoadingFundingSubmissionLineJson
 const isErrored = computed(
-  () =>
-    isErroredFundingSubmissionLineJson.value ||
-    isErroredChildCareSpaces.value ||
-    isNil(fundingSubmissionLineJson.value)
+  () => isErroredFundingSubmissionLineJson.value || isNil(fundingSubmissionLineJson.value)
 )
 
 const isSaving = ref(false)
 const isWorkflowRunning = computed(() => isSaving.value || props.isWorkflowBusy)
-const dateName = computed(() => fundingSubmissionLineJson.value?.dateName)
-const calendarYear = computed(() => {
-  if (isNil(fundingSubmissionLineJson.value)) {
-    return "..."
-  }
-
-  const { dateStart } = fundingSubmissionLineJson.value
-  return DateTime.fromISO(dateStart).toFormat("yyyy")
-})
-
-const childCareSpacesAsFundingLineValues = computed<FundingLineValue[]>(() => {
-  return childCareSpaces.value.map((childCareSpace) => {
-    const submissionLineId = childCareSpace.categoryId
-
-    return reactive({
-      submissionLineId,
-      sectionName: CHILD_CARE_SPACES_SECTION_NAME,
-      lineName: childCareSpace.lineName,
-      monthlyAmount: childCareSpace.monthlyAmount,
-      estimatedChildOccupancyRate: childCareSpace.estimatedChildOccupancyRate,
-      actualChildOccupancyRate: childCareSpace.actualChildOccupancyRate,
-      estimatedComputedTotal: childCareSpace.estimatedComputedTotal,
-      actualComputedTotal: childCareSpace.actualComputedTotal,
-    })
-  })
-})
-
 const sections = computed<{ sectionName: string; lines: FundingLineValue[] }[]>(() => {
   const sectionGroups = groupBy(fundingSubmissionLineJson.value?.lines ?? [], "sectionName")
-  return [
-    {
-      sectionName: CHILD_CARE_SPACES_SECTION_NAME,
-      lines: childCareSpacesAsFundingLineValues.value,
-    },
-    ...Object.entries(sectionGroups).map(([sectionName, lines]) => ({ sectionName, lines })),
-  ]
+  return Object.entries(sectionGroups).map(([sectionName, lines]) => ({ sectionName, lines }))
 })
 const fundingSubmissionLineJsonSectionTables = useTemplateRef<
   InstanceType<typeof FundingSubmissionLineJsonSectionTable>[]
@@ -186,7 +119,7 @@ const snack = useSnack()
 
 async function reloadWorksheet() {
   try {
-    await awaitRequestSettlements([refreshChildCareSpaces(), refreshFundingSubmissionLineJson()])
+    await refreshFundingSubmissionLineJson()
   } catch (error) {
     rethrowUnexpectedError(error)
 
@@ -202,45 +135,11 @@ async function saveFundingSubmissionLineJson(): Promise<boolean> {
   isSaving.value = true
   emit("saving", true)
   try {
-    const childCareSpaceLines = sections.value.find(
-      ({ sectionName }) => sectionName === CHILD_CARE_SPACES_SECTION_NAME
-    )?.lines
-    const childCareSpacesByCategoryId = new Map(
-      childCareSpaces.value.map((childCareSpace) => [childCareSpace.categoryId, childCareSpace])
-    )
-    const childCareSpaceUpdates = []
-
-    for (const line of childCareSpaceLines ?? []) {
-      const childCareSpace = childCareSpacesByCategoryId.get(line.submissionLineId)
-      if (isNil(childCareSpace)) {
-        throw new Error(`Child Care Space for category ${line.submissionLineId} is missing`)
-      }
-      if (
-        childCareSpace.estimatedChildOccupancyRate === line.estimatedChildOccupancyRate &&
-        childCareSpace.actualChildOccupancyRate === line.actualChildOccupancyRate
-      ) {
-        continue
-      }
-      childCareSpaceUpdates.push({
-        id: childCareSpace.id,
-        update: {
-          estimatedChildOccupancyRate: line.estimatedChildOccupancyRate,
-          actualChildOccupancyRate: line.actualChildOccupancyRate,
-        },
-      })
-    }
-
-    const jsonLines = sections.value
-      .filter(({ sectionName }) => sectionName !== CHILD_CARE_SPACES_SECTION_NAME)
-      .flatMap(({ lines }) => lines)
-    const mutations = childCareSpaceUpdates.map(({ id, update }) =>
-      childCareSpacesApi.update(id, update)
-    )
-    await awaitRequestSettlements(mutations)
+    const jsonLines = sections.value.flatMap(({ lines }) => lines)
     await fundingSubmissionLineJsonsApi.update(fundingSubmissionLineJsonId.value, {
       lines: jsonLines,
     })
-    await awaitRequestSettlements([refreshChildCareSpaces(), refreshFundingSubmissionLineJson()])
+    await refreshFundingSubmissionLineJson()
 
     emit("update:fundingSubmissionLineJson", fundingSubmissionLineJsonId.value)
     return true
@@ -256,66 +155,79 @@ async function saveFundingSubmissionLineJson(): Promise<boolean> {
   }
 }
 
-async function awaitRequestSettlements(requests: Promise<unknown>[]) {
-  const results = await Promise.allSettled(requests)
-  const failures = results.flatMap((result) =>
-    result.status === "rejected" ? [result.reason] : []
-  )
-
-  if (failures.length > 0) {
-    const error = new AggregateError(failures, failures.map(String).join("; "))
-    rethrowUnexpectedError(error)
-    throw error
-  }
-}
-
 async function replicateOwnEstimates(): Promise<void> {
-  await awaitRequestSettlements([
-    fundingSubmissionLineJsonsApi.replicateEstimates(fundingSubmissionLineJsonId.value),
-    replicateChildCareSpaceEstimates(),
-  ])
-  await awaitRequestSettlements([refreshChildCareSpaces(), refreshFundingSubmissionLineJson()])
+  await fundingSubmissionLineJsonsApi.replicateEstimates(fundingSubmissionLineJsonId.value)
+  await refreshFundingSubmissionLineJson()
   emit("update:fundingSubmissionLineJson", fundingSubmissionLineJsonId.value)
 }
 
-async function replicateChildCareSpaceEstimates(): Promise<void> {
-  for (const childCareSpace of childCareSpaces.value) {
-    await childCareSpacesApi.replicateEstimates(childCareSpace.id)
-  }
-}
-
 function goToNextSection(sectionIndex: number, columnName: ColumnNames) {
-  if (sectionIndex < sections.value.length - 1) {
-    const sectionTables = fundingSubmissionLineJsonSectionTables.value
-    if (isNil(sectionTables)) {
-      return
-    }
-
-    const nextIndex = sectionIndex + 1
-    const nextSection = sectionTables[nextIndex]
-    if (isNil(nextSection)) {
-      return
-    }
-
-    nextSection.focusOnFirstInColumn(columnName)
+  const sectionTables = fundingSubmissionLineJsonSectionTables.value
+  if (isNil(sectionTables)) {
+    emit("focusBeyondLastInColumn", columnName)
+    return
   }
+
+  for (let index = sectionIndex + 1; index < sectionTables.length; index++) {
+    const nextSection = sectionTables[index]
+    if (isNil(nextSection)) {
+      continue
+    }
+
+    if (nextSection.focusOnFirstInColumn(columnName)) {
+      return
+    }
+  }
+
+  emit("focusBeyondLastInColumn", columnName)
 }
 
 function goToPreviousSection(sectionIndex: number, columnName: ColumnNames) {
-  if (sectionIndex > 0) {
-    const sectionTables = fundingSubmissionLineJsonSectionTables.value
-    if (isNil(sectionTables)) {
-      return
-    }
-
-    const previousIndex = sectionIndex - 1
-    const previousSection = sectionTables[previousIndex]
-    if (isNil(previousSection)) {
-      return
-    }
-
-    previousSection.focusOnLastInColumn(columnName)
+  const sectionTables = fundingSubmissionLineJsonSectionTables.value
+  if (isNil(sectionTables)) {
+    emit("focusBeyondFirstInColumn", columnName)
+    return
   }
+
+  for (let index = sectionIndex - 1; index >= 0; index--) {
+    const previousSection = sectionTables[index]
+    if (isNil(previousSection)) {
+      continue
+    }
+
+    if (previousSection.focusOnLastInColumn(columnName)) {
+      return
+    }
+  }
+
+  emit("focusBeyondFirstInColumn", columnName)
+}
+
+function focusOnFirstInColumn(columnName: ColumnNames): boolean {
+  const sectionTables = fundingSubmissionLineJsonSectionTables.value
+  if (isWorkflowRunning.value || isNil(sectionTables)) return false
+
+  for (const section of sectionTables) {
+    if (section.focusOnFirstInColumn(columnName)) return true
+  }
+  return false
+}
+
+function focusOnLastInColumn(columnName: ColumnNames): boolean {
+  const sectionTables = fundingSubmissionLineJsonSectionTables.value
+  if (isWorkflowRunning.value || isNil(sectionTables)) return false
+
+  for (let index = sectionTables.length - 1; index >= 0; index--) {
+    const section = sectionTables[index]
+    if (isNil(section)) {
+      continue
+    }
+
+    if (section.focusOnLastInColumn(columnName)) {
+      return true
+    }
+  }
+  return false
 }
 
 const keyboardShortcutsModal = useTemplateRef("keyboardShortcutsModal")
@@ -337,7 +249,10 @@ function showKeyboardShortcutsModal() {
 defineExpose({
   saveFundingSubmissionLineJson,
   replicateOwnEstimates,
+  focusOnFirstInColumn,
+  focusOnLastInColumn,
   isLoading,
   isErrored,
+  isWorkflowRunning,
 })
 </script>

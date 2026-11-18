@@ -1,4 +1,4 @@
-import { flushPromises, mount } from "@vue/test-utils"
+import { flushPromises } from "@vue/test-utils"
 
 import fundingSubmissionLineJsonsApi from "@/api/funding-submission-line-jsons-api"
 import httpClient from "@/api/http-client"
@@ -7,19 +7,20 @@ import qualityEnhancementsApi from "@/api/quality-enhancements-api"
 import { FiscalPeriodMonths } from "@/use/use-fiscal-periods"
 
 import {
+  childCareSpaceSummariesFactory,
   fiscalPeriodFactory,
   fundingSubmissionLineJsonFactory,
   qualityEnhancementFactory,
 } from "@/tests/factories"
-import { mockHttpGetRoutes, mockRouter, mockVuetify } from "@/tests/support"
+import { mockHttpGetRoutes, mountWithDefaultPlugins } from "@/tests/support"
 
 import MonthlyWorksheetPage from "@/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue"
 
 describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue", () => {
   describe("MonthlyWorksheetPage", () => {
     describe("saving edited cells", () => {
-      test.each(["Save", "Replicate Estimates"])(
-        "when a Quality Enhancement cell is edited, %s saves it without Enter",
+      test.each(["Enter", "Replicate Estimates"])(
+        "when a Quality Enhancement cell is edited, %s commits and saves it",
         async (actionLabel) => {
           // Arrange
           const updateQualityEnhancement = vi.spyOn(qualityEnhancementsApi, "update")
@@ -51,7 +52,13 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
               return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
             },
             "/api/child-care-spaces": async () => {
-              return { data: { childCareSpaces: [], totalCount: 0 } }
+              return {
+                data: {
+                  childCareSpaces: [],
+                  totalCount: 0,
+                  summaries: childCareSpaceSummariesFactory.build(),
+                },
+              }
             },
             "/api/administration-costs": async () => {
               return { data: { administrationCosts: [], totalCount: 0 } }
@@ -68,13 +75,9 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           })
           http.patch.mockResolvedValue({ data: {} })
           http.post.mockResolvedValue({ data: undefined })
-          const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-          await router.push("/")
-          await router.isReady()
-          const wrapper = mount(MonthlyWorksheetPage, {
+          const wrapper = mountWithDefaultPlugins(MonthlyWorksheetPage, {
             props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
             global: {
-              plugins: [router, mockVuetify()],
               stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
             },
           })
@@ -89,11 +92,15 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           await flushPromises()
           const estimateInput = wrapper.get<HTMLInputElement>("tbody input")
           await estimateInput.setValue("0.8125")
-          const action = wrapper
-            .findAll("button")
-            .find((button) => button.text().trim() === actionLabel)
-          if (!action) throw new Error(`Expected ${actionLabel} button`)
-          await action.trigger("click")
+          if (actionLabel === "Enter") {
+            await estimateInput.trigger("keydown", { key: "Enter" })
+          } else {
+            const action = wrapper
+              .findAll("button")
+              .find((button) => button.text().trim() === actionLabel)
+            if (!action) throw new Error(`Expected ${actionLabel} button`)
+            await action.trigger("click")
+          }
           await flushPromises()
 
           // Assert
@@ -135,7 +142,13 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
           },
           "/api/child-care-spaces": async () => {
-            return { data: { childCareSpaces: [], totalCount: 0 } }
+            return {
+              data: {
+                childCareSpaces: [],
+                totalCount: 0,
+                summaries: childCareSpaceSummariesFactory.build(),
+              },
+            }
           },
           "/api/administration-costs": async () => {
             return { data: { administrationCosts: [], totalCount: 0 } }
@@ -152,13 +165,9 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         })
         http.patch.mockResolvedValue({ data: {} })
         http.post.mockResolvedValue({ data: undefined })
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-        await router.push("/")
-        await router.isReady()
-        const wrapper = mount(MonthlyWorksheetPage, {
+        const wrapper = mountWithDefaultPlugins(MonthlyWorksheetPage, {
           props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
           global: {
-            plugins: [router, mockVuetify()],
             stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
           },
         })
@@ -216,7 +225,13 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
           },
           "/api/child-care-spaces": async () => {
-            return { data: { childCareSpaces: [], totalCount: 0 } }
+            return {
+              data: {
+                childCareSpaces: [],
+                totalCount: 0,
+                summaries: childCareSpaceSummariesFactory.build(),
+              },
+            }
           },
           "/api/administration-costs": async () => {
             return { data: { administrationCosts: [], totalCount: 0 } }
@@ -233,13 +248,9 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         })
         http.patch.mockResolvedValue({ data: {} })
         http.post.mockResolvedValue({ data: undefined })
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-        await router.push("/")
-        await router.isReady()
-        const wrapper = mount(MonthlyWorksheetPage, {
+        const wrapper = mountWithDefaultPlugins(MonthlyWorksheetPage, {
           props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
           global: {
-            plugins: [router, mockVuetify()],
             stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
           },
         })
@@ -265,9 +276,8 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         expect(replicateQualityEnhancement).toHaveBeenCalledExactlyOnceWith(70)
       })
 
-      test("when saving an edited Quality Enhancement cell, does not replicate estimates", async () => {
+      test("when Enter commits an edited Quality Enhancement cell, does not replicate estimates", async () => {
         // Arrange
-        const actionLabel = "Save"
         const worksheet = fundingSubmissionLineJsonFactory.build({
           id: 44,
           centreId: 1,
@@ -296,7 +306,13 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             return { data: { fiscalPeriods: [fiscalPeriod], totalCount: 1 } }
           },
           "/api/child-care-spaces": async () => {
-            return { data: { childCareSpaces: [], totalCount: 0 } }
+            return {
+              data: {
+                childCareSpaces: [],
+                totalCount: 0,
+                summaries: childCareSpaceSummariesFactory.build(),
+              },
+            }
           },
           "/api/administration-costs": async () => {
             return { data: { administrationCosts: [], totalCount: 0 } }
@@ -313,13 +329,9 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         })
         http.patch.mockResolvedValue({ data: {} })
         http.post.mockResolvedValue({ data: undefined })
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-        await router.push("/")
-        await router.isReady()
-        const wrapper = mount(MonthlyWorksheetPage, {
+        const wrapper = mountWithDefaultPlugins(MonthlyWorksheetPage, {
           props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
           global: {
-            plugins: [router, mockVuetify()],
             stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
           },
         })
@@ -334,11 +346,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         await flushPromises()
         const estimateInput = wrapper.get<HTMLInputElement>("tbody input")
         await estimateInput.setValue("0.8125")
-        const action = wrapper
-          .findAll("button")
-          .find((button) => button.text().trim() === actionLabel)
-        if (!action) throw new Error(`Expected ${actionLabel} button`)
-        await action.trigger("click")
+        await estimateInput.trigger("keydown", { key: "Enter" })
         await flushPromises()
 
         // Assert

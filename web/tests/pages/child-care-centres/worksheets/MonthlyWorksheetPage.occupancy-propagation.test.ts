@@ -1,4 +1,4 @@
-import { flushPromises, mount } from "@vue/test-utils"
+import { flushPromises } from "@vue/test-utils"
 
 import httpClient from "@/api/http-client"
 import administrationCostsApi from "@/api/administration-costs-api"
@@ -15,14 +15,14 @@ import {
   fundingSubmissionLineJsonFactory,
   qualityEnhancementFactory,
 } from "@/tests/factories"
-import { mockHttpGetRoutes, mockRouter, mockVuetify } from "@/tests/support"
+import { mockHttpGetRoutes, mountWithDefaultPlugins } from "@/tests/support"
 
 import MonthlyWorksheetPage from "@/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue"
 
 describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue", () => {
   describe("MonthlyWorksheetPage", () => {
-    describe("partial-save recovery", () => {
-      test("when one Spaces update fails, refreshes the Administration total", async () => {
+    describe("Spaces autosave integration", () => {
+      test("when a committed Spaces edit saves, refreshes the Administration total", async () => {
         // Arrange
         const worksheet = fundingSubmissionLineJsonFactory.build({
           id: 44,
@@ -38,7 +38,6 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         })
         const childCareSpaces = [
           childCareSpaceFactory.build({ id: 40, centreId: 1, fiscalPeriodId: 4, categoryId: 9 }),
-          childCareSpaceFactory.build({ id: 41, centreId: 1, fiscalPeriodId: 4, categoryId: 10 }),
         ]
         const administrationCost = administrationCostFactory.build({
           id: 60,
@@ -65,7 +64,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           },
           "/api/child-care-spaces": async () => {
             return {
-              data: { childCareSpaces, totalCount: 2, summaries: childCareSpaceSummariesFactory.build() },
+              data: { childCareSpaces, totalCount: 1, summaries: childCareSpaceSummariesFactory.build() },
             }
           },
           "/api/children-with-diverse-needs-funding-records": async () => {
@@ -78,19 +77,12 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             return { data: { fundingSubmissionLineJson: worksheet } }
           },
         })
-        http.patch.mockImplementation(async (url) => {
-          if (url === "/api/child-care-spaces/41") {
-            throw new ApiOperationError("Second Spaces update failed", 503)
-          }
-          return { data: {} }
+        http.patch.mockResolvedValue({
+          data: { childCareSpace: { ...childCareSpaces[0], estimatedChildOccupancyRate: "0.5" } },
         })
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-        await router.push("/")
-        await router.isReady()
-        const wrapper = mount(MonthlyWorksheetPage, {
+        const wrapper = mountWithDefaultPlugins(MonthlyWorksheetPage, {
           props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
           global: {
-            plugins: [router, mockVuetify()],
             stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
           },
         })
@@ -99,28 +91,26 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           administrationCosts: [refreshedAdministrationCost],
           totalCount: 1,
         })
-        const replicate = wrapper
-          .findAll("button")
-          .find((button) => button.text().includes("Replicate Estimates"))
-        if (!replicate) throw new Error("Expected the Replicate Estimates button")
 
         // Act
-        const inputs = wrapper.findAll("tbody input")
-        await inputs[0].setValue("0.5")
-        await inputs[2].setValue("0.75")
-        await replicate.trigger("click")
+        const spaces = wrapper.getComponent({ name: "ChildCareSpacesEditDataTableVirtual" })
+        await spaces.get("tr.cursor-pointer").trigger("click")
+        await flushPromises()
+        const estimate = spaces.get("tbody input")
+        await estimate.setValue("0.5")
+        await estimate.trigger("keydown", { key: "Enter" })
         await flushPromises()
 
         // Assert
         expect(
           wrapper
             .getComponent({ name: "AdministrationCostEditTable" })
-            .get("tbody tr.cursor-pointer td:nth-child(4)")
+            .get("tfoot td:nth-child(4)")
             .text()
-        ).toEqual("$20.00")
+        ).toEqual("$20")
       })
 
-      test("when one Spaces update fails, refreshes the Quality Enhancement total", async () => {
+      test("when a committed Spaces edit saves, refreshes the Quality Enhancement total", async () => {
         // Arrange
         const worksheet = fundingSubmissionLineJsonFactory.build({
           id: 44,
@@ -136,7 +126,6 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         })
         const childCareSpaces = [
           childCareSpaceFactory.build({ id: 40, centreId: 1, fiscalPeriodId: 4, categoryId: 9 }),
-          childCareSpaceFactory.build({ id: 41, centreId: 1, fiscalPeriodId: 4, categoryId: 10 }),
         ]
         const qualityEnhancement = qualityEnhancementFactory.build({
           id: 70,
@@ -163,7 +152,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           },
           "/api/child-care-spaces": async () => {
             return {
-              data: { childCareSpaces, totalCount: 2, summaries: childCareSpaceSummariesFactory.build() },
+              data: { childCareSpaces, totalCount: 1, summaries: childCareSpaceSummariesFactory.build() },
             }
           },
           "/api/administration-costs": async () => {
@@ -176,19 +165,12 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             return { data: { fundingSubmissionLineJson: worksheet } }
           },
         })
-        http.patch.mockImplementation(async (url) => {
-          if (url === "/api/child-care-spaces/41") {
-            throw new ApiOperationError("Second Spaces update failed", 503)
-          }
-          return { data: {} }
+        http.patch.mockResolvedValue({
+          data: { childCareSpace: { ...childCareSpaces[0], estimatedChildOccupancyRate: "0.5" } },
         })
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-        await router.push("/")
-        await router.isReady()
-        const wrapper = mount(MonthlyWorksheetPage, {
+        const wrapper = mountWithDefaultPlugins(MonthlyWorksheetPage, {
           props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
           global: {
-            plugins: [router, mockVuetify()],
             stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
           },
         })
@@ -197,28 +179,26 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           qualityEnhancements: [refreshedQualityEnhancement],
           totalCount: 1,
         })
-        const replicate = wrapper
-          .findAll("button")
-          .find((button) => button.text().includes("Replicate Estimates"))
-        if (!replicate) throw new Error("Expected the Replicate Estimates button")
 
         // Act
-        const inputs = wrapper.findAll("tbody input")
-        await inputs[0].setValue("0.5")
-        await inputs[2].setValue("0.75")
-        await replicate.trigger("click")
+        const spaces = wrapper.getComponent({ name: "ChildCareSpacesEditDataTableVirtual" })
+        await spaces.get("tr.cursor-pointer").trigger("click")
+        await flushPromises()
+        const estimate = spaces.get("tbody input")
+        await estimate.setValue("0.5")
+        await estimate.trigger("keydown", { key: "Enter" })
         await flushPromises()
 
         // Assert
         expect(
           wrapper
             .getComponent({ name: "QualityEnhancementEditTable" })
-            .get("tbody tr.cursor-pointer td:nth-child(4)")
+            .get("tfoot td:nth-child(4)")
             .text()
-        ).toEqual("$40.00")
+        ).toEqual("$40")
       })
 
-      test("when one Spaces update fails, does not replicate the partial save", async () => {
+      test("when the active Spaces edit fails to save, does not replicate estimates", async () => {
         // Arrange
         const worksheet = fundingSubmissionLineJsonFactory.build({
           id: 44,
@@ -234,7 +214,6 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         })
         const childCareSpaces = [
           childCareSpaceFactory.build({ id: 40, centreId: 1, fiscalPeriodId: 4, categoryId: 9 }),
-          childCareSpaceFactory.build({ id: 41, centreId: 1, fiscalPeriodId: 4, categoryId: 10 }),
         ]
         const http = vi.mocked(httpClient, true)
         mockHttpGetRoutes({
@@ -246,7 +225,7 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
           },
           "/api/child-care-spaces": async () => {
             return {
-              data: { childCareSpaces, totalCount: 2, summaries: childCareSpaceSummariesFactory.build() },
+              data: { childCareSpaces, totalCount: 1, summaries: childCareSpaceSummariesFactory.build() },
             }
           },
           "/api/administration-costs": async () => {
@@ -262,20 +241,11 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
             return { data: { fundingSubmissionLineJson: worksheet } }
           },
         })
-        http.patch.mockImplementation(async (url) => {
-          if (url === "/api/child-care-spaces/41") {
-            throw new ApiOperationError("Second Spaces update failed", 503)
-          }
-          return { data: {} }
-        })
+        http.patch.mockRejectedValue(new ApiOperationError("Spaces update failed", 503))
         http.post.mockResolvedValue({ data: undefined })
-        const router = mockRouter([{ path: "/", component: { template: "<div />" } }])
-        await router.push("/")
-        await router.isReady()
-        const wrapper = mount(MonthlyWorksheetPage, {
+        const wrapper = mountWithDefaultPlugins(MonthlyWorksheetPage, {
           props: { centreId: 1, fiscalYearSlug: "2024-25", month: FiscalPeriodMonths.APRIL },
           global: {
-            plugins: [router, mockVuetify()],
             stubs: { BuildingExpenseCreateFormCard: true, BuildingExpensesEditTable: true },
           },
         })
@@ -286,9 +256,10 @@ describe("web/src/pages/child-care-centres/worksheets/MonthlyWorksheetPage.vue",
         if (!replicate) throw new Error("Expected the Replicate Estimates button")
 
         // Act
-        const inputs = wrapper.findAll("tbody input")
-        await inputs[0].setValue("0.5")
-        await inputs[2].setValue("0.75")
+        const spaces = wrapper.getComponent({ name: "ChildCareSpacesEditDataTableVirtual" })
+        await spaces.get("tr.cursor-pointer").trigger("click")
+        await flushPromises()
+        await spaces.get("tbody input").setValue("0.5")
         await replicate.trigger("click")
         await flushPromises()
 
