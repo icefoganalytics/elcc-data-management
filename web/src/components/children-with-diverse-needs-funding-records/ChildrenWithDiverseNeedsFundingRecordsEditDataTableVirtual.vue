@@ -10,6 +10,8 @@
     fixed-footer
     disable-sort
     @update:cell="trackSave"
+    @focus-beyond-last-in-column="emitBoundary('last', $event)"
+    @focus-beyond-first-in-column="emitBoundary('first', $event)"
   >
     <template #top>
       <v-alert
@@ -43,8 +45,14 @@
     </template>
     <template #item.categoryId="{ item }">{{ item.lineName }}</template>
     <template #item.monthlyAmount="{ item }">{{ formatMoney(item.monthlyAmount) }}</template>
+    <template #item.estimatedChildOccupancyRate="{ item }">{{
+      formatDecimal(item.estimatedChildOccupancyRate)
+    }}</template>
     <template #item.estimatedComputedTotal="{ item }">{{
       formatMoney(item.estimatedComputedTotal)
+    }}</template>
+    <template #item.actualChildOccupancyRate="{ item }">{{
+      formatDecimal(item.actualChildOccupancyRate)
     }}</template>
     <template #item.actualComputedTotal="{ item }">{{
       formatMoney(item.actualComputedTotal)
@@ -56,6 +64,7 @@
         inputmode="decimal"
         :disabled="isBlocked"
         hide-details
+        @focus="item.estimatedChildOccupancyRate = formatDecimal(item.estimatedChildOccupancyRate)"
       />
     </template>
     <template #item.actualChildOccupancyRate.edit="{ item }">
@@ -65,6 +74,7 @@
         inputmode="decimal"
         :disabled="isBlocked"
         hide-details
+        @focus="item.actualChildOccupancyRate = formatDecimal(item.actualChildOccupancyRate)"
       />
     </template>
     <template #item.actions="{ item }">
@@ -114,7 +124,7 @@ import useChildrenWithDiverseNeedsFundingRecords from "@/use/use-children-with-d
 import useSnack from "@/use/use-snack"
 
 import blockedToTrueConfirm from "@/utils/blocked-to-true-confirm"
-import { formatMoney } from "@/utils/formatters"
+import { formatDecimal, formatMoney } from "@/utils/formatters"
 import sumByDecimal from "@/utils/sum-by-decimal"
 
 import EditDataTableVirtual from "@/components/common/EditDataTableVirtual.vue"
@@ -136,6 +146,8 @@ const props = withDefaults(
 const emit = defineEmits<{
   updated: []
   mutationSettled: []
+  focusBeyondLastInColumn: [column: "estimates" | "actuals"]
+  focusBeyondFirstInColumn: [column: "estimates" | "actuals"]
 }>()
 
 const query = computed(() => ({
@@ -174,13 +186,20 @@ const totalActual = computed(() =>
 )
 
 const totalEstimatedOccupancy = computed(() =>
-  sumByDecimal(childrenWithDiverseNeedsFundingRecords.value, "estimatedChildOccupancyRate").toFixed(
-    4
+  formatDecimal(
+    sumByDecimal(
+      childrenWithDiverseNeedsFundingRecords.value,
+      "estimatedChildOccupancyRate"
+    ).toFixed(4)
   )
 )
 
 const totalActualOccupancy = computed(() =>
-  sumByDecimal(childrenWithDiverseNeedsFundingRecords.value, "actualChildOccupancyRate").toFixed(4)
+  formatDecimal(
+    sumByDecimal(childrenWithDiverseNeedsFundingRecords.value, "actualChildOccupancyRate").toFixed(
+      4
+    )
+  )
 )
 
 const byId = computed(() => keyBy(childrenWithDiverseNeedsFundingRecords.value, "id"))
@@ -212,8 +231,12 @@ async function commitEdit(): Promise<boolean> {
   editDataTableVirtual.value?.commitEdit()
   const save = currentSave
   try {
-    return (save === null || (await save)) && !isErrored.value
+    const saved = (save === null || (await save)) && !isErrored.value
+    if (!saved) editDataTableVirtual.value?.cancelPendingFocus()
+
+    return saved
   } catch (error) {
+    editDataTableVirtual.value?.cancelPendingFocus()
     console.error("Failed to commit diverse need edit", { error })
     rethrowUnexpectedError(error)
 
@@ -227,7 +250,9 @@ async function saveIfDirty(record: ChildrenWithDiverseNeedsFundingRecordAsIndex)
   const current = byId.value[record.id]
   if (!current || isBlocked.value) return false
 
-  const changed = editableColumns.filter((field) => current[field] !== record[field])
+  const changed = editableColumns.filter(
+    (field) => formatDecimal(current[field]) !== formatDecimal(record[field])
+  )
   if (!changed.length) return true
 
   isSaving.value = true
@@ -249,6 +274,7 @@ async function saveIfDirty(record: ChildrenWithDiverseNeedsFundingRecordAsIndex)
     emit("updated")
     return true
   } catch (error) {
+    editDataTableVirtual.value?.cancelPendingFocus()
     console.error("Failed to save diverse need", { error })
     rethrowUnexpectedError(error)
 
@@ -347,10 +373,33 @@ async function replicateEstimates() {
   }
 }
 
+function emitBoundary(
+  direction: "last" | "first",
+  column: keyof ChildrenWithDiverseNeedsFundingRecordOccupancyAttributes
+) {
+  const name = column === "estimatedChildOccupancyRate" ? "estimates" : "actuals"
+  if (direction === "last") emit("focusBeyondLastInColumn", name)
+  else emit("focusBeyondFirstInColumn", name)
+}
+
+function focusOnFirstInColumn(
+  column: keyof ChildrenWithDiverseNeedsFundingRecordOccupancyAttributes
+): boolean {
+  return editDataTableVirtual.value?.focusOnFirstInColumn(column) ?? false
+}
+
+function focusOnLastInColumn(
+  column: keyof ChildrenWithDiverseNeedsFundingRecordOccupancyAttributes
+): boolean {
+  return editDataTableVirtual.value?.focusOnLastInColumn(column) ?? false
+}
+
 defineExpose({
   refresh,
   replicateEstimates,
   commitEdit,
+  focusOnFirstInColumn,
+  focusOnLastInColumn,
   isSaving,
   isDeleting,
   isLoading,

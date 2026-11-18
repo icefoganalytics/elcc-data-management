@@ -36,17 +36,19 @@
       fixed-footer
       disable-sort
       @update:cell="trackSave"
+      @focus-beyond-last-in-column="emitBoundary('last', $event)"
+      @focus-beyond-first-in-column="emitBoundary('first', $event)"
     >
       <template #item.categoryId="{ item }">{{ item.lineName }}</template>
       <template #item.monthlyAmount="{ item }">{{ formatMoney(item.monthlyAmount) }}</template>
       <template #item.estimatedChildOccupancyRate="{ item }">{{
-        item.estimatedChildOccupancyRate
+        formatDecimal(item.estimatedChildOccupancyRate)
       }}</template>
       <template #item.estimatedComputedTotal="{ item }">{{
         formatMoney(item.estimatedComputedTotal)
       }}</template>
       <template #item.actualChildOccupancyRate="{ item }">{{
-        item.actualChildOccupancyRate
+        formatDecimal(item.actualChildOccupancyRate)
       }}</template>
       <template #item.actualComputedTotal="{ item }">{{
         formatMoney(item.actualComputedTotal)
@@ -58,6 +60,7 @@
           inputmode="decimal"
           :disabled="isReplicating || isSaving || isDeleting || isLoading || isErrored"
           hide-details
+          @focus="item.estimatedChildOccupancyRate = formatDecimal(item.estimatedChildOccupancyRate)"
       /></template>
       <template #item.actualChildOccupancyRate.edit="{ item }"
         ><v-text-field
@@ -66,6 +69,7 @@
           inputmode="decimal"
           :disabled="isReplicating || isSaving || isDeleting || isLoading || isErrored"
           hide-details
+          @focus="item.actualChildOccupancyRate = formatDecimal(item.actualChildOccupancyRate)"
       /></template>
       <template #item.actions="{ item }"
         ><v-btn
@@ -97,11 +101,11 @@
 
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from "vue"
-import { keyBy, pick } from "lodash"
-import { formatMoney } from "@/utils/formatters"
+import { cloneDeep, keyBy, merge, pick } from "lodash"
+import { formatDecimal, formatMoney } from "@/utils/formatters"
 import sumByDecimal from "@/utils/sum-by-decimal"
 import blockedToTrueConfirm from "@/utils/blocked-to-true-confirm"
-import { MAX_PER_PAGE } from "@/api/base-api"
+import { MAX_PER_PAGE, type ModelOrder } from "@/api/base-api"
 import qualityEnhancementsApi, {
   type QualityEnhancementAsIndex,
   type QualityEnhancementUpdateAttributes,
@@ -118,9 +122,25 @@ const props = withDefaults(
   }>(),
   { where: () => ({}), isReplicating: false }
 )
-const emit = defineEmits<{ updated: []; mutationSettled: [] }>()
-const query = computed(() => ({ where: props.where, perPage: MAX_PER_PAGE }))
-const { qualityEnhancements, isLoading, isErrored, fetch } = useQualityEnhancements(query)
+
+const emit = defineEmits<{
+  updated: []
+  mutationSettled: []
+  focusBeyondLastInColumn: [column: "estimates" | "actuals"]
+  focusBeyondFirstInColumn: [column: "estimates" | "actuals"]
+}>()
+
+const order: ModelOrder[] = [
+  ["childCareSpaceCategoryId", "ASC"],
+  ["id", "ASC"],
+]
+const qualityEnhancementsQuery = computed(() => ({
+  where: props.where,
+  order,
+  perPage: MAX_PER_PAGE,
+}))
+const { qualityEnhancements, isLoading, isErrored, fetch } =
+  useQualityEnhancements(qualityEnhancementsQuery)
 const headers = [
   { title: "Category", key: "categoryId" },
   { title: "Subsidized", key: "monthlyAmount" },
@@ -141,14 +161,19 @@ const totalActual = computed(() =>
   sumByDecimal(qualityEnhancements.value, "actualComputedTotal").toFixed(4)
 )
 const totalEstimatedOccupancy = computed(() =>
-  sumByDecimal(qualityEnhancements.value, "estimatedChildOccupancyRate").toFixed(4)
+  formatDecimal(sumByDecimal(qualityEnhancements.value, "estimatedChildOccupancyRate").toFixed(4))
 )
 const totalActualOccupancy = computed(() =>
-  sumByDecimal(qualityEnhancements.value, "actualChildOccupancyRate").toFixed(4)
+  formatDecimal(sumByDecimal(qualityEnhancements.value, "actualChildOccupancyRate").toFixed(4))
 )
-const byId = computed(() => keyBy(qualityEnhancements.value, "id"))
+const qualityEnhancementsById = computed(() => keyBy(qualityEnhancements.value, "id"))
 const categoryIds = computed(() => qualityEnhancements.value.map(({ categoryId }) => categoryId))
-const editTable = useTemplateRef<{ commitEdit: () => void }>("editTable")
+const editTable = useTemplateRef<{
+  commitEdit: () => void
+  focusOnFirstInColumn: (column: keyof QualityEnhancementUpdateAttributes) => boolean
+  focusOnLastInColumn: (column: keyof QualityEnhancementUpdateAttributes) => boolean
+  cancelPendingFocus: () => void
+}>("editTable")
 let currentSave: Promise<boolean> | null = null
 const isSaving = ref(false)
 const isDeleting = ref(false)
@@ -160,31 +185,35 @@ const isBusy = computed(
 )
 const snack = useSnack()
 
-function trackSave(record: QualityEnhancementAsIndex) {
+function trackSave(qualityEnhancementRecord: QualityEnhancementAsIndex) {
   if (isSaving.value) return
 
-  currentSave = saveIfDirty(record)
+  currentSave = saveIfDirty(qualityEnhancementRecord)
   return currentSave
 }
 
 async function commitEdit(): Promise<boolean> {
   editTable.value?.commitEdit()
-  const save = currentSave
+  const pendingSave = currentSave
   try {
-    return (save === null || (await save)) && !isErrored.value
+    const isSaved = (pendingSave === null || (await pendingSave)) && !isErrored.value
+    if (!isSaved) editTable.value?.cancelPendingFocus()
+
+    return isSaved
   } catch (error) {
+    editTable.value?.cancelPendingFocus()
     rethrowUnexpectedError(error)
 
     return false
   } finally {
-    if (currentSave === save) currentSave = null
+    if (currentSave === pendingSave) currentSave = null
   }
 }
 
-async function saveIfDirty(record: QualityEnhancementAsIndex) {
-  const current = byId.value[record.id]
+async function saveIfDirty(qualityEnhancementRecord: QualityEnhancementAsIndex) {
+  const persistedQualityEnhancement = qualityEnhancementsById.value[qualityEnhancementRecord.id]
   if (
-    !current ||
+    !persistedQualityEnhancement ||
     props.isReplicating ||
     isSaving.value ||
     isDeleting.value ||
@@ -192,18 +221,28 @@ async function saveIfDirty(record: QualityEnhancementAsIndex) {
     isErrored.value
   )
     return false
-  const changed = editableColumns.filter((field) => current[field] !== record[field])
-  if (!changed.length) return true
+  const changedOccupancyFields = editableColumns.filter(
+    (field) =>
+      formatDecimal(persistedQualityEnhancement[field]) !==
+      formatDecimal(qualityEnhancementRecord[field])
+  )
+  if (!changedOccupancyFields.length) return true
   isSaving.value = true
   saveError.value = ""
   try {
     const { qualityEnhancement } = await qualityEnhancementsApi.update(
-      record.id,
-      pick(record, changed)
+      qualityEnhancementRecord.id,
+      pick(qualityEnhancementRecord, changedOccupancyFields)
     )
-    const index = qualityEnhancements.value.findIndex((item) => item.id === record.id)
-    if (index >= 0)
-      qualityEnhancements.value.splice(index, 1, { ...current, ...qualityEnhancement })
+    const qualityEnhancementIndex = qualityEnhancements.value.findIndex(
+      (existingQualityEnhancement) => existingQualityEnhancement.id === qualityEnhancementRecord.id
+    )
+    if (qualityEnhancementIndex >= 0)
+      qualityEnhancements.value.splice(
+        qualityEnhancementIndex,
+        1,
+        merge(cloneDeep(persistedQualityEnhancement), qualityEnhancement)
+      )
     snack.success("Quality enhancement saved!")
     emit("updated")
     return true
@@ -218,7 +257,7 @@ async function saveIfDirty(record: QualityEnhancementAsIndex) {
 
       /* Preserve the save failure if reload also fails. */
     }
-    snack.error(saveError.value)
+    editTable.value?.cancelPendingFocus()
     return false
   } finally {
     isSaving.value = false
@@ -226,9 +265,9 @@ async function saveIfDirty(record: QualityEnhancementAsIndex) {
   }
 }
 
-async function deleteRecord(record: QualityEnhancementAsIndex) {
+async function deleteRecord(qualityEnhancementRecord: QualityEnhancementAsIndex) {
   if (
-    !record.policy.destroy ||
+    !qualityEnhancementRecord.policy.destroy ||
     props.isReplicating ||
     isSaving.value ||
     isDeleting.value ||
@@ -241,9 +280,9 @@ async function deleteRecord(record: QualityEnhancementAsIndex) {
   if (!(await commitEdit())) return
 
   isDeleting.value = true
-  deletingId.value = record.id
+  deletingId.value = qualityEnhancementRecord.id
   try {
-    await qualityEnhancementsApi.delete(record.id)
+    await qualityEnhancementsApi.delete(qualityEnhancementRecord.id)
     await refresh()
     snack.success("Quality enhancement deleted!")
     emit("updated")
@@ -259,7 +298,7 @@ async function deleteRecord(record: QualityEnhancementAsIndex) {
 }
 
 async function refresh() {
-  return await fetch()
+  return fetch()
 }
 
 async function reload() {
@@ -279,9 +318,9 @@ async function replicateEstimates() {
   isSaving.value = true
   const failures: unknown[] = []
   try {
-    for (const record of qualityEnhancements.value) {
+    for (const qualityEnhancementRecord of qualityEnhancements.value) {
       try {
-        await qualityEnhancementsApi.replicateEstimates(record.id)
+        await qualityEnhancementsApi.replicateEstimates(qualityEnhancementRecord.id)
       } catch (error) {
         failures.push(error)
       }
@@ -304,10 +343,29 @@ async function replicateEstimates() {
   }
 }
 
+function emitBoundary(
+  direction: "last" | "first",
+  column: keyof QualityEnhancementUpdateAttributes
+) {
+  const occupancyColumnName = column === "estimatedChildOccupancyRate" ? "estimates" : "actuals"
+  if (direction === "last") emit("focusBeyondLastInColumn", occupancyColumnName)
+  else emit("focusBeyondFirstInColumn", occupancyColumnName)
+}
+
+function focusOnFirstInColumn(column: keyof QualityEnhancementUpdateAttributes): boolean {
+  return editTable.value?.focusOnFirstInColumn(column) ?? false
+}
+
+function focusOnLastInColumn(column: keyof QualityEnhancementUpdateAttributes): boolean {
+  return editTable.value?.focusOnLastInColumn(column) ?? false
+}
+
 defineExpose({
   refresh,
   replicateEstimates,
   commitEdit,
+  focusOnFirstInColumn,
+  focusOnLastInColumn,
   isSaving,
   isDeleting,
   isLoading,

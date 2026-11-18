@@ -1,5 +1,6 @@
 <template>
   <EditDataTableVirtual
+    ref="editTable"
     :headers="headers"
     :items="buildingExpenses"
     :busy="isBusy"
@@ -8,10 +9,15 @@
     height="630"
     fixed-footer
     disable-sort
-    @update:cell="saveBuildingExpenseIfDirty"
+    @focus-beyond-last-in-column="emitBoundary('last', $event)"
+    @focus-beyond-first-in-column="emitBoundary('first', $event)"
+    @update:cell="trackSave"
   >
     <template #item.categoryId="{ item }">
       <BuildingExpenseCategoryAttributesChip :building-expense-category="item.category" />
+    </template>
+    <template #item.subsidyRate="{ item }">
+      {{ formatDecimal(item.subsidyRate) }}
     </template>
 
     <template #item.estimatedCost="{ item }">
@@ -30,6 +36,7 @@
       <v-text-field
         v-model="item.subsidyRate"
         hide-details
+        @focus="item.subsidyRate = formatDecimal(item.subsidyRate)"
       />
     </template>
 
@@ -37,6 +44,7 @@
       <v-text-field
         v-model="item.estimatedCost"
         hide-details
+        @focus="item.estimatedCost = formatDecimal(item.estimatedCost)"
       />
     </template>
 
@@ -44,6 +52,7 @@
       <v-text-field
         v-model="item.actualCost"
         hide-details
+        @focus="item.actualCost = formatDecimal(item.actualCost)"
       />
     </template>
 
@@ -88,10 +97,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue"
+import { computed, ref, useTemplateRef } from "vue"
 import { isNil, keyBy, pick } from "lodash"
 
-import { formatMoney } from "@/utils/formatters"
+import { formatDecimal, formatMoney } from "@/utils/formatters"
 import blockedToTrueConfirm from "@/utils/blocked-to-true-confirm"
 import sumByDecimal from "@/utils/sum-by-decimal"
 
@@ -213,12 +222,42 @@ const buildingExpenseIdToIndex = computed<Record<number, number>>(() =>
   )
 )
 
+let currentSave: Promise<boolean> | null = null
 const isSaving = ref(false)
 const snack = useSnack()
 
-async function saveBuildingExpenseIfDirty(buildingExpense: BuildingExpense) {
+function trackSave(buildingExpense: BuildingExpense) {
+  currentSave = saveBuildingExpenseIfDirty(buildingExpense)
+  return currentSave
+}
+
+async function commitEdit(): Promise<boolean> {
+  editTable.value?.commitEdit()
+  const save = currentSave
+  try {
+    const saved = save === null || (await save)
+    if (!saved) editTable.value?.cancelPendingFocus()
+
+    return saved
+  } catch (error) {
+    editTable.value?.cancelPendingFocus()
+    rethrowUnexpectedError(error)
+
+    return false
+  } finally {
+    if (currentSave === save) currentSave = null
+  }
+}
+
+async function saveBuildingExpenseIfDirty(buildingExpense: BuildingExpense): Promise<boolean> {
   const currentBuildingExpense = buildingExpensesById.value[buildingExpense.id]
-  if (JSON.stringify(currentBuildingExpense) === JSON.stringify(buildingExpense)) return
+  if (!currentBuildingExpense) return false
+  const decimalFields = ["subsidyRate", "estimatedCost", "actualCost"] as const
+  const hasChangedDecimal = decimalFields.some(
+    (field) =>
+      formatDecimal(currentBuildingExpense[field]) !== formatDecimal(buildingExpense[field])
+  )
+  if (!hasChangedDecimal && currentBuildingExpense.notes === buildingExpense.notes) return true
 
   isSaving.value = true
   try {
@@ -234,7 +273,7 @@ async function saveBuildingExpenseIfDirty(buildingExpense: BuildingExpense) {
     )
 
     const buildingExpenseIndex = buildingExpenseIdToIndex.value[buildingExpense.id]
-    if (isNil(buildingExpenseIndex)) return
+    if (isNil(buildingExpenseIndex)) return false
 
     buildingExpenses.value.splice(buildingExpenseIndex, 1, {
       ...currentBuildingExpense,
@@ -242,13 +281,15 @@ async function saveBuildingExpenseIfDirty(buildingExpense: BuildingExpense) {
     })
 
     snack.success("Building expense saved!")
+    return true
   } catch (error) {
+    editTable.value?.cancelPendingFocus()
     if (error instanceof ApiOperationError) {
       await refresh()
 
       console.error(`Failed to save building expense: ${error}`, { error })
       snack.error(`Failed to save building expense: ${error}`)
-      return
+      return false
     }
 
     throw error
@@ -280,7 +321,39 @@ async function deleteBuildingExpense(buildingExpense: BuildingExpense) {
   }
 }
 
+const editTable = useTemplateRef<{
+  commitEdit: () => void
+  focusOnFirstInColumn: (column: string) => boolean
+  focusOnLastInColumn: (column: string) => boolean
+  cancelPendingFocus: () => void
+}>("editTable")
+
+function emitBoundary(direction: "first" | "last", column: string) {
+  const name = column === "estimatedCost" ? "estimates" : column === "actualCost" ? "actuals" : null
+  if (name === null) return
+
+  if (direction === "last") emit("focusBeyondLastInColumn", name)
+  else emit("focusBeyondFirstInColumn", name)
+}
+
+function focusOnFirstInColumn(column: string): boolean {
+  return editTable.value?.focusOnFirstInColumn(column) ?? false
+}
+
+function focusOnLastInColumn(column: string): boolean {
+  return editTable.value?.focusOnLastInColumn(column) ?? false
+}
+
+const emit = defineEmits<{
+  focusBeyondLastInColumn: [column: "estimates" | "actuals"]
+  focusBeyondFirstInColumn: [column: "estimates" | "actuals"]
+}>()
+
 defineExpose({
   refresh,
+  commitEdit,
+  focusOnFirstInColumn,
+  focusOnLastInColumn,
+  isLoading,
 })
 </script>

@@ -1,12 +1,13 @@
 <template>
   <v-data-table-virtual
+    ref="dataTableVirtual"
     v-click-outside="emitInputAndCancel"
     :items="itemClones"
     :headers="headers"
     :inert="busy"
     :aria-busy="busy"
   >
-    <template #item="{ index, item, itemRef }">
+    <template #item="{ internalItem: { index }, item, itemRef }">
       <tr
         v-if="!isEditingRow(index)"
         :ref="itemRef"
@@ -101,6 +102,7 @@
 >
 import { nextTick, ref, shallowRef, watch, watchEffect } from "vue"
 import { cloneDeep, isNil } from "lodash"
+import { VDataTableVirtual } from "vuetify/components"
 
 type InputComponents = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
 
@@ -116,13 +118,19 @@ const props = defineProps<{
 const emit = defineEmits<{
   "update:cell": [item: Item]
   cancel: [void]
+  focusBeyondLastInColumn: [column: ColumnKey]
+  focusBeyondFirstInColumn: [column: ColumnKey]
 }>()
 
 defineExpose({
   commitEdit: emitInputAndCancel,
+  focusOnFirstInColumn,
+  focusOnLastInColumn,
+  cancelPendingFocus,
 })
 
 const itemClones = ref<Item[]>([])
+const dataTableVirtual = ref<InstanceType<typeof VDataTableVirtual> | null>(null)
 
 watchEffect(() => {
   itemClones.value = cloneDeep(props.items)
@@ -151,19 +159,18 @@ function isEditingRow(rowIndex: number): boolean {
 function getInputElementBy(columnKey: ColumnKey, rowIndex: number): InputComponents | null {
   const cellKey = `${columnKey}:${rowIndex}`
   const inputElement = inputElementRefsByAlphaNumericIndex.value[cellKey]
-  if (isNil(inputElement)) return null
+  if (isNil(inputElement) || !inputElement.isConnected) return null
 
   return inputElement
 }
 
-async function startEditingRow(rowIndex: number, columnKey: ColumnKey): Promise<void> {
-  if (isEditingRow(rowIndex)) return
+function startEditingRow(rowIndex: number, columnKey: ColumnKey): void {
+  if (!isEditingRow(rowIndex)) {
+    emitInputAndCancel()
+    activeRowIndex.value = rowIndex
+  }
 
-  emitInputAndCancel()
-  activeRowIndex.value = rowIndex
-
-  await nextTick()
-
+  dataTableVirtual.value?.scrollToIndex(rowIndex)
   focusOnField(columnKey, rowIndex)
 }
 
@@ -184,18 +191,48 @@ function resetAndCancel(): void {
 }
 
 function registerInputElement(columnKey: ColumnKey, rowIndex: number, element: unknown): void {
-  if (!(element instanceof HTMLElement)) return
-
-  const input = element.querySelector<HTMLInputElement>(INPUT_COMPONENTS.join(", "))
-  if (isNil(input)) return
-
   const cellKey = `${columnKey}:${rowIndex}`
+  if (!(element instanceof HTMLElement)) {
+    delete inputElementRefsByAlphaNumericIndex.value[cellKey]
+    return
+  }
+
+  const input = element.querySelector<InputComponents>(INPUT_COMPONENTS.join(", "))
   inputElementRefsByAlphaNumericIndex.value[cellKey] = input
+
+  const target = pendingFocus.value
+  if (target?.columnKey === columnKey && target.rowIndex === rowIndex) {
+    void resumePendingFocus()
+  }
+}
+
+function focusOnFirstInColumn(columnKey: ColumnKey): boolean {
+  return focusOnRowInColumn(0, 1, columnKey)
+}
+
+function focusOnLastInColumn(columnKey: ColumnKey): boolean {
+  return focusOnRowInColumn(props.items.length - 1, -1, columnKey)
+}
+
+function focusOnRowInColumn(rowIndex: number, direction: 1 | -1, columnKey: ColumnKey): boolean {
+  if (!isEditableColumn(columnKey) || props.busy) return false
+
+  for (let index = rowIndex; index >= 0 && index < props.items.length; index += direction) {
+    if (isNil(props.items[index])) continue
+    startEditingRow(index, columnKey)
+    return true
+  }
+
+  return false
 }
 
 function focusOnField(columnKey: ColumnKey, rowIndex: number): void {
   pendingFocus.value = { columnKey, rowIndex }
   void resumePendingFocus()
+}
+
+function cancelPendingFocus(): void {
+  resetActiveRow()
 }
 
 async function resumePendingFocus(): Promise<void> {
@@ -261,6 +298,7 @@ async function goToNextRow(rowIndex: number, columnKey: ColumnKey): Promise<void
 
   const nextRowIndex = rowIndex + 1
   if (nextRowIndex >= props.items.length) {
+    emit("focusBeyondLastInColumn", columnKey)
     resetActiveRow()
     return
   }
@@ -272,6 +310,7 @@ async function goToPreviousRow(rowIndex: number, columnKey: ColumnKey): Promise<
   emitInputAndCancel()
 
   if (rowIndex <= 0) {
+    emit("focusBeyondFirstInColumn", columnKey)
     resetActiveRow()
     return
   }

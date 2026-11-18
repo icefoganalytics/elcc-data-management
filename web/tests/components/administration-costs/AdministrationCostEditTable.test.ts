@@ -16,6 +16,146 @@ import AdministrationCostEditTable from "@/components/administration-costs/Admin
 describe("web/src/components/administration-costs/AdministrationCostEditTable.vue", () => {
   describe("AdministrationCostEditTable", () => {
     describe("#commitEdit", () => {
+      test("when Enter leaves unchanged occupancy, does not write", async () => {
+        // Arrange
+        const record = administrationCostFactory.build({
+          childCareSpaceCategoryId: 1,
+          estimatedChildOccupancyRate: "1.0000",
+          actualChildOccupancyRate: "2.0000",
+        })
+        vi.spyOn(administrationCostsApi, "list").mockResolvedValue({
+          administrationCosts: [record],
+          totalCount: 1,
+        })
+        const update = vi.spyOn(administrationCostsApi, "update")
+        const wrapper = mountWithDefaultPlugins(AdministrationCostEditTable, {
+          props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
+        })
+        await flushPromises()
+        await wrapper.get("tr.cursor-pointer").trigger("click")
+
+        // Act
+        await wrapper.get('input[inputmode="decimal"]').trigger("keydown", { key: "Enter" })
+        await flushPromises()
+
+        // Assert
+        expect(update).not.toHaveBeenCalled()
+      })
+
+      test("when manually editing an estimate, saves only the changed occupancy field", async () => {
+        // Arrange
+        const record = administrationCostFactory.build({
+          id: 1,
+          childCareSpaceCategoryId: 1,
+          monthlyAmount: "10.0000",
+          estimatedChildOccupancyRate: "1.0000",
+          actualChildOccupancyRate: "2.0000",
+          estimatedComputedTotal: "10.0000",
+          actualComputedTotal: "20.0000",
+        })
+        vi.spyOn(administrationCostsApi, "list").mockResolvedValue({
+          administrationCosts: [record],
+          totalCount: 1,
+        })
+        const update = vi.spyOn(administrationCostsApi, "update").mockResolvedValue({
+          administrationCost: {
+            ...record,
+            estimatedChildOccupancyRate: "3.25",
+            estimatedComputedTotal: "32.5000",
+          },
+          policy: record.policy,
+        })
+        const wrapper = mountWithDefaultPlugins(AdministrationCostEditTable, {
+          props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
+        })
+        await flushPromises()
+        await wrapper.get("tr.cursor-pointer").trigger("click")
+        await wrapper.findAll('input[inputmode="decimal"]')[0].setValue("3.25")
+
+        // Act
+        await wrapper.vm.commitEdit()
+        await flushPromises()
+
+        // Assert
+        expect(update).toHaveBeenCalledExactlyOnceWith(1, {
+          estimatedChildOccupancyRate: "3.25",
+        })
+      })
+
+      test("when manually editing an actual, preserves the persisted estimated occupancy", async () => {
+        // Arrange
+        const record = administrationCostFactory.build({
+          childCareSpaceCategoryId: 1,
+          monthlyAmount: "10.0000",
+          estimatedChildOccupancyRate: "1.0000",
+          actualChildOccupancyRate: "2.0000",
+          estimatedComputedTotal: "10.0000",
+          actualComputedTotal: "20.0000",
+        })
+        vi.spyOn(administrationCostsApi, "list").mockResolvedValue({
+          administrationCosts: [record],
+          totalCount: 1,
+        })
+        vi.spyOn(administrationCostsApi, "update").mockResolvedValue({
+          administrationCost: {
+            ...record,
+            actualChildOccupancyRate: "3.25",
+            actualComputedTotal: "32.5000",
+          },
+          policy: record.policy,
+        })
+        const wrapper = mountWithDefaultPlugins(AdministrationCostEditTable, {
+          props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
+        })
+        await flushPromises()
+        await wrapper.get("tr.cursor-pointer").trigger("click")
+        await wrapper.findAll('input[inputmode="decimal"]')[1].setValue("3.25")
+
+        // Act
+        await wrapper.vm.commitEdit()
+        await flushPromises()
+
+        // Assert
+        expect(wrapper.get("tr.cursor-pointer td:nth-child(3)").text()).toEqual("1")
+      })
+
+      test("when manually editing an estimate, preserves the persisted actual occupancy", async () => {
+        // Arrange
+        const administrationCost = administrationCostFactory.build({
+          estimatedChildOccupancyRate: "1.0000",
+          actualChildOccupancyRate: "2.0000",
+        })
+        vi.spyOn(administrationCostsApi, "list").mockResolvedValue({
+          administrationCosts: [administrationCost],
+          totalCount: 1,
+        })
+        vi.spyOn(administrationCostsApi, "update").mockResolvedValue({
+          administrationCost: {
+            ...administrationCost,
+            estimatedChildOccupancyRate: "3.25",
+          },
+          policy: administrationCost.policy,
+        })
+        const wrapper = mountWithDefaultPlugins(AdministrationCostEditTable, {
+          props: {
+            where: {
+              centreId: administrationCost.centreId,
+              fiscalPeriodId: administrationCost.fiscalPeriodId,
+            },
+          },
+        })
+        await flushPromises()
+        await wrapper.get("tr.cursor-pointer").trigger("click")
+        await wrapper.findAll('input[inputmode="decimal"]')[0].setValue("3.25")
+
+        // Act
+        await wrapper.vm.commitEdit()
+        await flushPromises()
+
+        // Assert
+        expect(wrapper.get("tr.cursor-pointer td:nth-child(5)").text()).toEqual("2")
+      })
+
       test("when an autosave loses its network connection, shows unconfirmed-save feedback", async () => {
         // Arrange
         vi.stubGlobal("visualViewport", undefined)
@@ -207,27 +347,7 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
     })
 
     describe("#refresh", () => {
-      test("when a refresh fails, prevents replication of stale rows", async () => {
-        // Arrange
-        const record = administrationCostFactory.build()
-        vi.spyOn(administrationCostsApi, "list")
-          .mockResolvedValueOnce({ administrationCosts: [record], totalCount: 1 })
-          .mockRejectedValueOnce(new ApiOperationError("Refresh unavailable", 503))
-        const replicate = vi.spyOn(administrationCostsApi, "replicateEstimates")
-        const wrapper = mountWithDefaultPlugins(AdministrationCostEditTable, {
-          props: { where: { centreId: record.centreId, fiscalPeriodId: record.fiscalPeriodId } },
-        })
-        await flushPromises()
-
-        // Act
-        await wrapper.vm.refresh().catch(() => undefined)
-        await wrapper.vm.replicateEstimates()
-
-        // Assert
-        expect(replicate).not.toHaveBeenCalled()
-      })
-
-      test("when retry succeeds after a failed refresh, allows the next occupancy edit", async () => {
+      test("when refresh succeeds after a failed refresh, allows the next occupancy edit", async () => {
         // Arrange
         const record = administrationCostFactory.build()
         vi.spyOn(administrationCostsApi, "list")
@@ -246,7 +366,7 @@ describe("web/src/components/administration-costs/AdministrationCostEditTable.vu
         await flushPromises()
 
         // Act
-        await wrapper.get(".v-alert button").trigger("click")
+        await wrapper.vm.refresh()
         await flushPromises()
         await wrapper.get("tr.cursor-pointer").trigger("click")
         const input = wrapper.get('input[inputmode="decimal"]')
