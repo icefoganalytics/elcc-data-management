@@ -33,6 +33,22 @@ export async function withLegacyChildCareSpaceSchema(
       await transactionClient.transaction(async (transaction) => {
         await transaction.schema.dropTable("child_care_spaces")
         await createLegacyChildCareSpaces(transaction)
+        if (!(await transaction.schema.hasColumn("child_care_space_categories", "category_name"))) {
+          await transaction.schema.alterTable("child_care_space_categories", (table) => {
+            table.dropUnique(
+              ["funding_period_id", "child_care_category_id"],
+              "unique_child_care_space_categories_on_funding_period_id_child_care_category_id"
+            )
+            table.integer("child_care_category_id").nullable().alter()
+            table.string("category_name", 200).notNullable()
+            table.integer("from_age")
+            table.integer("to_age")
+            table.unique(["funding_period_id", "category_name"], {
+              indexName: "unique_child_care_space_categories_on_funding_period_id_category_name",
+              predicate: transaction.whereNull("deleted_at"),
+            })
+          })
+        }
         await transaction.schema.alterTable("child_care_space_categories", (table) => {
           table.integer("source_funding_submission_line_id").nullable()
         })

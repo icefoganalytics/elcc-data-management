@@ -47,6 +47,7 @@ describe("web/src/components/child-care-space-categories/ChildCareSpaceCategorie
               {
                 id: 2,
                 fundingPeriodId: 10,
+                childCareCategoryId: 2,
                 categoryName: "Newest category",
                 fromAge: 0,
                 toAge: 3,
@@ -66,6 +67,7 @@ describe("web/src/components/child-care-space-categories/ChildCareSpaceCategorie
               {
                 id: 1,
                 fundingPeriodId: 10,
+                childCareCategoryId: 1,
                 categoryName: "Older category",
                 fromAge: 0,
                 toAge: 3,

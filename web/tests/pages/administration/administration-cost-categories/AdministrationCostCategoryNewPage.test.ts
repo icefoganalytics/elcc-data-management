@@ -29,6 +29,7 @@ describe("web/src/pages/administration/administration-cost-categories/Administra
         const previousCategory: ChildCareSpaceCategoryAsIndex = {
           id: 10,
           fundingPeriodId: 1,
+          childCareCategoryId: 10,
           categoryName: "Previous-year Infants",
           fromAge: 0,
           toAge: 1,

@@ -1,3 +1,4 @@
+import childCareCategoryFactory from "@/factories/child-care-category-factory"
 import { AdministrationCostCategory } from "@/models"
 
 import {
@@ -16,56 +17,77 @@ describe("api/src/services/funding-periods/administration-cost-categories/bulk-e
         const fundingPeriod = await fundingPeriodFactory.create({
           fiscalYear: "2024-2025",
         })
+        const infantsChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
+        const toddlersChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Toddlers",
+        })
+        const preschoolChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Preschool",
+        })
+        const partTimeKindergartenChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Kindergarten (PT)",
+        })
+        const fullTimeKindergartenChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Kindergarten (FT)",
+        })
+        const partTimeSchoolAgeChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "School Age (PT)",
+        })
+        const fullTimeSchoolAgeChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "School Age (FT)",
+        })
         const childCareSpaceCategories = await Promise.all([
           childCareSpaceCategoryFactory
             .associations({
               fundingPeriod,
+              childCareCategory: infantsChildCareCategory,
             })
-            .create({
-              categoryName: "Infants",
-            }),
+            .create(),
           childCareSpaceCategoryFactory
             .associations({
               fundingPeriod,
+              childCareCategory: toddlersChildCareCategory,
             })
-            .create({
-              categoryName: "Toddlers",
-            }),
+            .create(),
           childCareSpaceCategoryFactory
             .associations({
               fundingPeriod,
+              childCareCategory: preschoolChildCareCategory,
             })
-            .create({
-              categoryName: "Preschool",
-            }),
+            .create(),
           childCareSpaceCategoryFactory
             .associations({
               fundingPeriod,
+              childCareCategory: partTimeKindergartenChildCareCategory,
             })
-            .create({
-              categoryName: "Kindergarten (PT)",
-            }),
+            .create(),
           childCareSpaceCategoryFactory
             .associations({
               fundingPeriod,
+              childCareCategory: fullTimeKindergartenChildCareCategory,
             })
-            .create({
-              categoryName: "Kindergarten (FT)",
-            }),
+            .create(),
           childCareSpaceCategoryFactory
             .associations({
               fundingPeriod,
+              childCareCategory: partTimeSchoolAgeChildCareCategory,
             })
-            .create({
-              categoryName: "School Age (PT)",
-            }),
+            .create(),
           childCareSpaceCategoryFactory
             .associations({
               fundingPeriod,
+              childCareCategory: fullTimeSchoolAgeChildCareCategory,
             })
-            .create({
-              categoryName: "School Age (FT)",
-            }),
+            .create(),
         ])
 
         // Act
@@ -140,20 +162,26 @@ describe("api/src/services/funding-periods/administration-cost-categories/bulk-e
         const targetFundingPeriod = await fundingPeriodFactory.create({
           fiscalYear: "2025-2026",
         })
+        const sourceChildCareSpaceCategoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: sourceFundingPeriod.id,
+          categoryName: "Infants",
+        })
         const sourceChildCareSpaceCategory = await childCareSpaceCategoryFactory
           .associations({
             fundingPeriod: sourceFundingPeriod,
+            childCareCategory: sourceChildCareSpaceCategoryChildCareCategory,
           })
-          .create({
-            categoryName: "Infants",
-          })
+          .create()
+        const targetChildCareSpaceCategoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: targetFundingPeriod.id,
+          categoryName: "Infants",
+        })
         const targetChildCareSpaceCategory = await childCareSpaceCategoryFactory
           .associations({
             fundingPeriod: targetFundingPeriod,
+            childCareCategory: targetChildCareSpaceCategoryChildCareCategory,
           })
-          .create({
-            categoryName: "Infants",
-          })
+          .create()
         await administrationCostCategoryFactory
           .associations({
             fundingPeriod: sourceFundingPeriod,

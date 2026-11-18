@@ -1,3 +1,4 @@
+import childCareCategoryFactory from "@/factories/child-care-category-factory"
 import { ChildCareSpace, ChildCareSpaceCategory, FiscalPeriod } from "@/models"
 
 import { childCareSpaceCategoryFactory, fiscalPeriodFactory } from "@/factories"
@@ -40,9 +41,13 @@ describe("tests/factories/child-care-space-factory.ts", () => {
 
       test("when a category ID is supplied, copies its historical name and amount", async () => {
         // Arrange
-        const category = await childCareSpaceCategoryFactory.create({
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
           categoryName: "Historical infant cohort",
+        })
+        const category = await childCareSpaceCategoryFactory.create({
           monthlyAmount: "125.5000",
+          childCareCategoryId: categoryChildCareCategory.id,
+          fundingPeriodId: categoryChildCareCategory.fundingPeriodId,
         })
 
         // Act
@@ -61,9 +66,13 @@ describe("tests/factories/child-care-space-factory.ts", () => {
 
       test("when worksheet values override a category, preserves the explicit name and amount", async () => {
         // Arrange
-        const category = await childCareSpaceCategoryFactory.create({
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
           categoryName: "Infants",
+        })
+        const category = await childCareSpaceCategoryFactory.create({
           monthlyAmount: "100.0000",
+          childCareCategoryId: categoryChildCareCategory.id,
+          fundingPeriodId: categoryChildCareCategory.fundingPeriodId,
         })
 
         // Act

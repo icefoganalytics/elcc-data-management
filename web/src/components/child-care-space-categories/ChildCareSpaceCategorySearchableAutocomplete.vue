@@ -142,7 +142,7 @@ const childCareSpaceCategoriesQuery = computed<ChildCareSpaceCategoryQueryOption
       ...props.filters,
       ...searchFilter.value,
     },
-    order: [["categoryName", "ASC"]],
+    order: [["childCareCategory", "categoryName", "ASC"]],
     perPage: perPage.value,
     page: page.value,
   }

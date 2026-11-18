@@ -1,3 +1,4 @@
+import childCareCategoryFactory from "@/factories/child-care-category-factory"
 import { ChildCareSpace } from "@/models"
 
 import {
@@ -100,9 +101,13 @@ describe("api/src/models/child-care-space.ts", () => {
             fundingPeriodId: otherFundingPeriod.id,
             fiscalYear: "2025-26",
           })
-          const category = await childCareSpaceCategoryFactory.create({
+          const categoryChildCareCategory = await childCareCategoryFactory.create({
             fundingPeriodId: matchingFundingPeriod.id,
             categoryName: "Matching",
+          })
+          const category = await childCareSpaceCategoryFactory.create({
+            fundingPeriodId: matchingFundingPeriod.id,
+            childCareCategoryId: categoryChildCareCategory.id,
           })
           const matchingChildCareSpace = await childCareSpaceFactory
             .associations({
@@ -111,9 +116,13 @@ describe("api/src/models/child-care-space.ts", () => {
               category,
             })
             .create()
-          const otherCategory = await childCareSpaceCategoryFactory.create({
+          const otherCategoryChildCareCategory = await childCareCategoryFactory.create({
             fundingPeriodId: otherFundingPeriod.id,
             categoryName: "Other",
+          })
+          const otherCategory = await childCareSpaceCategoryFactory.create({
+            fundingPeriodId: otherFundingPeriod.id,
+            childCareCategoryId: otherCategoryChildCareCategory.id,
           })
           await childCareSpaceFactory
             .associations({

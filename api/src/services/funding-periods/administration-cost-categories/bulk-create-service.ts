@@ -23,7 +23,8 @@ export class BulkCreateService extends BaseService {
     fundingPeriodId: number
   ): Promise<Omit<CreationAttributes<AdministrationCostCategory>, "fundingPeriodId">[]> {
     const targetChildCareSpaceCategories = await ChildCareSpaceCategory.findAll({
-      attributes: ["id", "categoryName"],
+      attributes: ["id", "childCareCategoryId"],
+      include: ["childCareCategory"],
       where: {
         fundingPeriodId,
       },
@@ -85,7 +86,8 @@ export class BulkCreateService extends BaseService {
     const sourceChildCareSpaceCategoryNamesById = new Map<number, string>()
     if (!isEmpty(sourceChildCareSpaceCategoryIds)) {
       const sourceChildCareSpaceCategories = await ChildCareSpaceCategory.findAll({
-        attributes: ["id", "categoryName"],
+        attributes: ["id", "childCareCategoryId"],
+      include: ["childCareCategory"],
         where: {
           id: {
             [Op.in]: sourceChildCareSpaceCategoryIds,

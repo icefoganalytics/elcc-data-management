@@ -10,11 +10,13 @@ The line name and monthly amount are snapshots, not live category lookups. Ordin
 
 ## Category configuration
 
-Each funding period owns its configurable category names, optional age ranges, and monthly amounts. **Administration → Child Care Space Categories** manages this configuration separately from the remaining funding submission lines. Only system administrators can create, update, retire, or forward-apply categories; authenticated worksheet users retain category reads and occupancy editing. A category's funding period is selected when created and cannot be changed through an update.
+Spaces rates select an existing shared child-care category in their funding period. **Administration → Child Care Categories** owns its name and optional age range; the Spaces category page owns its monthly amount. Its shared identity and funding period cannot be changed afterward. Only system administrators can mutate configuration; authenticated worksheet users retain category reads and occupancy editing. Administration and Quality Enhancement retain their legacy configuration until their programme cutovers.
 
 Category editors clear the previous record when navigating to another category. Late load or save responses cannot replace the currently requested record, and saving requires that record's identity to match the route.
 
-New funding periods copy active categories from the latest active fiscal year with categories, or use the seven original categories when none exist. Ensuring an already configured period retains its categories unchanged, including a deliberately empty configuration whose categories were all retired. Without explicit forward application, revised names and rates apply only to newly provisioned ledger rows. Removing a category retires its configuration without deleting historical ledger rows.
+New funding periods create shared identities before copying Spaces rates from the latest configured earlier period. Retired category history preserves deliberately empty configurations. Without explicit forward application, revised names and rates apply only to newly provisioned ledger rows. Shared category retirement requires its active programme configurations to be retired first.
+
+Existing monthly rows keep their names, rates, counts, and historical Spaces links when the shared catalogue changes. Administration and Quality Enhancement still use their explicit legacy Spaces links at this stage; their monthly snapshots are not rewritten.
 
 ## Forward application
 

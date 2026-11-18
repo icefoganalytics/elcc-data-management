@@ -1,3 +1,4 @@
+import childCareCategoryFactory from "@/factories/child-care-category-factory"
 import {
   AdministrationCost,
   AdministrationCostCategory,
@@ -101,14 +102,28 @@ describe("api/src/services/funding-periods/destroy-service.ts", () => {
           fundingPeriodId: unrelatedFundingPeriod.id,
           fiscalYear: "2025-26",
         })
-        const selectedCategory = await childCareSpaceCategoryFactory.create({
+        const selectedCategoryChildCareCategory = await childCareCategoryFactory.create({
           fundingPeriodId: selectedFundingPeriod.id,
           categoryName: "Selected",
         })
-        const unrelatedCategory = await childCareSpaceCategoryFactory.create({
+        const selectedCategory = await childCareSpaceCategoryFactory
+          .associations({
+            childCareCategory: selectedCategoryChildCareCategory,
+          })
+          .create({
+            fundingPeriodId: selectedFundingPeriod.id,
+          })
+        const unrelatedCategoryChildCareCategory = await childCareCategoryFactory.create({
           fundingPeriodId: unrelatedFundingPeriod.id,
           categoryName: "Unrelated",
         })
+        const unrelatedCategory = await childCareSpaceCategoryFactory
+          .associations({
+            childCareCategory: unrelatedCategoryChildCareCategory,
+          })
+          .create({
+            fundingPeriodId: unrelatedFundingPeriod.id,
+          })
         await childCareSpaceFactory
           .associations({
             centre,

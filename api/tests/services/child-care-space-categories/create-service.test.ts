@@ -1,3 +1,4 @@
+import childCareCategoryFactory from "@/factories/child-care-category-factory"
 import { ChildCareSpace, ChildCareSpaceCategory, Centre, FiscalPeriod } from "@/models"
 
 import { centreFactory, fiscalPeriodFactory, fundingPeriodFactory } from "@/factories"
@@ -39,12 +40,16 @@ describe("api/src/services/child-care-space-categories/create-service.ts", () =>
         await deletedCentre.destroy()
 
         // Act
-        const category = await CreateService.perform({
+        const childCareCategory1 = await childCareCategoryFactory.create({
           fundingPeriodId: fundingPeriod.id,
           categoryName: "Infants",
+        })
+        const category = await CreateService.perform({
+          fundingPeriodId: fundingPeriod.id,
           monthlyAmount: "125.5000",
           applyToFutureMonths: true,
           propagationStartFiscalPeriodId: mayFiscalPeriod.id,
+          childCareCategoryId: childCareCategory1.id,
         })
 
         // Assert
@@ -108,10 +113,14 @@ describe("api/src/services/child-care-space-categories/create-service.ts", () =>
         await centreFactory.create({ status: Centre.Statuses.ACTIVE })
 
         // Act
-        await CreateService.perform({
+        const childCareCategory2 = await childCareCategoryFactory.create({
           fundingPeriodId: fundingPeriod.id,
           categoryName: "Toddlers",
+        })
+        await CreateService.perform({
+          fundingPeriodId: fundingPeriod.id,
           monthlyAmount: "100.0000",
+          childCareCategoryId: childCareCategory2.id,
         })
 
         // Assert
@@ -124,11 +133,15 @@ describe("api/src/services/child-care-space-categories/create-service.ts", () =>
         const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2024-2025" })
 
         // Act
-        const createPromise = CreateService.perform({
+        const childCareCategory3 = await childCareCategoryFactory.create({
           fundingPeriodId: fundingPeriod.id,
           categoryName: "Infants",
+        })
+        const createPromise = CreateService.perform({
+          fundingPeriodId: fundingPeriod.id,
           monthlyAmount: "100.0000",
           applyToFutureMonths: true,
+          childCareCategoryId: childCareCategory3.id,
         })
 
         // Assert
@@ -142,11 +155,15 @@ describe("api/src/services/child-care-space-categories/create-service.ts", () =>
         const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2024-2025" })
 
         // Act
-        await CreateService.perform({
+        const childCareCategory4 = await childCareCategoryFactory.create({
           fundingPeriodId: fundingPeriod.id,
           categoryName: "Infants",
+        })
+        await CreateService.perform({
+          fundingPeriodId: fundingPeriod.id,
           monthlyAmount: "100.0000",
           applyToFutureMonths: true,
+          childCareCategoryId: childCareCategory4.id,
         }).catch(() => undefined)
 
         // Assert
@@ -159,10 +176,14 @@ describe("api/src/services/child-care-space-categories/create-service.ts", () =>
         const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2024-2025" })
 
         // Act
-        const createPromise = CreateService.perform({
+        const childCareCategory5 = await childCareCategoryFactory.create({
           fundingPeriodId: fundingPeriod.id,
           categoryName: "Infants",
+        })
+        const createPromise = CreateService.perform({
+          fundingPeriodId: fundingPeriod.id,
           monthlyAmount: "0.12345",
+          childCareCategoryId: childCareCategory5.id,
         })
 
         // Assert

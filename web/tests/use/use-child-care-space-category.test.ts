@@ -15,6 +15,7 @@ type CategoryResponse = {
 const category1: ChildCareSpaceCategoryAsShow = {
   id: 1,
   fundingPeriodId: 10,
+  childCareCategoryId: 1,
   categoryName: "Infants",
   fromAge: 0,
   toAge: 18,
@@ -26,6 +27,7 @@ const category1: ChildCareSpaceCategoryAsShow = {
 const category2: ChildCareSpaceCategoryAsShow = {
   id: 2,
   fundingPeriodId: 10,
+  childCareCategoryId: 2,
   categoryName: "Toddlers",
   fromAge: 19,
   toAge: 36,

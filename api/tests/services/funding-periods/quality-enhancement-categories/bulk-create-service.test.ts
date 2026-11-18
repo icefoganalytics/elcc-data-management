@@ -1,3 +1,4 @@
+import childCareCategoryFactory from "@/factories/child-care-category-factory"
 import {
   childCareSpaceCategoryFactory,
   fundingPeriodFactory,
@@ -19,12 +20,26 @@ describe("api/src/services/funding-periods/quality-enhancement-categories/bulk-c
           fiscalYear: "2026-2027",
           fromDate: new Date("2026-04-01T00:00:00.000Z"),
         })
+        const previousSpaceCategoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: previousFundingPeriod.id,
+          categoryName: "Infants",
+        })
         const previousSpaceCategory = await childCareSpaceCategoryFactory
-          .associations({ fundingPeriod: previousFundingPeriod })
-          .create({ categoryName: "Infants" })
+          .associations({
+            fundingPeriod: previousFundingPeriod,
+            childCareCategory: previousSpaceCategoryChildCareCategory,
+          })
+          .create()
+        const targetSpaceCategoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: targetFundingPeriod.id,
+          categoryName: "Infants",
+        })
         const targetSpaceCategory = await childCareSpaceCategoryFactory
-          .associations({ fundingPeriod: targetFundingPeriod })
-          .create({ categoryName: "Infants" })
+          .associations({
+            fundingPeriod: targetFundingPeriod,
+            childCareCategory: targetSpaceCategoryChildCareCategory,
+          })
+          .create()
         await qualityEnhancementCategoryFactory
           .associations({ fundingPeriod: previousFundingPeriod })
           .create({
@@ -81,12 +96,26 @@ describe("api/src/services/funding-periods/quality-enhancement-categories/bulk-c
         // Arrange
         const previousFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2025-2026" })
         const targetFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2026-2027" })
+        const previousSpaceCategoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: previousFundingPeriod.id,
+          categoryName: "Infants",
+        })
         const previousSpaceCategory = await childCareSpaceCategoryFactory
-          .associations({ fundingPeriod: previousFundingPeriod })
-          .create({ categoryName: "Infants" })
+          .associations({
+            fundingPeriod: previousFundingPeriod,
+            childCareCategory: previousSpaceCategoryChildCareCategory,
+          })
+          .create()
+        const targetSpaceCategoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: targetFundingPeriod.id,
+          categoryName: "Infants",
+        })
         const targetSpaceCategory = await childCareSpaceCategoryFactory
-          .associations({ fundingPeriod: targetFundingPeriod })
-          .create({ categoryName: "Infants" })
+          .associations({
+            fundingPeriod: targetFundingPeriod,
+            childCareCategory: targetSpaceCategoryChildCareCategory,
+          })
+          .create()
         await qualityEnhancementCategoryFactory
           .associations({ fundingPeriod: previousFundingPeriod })
           .create({

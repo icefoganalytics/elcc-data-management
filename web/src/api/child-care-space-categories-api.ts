@@ -9,6 +9,7 @@ import {
 export type ChildCareSpaceCategory = {
   id: number
   fundingPeriodId: number
+  childCareCategoryId: number
   categoryName: string
   fromAge: number | null
   toAge: number | null
@@ -30,18 +31,18 @@ export type ChildCareSpaceCategoryPropagationOptions = {
 
 export type ChildCareSpaceCategoryCreationAttributes = Pick<
   ChildCareSpaceCategory,
-  "fundingPeriodId" | "categoryName" | "fromAge" | "toAge" | "monthlyAmount"
+  "fundingPeriodId" | "childCareCategoryId" | "monthlyAmount"
 > &
   ChildCareSpaceCategoryPropagationOptions
 
 export type ChildCareSpaceCategoryUpdateAttributes = Partial<
-  Pick<ChildCareSpaceCategory, "categoryName" | "fromAge" | "toAge" | "monthlyAmount">
+  Pick<ChildCareSpaceCategory, "monthlyAmount">
 > &
   ChildCareSpaceCategoryPropagationOptions
 
 export type ChildCareSpaceCategoryWhereOptions = WhereOptions<
   ChildCareSpaceCategory,
-  "id" | "fundingPeriodId" | "categoryName" | "fromAge" | "toAge"
+  "id" | "fundingPeriodId" | "childCareCategoryId"
 >
 
 export type ChildCareSpaceCategoryFiltersOptions = FiltersOptions<{

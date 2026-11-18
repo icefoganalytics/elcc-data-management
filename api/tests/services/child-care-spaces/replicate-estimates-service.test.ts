@@ -1,3 +1,4 @@
+import childCareCategoryFactory from "@/factories/child-care-category-factory"
 import { ChildCareSpace } from "@/models"
 
 import {
@@ -29,9 +30,15 @@ describe("api/src/services/child-care-spaces/replicate-estimates-service.ts", ()
           fiscalYear: "2024-25",
           dateStart: new Date("2024-05-01"),
         })
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
         const category = await childCareSpaceCategoryFactory
           .associations({ fundingPeriod })
-          .create({ categoryName: "Infants" })
+          .create({
+            childCareCategoryId: categoryChildCareCategory.id,
+          })
         const sourceChildCareSpace = await childCareSpaceFactory
           .associations({
             centre,
@@ -86,9 +93,15 @@ describe("api/src/services/child-care-spaces/replicate-estimates-service.ts", ()
           fiscalYear: "2024-25",
           dateStart: new Date("2024-05-01"),
         })
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
         const category = await childCareSpaceCategoryFactory
           .associations({ fundingPeriod })
-          .create({ categoryName: "Infants" })
+          .create({
+            childCareCategoryId: categoryChildCareCategory.id,
+          })
         const sourceChildCareSpace = await childCareSpaceFactory
           .associations({
             centre,

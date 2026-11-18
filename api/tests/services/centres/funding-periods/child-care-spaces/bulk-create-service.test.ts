@@ -1,3 +1,4 @@
+import childCareCategoryFactory from "@/factories/child-care-category-factory"
 import {
   centreFactory,
   childCareSpaceCategoryFactory,
@@ -26,15 +27,23 @@ describe("api/src/services/centres/funding-periods/child-care-spaces/bulk-create
           fiscalYear: "2024-25",
           dateStart: new Date("2024-05-01"),
         })
-        const infantCategory = await childCareSpaceCategoryFactory.create({
+        const infantCategoryChildCareCategory = await childCareCategoryFactory.create({
           fundingPeriodId: fundingPeriod.id,
           categoryName: "Infants",
+        })
+        const infantCategory = await childCareSpaceCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
           monthlyAmount: "100.0000",
+          childCareCategoryId: infantCategoryChildCareCategory.id,
+        })
+        const toddlerCategoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Toddlers",
         })
         const toddlerCategory = await childCareSpaceCategoryFactory.create({
           fundingPeriodId: fundingPeriod.id,
-          categoryName: "Toddlers",
           monthlyAmount: "200.0000",
+          childCareCategoryId: toddlerCategoryChildCareCategory.id,
         })
         const historicalInfantChildCareSpace = await childCareSpaceFactory
           .associations({ centre, fiscalPeriod: aprilFiscalPeriod, category: infantCategory })
