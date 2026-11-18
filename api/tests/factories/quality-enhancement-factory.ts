@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker"
 import FactoryShark from "factory-shark"
 
-import { QualityEnhancement } from "@/models"
+import { QualityEnhancement, ChildCareSpaceCategory } from "@/models"
 
 import centreFactory from "@/factories/centre-factory"
 import fiscalPeriodFactory from "@/factories/fiscal-period-factory"
@@ -33,12 +33,19 @@ export const qualityEnhancementFactory = FactoryShark.define<QualityEnhancement>
       }
 
       if (params.childCareSpaceCategoryId === undefined) {
-        enhancement.childCareSpaceCategoryId = resolvedCategory.childCareSpaceCategoryId
+        const spaceCategory = await ChildCareSpaceCategory.findOne({
+          attributes: ["id"],
+          where: {
+            fundingPeriodId: resolvedCategory.fundingPeriodId,
+            childCareCategoryId: resolvedCategory.childCareCategoryId,
+          },
+        })
+        enhancement.childCareSpaceCategoryId = spaceCategory?.id ?? null
       }
     })
 
     return {
-      childCareSpaceCategoryId: categoryDefaults.childCareSpaceCategoryId,
+      childCareSpaceCategoryId: null,
       lineName: categoryDefaults.categoryName,
       baseMonthlyAmount: categoryDefaults.monthlyAmount,
       hotMealIncrementAmount: "0.0000",

@@ -28,8 +28,6 @@ describe("api/src/services/child-care-categories/update-service.ts", () => {
         })
         const qualityCategory = await qualityEnhancementCategoryFactory.create({
           fundingPeriodId,
-          categoryName: "Infants",
-          childCareSpaceCategoryId: spacesCategory.id,
           childCareCategoryId: childCareCategory.id,
         })
         const space = await childCareSpaceFactory

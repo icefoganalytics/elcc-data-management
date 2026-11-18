@@ -8,6 +8,7 @@ import FiscalPeriod from "@/models/fiscal-period"
 import FundingRegion from "@/models/funding-region"
 import QualityEnhancement from "@/models/quality-enhancement"
 import QualityEnhancementCategory from "@/models/quality-enhancement-category"
+import ChildCareSpaceCategory from "@/models/child-care-space-category"
 import BaseService from "@/services/base-service"
 
 export type QualityEnhancementCreationAttributes = Partial<
@@ -53,6 +54,15 @@ export class CreateService extends BaseService {
         )
       }
 
+      const spaceCategory = await ChildCareSpaceCategory.findOne({
+        attributes: ["id"],
+        where: {
+          fundingPeriodId: category.fundingPeriodId,
+          childCareCategoryId: category.childCareCategoryId,
+        },
+      })
+      const childCareSpaceCategoryId = spaceCategory?.id ?? null
+
       const existing = await QualityEnhancement.findOne({
         attributes: ["id"],
         where: { centreId, fiscalPeriodId, categoryId },
@@ -74,7 +84,7 @@ export class CreateService extends BaseService {
       const attributes = {
         centreId,
         categoryId,
-        childCareSpaceCategoryId: category.childCareSpaceCategoryId,
+        childCareSpaceCategoryId,
         lineName: category.categoryName,
         baseMonthlyAmount: category.monthlyAmount,
         hotMealIncrementAmount,

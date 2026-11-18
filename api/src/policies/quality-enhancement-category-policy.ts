@@ -20,15 +20,15 @@ export class QualityEnhancementCategoryPolicy extends PolicyFactory(QualityEnhan
   }
 
   permittedAttributes(): Path[] {
-    return ["categoryName", "fromAge", "toAge", "monthlyAmount", "childCareSpaceCategoryId"]
+    return ["monthlyAmount"]
   }
 
   permittedAttributesForCreate(): Path[] {
-    return ["fundingPeriodId", ...this.permittedAttributes()]
+    return ["fundingPeriodId", "childCareCategoryId", ...this.permittedAttributes()]
   }
 
   static policyScope(_user: User): FindOptions<Attributes<QualityEnhancementCategory>> {
-    return ALL_RECORDS_SCOPE
+    return { ...ALL_RECORDS_SCOPE, include: ["childCareCategory"] }
   }
 }
 

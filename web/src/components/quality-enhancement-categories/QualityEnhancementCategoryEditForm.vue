@@ -54,44 +54,10 @@
         </v-col>
       </v-row>
       <v-divider class="my-4" />
-      <v-row>
-        <v-col cols="12">
-          <QualityEnhancementCategoryNameUniqueTextField
-            v-model="qualityEnhancementCategory.categoryName"
-            :funding-period-id="qualityEnhancementCategory.fundingPeriodId"
-            :excluding-category-id="qualityEnhancementCategoryId"
-            label="Category Name *"
-            :rules="[required]"
-            required
-          />
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col
-          cols="12"
-          md="6"
-        >
-          <NumberTextField
-            v-model="qualityEnhancementCategory.fromAge"
-            label="From Age"
-            step="1"
-            min="0"
-            :rules="[wholeNumberOrEmpty, greaterThanOrEqualTo(0)]"
-          />
-        </v-col>
-        <v-col
-          cols="12"
-          md="6"
-        >
-          <NumberTextField
-            v-model="qualityEnhancementCategory.toAge"
-            label="To Age"
-            step="1"
-            min="0"
-            :rules="toAgeRules"
-          />
-        </v-col>
-      </v-row>
+      <ChildCareCategoryDescriptionFields
+        :child-care-category-id="qualityEnhancementCategory.childCareCategoryId"
+        :category="qualityEnhancementCategory"
+      />
       <v-row>
         <v-col cols="12">
           <CurrencyInput
@@ -101,16 +67,6 @@
             :rules="[required]"
             required
             @update:model-value="updateMonthlyAmount"
-          />
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="12">
-          <ChildCareSpaceCategorySearchableAutocomplete
-            v-model="qualityEnhancementCategory.childCareSpaceCategoryId"
-            :where="childCareSpaceCategoriesWhere"
-            label="Linked Child Care Space Category"
-            clearable
           />
         </v-col>
       </v-row>
@@ -147,18 +103,16 @@
 import { computed, ref, toRefs, useTemplateRef } from "vue"
 import { isNil } from "lodash"
 
-import { greaterThanOrEqualTo, required } from "@/utils/validators"
+import { required } from "@/utils/validators"
 
 import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
 import useQualityEnhancementCategory from "@/use/use-quality-enhancement-category"
 import useFundingPeriod from "@/use/use-funding-period"
 import useSnack from "@/use/use-snack"
 
-import NumberTextField from "@/components/common/NumberTextField.vue"
 import CurrencyInput from "@/components/CurrencyInput.vue"
 import DescriptionElement from "@/components/common/DescriptionElement.vue"
-import QualityEnhancementCategoryNameUniqueTextField from "@/components/quality-enhancement-categories/QualityEnhancementCategoryNameUniqueTextField.vue"
-import ChildCareSpaceCategorySearchableAutocomplete from "@/components/child-care-space-categories/ChildCareSpaceCategorySearchableAutocomplete.vue"
+import ChildCareCategoryDescriptionFields from "@/components/child-care-categories/ChildCareCategoryDescriptionFields.vue"
 
 const monthlyAmountOptions = { precision: 4 }
 
@@ -180,9 +134,6 @@ const {
   save,
 } = useQualityEnhancementCategory(qualityEnhancementCategoryId)
 const fundingPeriodId = computed(() => qualityEnhancementCategory.value?.fundingPeriodId)
-const childCareSpaceCategoriesWhere = computed(() => ({
-  fundingPeriodId: fundingPeriodId.value,
-}))
 const {
   fundingPeriod,
   isLoading: isLoadingFundingPeriod,
@@ -197,29 +148,6 @@ const fundingPeriodDescription = computed(() => {
   const { fiscalYear, title } = fundingPeriod.value
   return title ? `${fiscalYear} — ${title}` : fiscalYear
 })
-const toAgeRules = computed(() => [
-  wholeNumberOrEmpty,
-  greaterThanOrEqualTo(0),
-  greaterThanOrEqualTo(qualityEnhancementCategory.value?.fromAge ?? 0, {
-    referenceFieldLabel: `From Age of ${qualityEnhancementCategory.value?.fromAge}`,
-  }),
-])
-
-function wholeNumberOrEmpty(value: unknown): boolean | string {
-  if (isNil(value) || value === "") {
-    return true
-  }
-
-  if (typeof value === "number" && Number.isInteger(value)) {
-    return true
-  }
-
-  if (typeof value === "string" && value.trim() !== "" && Number.isInteger(Number(value))) {
-    return true
-  }
-
-  return "Age must be a whole number"
-}
 
 function updateMonthlyAmount(value: string | number | null) {
   const category = qualityEnhancementCategory.value

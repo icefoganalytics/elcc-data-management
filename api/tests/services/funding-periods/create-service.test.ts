@@ -154,13 +154,13 @@ describe("api/src/services/funding-periods/create-service.ts", () => {
           expect.objectContaining({
             categoryName: "Infants",
             fromAge: 0,
-            toAge: 1,
+            toAge: 18,
             monthlyAmount: "70",
           }),
           expect.objectContaining({
             categoryName: "Toddlers",
-            fromAge: 2,
-            toAge: 3,
+            fromAge: 19,
+            toAge: 36,
             monthlyAmount: "70",
           }),
           expect.objectContaining({

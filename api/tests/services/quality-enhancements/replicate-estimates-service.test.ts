@@ -37,8 +37,7 @@ describe("api/src/services/quality-enhancements/replicate-estimates-service.ts",
           .create()
         const spaceCategory = await childCareSpaceCategoryFactory
           .associations({ fundingPeriod })
-          .create()
-        await category.update({ childCareSpaceCategoryId: spaceCategory.id })
+          .create({ childCareCategoryId: category.childCareCategoryId })
         const source = await qualityEnhancementFactory
           .associations({ centre, fiscalPeriod: sourcePeriod, category })
           .create({

@@ -25,29 +25,24 @@ describe("api/src/services/funding-periods/quality-enhancement-categories/bulk-c
           categoryName: "Infants",
         })
         const previousSpaceCategory = await childCareSpaceCategoryFactory
-          .associations({
-            fundingPeriod: previousFundingPeriod,
-            childCareCategory: previousSpaceCategoryChildCareCategory,
+          .associations({ fundingPeriod: previousFundingPeriod })
+          .create({
+            childCareCategoryId: previousSpaceCategoryChildCareCategory.id,
           })
-          .create()
         const targetSpaceCategoryChildCareCategory = await childCareCategoryFactory.create({
           fundingPeriodId: targetFundingPeriod.id,
           categoryName: "Infants",
         })
         const targetSpaceCategory = await childCareSpaceCategoryFactory
-          .associations({
-            fundingPeriod: targetFundingPeriod,
-            childCareCategory: targetSpaceCategoryChildCareCategory,
+          .associations({ fundingPeriod: targetFundingPeriod })
+          .create({
+            childCareCategoryId: targetSpaceCategoryChildCareCategory.id,
           })
-          .create()
         await qualityEnhancementCategoryFactory
           .associations({ fundingPeriod: previousFundingPeriod })
           .create({
-            categoryName: "Infants Quality Enhancement",
-            fromAge: 0,
-            toAge: 1,
             monthlyAmount: "206.1000",
-            childCareSpaceCategoryId: previousSpaceCategory.id,
+            childCareCategoryId: previousSpaceCategory.childCareCategoryId,
           })
 
         // Act
@@ -60,11 +55,11 @@ describe("api/src/services/funding-periods/quality-enhancement-categories/bulk-c
         expect(persistedCategories).toEqual([
           expect.objectContaining({
             fundingPeriodId: targetFundingPeriod.id,
-            categoryName: "Infants Quality Enhancement",
+            categoryName: "Infants",
             fromAge: 0,
-            toAge: 1,
+            toAge: 5,
             monthlyAmount: "206.1",
-            childCareSpaceCategoryId: targetSpaceCategory.id,
+            childCareCategoryId: targetSpaceCategory.childCareCategoryId,
           }),
         ])
       })
@@ -101,26 +96,23 @@ describe("api/src/services/funding-periods/quality-enhancement-categories/bulk-c
           categoryName: "Infants",
         })
         const previousSpaceCategory = await childCareSpaceCategoryFactory
-          .associations({
-            fundingPeriod: previousFundingPeriod,
-            childCareCategory: previousSpaceCategoryChildCareCategory,
+          .associations({ fundingPeriod: previousFundingPeriod })
+          .create({
+            childCareCategoryId: previousSpaceCategoryChildCareCategory.id,
           })
-          .create()
         const targetSpaceCategoryChildCareCategory = await childCareCategoryFactory.create({
           fundingPeriodId: targetFundingPeriod.id,
           categoryName: "Infants",
         })
         const targetSpaceCategory = await childCareSpaceCategoryFactory
-          .associations({
-            fundingPeriod: targetFundingPeriod,
-            childCareCategory: targetSpaceCategoryChildCareCategory,
+          .associations({ fundingPeriod: targetFundingPeriod })
+          .create({
+            childCareCategoryId: targetSpaceCategoryChildCareCategory.id,
           })
-          .create()
         await qualityEnhancementCategoryFactory
           .associations({ fundingPeriod: previousFundingPeriod })
           .create({
-            categoryName: "Infants Quality Enhancement",
-            childCareSpaceCategoryId: previousSpaceCategory.id,
+            childCareCategoryId: previousSpaceCategory.childCareCategoryId,
           })
         await previousSpaceCategory.destroy()
 
@@ -133,7 +125,7 @@ describe("api/src/services/funding-periods/quality-enhancement-categories/bulk-c
         })
         expect(categories).toEqual([
           expect.objectContaining({
-            childCareSpaceCategoryId: targetSpaceCategory.id,
+            childCareCategoryId: targetSpaceCategory.childCareCategoryId,
           }),
         ])
       })
@@ -143,12 +135,26 @@ describe("api/src/services/funding-periods/quality-enhancement-categories/bulk-c
         const earlierFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2024-2025" })
         const targetFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2025-2026" })
         const futureFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2026-2027" })
+        const configuredCategory3ChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: earlierFundingPeriod.id,
+          categoryName: "Infants",
+        })
         await qualityEnhancementCategoryFactory
           .associations({ fundingPeriod: earlierFundingPeriod })
-          .create({ categoryName: "Infants", monthlyAmount: "206.1000" })
+          .create({
+            monthlyAmount: "206.1000",
+            childCareCategoryId: configuredCategory3ChildCareCategory.id,
+          })
+        const configuredCategory4ChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: futureFundingPeriod.id,
+          categoryName: "Infants",
+        })
         await qualityEnhancementCategoryFactory
           .associations({ fundingPeriod: futureFundingPeriod })
-          .create({ categoryName: "Infants", monthlyAmount: "300.0000" })
+          .create({
+            monthlyAmount: "300.0000",
+            childCareCategoryId: configuredCategory4ChildCareCategory.id,
+          })
 
         // Act
         await BulkCreateService.perform(targetFundingPeriod)
@@ -161,6 +167,107 @@ describe("api/src/services/funding-periods/quality-enhancement-categories/bulk-c
           expect.objectContaining({
             categoryName: "Infants",
             monthlyAmount: "206.1",
+          }),
+        ])
+      })
+
+      test("clones a sparse older program identity absent from the newest shared catalogue", async () => {
+        const olderFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2024-2025" })
+        const newerFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2025-2026" })
+        const targetFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2026-2027" })
+        const olderCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: olderFundingPeriod.id,
+          categoryName: "Standalone cohort",
+          fromAge: 4,
+          toAge: 8,
+        })
+        await qualityEnhancementCategoryFactory.create({
+          fundingPeriodId: olderFundingPeriod.id,
+          childCareCategoryId: olderCategory.id,
+          monthlyAmount: "75.5000",
+        })
+        await childCareCategoryFactory.create({
+          fundingPeriodId: newerFundingPeriod.id,
+          categoryName: "Newest catalogue only",
+        })
+
+        await BulkCreateService.perform(targetFundingPeriod)
+        const categories = await QualityEnhancementCategory.findAll({
+          where: { fundingPeriodId: targetFundingPeriod.id },
+        })
+
+        expect(categories).toEqual([
+          expect.objectContaining({
+            fundingPeriodId: targetFundingPeriod.id,
+            categoryName: "Standalone cohort",
+            fromAge: 4,
+            toAge: 8,
+            monthlyAmount: "75.5",
+          }),
+        ])
+      })
+      test("when the latest shared catalogue retired an older program category, does not revive its rate", async () => {
+        // Arrange
+        const olderFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2024-2025" })
+        const latestFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2025-2026" })
+        const targetFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2026-2027" })
+        const olderCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: olderFundingPeriod.id,
+          categoryName: "Retired cohort",
+        })
+        await qualityEnhancementCategoryFactory.create({
+          fundingPeriodId: olderFundingPeriod.id,
+          childCareCategoryId: olderCategory.id,
+          monthlyAmount: "42.1234",
+        })
+        const retiredCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: latestFundingPeriod.id,
+          categoryName: "Retired cohort",
+        })
+        await retiredCategory.destroy()
+
+        // Act
+        const categories = await BulkCreateService.perform(targetFundingPeriod)
+
+        // Assert
+        expect(categories).toEqual([])
+      })
+
+      test("when an active replacement shares a retired category name, clones the rate to the active identity", async () => {
+        // Arrange
+        const previousFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2025-2026" })
+        const targetFundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2026-2027" })
+        const sourceCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: previousFundingPeriod.id,
+          categoryName: "Replacement cohort",
+          fromAge: 5,
+          toAge: 5,
+        })
+        await qualityEnhancementCategoryFactory.create({
+          fundingPeriodId: previousFundingPeriod.id,
+          childCareCategoryId: sourceCategory.id,
+          monthlyAmount: "42.1234",
+        })
+        const retiredCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: targetFundingPeriod.id,
+          categoryName: "Replacement cohort",
+        })
+        await retiredCategory.destroy()
+        const activeCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: targetFundingPeriod.id,
+          categoryName: "Replacement cohort",
+          fromAge: 5,
+          toAge: 5,
+        })
+
+        // Act
+        const categories = await BulkCreateService.perform(targetFundingPeriod)
+
+        // Assert
+        expect(categories).toEqual([
+          expect.objectContaining({
+            childCareCategoryId: activeCategory.id,
+            monthlyAmount: "42.1234",
           }),
         ])
       })

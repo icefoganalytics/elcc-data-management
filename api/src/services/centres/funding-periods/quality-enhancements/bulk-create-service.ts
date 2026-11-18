@@ -8,6 +8,7 @@ import FundingPeriod from "@/models/funding-period"
 import FundingRegion from "@/models/funding-region"
 import QualityEnhancement from "@/models/quality-enhancement"
 import QualityEnhancementCategory from "@/models/quality-enhancement-category"
+import ChildCareSpaceCategory from "@/models/child-care-space-category"
 import BaseService from "@/services/base-service"
 
 export class BulkCreateService extends BaseService {
@@ -32,6 +33,14 @@ export class BulkCreateService extends BaseService {
     })
     if (isEmpty(categories)) return []
 
+    const spaceCategories = await ChildCareSpaceCategory.findAll({
+      attributes: ["id", "childCareCategoryId"],
+      where: { fundingPeriodId: this.fundingPeriod.id },
+    })
+    const spaceCategoryIdsBySharedCategoryId = new Map(
+      spaceCategories.map(({ id, childCareCategoryId }) => [childCareCategoryId, id])
+    )
+
     const existing = await QualityEnhancement.findAll({
       attributes: ["fiscalPeriodId", "categoryId"],
       where: { centreId: this.centre.id, fiscalPeriodId: periods.map(({ id }) => id) },
@@ -53,7 +62,8 @@ export class BulkCreateService extends BaseService {
           centreId: this.centre.id,
           fiscalPeriodId: period.id,
           categoryId: category.id,
-          childCareSpaceCategoryId: category.childCareSpaceCategoryId,
+          childCareSpaceCategoryId:
+            spaceCategoryIdsBySharedCategoryId.get(category.childCareCategoryId) ?? null,
           lineName: category.categoryName,
           baseMonthlyAmount: category.monthlyAmount,
           hotMealIncrementAmount: hotMealIncrement,

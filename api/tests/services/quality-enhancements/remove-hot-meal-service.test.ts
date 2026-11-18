@@ -1,3 +1,4 @@
+import childCareCategoryFactory from "@/factories/child-care-category-factory"
 import {
   centreFactory,
   fiscalPeriodFactory,
@@ -82,12 +83,24 @@ describe("api/src/services/quality-enhancements/remove-hot-meal-service.ts", () 
           dateStart: new Date("2027-01-01T00:00:00Z"),
           dateEnd: new Date("2027-01-31T23:59:59Z"),
         })
+        const firstCategoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
         const firstCategory = await qualityEnhancementCategoryFactory
           .associations({ fundingPeriod })
-          .create({ categoryName: "Infants" })
+          .create({
+            childCareCategoryId: firstCategoryChildCareCategory.id,
+          })
+        const secondCategoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Preschool",
+        })
         const secondCategory = await qualityEnhancementCategoryFactory
           .associations({ fundingPeriod })
-          .create({ categoryName: "Preschool" })
+          .create({
+            childCareCategoryId: secondCategoryChildCareCategory.id,
+          })
         const appliedAt = new Date("2026-10-20T00:00:00Z")
         await qualityEnhancementFactory
           .associations({ centre, fiscalPeriod, category: firstCategory })
@@ -125,12 +138,24 @@ describe("api/src/services/quality-enhancements/remove-hot-meal-service.ts", () 
           dateStart: new Date("2027-01-01T00:00:00Z"),
           dateEnd: new Date("2027-01-31T23:59:59Z"),
         })
+        const firstCategoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
         const firstCategory = await qualityEnhancementCategoryFactory
           .associations({ fundingPeriod })
-          .create({ categoryName: "Infants" })
+          .create({
+            childCareCategoryId: firstCategoryChildCareCategory.id,
+          })
+        const secondCategoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Preschool",
+        })
         const secondCategory = await qualityEnhancementCategoryFactory
           .associations({ fundingPeriod })
-          .create({ categoryName: "Preschool" })
+          .create({
+            childCareCategoryId: secondCategoryChildCareCategory.id,
+          })
         const appliedAt = new Date("2026-10-20T00:00:00Z")
         const first = await qualityEnhancementFactory
           .associations({ centre, fiscalPeriod, category: firstCategory })

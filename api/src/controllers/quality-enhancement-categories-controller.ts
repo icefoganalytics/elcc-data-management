@@ -15,14 +15,16 @@ export class QualityEnhancementCategoriesController extends BaseController<Quali
   async index() {
     try {
       const where = this.buildWhere()
+      const scopes = this.buildFilterScopes()
+      const order = this.buildOrder([["childCareCategory", "categoryName", "ASC"]])
       const scopedCategories = QualityEnhancementCategoryPolicy.applyScope(
-        this.buildFilterScopes(),
+        scopes,
         this.currentUser
       )
       const totalCount = await scopedCategories.count({ where })
       const categories = await scopedCategories.findAll({
         where,
-        order: this.buildOrder([["categoryName", "ASC"]]),
+        order,
         limit: this.pagination.limit,
         offset: this.pagination.offset,
       })

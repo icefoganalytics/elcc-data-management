@@ -28,18 +28,16 @@ describe("api/src/services/centres/funding-periods/quality-enhancements/bulk-cre
           categoryName: "Infants",
         })
         const spaceCategory = await childCareSpaceCategoryFactory
-          .associations({
-            fundingPeriod,
-            childCareCategory: spaceCategoryChildCareCategory,
+          .associations({ fundingPeriod })
+          .create({
+            childCareCategoryId: spaceCategoryChildCareCategory.id,
           })
-          .create()
         const category = await qualityEnhancementCategoryFactory
           .associations({ fundingPeriod })
           .create({
-            categoryName: "Infants Quality Enhancement",
             monthlyAmount: "206.1000",
+            childCareCategoryId: spaceCategory.childCareCategoryId,
           })
-        await category.update({ childCareSpaceCategoryId: spaceCategory.id })
 
         // Act
         await BulkCreateService.perform(centre, fundingPeriod, true)
@@ -52,7 +50,7 @@ describe("api/src/services/centres/funding-periods/quality-enhancements/bulk-cre
             fiscalPeriodId: period.id,
             categoryId: category.id,
             childCareSpaceCategoryId: spaceCategory.id,
-            lineName: "Infants Quality Enhancement",
+            lineName: "Infants",
             baseMonthlyAmount: "206.1",
             hotMealIncrementAmount: "32.06",
             monthlyAmount: "238.16",
