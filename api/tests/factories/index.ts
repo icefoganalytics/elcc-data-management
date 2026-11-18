@@ -1,3 +1,4 @@
+export { childCareCategoryFactory } from "./child-care-category-factory"
 export { administrationCostCategoryFactory } from "./administration-cost-category-factory"
 export { administrationCostFactory } from "./administration-cost-factory"
 export { buildingExpenseCategoryFactory } from "./building-expense-category-factory"

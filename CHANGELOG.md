@@ -10,6 +10,8 @@ Changes since v2026.11.17.1 that will be included in the next release.
 
 ### Added
 
+- Shared child-care categories have a dedicated model and authorized API, with immutable funding-period ownership and safe retirement. Existing programme configuration remains unchanged during preparation.
+
 - Shared child-care category storage prepares one funding-period catalogue for Spaces, Administration, and Quality Enhancement without changing existing program rates or monthly records.
 
 ### Changed

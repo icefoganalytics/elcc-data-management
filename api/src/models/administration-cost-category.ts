@@ -91,6 +91,9 @@ export class AdministrationCostCategory extends BaseModel<
   declare fundingPeriodId: number
 
   @Attribute(DataTypes.INTEGER)
+  declare childCareCategoryId: number | null
+
+  @Attribute(DataTypes.INTEGER)
   declare childCareSpaceCategoryId: number | null
 
   @Attribute(DataTypes.STRING(200))
