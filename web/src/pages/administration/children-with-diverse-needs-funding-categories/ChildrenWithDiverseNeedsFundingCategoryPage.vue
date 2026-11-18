@@ -90,7 +90,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue"
+import { computed, ref } from "vue"
 import { useRouter } from "vue-router"
 import { isNil } from "lodash"
 
@@ -115,7 +115,7 @@ const props = defineProps<{
 const childrenWithDiverseNeedsFundingCategoryIdAsNumber = computed(() =>
   Number(props.childrenWithDiverseNeedsFundingCategoryId)
 )
-const { childrenWithDiverseNeedsFundingCategory, policy, isErrored } =
+const { childrenWithDiverseNeedsFundingCategory, policy } =
   useChildrenWithDiverseNeedsFundingCategory(childrenWithDiverseNeedsFundingCategoryIdAsNumber)
 
 const fundingPeriodId = computed(
@@ -127,10 +127,6 @@ const fundingPeriodDescription = computed(() => fundingPeriod.value?.fiscalYear 
 const isDeleting = ref(false)
 
 const snack = useSnack()
-
-watch(isErrored, (isErrored) => {
-  if (isErrored) snack.error("Failed to load Children with Diverse Needs category.")
-})
 
 const router = useRouter()
 

@@ -70,13 +70,12 @@ export function useChildrenWithDiverseNeedsFundingCategories(
   watch(
     () => [skipWatchIf(), unref(queryOptions)],
     async ([skip]) => {
-      state.childrenWithDiverseNeedsFundingCategories = []
-      state.totalCount = 0
-      state.isErrored = false
-      state.isLoading = false
-
       if (skip) {
         requestController?.abort()
+        state.childrenWithDiverseNeedsFundingCategories = []
+        state.totalCount = 0
+        state.isErrored = false
+        state.isLoading = false
         return
       }
 

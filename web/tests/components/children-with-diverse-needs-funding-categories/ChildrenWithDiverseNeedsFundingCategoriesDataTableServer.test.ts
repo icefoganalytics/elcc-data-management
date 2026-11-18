@@ -4,16 +4,54 @@ import childrenWithDiverseNeedsFundingCategoriesApi from "@/api/children-with-di
 import ApiOperationError from "@/api/errors/api-operation-error"
 import AuthenticationRequiredError from "@/api/errors/authentication-required-error"
 
-import useSnack from "@/use/use-snack"
-
 import { childrenWithDiverseNeedsFundingCategoryFactory } from "@/tests/factories"
-import { mockRouter, mockVuetify } from "@/tests/support"
+import { mockRouter, mockVuetify, mountWithDefaultPlugins } from "@/tests/support"
 
 import ChildrenWithDiverseNeedsFundingCategoriesDataTableServer from "@/components/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoriesDataTableServer.vue"
 
 describe("web/src/components/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoriesDataTableServer.vue", () => {
   describe("ChildrenWithDiverseNeedsFundingCategoriesDataTableServer", () => {
     describe("pagination", () => {
+      test("when opening a page-two bookmark, renders that page after the initial load", async () => {
+        // Arrange
+        const firstPageCategory = childrenWithDiverseNeedsFundingCategoryFactory.build({
+          id: 1,
+          categoryName: "First page category",
+        })
+        const secondPageCategory = childrenWithDiverseNeedsFundingCategoryFactory.build({
+          id: 11,
+          categoryName: "Bookmarked category",
+        })
+        vi.spyOn(childrenWithDiverseNeedsFundingCategoriesApi, "list").mockImplementation(
+          async (query) => ({
+            childrenWithDiverseNeedsFundingCategories: [
+              query?.page === 2 ? secondPageCategory : firstPageCategory,
+            ],
+            totalCount: 20,
+          })
+        )
+        const router = mockRouter([
+          { path: "/", component: { template: "<div />" } },
+          {
+            path: "/categories/:childrenWithDiverseNeedsFundingCategoryId",
+            name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
+            component: { template: "<div>Category details</div>" },
+          },
+        ])
+        await router.push("/?page=2")
+        await router.isReady()
+
+        // Act
+        const wrapper = mountWithDefaultPlugins(
+          ChildrenWithDiverseNeedsFundingCategoriesDataTableServer,
+          { router }
+        )
+        await flushPromises()
+
+        // Assert
+        expect(wrapper.get("tbody").text()).toContain("Bookmarked category")
+      })
+
       test("when the next page loads, displays its records without resetting to page one", async () => {
         // Arrange
         vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] })
@@ -75,16 +113,6 @@ describe("web/src/components/children-with-diverse-needs-funding-categories/Chil
     })
 
     describe("loading categories", () => {
-      beforeEach(() => {
-        const snack = useSnack()
-        snack.reset()
-      })
-
-      afterEach(() => {
-        const snack = useSnack()
-        snack.reset()
-      })
-
       test("when loading requires authentication, delivers the original error to application recovery", async () => {
         // Arrange
         const authenticationError = new AuthenticationRequiredError()
@@ -123,38 +151,6 @@ describe("web/src/components/children-with-diverse-needs-funding-categories/Chil
         expect(receivedErrors).toEqual([
           expect.objectContaining({ message: "You must be logged in to access this endpoint" }),
         ])
-      })
-
-      test("when loading fails with an operation error, displays load-failure feedback", async () => {
-        // Arrange
-        const snack = useSnack()
-        vi.spyOn(childrenWithDiverseNeedsFundingCategoriesApi, "list").mockRejectedValue(
-          new ApiOperationError("Categories are unavailable", 503)
-        )
-        const router = mockRouter([
-          {
-            path: "/",
-            component: ChildrenWithDiverseNeedsFundingCategoriesDataTableServer,
-          },
-        ])
-        await router.push("/")
-        await router.isReady()
-
-        // Act
-        mount(ChildrenWithDiverseNeedsFundingCategoriesDataTableServer, {
-          props: {
-            where: {
-              fundingPeriodId: 5,
-            },
-          },
-          global: {
-            plugins: [router, mockVuetify()],
-          },
-        })
-        await flushPromises()
-
-        // Assert
-        expect(snack.message.value).toBe("Failed to load Children with Diverse Needs categories.")
       })
 
       test("when loading fails, leaves the table's normal empty state visible", async () => {

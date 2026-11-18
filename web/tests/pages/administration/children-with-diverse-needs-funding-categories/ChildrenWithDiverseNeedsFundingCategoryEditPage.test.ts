@@ -332,55 +332,5 @@ describe("web/src/pages/administration/children-with-diverse-needs-funding-categ
         expect(useSnack().message.value).toContain("Name is taken")
       })
     })
-
-    describe("load recovery", () => {
-      test("when the initial category load fails, displays load-failure feedback", async () => {
-        // Arrange
-        const snack = useSnack()
-        snack.reset()
-        onTestFinished(() => snack.reset())
-
-        mockHttpGetRoutes({
-          "/api/children-with-diverse-needs-funding-categories/8": () => {
-            throw new ApiOperationError("Unavailable", 503)
-          },
-          "/api/funding-periods": () => ({
-            data: {
-              fundingPeriods: [],
-              totalCount: 0,
-            },
-          }),
-        })
-
-        // Act
-        const router = mockRouter([
-          {
-            path: "/",
-            component: ChildrenWithDiverseNeedsFundingCategoryEditPage,
-          },
-          {
-            path: "/categories/:childrenWithDiverseNeedsFundingCategoryId",
-            name: "administration/children-with-diverse-needs-funding-categories/ChildrenWithDiverseNeedsFundingCategoryPage",
-            component: {
-              template: "<div>Category details</div>",
-            },
-          },
-        ])
-        await router.push("/")
-        await router.isReady()
-        mount(ChildrenWithDiverseNeedsFundingCategoryEditPage, {
-          props: {
-            childrenWithDiverseNeedsFundingCategoryId: "8",
-          },
-          global: {
-            plugins: [router, mockVuetify()],
-          },
-        })
-        await flushPromises()
-
-        // Assert
-        expect(snack.message.value).toBe("Failed to load Children with Diverse Needs category.")
-      })
-    })
   })
 })

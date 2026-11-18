@@ -79,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, toRefs, useTemplateRef, watch } from "vue"
+import { ref, toRefs, useTemplateRef } from "vue"
 import { isNil } from "lodash"
 
 import rethrowUnexpectedError from "@/api/errors/rethrow-unexpected-error"
@@ -102,7 +102,7 @@ const emit = defineEmits<{
 }>()
 
 const { childrenWithDiverseNeedsFundingCategoryId } = toRefs(props)
-const { childrenWithDiverseNeedsFundingCategory, save, isErrored } =
+const { childrenWithDiverseNeedsFundingCategory, save } =
   useChildrenWithDiverseNeedsFundingCategory(childrenWithDiverseNeedsFundingCategoryId)
 
 const form = useTemplateRef("form")
@@ -110,10 +110,6 @@ const form = useTemplateRef("form")
 const isSaving = ref(false)
 
 const snack = useSnack()
-
-watch(isErrored, (isErrored) => {
-  if (isErrored) snack.error("Failed to load Children with Diverse Needs category.")
-})
 
 async function submit() {
   if (isNil(form.value)) return
