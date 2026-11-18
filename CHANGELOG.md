@@ -10,6 +10,8 @@ Changes since v2026.11.17.1 that will be included in the next release.
 
 ### Added
 
+- Spaces rates use shared category identities while retaining historical monthly names and amounts.
+
 - Administrators can manage the shared category catalogue independently of programme rates.
 
 - Shared child-care categories have a dedicated model and authorized API, with immutable funding-period ownership and safe retirement. Existing programme configuration remains unchanged during preparation.

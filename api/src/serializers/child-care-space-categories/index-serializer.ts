@@ -9,6 +9,7 @@ export type ChildCareSpaceCategoryIndexView = Pick<
   ChildCareSpaceCategory,
   | "id"
   | "fundingPeriodId"
+  | "childCareCategoryId"
   | "categoryName"
   | "fromAge"
   | "toAge"
@@ -35,6 +36,7 @@ export class IndexSerializer extends BaseSerializer<ChildCareSpaceCategory> {
       ...pick(this.record, [
         "id",
         "fundingPeriodId",
+        "childCareCategoryId",
         "categoryName",
         "fromAge",
         "toAge",

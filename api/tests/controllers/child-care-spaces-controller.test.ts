@@ -1,3 +1,4 @@
+import childCareCategoryFactory from "@/factories/child-care-category-factory"
 import { mockCurrentUser, request } from "@/support"
 import {
   centreFactory,
@@ -38,10 +39,14 @@ describe("api/src/controllers/child-care-spaces-controller.ts", () => {
           fiscalYear: "2025-26",
           dateStart: new Date("2025-04-01"),
         })
-        const category = await childCareSpaceCategoryFactory.create({
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
           fundingPeriodId: fundingPeriod.id,
           categoryName: "Infants",
+        })
+        const category = await childCareSpaceCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
           monthlyAmount: "100.0000",
+          childCareCategoryId: categoryChildCareCategory.id,
         })
         const aprilChildCareSpace = await childCareSpaceFactory
           .associations({

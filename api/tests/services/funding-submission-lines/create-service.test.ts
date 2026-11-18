@@ -1,3 +1,4 @@
+import childCareCategoryFactory from "@/factories/child-care-category-factory"
 import { FundingSubmissionLine } from "@/models"
 
 import { childCareSpaceCategoryFactory, fundingPeriodFactory } from "@/factories"
@@ -37,10 +38,17 @@ describe("api/src/services/funding-submission-lines/create-service.ts", () => {
       test("when creating an unrelated section with a category link, persists its snapshot without the ledger link", async () => {
         // Arrange
         const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2147-2148" })
-        const category = await childCareSpaceCategoryFactory.create({
+        const categoryChildCareCategory = await childCareCategoryFactory.create({
           fundingPeriodId: fundingPeriod.id,
           categoryName: "Infants",
         })
+        const category = await childCareSpaceCategoryFactory
+          .associations({
+            childCareCategory: categoryChildCareCategory,
+          })
+          .create({
+            fundingPeriodId: fundingPeriod.id,
+          })
 
         // Act
         const fundingSubmissionLine = await CreateService.perform({

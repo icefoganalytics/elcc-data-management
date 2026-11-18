@@ -8,7 +8,9 @@ import PropagateToFutureMonthsService, {
   type ChildCareSpaceCategoryPropagationOptions,
 } from "@/services/child-care-space-categories/propagate-to-future-months-service"
 
-export type ChildCareSpaceCategoryUpdateAttributes = Partial<Attributes<ChildCareSpaceCategory>> &
+export type ChildCareSpaceCategoryUpdateAttributes = Partial<
+  Pick<Attributes<ChildCareSpaceCategory>, "monthlyAmount">
+> &
   ChildCareSpaceCategoryPropagationOptions
 
 export class UpdateService extends BaseService {
@@ -20,12 +22,7 @@ export class UpdateService extends BaseService {
   }
 
   async perform(): Promise<ChildCareSpaceCategory> {
-    const {
-      fundingPeriodId: _ignoredFundingPeriodId,
-      applyToFutureMonths,
-      propagationStartFiscalPeriodId,
-      ...attributes
-    } = this.attributes
+    const { applyToFutureMonths, propagationStartFiscalPeriodId, monthlyAmount } = this.attributes
     if (!isUndefined(applyToFutureMonths) && typeof applyToFutureMonths !== "boolean") {
       throw new Error("applyToFutureMonths must be a boolean")
     }
@@ -34,13 +31,17 @@ export class UpdateService extends BaseService {
     return db.transaction(
       { isolationLevel: IsolationLevel.REPEATABLE_READ },
       async (transaction) => {
-        await this.category.reload({ transaction, tableHints: [TableHints.UPDLOCK] })
+        await this.category.reload({
+          transaction,
+          tableHints: [TableHints.UPDLOCK],
+          include: ["childCareCategory"],
+        })
         const previousCategorySnapshot = {
           categoryName: this.category.categoryName,
           monthlyAmount: this.category.monthlyAmount,
         }
 
-        await this.category.update(attributes, { transaction })
+        await this.category.update({ monthlyAmount }, { transaction })
 
         if (applyToFutureMonths === true) {
           await PropagateToFutureMonthsService.perform(

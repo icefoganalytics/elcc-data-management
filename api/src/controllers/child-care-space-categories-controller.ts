@@ -16,7 +16,7 @@ export class ChildCareSpaceCategoriesController extends BaseController<ChildCare
     try {
       const where = this.buildWhere()
       const scopes = this.buildFilterScopes()
-      const order = this.buildOrder([["categoryName", "ASC"]])
+      const order = this.buildOrder([["childCareCategory", "categoryName", "ASC"]])
       const scopedChildCareSpaceCategories = ChildCareSpaceCategoryPolicy.applyScope(
         scopes,
         this.currentUser

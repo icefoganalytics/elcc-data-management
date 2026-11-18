@@ -1,3 +1,4 @@
+import childCareCategoryFactory from "@/factories/child-care-category-factory"
 import { User } from "@/models"
 
 import { childCareSpaceCategoryFactory, fundingPeriodFactory, userFactory } from "@/factories"
@@ -37,13 +38,16 @@ describe("api/src/controllers/administration-cost-categories-controller.ts", () 
         })
         mockCurrentUser(currentUser)
         const fundingPeriod = await fundingPeriodFactory.create()
+        const childCareSpaceCategoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
         const childCareSpaceCategory = await childCareSpaceCategoryFactory
           .associations({
             fundingPeriod,
+            childCareCategory: childCareSpaceCategoryChildCareCategory,
           })
-          .create({
-            categoryName: "Infants",
-          })
+          .create()
 
         // Act
         const response = await request().post("/api/administration-cost-categories").send({

@@ -36,7 +36,7 @@ export class BulkCreateService extends BaseService {
     }
 
     const categories = await ChildCareSpaceCategory.findAll({
-      attributes: ["id", "categoryName", "monthlyAmount"],
+      attributes: ["id", "childCareCategoryId", "monthlyAmount"],
       where: { fundingPeriodId: this.fundingPeriod.id },
       order: [["id", "ASC"]],
     })

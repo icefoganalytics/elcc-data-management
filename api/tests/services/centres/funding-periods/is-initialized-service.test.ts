@@ -5,6 +5,7 @@ import {
   administrationCostFactory,
   buildingExpenseFactory,
   centreFactory,
+  childCareCategoryFactory,
   employeeBenefitFactory,
   fiscalPeriodFactory,
   fundingPeriodFactory,
@@ -34,9 +35,12 @@ describe("api/src/services/centres/funding-periods/is-initialized-service.ts", (
           fiscalYear: "2024/25",
         })
         await fundingReconciliationFactory.associations({ centre, fundingPeriod }).create()
+        const childCareCategory = await childCareCategoryFactory.associations({ fundingPeriod }).create({
+          categoryName: "New category",
+        })
         await CreateCategoryService.perform({
           fundingPeriodId: fundingPeriod.id,
-          categoryName: "New category",
+          childCareCategoryId: childCareCategory.id,
           monthlyAmount: "100.0000",
         })
 
@@ -92,9 +96,12 @@ describe("api/src/services/centres/funding-periods/is-initialized-service.ts", (
             category: administrationCostCategory,
           })
           .create()
+        const childCareCategory = await childCareCategoryFactory.associations({ fundingPeriod }).create({
+          categoryName: "May category",
+        })
         await CreateCategoryService.perform({
           fundingPeriodId: fundingPeriod.id,
-          categoryName: "May category",
+          childCareCategoryId: childCareCategory.id,
           monthlyAmount: "100.0000",
           applyToFutureMonths: true,
           propagationStartFiscalPeriodId: mayFiscalPeriod.id,

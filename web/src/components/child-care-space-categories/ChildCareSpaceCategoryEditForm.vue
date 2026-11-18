@@ -34,48 +34,10 @@
       </v-col>
     </v-row>
     <v-divider class="my-4" />
-    <v-row>
-      <v-col cols="12">
-        <ChildCareSpaceCategoryNameUniqueTextField
-          v-model="childCareSpaceCategory.categoryName"
-          :funding-period-id="childCareSpaceCategory.fundingPeriodId"
-          :excluding-category-id="childCareSpaceCategoryId"
-          label="Category Name *"
-          :rules="[required]"
-          required
-        />
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col
-        cols="12"
-        md="6"
-      >
-        <v-text-field
-          :model-value="childCareSpaceCategory.fromAge"
-          label="From Age"
-          type="number"
-          step="1"
-          min="0"
-          :rules="[wholeNumberOrEmpty, greaterThanOrEqualTo(0)]"
-          @update:model-value="updateAge('fromAge', $event)"
-        />
-      </v-col>
-      <v-col
-        cols="12"
-        md="6"
-      >
-        <v-text-field
-          :model-value="childCareSpaceCategory.toAge"
-          label="To Age"
-          type="number"
-          step="1"
-          min="0"
-          :rules="toAgeRules"
-          @update:model-value="updateAge('toAge', $event)"
-        />
-      </v-col>
-    </v-row>
+    <ChildCareCategoryDescriptionFields
+      :child-care-category-id="childCareSpaceCategory.childCareCategoryId"
+      :category="childCareSpaceCategory"
+    />
     <v-row>
       <v-col cols="12">
         <CurrencyInput
@@ -132,7 +94,7 @@ import { isNil } from "lodash"
 import { ApiOperationError } from "@/api/errors/api-operation-error"
 
 import { type ChildCareSpaceCategoryPropagationOptions } from "@/api/child-care-space-categories-api"
-import { greaterThan, greaterThanOrEqualTo, required } from "@/utils/validators"
+import { required } from "@/utils/validators"
 
 import useChildCareSpaceCategory from "@/use/use-child-care-space-category"
 import useFundingPeriod from "@/use/use-funding-period"
@@ -140,7 +102,7 @@ import useSnack from "@/use/use-snack"
 
 import CurrencyInput from "@/components/CurrencyInput.vue"
 import DescriptionElement from "@/components/common/DescriptionElement.vue"
-import ChildCareSpaceCategoryNameUniqueTextField from "@/components/child-care-space-categories/ChildCareSpaceCategoryNameUniqueTextField.vue"
+import ChildCareCategoryDescriptionFields from "@/components/child-care-categories/ChildCareCategoryDescriptionFields.vue"
 import ChildCareSpaceCategoryPropagationControls from "@/components/child-care-space-categories/ChildCareSpaceCategoryPropagationControls.vue"
 
 const monthlyAmountOptions = { precision: 4 }
@@ -176,38 +138,6 @@ const fundingPeriodDescription = computed(() => {
   const { fiscalYear, title } = fundingPeriod.value
   return title ? `${fiscalYear} — ${title}` : fiscalYear
 })
-const toAgeRules = computed(() => [
-  wholeNumberOrEmpty,
-  greaterThanOrEqualTo(0),
-  greaterThan(childCareSpaceCategory.value?.fromAge, {
-    referenceFieldLabel: `From Age of ${childCareSpaceCategory.value?.fromAge}`,
-  }),
-])
-
-function wholeNumberOrEmpty(value: unknown): boolean | string {
-  if (isNil(value) || value === "") {
-    return true
-  }
-
-  if (typeof value === "number" && Number.isInteger(value)) {
-    return true
-  }
-
-  if (typeof value === "string" && value.trim() !== "" && Number.isInteger(Number(value))) {
-    return true
-  }
-
-  return "Age must be a whole number"
-}
-
-function updateAge(field: "fromAge" | "toAge", value: string | number | null) {
-  const category = childCareSpaceCategory.value
-  if (isNil(category)) {
-    return
-  }
-
-  category[field] = isNil(value) || value === "" ? null : Number(value)
-}
 
 function updateMonthlyAmount(value: string | number | null) {
   const category = childCareSpaceCategory.value

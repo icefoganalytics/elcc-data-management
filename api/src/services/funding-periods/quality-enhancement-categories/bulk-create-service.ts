@@ -40,7 +40,7 @@ export class BulkCreateService extends BaseService {
           include: [
             {
               association: "childCareSpaceCategory",
-              attributes: ["categoryName"],
+              include: ["childCareCategory"],
               paranoid: false,
             },
           ],
@@ -48,7 +48,8 @@ export class BulkCreateService extends BaseService {
         })
     const spaceCategories = await ChildCareSpaceCategory.findAll({
       where: { fundingPeriodId: this.fundingPeriod.id },
-      attributes: ["id", "categoryName"],
+      attributes: ["id", "childCareCategoryId"],
+      include: ["childCareCategory"],
     })
     const spaceCategoryIdsByName = new Map(
       spaceCategories.map(({ id, categoryName }) => [categoryName, id])

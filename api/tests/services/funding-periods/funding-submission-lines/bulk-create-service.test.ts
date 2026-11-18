@@ -1,3 +1,4 @@
+import childCareCategoryFactory from "@/factories/child-care-category-factory"
 import { FundingSubmissionLine } from "@/models"
 
 import {
@@ -93,11 +94,18 @@ describe("api/src/services/funding-periods/funding-submission-lines/bulk-create-
         const sourceFundingPeriod = await fundingPeriodFactory.create({
           fiscalYear: "2024-2025",
         })
-        const renamedCategory = await childCareSpaceCategoryFactory.create({
+        const renamedCategoryChildCareCategory = await childCareCategoryFactory.create({
           fundingPeriodId: sourceFundingPeriod.id,
           categoryName: "AAA",
-          monthlyAmount: "742.5000",
         })
+        const renamedCategory = await childCareSpaceCategoryFactory
+          .associations({
+            childCareCategory: renamedCategoryChildCareCategory,
+          })
+          .create({
+            fundingPeriodId: sourceFundingPeriod.id,
+            monthlyAmount: "742.5000",
+          })
         await fundingSubmissionLineFactory.create({
           fiscalYear: "2024/25",
           sectionName: "Unrelated Program",
@@ -109,11 +117,18 @@ describe("api/src/services/funding-periods/funding-submission-lines/bulk-create-
         const targetFundingPeriod = await fundingPeriodFactory.create({
           fiscalYear: "2025-2026",
         })
-        await childCareSpaceCategoryFactory.create({
+        const configuredCategoryChildCareCategory = await childCareCategoryFactory.create({
           fundingPeriodId: targetFundingPeriod.id,
           categoryName: "AAA",
-          monthlyAmount: "742.5000",
         })
+        await childCareSpaceCategoryFactory
+          .associations({
+            childCareCategory: configuredCategoryChildCareCategory,
+          })
+          .create({
+            fundingPeriodId: targetFundingPeriod.id,
+            monthlyAmount: "742.5000",
+          })
 
         // Act
         await BulkCreateService.perform(targetFundingPeriod)

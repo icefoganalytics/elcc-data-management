@@ -23,6 +23,7 @@ describe("web/src/components/child-care-space-categories/ChildCareSpaceCategoryS
         const selectedCategory: ChildCareSpaceCategoryAsIndex = {
           id: 10,
           fundingPeriodId: 1,
+          childCareCategoryId: 10,
           categoryName: "Linked Infants",
           fromAge: 0,
           toAge: 1,
@@ -34,6 +35,7 @@ describe("web/src/components/child-care-space-categories/ChildCareSpaceCategoryS
         const matchingCategory: ChildCareSpaceCategoryAsIndex = {
           id: 20,
           fundingPeriodId: 1,
+          childCareCategoryId: 20,
           categoryName: "Toddlers",
           fromAge: 2,
           toAge: 3,

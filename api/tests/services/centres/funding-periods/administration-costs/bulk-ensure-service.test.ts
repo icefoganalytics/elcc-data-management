@@ -1,3 +1,4 @@
+import childCareCategoryFactory from "@/factories/child-care-category-factory"
 import { AdministrationCost } from "@/models"
 
 import {
@@ -36,13 +37,16 @@ describe("api/src/services/centres/funding-periods/administration-costs/bulk-ens
             fiscalYear: "2024-25",
             dateStart: new Date("2024-05-01"),
           })
+        const childCareSpaceCategoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Infants",
+        })
         const childCareSpaceCategory = await childCareSpaceCategoryFactory
           .associations({
             fundingPeriod,
+            childCareCategory: childCareSpaceCategoryChildCareCategory,
           })
-          .create({
-            categoryName: "Infants",
-          })
+          .create()
         const linkedCategory = await administrationCostCategoryFactory
           .associations({
             fundingPeriod,

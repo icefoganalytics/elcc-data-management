@@ -37,6 +37,18 @@
         Delete
       </v-btn>
     </template>
+    <v-btn
+      v-if="policy?.update"
+      variant="text"
+      :to="{
+        name: 'administration/child-care-categories/ChildCareCategoryEditPage',
+        params: {
+          childCareCategoryId: childCareSpaceCategory.childCareCategoryId,
+        },
+      }"
+    >
+      Edit shared category name and ages
+    </v-btn>
 
     <v-alert
       v-if="isFundingPeriodErrored"

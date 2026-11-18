@@ -1,3 +1,4 @@
+import childCareCategoryFactory from "@/factories/child-care-category-factory"
 import { ChildCareSpaceCategory } from "@/models"
 
 import { childCareSpaceCategoryFactory, fundingPeriodFactory } from "@/factories"
@@ -9,9 +10,15 @@ describe("api/src/services/funding-periods/child-care-space-categories/bulk-ensu
       test("when all categories have been deleted, preserves the deliberate empty configuration", async () => {
         // Arrange
         const fundingPeriod = await fundingPeriodFactory.create({ fiscalYear: "2024-2025" })
+        const deletedCategoryChildCareCategory = await childCareCategoryFactory.create({
+          fundingPeriodId: fundingPeriod.id,
+          categoryName: "Retired category",
+        })
         const deletedCategory = await childCareSpaceCategoryFactory
           .associations({ fundingPeriod })
-          .create({ categoryName: "Retired category" })
+          .create({
+            childCareCategoryId: deletedCategoryChildCareCategory.id,
+          })
         await deletedCategory.destroy()
 
         // Act
