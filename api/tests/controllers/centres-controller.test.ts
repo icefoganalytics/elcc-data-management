@@ -7,9 +7,7 @@ describe("api/src/controllers/centres-controller.ts", () => {
     describe("#update -> PATCH /api/centres/:centreId", () => {
       test("when a System Administrator updates a centre, persists the edited metadata", async () => {
         // Arrange
-        const currentUser = await userFactory.create({
-          roles: [User.Roles.SYSTEM_ADMINISTRATOR],
-        })
+        const currentUser = await userFactory.asSystemAdministrator().create()
         mockCurrentUser(currentUser)
         const centre = await centreFactory.create({ name: "Original Centre" })
 
